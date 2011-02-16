@@ -184,7 +184,7 @@ class CICommand {
         });
         const osDistros = [];
         for (const file of files.data) {
-            for (const prefix of osDistroPathPrefixHints) {
+            for (const prefix of this.osDistroPathPrefixHints) {
                 if (file.filename.startsWith(prefix)) {
                     const osDistro = this.osDistroPathPrefixHints[prefix];
                     osDistros.push(osDistro);
