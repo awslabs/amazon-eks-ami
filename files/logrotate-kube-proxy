@@ -1,0 +1,5 @@
+/var/log/kube-proxy.log {
+    rotate 5
+    daily
+    compress
+}
