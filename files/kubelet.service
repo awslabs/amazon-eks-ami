@@ -22,6 +22,7 @@ ExecStart=/usr/bin/kubelet \
   --pod-infra-container-image=602401143452.dkr.ecr.REGION.amazonaws.com/eks/pause-amd64:3.1 \
   --cgroup-driver=cgroupfs \
   --register-node=true \
+  --node-labels="LABELS" \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
   --feature-gates=RotateKubeletServerCertificate=true \
   --anonymous-auth=false \
