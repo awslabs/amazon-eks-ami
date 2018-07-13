@@ -6,8 +6,7 @@
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.10.3/2018-06-05/bin/linux/amd64",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large",
-    "source_ami_id": ""
+    "instance_type": "m4.large"
   },
 
   "builders": [
