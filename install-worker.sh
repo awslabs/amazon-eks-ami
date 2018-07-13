@@ -16,6 +16,7 @@ sudo yum update -y
 sudo yum install -y \
     aws-cfn-bootstrap \
     conntrack \
+    nfs-utils \
     curl \
     socat \
     unzip \
@@ -44,7 +45,7 @@ sudo systemctl enable iptables-restore
 ################################################################################
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-sudo yum install -y docker
+sudo amazon-linux-extras install -y docker
 sudo usermod -aG docker $USER
 
 # Enable docker daemon to start on boot.
