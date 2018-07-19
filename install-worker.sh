@@ -44,7 +44,7 @@ sudo systemctl enable iptables-restore
 ################################################################################
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-sudo yum install -y docker
+sudo amazon-linux-extras install docker -y
 sudo usermod -aG docker $USER
 
 # Enable docker daemon to start on boot.
