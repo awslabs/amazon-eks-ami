@@ -17,6 +17,7 @@ sudo yum install -y \
     aws-cfn-bootstrap \
     conntrack \
     curl \
+    nfs-utils \
     socat \
     unzip \
     wget
@@ -44,7 +45,8 @@ sudo systemctl enable iptables-restore
 ################################################################################
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-sudo yum install -y docker
+sudo amazon-linux-extras enable docker
+sudo yum install -y docker-17.06*
 sudo usermod -aG docker $USER
 
 # Enable docker daemon to start on boot.
@@ -84,12 +86,19 @@ if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
     S3_DOMAIN="s3"
 fi
 S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
-wget $S3_URL_BASE/kubelet
-wget $S3_URL_BASE/kubectl
-wget $S3_URL_BASE/heptio-authenticator-aws
 
-chmod +x kubectl kubelet heptio-authenticator-aws
-sudo mv kubectl kubelet heptio-authenticator-aws /usr/bin/
+BINARIES=(
+    kubelet
+    kubectl
+    aws-iam-authenticator
+)
+for binary in ${BINARIES[*]} ; do
+    sudo wget $S3_URL_BASE/$binary
+    sudo wget $S3_URL_BASE/$binary.sha256
+    sudo sha256sum -c $binary.sha256
+    sudo chmod +x $binary
+    sudo mv $binary /usr/bin/
+done
 
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
