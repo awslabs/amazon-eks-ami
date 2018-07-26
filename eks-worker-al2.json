@@ -4,9 +4,10 @@
     "ami_name": "eks-k8s-worker-AL2-ami-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.10.3/2018-06-05/bin/linux/amd64",
+    "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large"
+    "instance_type": "m4.large",
+    "source_ami_id": ""
   },
 
   "builders": [
@@ -14,6 +15,17 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "source_ami_filter": {
+        "filters": {
+          "architecture": "x86_64",
+          "name": "amzn2-ami-minimal-hvm-*",
+          "owner-id": "137112412989",
+          "root-device-type": "ebs",
+          "state": "available",
+          "virtualization-type": "hvm"
+        },
+        "most_recent": true
+      },
       "instance_type": "{{user `instance_type`}}",
       "launch_block_device_mappings": [
         {
