@@ -11,21 +11,17 @@ ExecStart=/usr/bin/kubelet \
   --authorization-mode=Webhook \
   --allow-privileged=true \
   --cloud-provider=aws \
-  --cluster-dns=DNS_CLUSTER_IP \
   --cluster-domain=cluster.local \
   --cni-bin-dir=/opt/cni/bin \
   --cni-conf-dir=/etc/cni/net.d \
   --container-runtime=docker \
-  --max-pods=MAX_PODS \
-  --node-ip=INTERNAL_IP \
   --network-plugin=cni \
-  --pod-infra-container-image=602401143452.dkr.ecr.REGION.amazonaws.com/eks/pause-amd64:3.1 \
   --cgroup-driver=cgroupfs \
   --register-node=true \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
   --feature-gates=RotateKubeletServerCertificate=true \
   --anonymous-auth=false \
-  --client-ca-file=CLIENT_CA_FILE
+  --client-ca-file=/etc/kubernetes/pki/ca.crt $KUBELET_ARGS $KUBELET_MAX_PODS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartSec=5

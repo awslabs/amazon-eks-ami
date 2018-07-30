@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -euo pipefail
+set -o pipefail
+set -o nounset
+set -o errexit
 IFS=$'\n\t'
 
 TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
@@ -102,9 +104,20 @@ done
 
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mkdir -p /etc/systemd/system/kubelet.service.d
 
 sudo systemctl daemon-reload
-sudo systemctl enable kubelet
+# Disable the kubelet until the proper dropins have been configured
+sudo systemctl disable kubelet
+
+################################################################################
+### EKS ########################################################################
+################################################################################
+
+sudo mkdir -p /etc/eks
+sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
+sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
+sudo chmod +x /etc/eks/bootstrap.sh
 
 # Clean up yum caches to reduce the image size
 sudo yum clean all
