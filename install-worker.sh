@@ -25,7 +25,7 @@ sudo yum install -y \
     unzip \
     wget
 
-systemctl enable ntpd
+sudo systemctl enable ntpd
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
