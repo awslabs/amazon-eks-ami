@@ -20,9 +20,12 @@ sudo yum install -y \
     conntrack \
     curl \
     nfs-utils \
+    ntp \
     socat \
     unzip \
     wget
+
+systemctl enable ntpd
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
