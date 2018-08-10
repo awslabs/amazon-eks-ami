@@ -259,6 +259,7 @@ Resources:
           !Sub |
             #!/bin/bash
             set -o xtrace
+            export KUBELET_EXTRA_ARGS="--node-labels aws-stack-name=${AWS::StackName}"
             /etc/eks/bootstrap.sh ${ClusterName}
             /opt/aws/bin/cfn-signal --exit-code $? \
                      --stack  ${AWS::StackName} \
