@@ -88,6 +88,11 @@ Parameters:
     Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
     Type: String
 
+  BootstrapArguments:
+    Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
+    Default: ""
+    Type: String
+
   NodeGroupName:
     Description: Unique identifier for the Node Group.
     Type: String
@@ -123,6 +128,7 @@ Metadata:
           - NodeInstanceType
           - NodeImageId
           - KeyName
+          - BootstrapArguments
       -
         Label:
           default: "Worker Network Configuration"
@@ -247,7 +253,7 @@ Resources:
           !Sub |
             #!/bin/bash
             set -o xtrace
-            /etc/eks/bootstrap.sh ${ClusterName}
+            /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
             /opt/aws/bin/cfn-signal --exit-code $? \
                      --stack  ${AWS::StackName} \
                      --resource NodeGroup  \
