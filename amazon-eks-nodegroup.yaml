@@ -84,6 +84,11 @@ Parameters:
     Description: Maximum size of Node Group ASG.
     Default: 3
 
+  NodeVolumeSize:
+    Type: Number
+    Description: Node volume size
+    Default: 20
+
   ClusterName:
     Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
     Type: String
@@ -127,6 +132,7 @@ Metadata:
           - NodeAutoScalingGroupMaxSize
           - NodeInstanceType
           - NodeImageId
+          - NodeVolumeSize
           - KeyName
           - BootstrapArguments
       -
@@ -248,6 +254,12 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroups:
       - !Ref NodeSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref NodeVolumeSize
+            VolumeType: gp2
+            DeleteOnTermination: true
       UserData:
         Fn::Base64:
           !Sub |
