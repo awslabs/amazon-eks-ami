@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS - Node Group'
+Description: 'Amazon EKS - Node Group - Released 2018-08-21'
 
 Parameters:
 

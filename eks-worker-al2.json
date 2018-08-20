@@ -1,7 +1,7 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "eks-k8s-worker-AL2-ami-{{timestamp}}",
+    "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
