@@ -22,6 +22,11 @@ Parameters:
     - t2.large
     - t2.xlarge
     - t2.2xlarge
+    - t3.small
+    - t3.medium
+    - t3.large
+    - t3.xlarge
+    - t3.2xlarge
     - m3.medium
     - m3.large
     - m3.xlarge
