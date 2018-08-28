@@ -61,6 +61,7 @@ versions by running `aws s3 ls s3://amazon-eks/cloudformation/`.
 
 | CloudFormation Version | EKS AMI versions     |
 | ---------------------- | -------------------- |
+| 2018-08-21             | amazon-eks-node-v23+ |
 | 2018-08-30             | amazon-eks-node-v23+ |
 
 For older versions of the EKS AMI (v20-v22), you can find the CloudFormation
