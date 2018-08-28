@@ -7,7 +7,9 @@
     "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",
-    "source_ami_id": ""
+    "source_ami_id": "",
+    "encrypted": "false",
+    "kms_key_id": ""
   },
 
   "builders": [
@@ -37,6 +39,8 @@
       ],
       "ssh_username": "ec2-user",
       "ssh_pty": true,
+      "encrypt_boot": "{{user `encrypted`}}",
+      "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
           "creator": "{{user `creator`}}"
       },
