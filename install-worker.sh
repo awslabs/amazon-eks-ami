@@ -77,13 +77,17 @@ sudo mkdir -p /opt/cni/bin
 
 CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz
+wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz.sha512
+sudo sha512sum -c cni-amd64-${CNI_VERSION}.tgz.sha512
 sudo tar -xvf cni-amd64-${CNI_VERSION}.tgz -C /opt/cni/bin
-rm cni-amd64-${CNI_VERSION}.tgz
+rm cni-amd64-${CNI_VERSION}.tgz cni-amd64-${CNI_VERSION}.tgz.sha512
 
 CNI_PLUGIN_VERSION=${CNI_PLUGIN_VERSION:-"v0.7.1"}
 wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz
+wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
+sudo sha512sum -c cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
 sudo tar -xvf cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
-rm cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz
+rm cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="s3-$BINARY_BUCKET_REGION"
