@@ -65,6 +65,7 @@ sudo systemctl enable docker
 # kubelet uses journald which has built-in rotation and capped size.
 # See man 5 journald.conf
 sudo mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
+sudo mkdir -p /var/log/journal
 
 ################################################################################
 ### Kubernetes #################################################################
@@ -108,6 +109,7 @@ for binary in ${BINARIES[*]} ; do
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
 done
+sudo rm *.sha256
 
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
