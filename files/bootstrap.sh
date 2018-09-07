@@ -100,11 +100,19 @@ sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 DNS_CLUSTER_IP=10.100.0.10
 if [[ $INTERNAL_IP == 10.* ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
 fi
+INSTANCE_LIFECYCLE=$(
+    aws ec2 describe-instances \
+        --region=$AWS_DEFAULT_REGION \
+        --instance-ids=$INSTANCE_ID \
+        --output=text \
+        --query='Reservations[].Instances[].InstanceLifecycle'
+)
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
@@ -119,6 +127,10 @@ cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
 Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --cluster-dns=$DNS_CLUSTER_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
 EOF
+
+if [[ $INSTANCE_LIFECYCLE == spot ]]; then
+    KUBELET_EXTRA_ARGS+=' --node-labels=lifecycle=Ec2Spot'
+fi
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
     cat <<EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
