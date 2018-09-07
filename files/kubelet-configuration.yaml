@@ -1,0 +1,26 @@
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+
+address: '0.0.0.0'
+maxPods: _MAX_PODS_
+
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: true
+  x509:
+    clientCAFile: '/etc/kubernetes/pki/ca.crt'
+
+authorization:
+  mode: Webhook
+
+clusterDomain: 'cluster.local'
+clusterDNS:
+  - '_CLUSTER_DNS_'
+cgroupDriver: 'cgroupfs'
+
+failSwapOn: true
+
+featureGates:
+  RotateKubeletServerCertificate: true

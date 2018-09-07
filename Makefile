@@ -21,7 +21,9 @@ AWS_DEFAULT_REGION = us-west-2
 all: ami
 
 validate:
-	packer validate eks-worker-al2.json
+	docker-compose run --rm -T packer validate eks-worker-al2.json
 
 ami: validate
-	packer build -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-al2.json
+	docker-compose run --rm -T packer build \
+		--var=source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-al2.json
