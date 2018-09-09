@@ -21,11 +21,11 @@
         "filters": {
           "architecture": "x86_64",
           "name": "amzn2-ami-minimal-hvm-*",
-          "owner-id": "137112412989",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
+        "owners": [ "137112412989" ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
