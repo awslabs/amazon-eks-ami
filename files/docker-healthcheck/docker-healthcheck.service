@@ -1,0 +1,9 @@
+[Unit]
+Description=Run docker-healthcheck once
+
+[Service]
+Type=oneshot
+ExecStart=/opt/docker-healthcheck/docker-healthcheck
+
+[Install]
+WantedBy=multi-user.target

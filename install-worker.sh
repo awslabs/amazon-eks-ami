@@ -119,6 +119,20 @@ sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
 sudo systemctl disable kubelet
 
+
+################################################################################
+### Docker HealthCheck #########################################################
+################################################################################
+
+DHC_PATH="/opt/docker-healthcheck"
+DHC_TEMPLATES="$TEMPLATE_DIR/docker-healthcheck"
+sudo mkdir -p "$DHC_PATH"
+sudo mv "$DHC_TEMPLATES/docker-healthcheck.sh" "$DHC_PATH/docker-healthcheck"
+sudo chmod +x "$DHC_PATH/docker-healthcheck"
+sudo mv $DHC_TEMPLATES/docker-healthcheck.service /etc/systemd/system/
+sudo mv $DHC_TEMPLATES/docker-healthcheck.timer   /etc/systemd/system/
+
+
 ################################################################################
 ### EKS ########################################################################
 ################################################################################
