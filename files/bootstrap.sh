@@ -109,10 +109,12 @@ fi
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
-    cat <<EOF > /etc/systemd/system/kubelet.service.d/20-max-pods.conf
+    if [[ -n "$MAX_PODS" ]]; then
+        cat <<EOF > /etc/systemd/system/kubelet.service.d/20-max-pods.conf
 [Service]
 Environment='KUBELET_MAX_PODS=--max-pods=$MAX_PODS'
 EOF
+    fi
 fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
