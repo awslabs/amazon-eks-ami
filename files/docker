@@ -1,0 +1,1 @@
+DOCKER_OPTS="--pidfile /var/run/docker.pid --no-new-privileges --iptables=false --log-level=info --live-restore --userland-proxy=false"
