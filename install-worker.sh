@@ -132,6 +132,10 @@ sudo chmod +x "$DHC_PATH/docker-healthcheck"
 sudo mv $DHC_TEMPLATES/docker-healthcheck.service /etc/systemd/system/
 sudo mv $DHC_TEMPLATES/docker-healthcheck.timer   /etc/systemd/system/
 
+# Enable docker-healthcheck to start on boot.
+sudo systemctl daemon-reload
+sudo systemctl enable docker-healthcheck.timer
+
 
 ################################################################################
 ### EKS ########################################################################
