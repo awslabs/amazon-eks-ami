@@ -4,7 +4,7 @@ Description=Trigger docker-healthcheck periodically
 [Timer]
 # defines a timer relative to when the machine was booted up
 # this will trigger the first run of the docker-healthcheck.service
-OnBootSec=10s
+OnBootSec=2m
 # defines a timer relative to when the unit the timer is activating was last deactivate
 # this will trigger the following runs
 OnUnitInactiveSec=10s
