@@ -18,6 +18,8 @@ SOURCE_AMI_ID ?= $(shell aws ec2 describe-images \
 
 AWS_DEFAULT_REGION = us-west-2
 
+.PHONY: all validate ami
+
 all: ami
 
 validate:
