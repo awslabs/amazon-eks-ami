@@ -2,11 +2,12 @@
   "variables": {
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
+    "iam_role": "epam-vae-nvidia-builder-profile",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large",
+    "instance_type": "g3.4xlarge",
     "source_ami_id": "",
     "encrypted": "false",
     "kms_key_id": ""
@@ -28,6 +29,7 @@
         "owners": [ "137112412989" ],
         "most_recent": true
       },
+      "iam_instance_profile": "{{user `iam_role`}}",
       "instance_type": "{{user `instance_type`}}",
       "launch_block_device_mappings": [
         {
@@ -64,7 +66,13 @@
     },
     {
       "type": "shell",
+      "script": "update-system.sh",
+      "expect_disconnect": true
+    },
+    {
+      "type": "shell",
       "script": "install-worker.sh",
+      "pause_before": "120s",
       "environment_vars": [
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",

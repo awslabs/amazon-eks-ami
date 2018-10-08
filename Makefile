@@ -24,4 +24,4 @@ validate:
 	packer validate eks-worker-al2.json
 
 ami: validate
-	packer build -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-al2.json
+	packer build -on-error=ask -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-al2.json
