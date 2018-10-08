@@ -3,7 +3,9 @@
 This repository contains resources and configuration scripts for building a
 custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
 the same configuration that Amazon EKS uses to create the official Amazon
-EKS-optimized AMI.
+EKS-optimized AMI. 
+
+Inteded to be used to build AMI images which supports G3 instance types and runs nvidia-docker runtime by default.
 
 ## Setup
 
@@ -15,15 +17,21 @@ For more information, see [Authentication](https://www.packer.io/docs/builders/a
 in the Packer documentation.
 
 **Note**
-The default instance type to build this AMI is an `m4.large` and does not
+The default instance type to build this AMI is an `g3.4xlarge` and does not
 qualify for the AWS free tier. You are charged for any instances created
 when building this AMI.
 
-## Building the AMI
+## Building the AMI for G3 instance types
+
 
 A Makefile is provided to build the AMI, but it is just a small wrapper around
 invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
+
+```bash
+make createInstanceProfile
+```
+The Makefile runs aws cloudformation to create the AWS IAM Role and InstanceProfile which will be used by Packer EBS builder Wait for the AWS IAM Role and EC2 Instance Profile to be created.
 
 ```bash
 make
