@@ -146,3 +146,23 @@ sudo chmod +x /etc/eks/bootstrap.sh
 
 # Clean up yum caches to reduce the image size
 sudo yum clean all
+sudo rm -rf \
+    $TEMPLATE_DIR  \
+    /var/cache/yum
+
+# Clean up files to reduce confusion during debug
+sudo rm -rf \
+    /etc/machine-id \
+    /etc/ssh/ssh_host* \
+    /root/.ssh/authorized_keys \
+    /home/ec2-user/.ssh/authorized_keys \
+    /var/log/secure \
+    /var/log/wtmp \
+    /var/lib/cloud/sem \
+    /var/lib/cloud/data \
+    /var/lib/cloud/instance \
+    /var/lib/cloud/instances \
+    /var/log/cloud-init.log \
+    /var/log/cloud-init-output.log
+
+sudo touch /etc/machine-id
