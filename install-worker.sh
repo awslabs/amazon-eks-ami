@@ -8,42 +8,38 @@ IFS=$'\n\t'
 TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 
 ################################################################################
-### Packages ###################################################################
+### Nvidia driver ##############################################################
 ################################################################################
+sudo yum -y erase nvidia cuda
+sudo yum install -y gcc kernel-devel-$(uname -r) dkms
 
-# Update the OS to begin with to catch up to the latest packages.
-sudo yum update -y
+# Downloading and installing the NVIDIA GRID Driver (G3)
+# https://gist.github.com/wangruohui/df039f0dc434d6486f5d4d098aa52d07#install-dependencies
+# option -s is used for silent installation which should used for batch installation. For installation on a single computer, this option should be turned off for more installtion information
+# option --dkms is used for register dkms module into the kernel so that update of the kernel will not require a reinstallation of the driver. This option should be turned on by default. 
+aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+sudo /bin/sh ./NVIDIA-Linux-x86_64*.run --dkms -s
 
-# Install necessary packages
-sudo yum install -y \
-    aws-cfn-bootstrap \
-    conntrack \
-    curl \
-    nfs-utils \
-    ntp \
-    socat \
-    unzip \
-    wget
+# Optimizing GPU Settings (P2, P3, and G3 Instances)
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/optimize_gpu.html
+sudo nvidia-smi -q | head
+sudo nvidia-persistenced
+sudo nvidia-smi --auto-boost-default=0
+sudo nvidia-smi -ac 2505,1177
 
-sudo systemctl enable ntpd
-
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
 
 ################################################################################
-### iptables ###################################################################
+### Activate NVIDIA GRID Virtual Applications (G3 Instances Only) ##############
 ################################################################################
+sudo chmod 666 /etc/nvidia/gridd.conf.template
+sudo sed -i "s/^FeatureType.*/FeatureType=0/g" /etc/nvidia/gridd.conf.template
+sudo echo "IgnoreSP=TRUE" >> /etc/nvidia/gridd.conf.template
+sudo rm -rf /etc/nvidia/gridd.conf
+sudo echo "Removed NVIDIA GRID original config, override it from template."
+sudo cp -fpa /etc/nvidia/gridd.conf.template /etc/nvidia/gridd.conf
+sudo echo "Activated NVIDIA GRID Virtual Applications."
 
-# Enable forwarding via iptables
-sudo iptables -P FORWARD ACCEPT
-sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable iptables-restore
 
 ################################################################################
 ### Docker #####################################################################
@@ -53,6 +49,26 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
 sudo yum install -y docker-17.06*
 sudo usermod -aG docker $USER
+
+
+# Add the package repositories
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-docker.repo
+
+# Install nvidia-docker2 and reload the Docker daemon configuration
+sudo yum install -y nvidia-docker2
+
+# Debug docker service options
+sudo mkdir /etc/systemd/system/docker.service.d
+sudo ls -lah /etc/systemd/system/docker.service.d/
+
+# Create /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
+sudo touch /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
+sudo chmod 666 /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
+sudo echo "[Service]" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
+sudo echo "ExecStart=" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
+sudo echo "ExecStart=/usr/bin/dockerd --default-runtime=nvidia" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
 
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload

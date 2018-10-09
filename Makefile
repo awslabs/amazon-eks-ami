@@ -23,5 +23,9 @@ all: ami
 validate:
 	packer validate eks-worker-al2.json
 
+createInstanceProfile:
+	aws cloudformation validate-template --template-body file://builder-instance-profile.yaml
+	aws cloudformation create-stack --stack-name nvidia-amazon-eks-ami-builder-instance-profile --template-body file://builder-instance-profile.yaml
+
 ami: validate
-	packer build -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-al2.json
+	packer build -on-error=ask -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-al2.json
