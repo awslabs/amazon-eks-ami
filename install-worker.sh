@@ -54,6 +54,10 @@ sudo amazon-linux-extras enable docker
 sudo yum install -y docker-17.06*
 sudo usermod -aG docker $USER
 
+# Enable docker daemon log rotation
+# https://success.docker.com/article/how-to-setup-log-rotation-post-installation
+sudo mv $TEMPLATE_DIR/daemon.json /etc/docker/daemon.json
+
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
 sudo systemctl enable docker
