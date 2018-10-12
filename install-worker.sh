@@ -65,6 +65,7 @@ sudo systemctl enable docker
 # kubelet uses journald which has built-in rotation and capped size.
 # See man 5 journald.conf
 sudo mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
+sudo chown root:root /etc/logrotate.d/kube-proxy
 sudo mkdir -p /var/log/journal
 
 ################################################################################
