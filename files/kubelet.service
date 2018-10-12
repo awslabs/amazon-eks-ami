@@ -6,22 +6,16 @@ Requires=docker.service
 
 [Service]
 ExecStart=/usr/bin/kubelet \
-  --address=0.0.0.0 \
-  --authentication-token-webhook \
-  --authorization-mode=Webhook \
+  --config=/var/lib/kubelet/kubelet-configuration.yaml \
   --allow-privileged=true \
   --cloud-provider=aws \
-  --cluster-domain=cluster.local \
   --cni-bin-dir=/opt/cni/bin \
   --cni-conf-dir=/etc/cni/net.d \
   --container-runtime=docker \
   --network-plugin=cni \
-  --cgroup-driver=cgroupfs \
   --register-node=true \
   --kubeconfig=/var/lib/kubelet/kubeconfig \
-  --feature-gates=RotateKubeletServerCertificate=true \
-  --anonymous-auth=false \
-  --client-ca-file=/etc/kubernetes/pki/ca.crt $KUBELET_ARGS $KUBELET_MAX_PODS $KUBELET_EXTRA_ARGS
+   $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartSec=5

@@ -1,0 +1,6 @@
+{
+  "bip": "192.168.0.1/16",
+  "ip-masq": false,
+  "iptables": false,
+  "log-driver": "journald"
+}

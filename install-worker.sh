@@ -16,21 +16,39 @@ sudo yum update -y
 
 # Install necessary packages
 sudo yum install -y \
-    aws-cfn-bootstrap \
-    conntrack \
-    curl \
-    nfs-utils \
-    ntp \
-    socat \
-    unzip \
-    wget
+  aws-cfn-bootstrap \
+  conntrack \
+  curl \
+  nfs-utils \
+  ntp \
+  socat \
+  unzip \
+  util-linux \
+  wget
 
 sudo systemctl enable ntpd
+
+if which swapoff ; then
+  sudo swapoff --all --verbose
+fi
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
 rm get-pip.py
 sudo pip install --upgrade awscli
+
+################################################################################
+### System Modules #############################################################
+################################################################################
+
+sudo mkdir -vp /etc/modules-load.d
+cat <<EOF | sudo tee /etc/modules-load.d/extra_modules.conf
+nf_conntrack_ipv4
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable systemd-modules-load
+sudo systemctl restart systemd-modules-load
 
 ################################################################################
 ### iptables ###################################################################
@@ -51,8 +69,10 @@ sudo systemctl enable iptables-restore
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
-sudo yum install -y docker-17.06*
+sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
+sudo mkdir -vp /etc/docker
+sudo mv $TEMPLATE_DIR/dockerd.json /etc/docker/daemon.json
 
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
@@ -93,26 +113,27 @@ rm cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz cni-plugins-amd64-${CNI_PLUGIN_VE
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="s3-$BINARY_BUCKET_REGION"
 if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
-    S3_DOMAIN="s3"
+  S3_DOMAIN="s3"
 fi
 S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
 
 BINARIES=(
-    kubelet
-    kubectl
-    aws-iam-authenticator
+  kubelet
+  kubectl
+  aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
-    sudo wget $S3_URL_BASE/$binary
-    sudo wget $S3_URL_BASE/$binary.sha256
-    sudo sha256sum -c $binary.sha256
-    sudo chmod +x $binary
-    sudo mv $binary /usr/bin/
+  sudo wget $S3_URL_BASE/$binary
+  sudo wget $S3_URL_BASE/$binary.sha256
+  sudo sha256sum -c $binary.sha256
+  sudo chmod +x $binary
+  sudo mv $binary /usr/bin/
 done
 sudo rm *.sha256
 
-sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
-sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mv -v $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv -v $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mv -v $TEMPLATE_DIR/kubelet-configuration.yaml /var/lib/kubelet/kubelet-configuration.yaml
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 
 sudo systemctl daemon-reload
@@ -130,6 +151,7 @@ sudo chmod +x /etc/eks/bootstrap.sh
 
 # Clean up yum caches to reduce the image size
 sudo yum clean all
+<<<<<<< HEAD
 sudo rm -rf \
     $TEMPLATE_DIR  \
     /var/cache/yum
@@ -150,3 +172,6 @@ sudo rm -rf \
     /var/log/cloud-init-output.log
 
 sudo touch /etc/machine-id
+=======
+sudo rm -rvf /var/cache/yum
+>>>>>>> updates to make the ami our own
