@@ -1,2 +1,3 @@
 manifest.json
 *.swp
+.vpc.env
