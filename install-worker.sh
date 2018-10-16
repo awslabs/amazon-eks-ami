@@ -54,6 +54,8 @@ sudo amazon-linux-extras enable docker
 sudo yum install -y docker-17.06*
 sudo usermod -aG docker $USER
 
+sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
 sudo systemctl enable docker
