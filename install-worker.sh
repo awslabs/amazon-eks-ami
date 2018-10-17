@@ -20,9 +20,13 @@ sudo yum install -y \
     aws-cfn-bootstrap \
     conntrack \
     curl \
+    htop \
     nfs-utils \
+    nmap \
     ntp \
     socat \
+    screen \
+    sysstat \
     unzip \
     wget
 
