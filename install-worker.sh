@@ -53,6 +53,10 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
 sudo yum install -y docker-17.06*
 sudo usermod -aG docker $USER
+sudo mkdir /etc/docker
+sudo chown root:root /etc/docker
+sudo chmod 700 /etc/docker
+sudo mv $TEMPLATE_DIR/daemon.json /etc/docker/daemon.json
 
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
