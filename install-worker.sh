@@ -16,6 +16,7 @@ sudo yum update -y
 
 # Install necessary packages
 sudo yum install -y \
+    awscli \
     aws-cfn-bootstrap \
     conntrack \
     curl \
@@ -26,11 +27,6 @@ sudo yum install -y \
     wget
 
 sudo systemctl enable ntpd
-
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
 
 ################################################################################
 ### iptables ###################################################################
