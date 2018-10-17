@@ -66,7 +66,13 @@ sudo systemctl enable iptables-restore
 ################################################################################
 ### Docker #####################################################################
 ################################################################################
-
+# mount secondary drive to var/lib/docker
+sudo mkfs -t xfs -n ftype=1 /dev/nvme1n1
+sudo mkdir -vp /var/lib/docker
+sudo mount /dev/nvme1n1 /var/lib/docker
+sudo bash -c "echo -e '/dev/nvme1n1\t/var/lib/docker\txfs\tdefaults,nofail\t0\t2' >> /etc/fstab"
+sudo cat /etc/fstab
+# install docker
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
 sudo yum install -y docker-${DOCKER_VERSION}*

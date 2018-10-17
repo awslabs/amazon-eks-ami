@@ -35,7 +35,14 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 20,
+          "volume_size": 100,
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/sdf",
+          "volume_type": "io1",
+          "volume_size": 100,
+          "iops":1000,
           "delete_on_termination": true
         }
       ],
