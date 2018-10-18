@@ -2,7 +2,7 @@
   "variables": {
     "aws_region": "us-west-2",
     "build_tag": "",
-    "ami_name": "amazon-eks-node",
+    "ami_name": "bionic-eks-node",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
@@ -21,26 +21,18 @@
       "source_ami_filter": {
         "filters": {
           "architecture": "x86_64",
-          "name": "amzn2-ami-minimal-hvm-*",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "137112412989" ],
+        "owners": [ "099720109477" ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
       "spot_price": "auto",
       "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
-      "launch_block_device_mappings": [
-        {
-          "device_name": "/dev/xvda",
-          "volume_type": "gp2",
-          "volume_size": 20,
-          "delete_on_termination": true
-        }
-      ],
-      "ssh_username": "ec2-user",
+      "ssh_username": "ubuntu",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
@@ -51,7 +43,7 @@
           "created": "{{timestamp}}"
       },
       "ami_name": "{{user `ami_name`}}-{{user `build_tag`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image"
+      "ami_description": "EKS Kubernetes Worker AMI with Ubuntu 18.04 Bionic image"
     }
   ],
 
