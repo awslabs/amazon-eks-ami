@@ -1,7 +1,8 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "bionic-eks-node-{{timestamp}}",
+    "build_tag": "",
+    "ami_name": "bionic-eks-node",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
@@ -41,7 +42,7 @@
       "tags": {
           "created": "{{timestamp}}"
       },
-      "ami_name": "{{user `ami_name`}}",
+      "ami_name": "{{user `ami_name`}}-{{user `build_tag`}}",
       "ami_description": "EKS Kubernetes Worker AMI with Ubuntu 18.04 Bionic image"
     }
   ],

@@ -1,3 +1,4 @@
+BUILD_TAG := $(or $(BUILD_TAG), $(shell date +%s))
 KUBERNETES_VERSION ?= 1.10.3
 
 DATE ?= $(shell date +%Y-%m-%d)
@@ -23,4 +24,4 @@ validate:
 	packer validate eks-worker-bionic.json
 
 ami: validate
-	packer build -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-bionic.json
+	packer build -color=false -var build_tag=$(BUILD_TAG) -var source_ami_id=$(SOURCE_AMI_ID) eks-worker-bionic.json
