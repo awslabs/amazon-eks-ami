@@ -12,25 +12,27 @@ TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 ################################################################################
 
 # Update the OS to begin with to catch up to the latest packages.
-sudo yum update -y
+sudo apt update
+sudo apt-get update
+sudo apt upgrade -y >/dev/null
 
 # Install necessary packages
-sudo yum install -y \
+sudo apt-get install -y --no-install-recommends \
     awscli \
-    aws-cfn-bootstrap \
     conntrack \
     curl \
     htop \
-    nfs-utils \
+    nfs-common \
     nmap \
     ntp \
     socat \
     screen \
     sysstat \
     unzip \
-    wget
+    wget \
+    >/dev/null
 
-sudo systemctl enable ntpd
+sudo systemctl enable ntp
 
 ################################################################################
 ### iptables ###################################################################
@@ -38,7 +40,7 @@ sudo systemctl enable ntpd
 
 # Enable forwarding via iptables
 sudo iptables -P FORWARD ACCEPT
-sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
+sudo bash -c "/sbin/iptables-save > /etc/iptables.rules"
 
 sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
 
@@ -49,11 +51,9 @@ sudo systemctl enable iptables-restore
 ### Docker #####################################################################
 ################################################################################
 
-sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-sudo amazon-linux-extras enable docker
-sudo yum install -y docker-17.06*
+sudo apt-get install -y --no-install-recommends docker.io=17.12.1-0ubuntu1
 sudo usermod -aG docker $USER
-sudo mkdir /etc/docker
+sudo mkdir -p /etc/docker
 sudo chown root:root /etc/docker
 sudo chmod 700 /etc/docker
 sudo mv $TEMPLATE_DIR/daemon.json /etc/docker/daemon.json
@@ -134,17 +134,18 @@ sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
 
 # Clean up yum caches to reduce the image size
-sudo yum clean all
+sudo apt-get autoremove -y
 sudo rm -rf \
     $TEMPLATE_DIR  \
-    /var/cache/yum
+    /var/lib/apt/lists \
+    /var/cache/apt/archives
 
 # Clean up files to reduce confusion during debug
 sudo rm -rf \
     /etc/machine-id \
     /etc/ssh/ssh_host* \
     /root/.ssh/authorized_keys \
-    /home/ec2-user/.ssh/authorized_keys \
+    /home/ubuntu/.ssh/authorized_keys \
     /var/log/secure \
     /var/log/wtmp \
     /var/lib/cloud/sem \
