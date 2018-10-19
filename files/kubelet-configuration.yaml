@@ -17,8 +17,27 @@ authorization:
 
 clusterDomain: 'cluster.local'
 clusterDNS:
-  - '_CLUSTER_DNS_'
+  - 172.20.0.10
+  - 172.20.0.20
 cgroupDriver: 'cgroupfs'
+
+enforceNodeAllocatable: [pods]
+kubeReserved:
+  cpu: "1000m"
+  memory: "2Gi"
+systemReserved:
+  cpu: "500m"
+  memory: "1Gi"
+
+evictionHard:
+  memory.available: "100Mi"
+  nodefs.available: "5%"
+evictionSoft:
+  memory.available: "300Mi"
+  nodefs.available: "10%"
+evictionSoftGracePeriod:
+  memory.available: "60s"
+  nodefs.available: "60s"
 
 failSwapOn: true
 

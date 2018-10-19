@@ -7,7 +7,6 @@
     "docker_version": "18",
     "creator": "{{env `USER`}}",
     "instance_type": "t3.small",
-    "source_ami_id": "",
     "aws_vpc_id": "{{env `AWS_VPC_ID`}}",
     "aws_subnet_id": "{{env `AWS_SUBNET_ID`}}"
   },
@@ -35,14 +34,14 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 100,
+          "volume_size": 150,
           "delete_on_termination": true
         },
         {
           "device_name": "/dev/sdf",
           "volume_type": "io1",
           "volume_size": 100,
-          "iops":1000,
+          "iops": 1000,
           "delete_on_termination": true
         }
       ],

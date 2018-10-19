@@ -103,11 +103,6 @@ sed -i s,_CLUSTER_NAME_,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
-DNS_CLUSTER_IP=10.100.0.10
-if [[ $INTERNAL_IP == 10.* ]] ; then
-  DNS_CLUSTER_IP=172.20.0.10;
-fi
-sed -i s,_CLUSTER_DNS_,$DNS_CLUSTER_IP,g /var/lib/kubelet/kubelet-configuration.yaml
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
   MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"

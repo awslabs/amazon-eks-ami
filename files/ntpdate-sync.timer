@@ -1,0 +1,9 @@
+[Unit]
+Description=Hourly ntpdate timer
+
+[Timer]
+OnCalendar=hourly
+RemainAfterElapse=yes
+
+[Install]
+WnatedBy=timers.target

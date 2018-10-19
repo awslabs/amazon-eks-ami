@@ -21,21 +21,50 @@ sudo yum install -y \
   curl \
   nfs-utils \
   ntp \
+  ntpdate \
   socat \
   unzip \
   util-linux \
   wget
 
-sudo systemctl enable ntpd
+curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+sudo python get-pip.py
+rm get-pip.py
+sudo pip install --upgrade awscli
 
 if which swapoff ; then
   sudo swapoff --all --verbose
 fi
 
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
+################################################################################
+### Date/Time ##################################################################
+################################################################################
+
+sudo timedatectl set-timezone UTC
+sudo systemctl stop ntpd
+sudo systemctl disable ntpd
+sudo systemctl mask ntpd
+
+cat <<EOF | sudo tee /etc/systemd/timesyncd.conf
+[Time]
+NTP=0.amazon.pool.ntp.org 1.amazon.pool.ntp.org 2.amazon.pool.ntp.org 3.amazon.pool.ntp.org
+EOF
+
+sudo mkdir -p /etc/systemd/network
+cat <<EOF | sudo tee /etc/systemd/network/50-network.conf
+[Network]
+DHCP=v4
+NTP=0.amazon.pool.ntp.org 1.amazon.pool.ntp.org 2.amazon.pool.ntp.org 3.amazon.pool.ntp.org
+
+[DHCP]
+UseMTU=true
+UseDomains=true
+UseNTP=false
+EOF
+
+sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable ntpdate-sync.timer
 
 ################################################################################
 ### System Modules #############################################################
@@ -49,6 +78,39 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable systemd-modules-load
 sudo systemctl restart systemd-modules-load
+
+sudo mkdir -p /etc/sysctl.d
+cat <<EOF | sudo tee /etc/sysctl.d/99-lumos.conf
+vm.swapiness = 0
+
+net.core.rmem_max = 8388608
+net.core.wmem_max = 8388608
+net.core.rmem_default = 65536
+net.core.wmem_default = 65536
+net.ipv4.tcp_rmem = 8192 873800 8388608
+net.ipv4.tcp_wmem = 4096 655360 8388608
+net.ipv4.tcp_mem = 8388608 8388608 8388608
+net.ipv4.tcp_max_tw_buckets = 6000000
+net.ipv4.tcp_max_syn_backlog = 65536
+net.ipv4.tcp_max_orphans = 262144
+net.core.somaxconn = 16384
+net.core.netdev_max_backlog = 16384
+net.ipv4.tcp_synack_retries = 2
+net.ipv4.tcp_syn_retries = 2
+net.ipv4.tcp_fin_timeout = 7
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.ip_local_port_range = 10000 65535
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable systemd-sysctl
+sudo systemctl restart systemd-sysctl
+
+sudo mkdir -p /etc/security/limits.d
+cat <<EOF | sudo tee /etc/security/limits.d/99-nofile.conf
+*          soft    nofile     65535
+root       soft    nofile     65535
+EOF
 
 ################################################################################
 ### iptables ###################################################################
