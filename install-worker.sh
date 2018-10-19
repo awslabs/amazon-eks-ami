@@ -109,7 +109,7 @@ sudo systemctl restart systemd-sysctl
 sudo mkdir -p /etc/security/limits.d
 cat <<EOF | sudo tee /etc/security/limits.d/99-nofile.conf
 *          soft    nofile     65535
-root       soft    nofile     65535
+*          hard    nofile     65535
 EOF
 
 ################################################################################
