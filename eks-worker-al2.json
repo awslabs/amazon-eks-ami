@@ -9,7 +9,7 @@
     "creator": "{{env `USER`}}",
     "instance_type": "g3.4xlarge",
     "source_ami_id": "",
-    "encrypted": "false",
+    "encrypted": "true",
     "kms_key_id": ""
   },
 
