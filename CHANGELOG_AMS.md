@@ -1,5 +1,9 @@
 # Changelog
 
+### 2018-10-24
+
+* Fix DNS resolution for Ubuntu 18.04.
+
 ### 2018-10-18
 
 * Use Ubuntu 18.04 as base AMI instead of Amazon Linux 2.
