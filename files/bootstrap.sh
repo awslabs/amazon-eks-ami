@@ -136,4 +136,8 @@ fi
 
 systemctl daemon-reload
 systemctl enable kubelet
+systemctl enable kubelet-monitor
+systemctl enable kube-container-runtime-monitor
 systemctl start kubelet
+systemctl start kubelet-monitor
+systemctl start kube-container-runtime-monitor

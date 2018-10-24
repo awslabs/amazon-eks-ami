@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes health monitoring for kubelet
+After=kubelet.service
+
+[Service]
+Restart=always
+RestartSec=10
+RemainAfterExit=yes
+RemainAfterExit=yes
+ExecStartPre=/bin/chmod 544 /usr/local/bin/health-monitor.sh
+ExecStart=/usr/local/bin/health-monitor.sh kubelet
+
+[Install]
+WantedBy=multi-user.target
