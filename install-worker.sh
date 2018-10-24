@@ -14,7 +14,7 @@ TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 # Update the OS to begin with to catch up to the latest packages.
 sudo apt update
 sudo apt-get update
-sudo apt upgrade -y >/dev/null
+sudo apt-get upgrade -y >/dev/null
 
 # Install necessary packages
 sudo apt-get install -y --no-install-recommends \
