@@ -1,9 +1,19 @@
 # Amazon EKS AMI Build Specification
 
 This repository contains resources and configuration scripts for building a
-custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
-the same configuration that Amazon EKS uses to create the official Amazon
-EKS-optimized AMI.
+custom EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is based
+on the [same configuration](https://github.com/awslabs/amazon-eks-ami) that
+Amazon EKS uses to create the official Amazon EKS-optimized AMI.
+
+## Differences from Official AMI
+
+The file `CHANGELOG_AMS.md` in the project root contains the list of changes
+made in this fork. The overarching aim of these changes is stability. Most
+notably, this uses [Ubuntu 18.04](http://releases.ubuntu.com/18.04/)
+instead of [Amazon Linux 2](https://aws.amazon.com/amazon-linux-2/).  Because
+Ubuntu uses ext4 rather than xfs, it avoids the [disk corruption](https://github.com/awslabs/amazon-eks-ami/issues/51)
+issue affecting the official AMI. Likewise, setting up Docker log rotation
+prevents worker nodes from [failing due to full disks.](https://github.com/awslabs/amazon-eks-ami/issues/36)
 
 ## Setup
 
@@ -13,11 +23,6 @@ in the Packer documentation. You must also have AWS account credentials
 configured so that Packer can make calls to AWS API operations on your behalf.
 For more information, see [Authentication](https://www.packer.io/docs/builders/amazon.html#specifying-amazon-credentials)
 in the Packer documentation.
-
-**Note**
-The default instance type to build this AMI is an `m4.large` and does not
-qualify for the AWS free tier. You are charged for any instances created
-when building this AMI.
 
 ## Building the AMI
 
@@ -29,7 +34,7 @@ following command in the root of this repository:
 make
 ```
 
-The Makefile runs Packer with the `eks-worker-al2.json` build specification
+The Makefile runs Packer with the `eks-worker-bionic.json` build specification
 template and the [amazon-ebs](https://www.packer.io/docs/builders/amazon-ebs.html)
 builder. An instance is launched and the Packer [Shell
 Provisioner](https://www.packer.io/docs/provisioners/shell.html) runs the
@@ -39,33 +44,8 @@ and terminates the instance after the AMI is created.
 
 ## Using the AMI
 
-If you are just getting started with Amazon EKS, we recommend that you follow
-our [Getting Started](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html)
-chapter in the Amazon EKS User Guide. If you already have a cluster, and you
-want to launch a node group with your new AMI, see [Launching Amazon EKS Worker
-Nodes](https://docs.aws.amazon.com/eks/latest/userguide/launch-workers.html)
-in the Amazon EKS User Guide.
-
-The [`amazon-eks-nodegroup.yaml`](amazon-eks-nodegroup.yaml) AWS CloudFormation
-template in this repository is provided to launch a node group with the new AMI
-ID that is returned when Packer finishes building. Note that there is important
-Amazon EC2 user data in this CloudFormation template that bootstraps the worker
-nodes when they are launched so that they can register with your Amazon EKS
-cluster. Your nodes cannot register properly without this user data.
-
-### Compatibility with CloudFormation Template
-
-The CloudFormation template for EKS Nodes is published in the S3 bucket
-`amazon-eks` under the path `cloudformation`. You can see a list of previous
-versions by running `aws s3 ls s3://amazon-eks/cloudformation/`.
-
-| CloudFormation Version | EKS AMI versions     |
-| ---------------------- | -------------------- |
-| 2018-08-21             | amazon-eks-node-v23+ |
-| 2018-08-30             | amazon-eks-node-v23+ |
-
-For older versions of the EKS AMI (v20-v22), you can find the CloudFormation
-templates in the same bucket under the path `s3://amazon-eks/1.10.3/2018-06-05/`.
+The [EKS Terraform module](https://github.com/AdvMicrogrid/terraform-aws-eks)
+simplifies deployment of infrastructure for an EKS cluster.
 
 ## License Summary
 
