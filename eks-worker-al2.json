@@ -80,7 +80,8 @@
       "type": "shell",
       "script": "setup_docker_ebs.sh",
       "environment_vars": [
-        "DOCKER_EBS_NAME={{user `docker_ebs_name`}}"
+        "DOCKER_EBS_NAME={{user `docker_ebs_name`}}",
+        "FSTYPE=xfs"
       ]
     },
     {
