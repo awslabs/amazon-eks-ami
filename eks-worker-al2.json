@@ -8,7 +8,8 @@
     "creator": "{{env `USER`}}",
     "instance_type": "t3.small",
     "aws_vpc_id": "{{env `AWS_VPC_ID`}}",
-    "aws_subnet_id": "{{env `AWS_SUBNET_ID`}}"
+    "aws_subnet_id": "{{env `AWS_SUBNET_ID`}}",
+    "docker_ebs_name": "/dev/sdf"
   },
   "builders": [
     {
@@ -38,7 +39,7 @@
           "delete_on_termination": true
         },
         {
-          "device_name": "/dev/sdf",
+          "device_name": "{{user `docker_ebs_name`}}",
           "volume_type": "io1",
           "volume_size": 100,
           "iops": 1000,
@@ -74,6 +75,13 @@
       "type": "file",
       "source": "./files/",
       "destination": "/tmp/worker/"
+    },
+    {
+      "type": "shell",
+      "script": "setup_docker_ebs.sh",
+      "environment_vars": [
+        "DOCKER_EBS_NAME={{user `docker_ebs_name`}}"
+      ]
     },
     {
       "type": "shell",
