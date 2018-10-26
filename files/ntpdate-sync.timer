@@ -6,4 +6,4 @@ OnCalendar=hourly
 RemainAfterElapse=yes
 
 [Install]
-WnatedBy=timers.target
+WantedBy=timers.target

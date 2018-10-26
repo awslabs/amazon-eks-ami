@@ -2,5 +2,12 @@
   "bip": "192.168.0.1/16",
   "ip-masq": false,
   "iptables": false,
-  "log-driver": "journald"
+  "log-driver": "journald",
+  "default-ulimits": {
+    "nofile": {
+      "Name": "nofile",
+      "Soft": 2048,
+      "Hard": 8192
+    }
+  }
 }

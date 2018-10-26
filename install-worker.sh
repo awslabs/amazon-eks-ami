@@ -22,10 +22,12 @@ sudo yum install -y \
   nfs-utils \
   ntp \
   ntpdate \
+  nmap-ncat \
   socat \
   unzip \
   util-linux \
-  wget
+  wget \
+  vim
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
@@ -45,23 +47,6 @@ sudo systemctl stop ntpd
 sudo systemctl disable ntpd
 sudo systemctl mask ntpd
 
-cat <<EOF | sudo tee /etc/systemd/timesyncd.conf
-[Time]
-NTP=0.amazon.pool.ntp.org 1.amazon.pool.ntp.org 2.amazon.pool.ntp.org 3.amazon.pool.ntp.org
-EOF
-
-sudo mkdir -p /etc/systemd/network
-cat <<EOF | sudo tee /etc/systemd/network/50-network.conf
-[Network]
-DHCP=v4
-NTP=0.amazon.pool.ntp.org 1.amazon.pool.ntp.org 2.amazon.pool.ntp.org 3.amazon.pool.ntp.org
-
-[DHCP]
-UseMTU=true
-UseDomains=true
-UseNTP=false
-EOF
-
 sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable ntpdate-sync.timer
@@ -71,46 +56,21 @@ sudo systemctl enable ntpdate-sync.timer
 ################################################################################
 
 sudo mkdir -vp /etc/modules-load.d
-cat <<EOF | sudo tee /etc/modules-load.d/extra_modules.conf
-nf_conntrack_ipv4
-EOF
+sudo mv -v $TEMPLATE_DIR/modules-load.d/* /etc/modules-load.d/
 
 sudo systemctl daemon-reload
 sudo systemctl enable systemd-modules-load
 sudo systemctl restart systemd-modules-load
 
-sudo mkdir -p /etc/sysctl.d
-cat <<EOF | sudo tee /etc/sysctl.d/99-lumos.conf
-vm.swapiness = 0
-
-net.core.rmem_max = 8388608
-net.core.wmem_max = 8388608
-net.core.rmem_default = 65536
-net.core.wmem_default = 65536
-net.ipv4.tcp_rmem = 8192 873800 8388608
-net.ipv4.tcp_wmem = 4096 655360 8388608
-net.ipv4.tcp_mem = 8388608 8388608 8388608
-net.ipv4.tcp_max_tw_buckets = 6000000
-net.ipv4.tcp_max_syn_backlog = 65536
-net.ipv4.tcp_max_orphans = 262144
-net.core.somaxconn = 16384
-net.core.netdev_max_backlog = 16384
-net.ipv4.tcp_synack_retries = 2
-net.ipv4.tcp_syn_retries = 2
-net.ipv4.tcp_fin_timeout = 7
-net.ipv4.tcp_slow_start_after_idle = 0
-net.ipv4.ip_local_port_range = 10000 65535
-EOF
+sudo mkdir -vp /etc/sysctl.d
+sudo mv -v $TEMPLATE_DIR/sysctl.d/* /etc/sysctl.d/
 
 sudo systemctl daemon-reload
 sudo systemctl enable systemd-sysctl
 sudo systemctl restart systemd-sysctl
 
-sudo mkdir -p /etc/security/limits.d
-cat <<EOF | sudo tee /etc/security/limits.d/99-nofile.conf
-*          soft    nofile     65535
-*          hard    nofile     65535
-EOF
+sudo mkdir -vp /etc/security/limits.d
+sudo mv $TEMPLATE_DIR/limits.d/* /etc/security/limits.d/
 
 ################################################################################
 ### iptables ###################################################################
@@ -132,6 +92,7 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
 sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
+sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 sudo mkdir -vp /etc/docker
 sudo mv $TEMPLATE_DIR/dockerd.json /etc/docker/daemon.json
 
@@ -157,6 +118,7 @@ sudo mkdir -p /etc/kubernetes/manifests
 sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
+sudo mkdir -p /etc/cni/net.d
 
 CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz
@@ -171,6 +133,8 @@ wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUG
 sudo sha512sum -c cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
 sudo tar -xvf cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
 rm cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
+
+sudo mv -v $TEMPLATE_DIR/net.d/* /etc/cni/net.d/
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="s3-$BINARY_BUCKET_REGION"
