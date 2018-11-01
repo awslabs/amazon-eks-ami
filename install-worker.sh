@@ -37,7 +37,6 @@ sudo pip install --upgrade awscli
 ################################################################################
 
 # Enable forwarding via iptables
-sudo iptables -P FORWARD ACCEPT
 sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
 
 sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
@@ -74,7 +73,6 @@ sudo mkdir -p /var/log/journal
 
 sudo mkdir -p /etc/kubernetes/manifests
 sudo mkdir -p /var/lib/kubernetes
-sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
 CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
@@ -112,9 +110,9 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
-sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
-sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
+sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /etc/kubernetes/kubelet-kubeconfig
+sudo mv $TEMPLATE_DIR/config-kubelet.conf /etc/systemd/system/kubelet.service.d/config-kubelet.conf
 
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
