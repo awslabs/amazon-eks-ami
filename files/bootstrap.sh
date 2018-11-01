@@ -90,12 +90,12 @@ fi
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 kubectl config \
-    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --kubeconfig /etc/kubernetes/kubelet-kubeconfig \
     set-cluster \
     kubernetes \
     --certificate-authority=/etc/kubernetes/pki/ca.crt \
     --server=$APISERVER_ENDPOINT
-sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
+sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /etc/kubernetes/kubelet-kubeconfig
 
 ### kubelet.service configuration
 
@@ -110,16 +110,14 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
     if [[ -n "$MAX_PODS" ]]; then
-        cat <<EOF > /etc/systemd/system/kubelet.service.d/20-max-pods.conf
-[Service]
-Environment='KUBELET_MAX_PODS=--max-pods=$MAX_PODS'
-EOF
+        sed -i s,MAX_PODS,$MAX_PODS,g /etc/kubernetes/config-kubelet.conf
+        sed -i s,DNS_CLUSTER_IP,$DNS_CLUSTER_IP,g /etc/kubernetes/config-kubelet.conf
     fi
 fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --cluster-dns=$DNS_CLUSTER_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
