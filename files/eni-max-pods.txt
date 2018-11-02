@@ -42,6 +42,7 @@ g2.8xlarge 234
 g3.4xlarge 234
 g3.8xlarge 234
 g3.16xlarge 737
+g3s.xlarge 58
 h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
