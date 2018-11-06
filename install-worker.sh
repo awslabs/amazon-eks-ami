@@ -120,6 +120,10 @@ sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 
+sudo mv $TEMPLATE_DIR/health-monitor.sh /usr/local/bin/health-monitor.sh
+sudo mv $TEMPLATE_DIR/kubelet-monitor.service /etc/systemd/system/kubelet-monitor.service
+sudo mv $TEMPLATE_DIR/kube-container-runtime-monitor.service /etc/systemd/system/kube-container-runtime-monitor.service
+
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
 sudo systemctl disable kubelet
