@@ -1,5 +1,9 @@
 # Changelog
 
+### 2018-11-06
+
+* Port kubelet and container-runtime health monitor from GCE K8s image.
+
 ### 2018-10-24
 
 * Fix DNS resolution for Ubuntu 18.04.
