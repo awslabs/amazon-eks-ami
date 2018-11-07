@@ -7,11 +7,12 @@ Requires=docker.service
 [Service]
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 ExecStart=/usr/bin/kubelet --cloud-provider aws \
-    --config /etc/kubernetes/config-kubelet.conf \
-    --kubeconfig /etc/kubernetes/kubelet-kubeconfig \
-    --allow-privileged \
+    --config /etc/systemd/system/kubelet.service.d/config-kubelet.conf \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --allow-privileged true\
+    --container-runtime docker \
     --network-plugin cni \
-    --register-node true $$KUBELET_ARGS
+    --register-node true $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartSec=5

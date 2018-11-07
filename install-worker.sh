@@ -19,6 +19,7 @@ sudo yum install -y \
     aws-cfn-bootstrap \
     conntrack \
     curl \
+    jq \
     nfs-utils \
     ntp \
     socat \
@@ -111,7 +112,8 @@ done
 sudo rm *.sha256
 
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
-sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /etc/kubernetes/kubelet-kubeconfig
+sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo mv $TEMPLATE_DIR/config-kubelet.conf /etc/systemd/system/kubelet.service.d/config-kubelet.conf
 
 sudo systemctl daemon-reload

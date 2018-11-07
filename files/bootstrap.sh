@@ -90,12 +90,12 @@ fi
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 kubectl config \
-    --kubeconfig /etc/kubernetes/kubelet-kubeconfig \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
     set-cluster \
     kubernetes \
     --certificate-authority=/etc/kubernetes/pki/ca.crt \
     --server=$APISERVER_ENDPOINT
-sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /etc/kubernetes/kubelet-kubeconfig
+sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 
 ### kubelet.service configuration
 
@@ -105,13 +105,13 @@ DNS_CLUSTER_IP=10.100.0.10
 if [[ $INTERNAL_IP == 10.* ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
 fi
+echo "$(jq .clusterDNS=[\"$DNS_CLUSTER_IP\"] config-kubelet.conf)" > config-kubelet.conf
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
     if [[ -n "$MAX_PODS" ]]; then
-        sed -i s,MAX_PODS,$MAX_PODS,g /etc/kubernetes/config-kubelet.conf
-        sed -i s,DNS_CLUSTER_IP,$DNS_CLUSTER_IP,g /etc/kubernetes/config-kubelet.conf
+        echo "$(jq .maxPods=$MAX_PODS config-kubelet.conf)" > config-kubelet.conf
     fi
 fi
 
