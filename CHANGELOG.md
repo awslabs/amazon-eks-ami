@@ -1,5 +1,13 @@
 # Changelog
 
+### amazon-eks-node-v25
+* 45a12de Fix kube-proxy logrotate (#68)
+* 742df5e Change make targets to be .PHONY (#59)
+* eb0239f Add NodeSecurityGroup to outputs. (#58)
+* 7219545 Only add max-pods for a known instance type (#57)
+
+Note: CNI >= 1.2.1 is required for t3 and r5 instance support.
+
 ### amazon-eks-node-v24
 
 * 9cda183 Scrub temporary build-time keypair (#48)
