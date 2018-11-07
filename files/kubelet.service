@@ -7,7 +7,7 @@ Requires=docker.service
 [Service]
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 ExecStart=/usr/bin/kubelet --cloud-provider aws \
-    --config /etc/systemd/system/kubelet.service.d/config-kubelet.conf \
+    --config /etc/systemd/system/kubelet.service.d/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
     --allow-privileged true\
     --container-runtime docker \

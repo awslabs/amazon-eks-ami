@@ -105,13 +105,13 @@ DNS_CLUSTER_IP=10.100.0.10
 if [[ $INTERNAL_IP == 10.* ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
 fi
-echo "$(jq .clusterDNS=[\"$DNS_CLUSTER_IP\"] config-kubelet.conf)" > config-kubelet.conf
+echo "$(jq .clusterDNS=[\"$DNS_CLUSTER_IP\"] kubelet-config.json)" > kubelet-config.json
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
     if [[ -n "$MAX_PODS" ]]; then
-        echo "$(jq .maxPods=$MAX_PODS config-kubelet.conf)" > config-kubelet.conf
+        echo "$(jq .maxPods=$MAX_PODS kubelet-config.json)" > kubelet-config.json
     fi
 fi
 
