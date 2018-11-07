@@ -74,6 +74,7 @@ sudo mkdir -p /var/log/journal
 
 sudo mkdir -p /etc/kubernetes/manifests
 sudo mkdir -p /var/lib/kubernetes
+sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
 CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
