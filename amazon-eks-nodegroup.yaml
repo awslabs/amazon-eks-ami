@@ -15,7 +15,7 @@ Parameters:
   NodeInstanceType:
     Description: EC2 instance type for the node instances
     Type: String
-    Default: t2.medium
+    Default: t3.medium
     AllowedValues:
     - t2.small
     - t2.medium
@@ -44,6 +44,12 @@ Parameters:
     - m5.4xlarge
     - m5.12xlarge
     - m5.24xlarge
+    - m5a.large
+    - m5a.xlarge
+    - m5a.2xlarge
+    - m5a.4xlarge
+    - m5a.12xlarge
+    - m5a.24xlarge
     - c4.large
     - c4.xlarge
     - c4.2xlarge
