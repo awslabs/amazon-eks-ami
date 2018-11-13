@@ -19,6 +19,7 @@ sudo yum install -y \
     aws-cfn-bootstrap \
     conntrack \
     curl \
+    jq \
     nfs-utils \
     ntp \
     socat \
@@ -37,7 +38,6 @@ sudo pip install --upgrade awscli
 ################################################################################
 
 # Enable forwarding via iptables
-sudo iptables -P FORWARD ACCEPT
 sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
 
 sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
@@ -112,11 +112,14 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
+sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/systemd/system/kubelet.service.d/kubelet-config.json
 sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
+
 
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured

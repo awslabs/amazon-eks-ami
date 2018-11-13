@@ -105,21 +105,19 @@ DNS_CLUSTER_IP=10.100.0.10
 if [[ $INTERNAL_IP == 10.* ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
 fi
+echo "$(jq .clusterDNS=[\"$DNS_CLUSTER_IP\"] kubelet-config.json)" > kubelet-config.json
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
     if [[ -n "$MAX_PODS" ]]; then
-        cat <<EOF > /etc/systemd/system/kubelet.service.d/20-max-pods.conf
-[Service]
-Environment='KUBELET_MAX_PODS=--max-pods=$MAX_PODS'
-EOF
+        echo "$(jq .maxPods=$MAX_PODS kubelet-config.json)" > kubelet-config.json
     fi
 fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --cluster-dns=$DNS_CLUSTER_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
