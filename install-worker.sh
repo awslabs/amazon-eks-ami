@@ -113,6 +113,7 @@ done
 sudo rm *.sha256
 
 sudo mkdir -p /etc/kubernetes/kubelet
+sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
