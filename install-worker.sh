@@ -12,6 +12,7 @@ TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 ################################################################################
 
 # Update the OS to begin with to catch up to the latest packages.
+sudo apt-get clean
 sudo apt update
 sudo apt-get update
 sudo apt-get upgrade -y >/dev/null
