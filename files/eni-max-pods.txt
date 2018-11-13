@@ -36,9 +36,11 @@ d2.2xlarge 58
 d2.4xlarge 234
 d2.8xlarge 234
 f1.2xlarge 58
+f1.4xlarge 234
 f1.16xlarge 394
 g2.2xlarge 58
 g2.8xlarge 234
+g3s.xlarge 58
 g3.4xlarge 234
 g3.8xlarge 234
 g3.16xlarge 737
@@ -81,6 +83,12 @@ m5.2xlarge 58
 m5.4xlarge 234
 m5.12xlarge 234
 m5.24xlarge 737
+m5a.large 29
+m5a.xlarge 58
+m5a.2xlarge 58
+m5a.4xlarge 234
+m5a.12xlarge 234
+m5a.24xlarge 737
 m5d.large 29
 m5d.xlarge 58
 m5d.2xlarge 58
@@ -110,6 +118,12 @@ r5.2xlarge 58
 r5.4xlarge 234
 r5.12xlarge 234
 r5.24xlarge 737
+r5a.large 29
+r5a.xlarge 58
+r5a.2xlarge 58
+r5a.4xlarge 234
+r5a.12xlarge 234
+r5a.24xlarge 737
 r5d.large 29
 r5d.xlarge 58
 r5d.2xlarge 58
