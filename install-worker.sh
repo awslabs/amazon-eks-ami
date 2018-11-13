@@ -135,6 +135,25 @@ sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
 
+################################################################################
+### AMI Metadata ###############################################################
+################################################################################
+
+BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
+cat <<EOF > /tmp/release
+BASE_AMI_ID="$BASE_AMI_ID"
+BUILD_TIME="$(date)"
+BUILD_KERNEL="$(uname -r)"
+AMI_NAME="$AMI_NAME"
+ARCH="$(uname -m)"
+EOF
+sudo mv /tmp/release /etc/eks/release
+sudo chown root:root /etc/eks/*
+
+################################################################################
+### Cleanup ####################################################################
+################################################################################
+
 # Clean up yum caches to reduce the image size
 sudo yum clean all
 sudo rm -rf \
