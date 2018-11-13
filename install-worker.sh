@@ -112,13 +112,13 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
-sudo mkdir -p /etc/systemd/system/kubelet.service.d
+sudo mkdir -p /etc/kubernetes/kubelet
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/systemd/system/kubelet.service.d/kubelet-config.json
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mkdir -p /etc/systemd/system/kubelet.service.d
+sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
 sudo systemctl daemon-reload
