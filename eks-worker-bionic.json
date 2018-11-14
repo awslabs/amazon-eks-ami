@@ -61,6 +61,7 @@
       "type": "shell",
       "script": "install-worker.sh",
       "environment_vars": [
+        "AMI_NAME={{user `ami_name`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}"

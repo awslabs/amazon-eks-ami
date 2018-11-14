@@ -5,26 +5,18 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-ExecStart=/usr/bin/kubelet \
-  --address=0.0.0.0 \
-  --authentication-token-webhook \
-  --authorization-mode=Webhook \
-  --allow-privileged=true \
-  --cloud-provider=aws \
-  --cluster-domain=cluster.local \
-  --cni-bin-dir=/opt/cni/bin \
-  --cni-conf-dir=/etc/cni/net.d \
-  --container-runtime=docker \
-  --network-plugin=cni \
-  --cgroup-driver=cgroupfs \
-  --register-node=true \
-  --kubeconfig=/var/lib/kubelet/kubeconfig \
-  --feature-gates=RotateKubeletServerCertificate=true \
-  --anonymous-auth=false \
-  --client-ca-file=/etc/kubernetes/pki/ca.crt $KUBELET_ARGS $KUBELET_MAX_PODS $KUBELET_EXTRA_ARGS
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
+ExecStart=/usr/bin/kubelet --cloud-provider aws \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --allow-privileged true\
+    --container-runtime docker \
+    --network-plugin cni \
+    --register-node true $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartSec=5
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target
