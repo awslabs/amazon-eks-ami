@@ -21,12 +21,9 @@ sudo yum install -y \
     curl \
     jq \
     nfs-utils \
-    ntp \
     socat \
     unzip \
     wget
-
-sudo systemctl enable ntpd
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
