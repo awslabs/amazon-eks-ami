@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS - Node Group - Released 2018-08-30'
+Description: 'Amazon EKS - Node Group'
 
 Parameters:
 
@@ -107,7 +107,27 @@ Parameters:
   NodeAutoScalingGroupMaxSize:
     Type: Number
     Description: Maximum size of Node Group ASG.
+    Default: 4
+
+  NodeAutoScalingGroupDesiredCapacity:
+    Type: Number
+    Description: Desired capacity of Node Group ASG.
     Default: 3
+
+  NodeAutoScalingGroupUpdatePolicyMaxBatchSize:
+    Type: Number
+    Description: MaxBatchSize for the NodeGroup UpdatePolicy. See https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html for documentation
+    Default: 1
+
+  NodeAutoScalingGroupUpdatePolicyMinInstancesInService:
+    Type: Number
+    Description: MinInstancesInService for the NodeGroup UpdatePolicy. See https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html for documentation
+    Default: 1
+
+  NodeAutoScalingGroupUpdatePolicyPauseTime:
+    Type: String
+    Description: PauseTime for the NodeGroup UpdatePolicy. See https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-updatepolicy.html for documentation
+    Default: "PT0S"
 
   NodeVolumeSize:
     Type: Number
@@ -155,6 +175,10 @@ Metadata:
           - NodeGroupName
           - NodeAutoScalingGroupMinSize
           - NodeAutoScalingGroupMaxSize
+          - NodeAutoScalingGroupDesiredCapacity
+          - NodeAutoScalingGroupUpdatePolicyMaxBatchSize
+          - NodeAutoScalingGroupUpdatePolicyMinInstancesInService
+          - NodeAutoScalingGroupUpdatePolicyPauseTime
           - NodeInstanceType
           - NodeImageId
           - NodeVolumeSize
@@ -273,7 +297,7 @@ Resources:
   NodeGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      DesiredCapacity: !Ref NodeAutoScalingGroupMaxSize
+      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
@@ -288,8 +312,9 @@ Resources:
         PropagateAtLaunch: 'true'
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: '1'
-        MaxBatchSize: '1'
+        MaxBatchSize: !Ref NodeAutoScalingGroupUpdatePolicyMaxBatchSize
+        MinInstancesInService: !Ref NodeAutoScalingGroupUpdatePolicyMinInstancesInService
+        PauseTime: !Ref NodeAutoScalingGroupUpdatePolicyPauseTime
 
   NodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
