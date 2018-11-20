@@ -54,12 +54,9 @@ sudo systemctl enable iptables-restore
 
 sudo apt-get install -y --no-install-recommends docker.io=17.12.1-0ubuntu1
 sudo usermod -aG docker $USER
-sudo mkdir -p /etc/docker
-sudo chown root:root /etc/docker
-sudo chmod 700 /etc/docker
-sudo mv $TEMPLATE_DIR/daemon.json /etc/docker/daemon.json
 
 sudo mkdir -p /etc/docker
+sudo chmod 700 /etc/docker
 sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
 sudo chown root:root /etc/docker/daemon.json
 
