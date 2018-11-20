@@ -59,6 +59,10 @@ sudo chown root:root /etc/docker
 sudo chmod 700 /etc/docker
 sudo mv $TEMPLATE_DIR/daemon.json /etc/docker/daemon.json
 
+sudo mkdir -p /etc/docker
+sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+sudo chown root:root /etc/docker/daemon.json
+
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
 sudo systemctl enable docker
@@ -122,8 +126,8 @@ sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/systemd/system/kubelet.service
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
