@@ -4,6 +4,11 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
+err_report() {
+    echo "Exited with error on line $1"
+}
+trap 'err_report $LINENO' ERR
+
 IFS=$'\n\t'
 
 function print_help {
@@ -94,13 +99,13 @@ fi
 
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
+sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 kubectl config \
     --kubeconfig /var/lib/kubelet/kubeconfig \
     set-cluster \
     kubernetes \
     --certificate-authority=/etc/kubernetes/pki/ca.crt \
     --server=$APISERVER_ENDPOINT
-sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 
 ### kubelet.service configuration
 
@@ -122,9 +127,13 @@ INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+    set +o pipefail
     MAX_PODS=$(grep $INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
+    set -o pipefail
     if [[ -n "$MAX_PODS" ]]; then
         echo "$(jq .maxPods=$MAX_PODS $KUBELET_CONFIG)" > $KUBELET_CONFIG
+    else
+        echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
     fi
 fi
 
