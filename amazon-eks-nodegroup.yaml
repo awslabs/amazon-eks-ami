@@ -197,8 +197,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for all nodes in the cluster
-      VpcId:
-        !Ref VpcId
+      VpcId: !Ref VpcId
       Tags:
         - Key: !Sub kubernetes.io/cluster/${ClusterName}
           Value: owned
@@ -276,8 +275,7 @@ Resources:
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
-      VPCZoneIdentifier:
-        !Ref Subnets
+      VPCZoneIdentifier: !Ref Subnets
       Tags:
         - Key: Name
           Value: !Sub ${ClusterName}-${NodeGroupName}-Node
