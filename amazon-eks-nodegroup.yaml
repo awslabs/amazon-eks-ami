@@ -1,6 +1,6 @@
 ---
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS - Node Group'
+AWSTemplateFormatVersion: 2010-09-09
+Description: Amazon EKS - Node Group
 
 Parameters:
 
@@ -149,13 +149,13 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: "EKS Cluster"
+          default: EKS Cluster
         Parameters:
           - ClusterName
           - ClusterControlPlaneSecurityGroup
       -
         Label:
-          default: "Worker Node Configuration"
+          default: Worker Node Configuration
         Parameters:
           - NodeGroupName
           - NodeAutoScalingGroupMinSize
@@ -168,7 +168,7 @@ Metadata:
           - BootstrapArguments
       -
         Label:
-          default: "Worker Network Configuration"
+          default: Worker Network Configuration
         Parameters:
           - VpcId
           - Subnets
@@ -186,7 +186,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
         - Effect: Allow
           Principal:
@@ -207,8 +207,8 @@ Resources:
       VpcId:
         !Ref VpcId
       Tags:
-      - Key: !Sub "kubernetes.io/cluster/${ClusterName}"
-        Value: 'owned'
+      - Key: !Sub kubernetes.io/cluster/${ClusterName}
+        Value: owned
 
   NodeSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -217,7 +217,7 @@ Resources:
       Description: Allow node to communicate with each other
       GroupId: !Ref NodeSecurityGroup
       SourceSecurityGroupId: !Ref NodeSecurityGroup
-      IpProtocol: '-1'
+      IpProtocol: -1
       FromPort: 0
       ToPort: 65535
 
@@ -287,21 +287,21 @@ Resources:
         !Ref Subnets
       Tags:
       - Key: Name
-        Value: !Sub "${ClusterName}-${NodeGroupName}-Node"
-        PropagateAtLaunch: 'true'
-      - Key: !Sub 'kubernetes.io/cluster/${ClusterName}'
-        Value: 'owned'
-        PropagateAtLaunch: 'true'
+        Value: !Sub ${ClusterName}-${NodeGroupName}-Node
+        PropagateAtLaunch: true
+      - Key: !Sub kubernetes.io/cluster/${ClusterName}
+        Value: owned
+        PropagateAtLaunch: true
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MaxBatchSize: '1'
+        MaxBatchSize: 1
         MinInstancesInService: !Ref NodeAutoScalingGroupDesiredCapacity
-        PauseTime: 'PT5M'
+        PauseTime: PT5M
 
   NodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      AssociatePublicIpAddress: 'true'
+      AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref NodeInstanceProfile
       ImageId: !Ref NodeImageId
       InstanceType: !Ref NodeInstanceType
