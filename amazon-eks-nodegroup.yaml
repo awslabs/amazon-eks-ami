@@ -145,6 +145,7 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
 
 Metadata:
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
@@ -317,9 +318,11 @@ Resources:
                      --region ${AWS::Region}
 
 Outputs:
+
   NodeInstanceRole:
     Description: The node instance role
     Value: !GetAtt NodeInstanceRole.Arn
+
   NodeSecurityGroup:
     Description: The security group for the node group
     Value: !Ref NodeSecurityGroup
