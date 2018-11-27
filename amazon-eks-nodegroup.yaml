@@ -9,13 +9,14 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
 
   NodeImageId:
-    Type: AWS::EC2::Image::Id
     Description: AMI id for the node instances.
+    Type: AWS::EC2::Image::Id
 
   NodeInstanceType:
     Description: EC2 instance type for the node instances
     Type: String
     Default: t3.medium
+    ConstraintDescription: Must be a valid EC2 instance type
     AllowedValues:
     - t2.small
     - t2.medium
@@ -97,26 +98,25 @@ Parameters:
     - z1d.3xlarge
     - z1d.6xlarge
     - z1d.12xlarge
-    ConstraintDescription: Must be a valid EC2 instance type
 
   NodeAutoScalingGroupMinSize:
-    Type: Number
     Description: Minimum size of Node Group ASG.
+    Type: Number
     Default: 1
 
   NodeAutoScalingGroupMaxSize:
-    Type: Number
     Description: Maximum size of Node Group ASG. Set to at least 1 greater than NodeAutoScalingGroupDesiredCapacity.
+    Type: Number
     Default: 4
 
   NodeAutoScalingGroupDesiredCapacity:
-    Type: Number
     Description: Desired capacity of Node Group ASG.
+    Type: Number
     Default: 3
 
   NodeVolumeSize:
-    Type: Number
     Description: Node volume size
+    Type: Number
     Default: 20
 
   ClusterName:
@@ -125,8 +125,8 @@ Parameters:
 
   BootstrapArguments:
     Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
-    Default: ""
     Type: String
+    Default: ""
 
   NodeGroupName:
     Description: Unique identifier for the Node Group.
