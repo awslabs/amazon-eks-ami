@@ -176,6 +176,7 @@ Resources:
   NodeInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
+      Path: "/"
       Roles:
         - !Ref NodeInstanceRole
 
@@ -189,6 +190,7 @@ Resources:
             Principal:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
+      Path: "/"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
         - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
