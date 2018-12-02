@@ -1,5 +1,5 @@
 {
-  "bip": "203.0.113.1/30",
+  "bridge": "none",
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "10m",
