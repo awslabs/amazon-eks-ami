@@ -5,21 +5,19 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 ExecStart=/usr/bin/kubelet \
-  --config=/var/lib/kubelet/kubelet-configuration.yaml \
-  --allow-privileged=true \
-  --cloud-provider=aws \
-  --cni-bin-dir=/opt/cni/bin \
-  --cni-conf-dir=/etc/cni/net.d \
-  --container-runtime=docker \
-  --network-plugin=cni \
-  --register-node=true \
-  --experimental-allowed-unsafe-sysctls=net.* \
-  --kubeconfig=/var/lib/kubelet/kubeconfig \
-   $KUBELET_ARGS $KUBELET_EXTRA_ARGS
+    --cloud-provider=aws \
+    --allow-privileged=true \
+    --config=/etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig=/var/lib/kubelet/kubeconfig \
+    --container-runtime=docker \
+    --experimental-allowed-unsafe-sysctls=net.* \
+    --network-plugin=cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartSec=5
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target

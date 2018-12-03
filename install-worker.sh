@@ -19,6 +19,7 @@ sudo yum install -y \
   aws-cfn-bootstrap \
   conntrack \
   curl \
+  jq \
   nfs-utils \
   ntp \
   ntpdate \
@@ -51,6 +52,45 @@ sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable ntpdate-sync.timer
 
+if which swapoff ; then
+  sudo swapoff --all --verbose
+fi
+
+################################################################################
+### Date/Time ##################################################################
+################################################################################
+
+sudo timedatectl set-timezone UTC
+sudo systemctl stop ntpd
+sudo systemctl disable ntpd
+sudo systemctl mask ntpd
+
+sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable ntpdate-sync.timer
+sudo systemctl restart ntpdate-sync.timer
+
+################################################################################
+### System Modules #############################################################
+################################################################################
+
+sudo mkdir -vp /etc/modules-load.d
+sudo mv -v $TEMPLATE_DIR/modules-load.d/* /etc/modules-load.d/
+
+sudo systemctl daemon-reload
+sudo systemctl enable systemd-modules-load
+sudo systemctl restart systemd-modules-load
+
+sudo mkdir -vp /etc/sysctl.d
+sudo mv -v $TEMPLATE_DIR/sysctl.d/* /etc/sysctl.d/
+
+sudo systemctl daemon-reload
+sudo systemctl enable systemd-sysctl
+sudo systemctl restart systemd-sysctl
+
+sudo mkdir -vp /etc/security/limits.d
+sudo mv $TEMPLATE_DIR/limits.d/* /etc/security/limits.d/
+
 ################################################################################
 ### System Modules #############################################################
 ################################################################################
@@ -77,7 +117,6 @@ sudo mv $TEMPLATE_DIR/limits.d/* /etc/security/limits.d/
 ################################################################################
 
 # Enable forwarding via iptables
-sudo iptables -P FORWARD ACCEPT
 sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
 
 sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
@@ -95,6 +134,7 @@ sudo usermod -aG docker $USER
 sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 sudo mkdir -vp /etc/docker
 sudo mv $TEMPLATE_DIR/dockerd.json /etc/docker/daemon.json
+sudo chown root:root /etc/docker/daemon.json
 
 # Enable docker daemon to start on boot.
 sudo systemctl daemon-reload
@@ -157,10 +197,15 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
-sudo mv -v $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
-sudo mv -v $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
-sudo mv -v $TEMPLATE_DIR/kubelet-configuration.yaml /var/lib/kubelet/kubelet-configuration.yaml
+sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
+sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
+sudo chown root:root /var/lib/kubelet/kubeconfig
+sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo chown root:root /etc/systemd/system/kubelet.service
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
+sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
+
 
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
@@ -174,6 +219,25 @@ sudo mkdir -p /etc/eks
 sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
+
+################################################################################
+### AMI Metadata ###############################################################
+################################################################################
+
+BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
+cat <<EOF > /tmp/release
+BASE_AMI_ID="$BASE_AMI_ID"
+BUILD_TIME="$(date)"
+BUILD_KERNEL="$(uname -r)"
+AMI_NAME="$AMI_NAME"
+ARCH="$(uname -m)"
+EOF
+sudo mv /tmp/release /etc/eks/release
+sudo chown root:root /etc/eks/*
+
+################################################################################
+### Cleanup ####################################################################
+################################################################################
 
 # Clean up yum caches to reduce the image size
 sudo yum clean all

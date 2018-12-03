@@ -1,0 +1,53 @@
+{
+  "kind": "KubeletConfiguration",
+  "apiVersion": "kubelet.config.k8s.io/v1beta1",
+  "address": "0.0.0.0",
+  "authentication": {
+    "anonymous": {
+      "enabled": false
+    },
+    "webhook": {
+      "cacheTTL": "2m0s",
+      "enabled": true
+    },
+    "x509": {
+      "clientCAFile": "/etc/kubernetes/pki/ca.crt"
+    }
+  },
+  "authorization": {
+    "mode": "Webhook",
+    "webhook": {
+      "cacheAuthorizedTTL": "5m0s",
+      "cacheUnauthorizedTTL": "30s"
+    }
+  },
+  "clusterDomain": "cluster.local",
+  "cgroupDriver": "cgroupfs",
+  "featureGates": {
+    "RotateKubeletServerCertificate": true
+  },
+  "enforceNodeAllocatable": [
+    "pods"
+  ],
+  "kubeReserved": {
+    "cpu": "1000m",
+    "memory": "2Gi"
+  },
+  "systemReserved": {
+    "cpu": "500m",
+    "memory": "1Gi"
+  },
+  "evictionHard": {
+    "memory.available": "100Mi",
+    "nodefs.available": "5%"
+  },
+  "evictionSoft": {
+    "memory.available": "300Mi",
+    "nodefs.available": "10%"
+  },
+  "evictionSoftGracePeriod": {
+    "memory.available": "60s",
+    "nodefs.available": "60s"
+  },
+  "failSwapOn": true
+}

@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+function fstab_fmt() {
+  local -r narg=$#
+  for ((i=1 ; i < narg ; i++)); do
+    echo -n "$1" ; echo -n -e "\t" ; shift
+  done
+  echo -n "$1"
+}
+
 # Provision and mount EBS volume to /var/lib/docker
 case "$FSTYPE" in
   xfs) sudo mkfs.xfs -n ftype=1 -i size=512 -L DOCKER $DOCKER_EBS_NAME ;;
@@ -9,18 +17,5 @@ esac
 
 sudo mkdir -vp /var/lib/docker
 sudo mount $DOCKER_EBS_NAME /var/lib/docker
-
-{
-  echo -n    "$DOCKER_EBS_NAME"
-  echo -n -e "\t"
-  echo -n    "/var/lib/docker"
-  echo -n -e "\t"
-  echo -n    "$FSTYPE"
-  echo -n -e "\t"
-  echo -n    "defaults,nofail,nodiratime,x-systemd.before=docker.service"
-  echo -n -e "\t"
-  echo -n    "0"
-  echo -n -e "\t"
-  echo -n    "2"
-  echo
-} | sudo tee -a /etc/fstab
+fstab_opts="${FSTAB_OPTIONS:-'defaults,nofail,nodiratime,x-systemd.before=docker.service'}"
+fstab_fmt "$DOCKER_EBS_NAME" '/var/lib/docker' "$FSTYPE" "$fstab_opts" 0 2 | sudo tee -a /etc/fstab
