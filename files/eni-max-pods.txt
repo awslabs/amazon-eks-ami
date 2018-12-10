@@ -101,6 +101,7 @@ p2.16xlarge 234
 p3.2xlarge 58
 p3.8xlarge 234
 p3.16xlarge 234
+p3dn.24xlarge 737
 r3.large 29
 r3.xlarge 58
 r3.2xlarge 58
