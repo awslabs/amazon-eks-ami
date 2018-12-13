@@ -1,5 +1,27 @@
 # Changelog
 
+### amazon-eks-node-1.11-v20181210 | amazon-eks-node-1.10-v20181210
+* 87a2aec Added GitHub issue templates
+* 95138f1 Simplified ASG Update parameters
+* 31f7d62 Swap order of `sed` and `kubectl config`
+* 9ad6e2a Add back the allow-privileged kubelet flag
+* 0bf1109 Added serverTLSBootstrap to kubelet config file
+* a5492b2 Added node ASG update policy parameters
+* b7015a6 Remove deprecated flags that use default values
+* d5a6437 Docker config should be owned by root
+* c281f32 Adding mkdir command
+* 90c5eae Adding simple dockerd config file to rotate logs from containers
+* 01090f8 Gracefully handle unknown instance types
+* 68e7a62 Added AMI metadata file
+* c0110a7 Reverted max-pod updates and instance types
+* 90d5209 Correctly select kube-DNS address for secondary CIDR VPC instances
+* f7b7f6c Updated kubelet config file location
+* 8ff10f2 Updated instance types and eni counts
+* 67053cf Modifying kubelet to use config files instead of kubelet flags which are about to deprecate. (#90)
+* 6a20fb1 Add max pods information for g3s.xlarge instances
+* a16af46 kubelet config files should be owned by root
+* f27bc2e Update eni-max-pods.txt
+
 ### amazon-eks-node-v25
 * 45a12de Fix kube-proxy logrotate (#68)
 * 742df5e Change make targets to be .PHONY (#59)
