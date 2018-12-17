@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS - Node Group - Released 2018-08-21'
+Description: 'Amazon EKS - Node Group'
 
 Parameters:
 
@@ -15,13 +15,20 @@ Parameters:
   NodeInstanceType:
     Description: EC2 instance type for the node instances
     Type: String
-    Default: t2.medium
+    Default: t3.medium
     AllowedValues:
     - t2.small
     - t2.medium
     - t2.large
     - t2.xlarge
     - t2.2xlarge
+    - t3.nano
+    - t3.micro
+    - t3.small
+    - t3.medium
+    - t3.large
+    - t3.xlarge
+    - t3.2xlarge
     - m3.medium
     - m3.large
     - m3.xlarge
@@ -72,6 +79,24 @@ Parameters:
     - p3.2xlarge
     - p3.8xlarge
     - p3.16xlarge
+    - r5.large
+    - r5.xlarge
+    - r5.2xlarge
+    - r5.4xlarge
+    - r5.12xlarge
+    - r5.24xlarge
+    - r5d.large
+    - r5d.xlarge
+    - r5d.2xlarge
+    - r5d.4xlarge
+    - r5d.12xlarge
+    - r5d.24xlarge
+    - z1d.large
+    - z1d.xlarge
+    - z1d.2xlarge
+    - z1d.3xlarge
+    - z1d.6xlarge
+    - z1d.12xlarge
     ConstraintDescription: Must be a valid EC2 instance type
 
   NodeAutoScalingGroupMinSize:
@@ -81,7 +106,12 @@ Parameters:
 
   NodeAutoScalingGroupMaxSize:
     Type: Number
-    Description: Maximum size of Node Group ASG.
+    Description: Maximum size of Node Group ASG. Set to at least 1 greater than NodeAutoScalingGroupDesiredCapacity.
+    Default: 4
+
+  NodeAutoScalingGroupDesiredCapacity:
+    Type: Number
+    Description: Desired capacity of Node Group ASG.
     Default: 3
 
   NodeVolumeSize:
@@ -129,6 +159,7 @@ Metadata:
         Parameters:
           - NodeGroupName
           - NodeAutoScalingGroupMinSize
+          - NodeAutoScalingGroupDesiredCapacity
           - NodeAutoScalingGroupMaxSize
           - NodeInstanceType
           - NodeImageId
@@ -212,6 +243,28 @@ Resources:
       FromPort: 1025
       ToPort: 65535
 
+  NodeSecurityGroupFromControlPlaneOn443Ingress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
+      GroupId: !Ref NodeSecurityGroup
+      SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  ControlPlaneEgressToNodeSecurityGroupOn443:
+    Type: AWS::EC2::SecurityGroupEgress
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
+      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      DestinationSecurityGroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
   ClusterControlPlaneSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     DependsOn: NodeSecurityGroup
@@ -226,7 +279,7 @@ Resources:
   NodeGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      DesiredCapacity: !Ref NodeAutoScalingGroupMaxSize
+      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
@@ -241,8 +294,9 @@ Resources:
         PropagateAtLaunch: 'true'
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: '1'
         MaxBatchSize: '1'
+        MinInstancesInService: !Ref NodeAutoScalingGroupDesiredCapacity
+        PauseTime: 'PT5M'
 
   NodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -275,3 +329,6 @@ Outputs:
   NodeInstanceRole:
     Description: The node instance role
     Value: !GetAtt NodeInstanceRole.Arn
+  NodeSecurityGroup:
+    Description: The security group for the node group
+    Value: !Ref NodeSecurityGroup

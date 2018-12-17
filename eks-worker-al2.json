@@ -21,11 +21,11 @@
         "filters": {
           "architecture": "x86_64",
           "name": "amzn2-ami-minimal-hvm-*",
-          "owner-id": "137112412989",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
+        "owners": [ "137112412989" ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -66,6 +66,7 @@
       "type": "shell",
       "script": "install-worker.sh",
       "environment_vars": [
+        "AMI_NAME={{user `ami_name`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}"
