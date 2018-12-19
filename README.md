@@ -61,10 +61,10 @@ versions by running `aws s3 ls s3://amazon-eks/cloudformation/`.
 
 | CloudFormation Version | EKS AMI versions                      | [amazon-vpc-cni-k8s](https://github.com/aws/amazon-vpc-cni-k8s/releases) |
 | ---------------------- | ------------------------------------- | -------------------- |
-| 2018-08-21             | amazon-eks-node-v23+                  | v1.1.0 |
-| 2018-08-30             | amazon-eks-node-v23+                  | v1.1.0 |
-| 2018-11-07             | amazon-eks-node-v25+                  | v1.2.1 (for t3 and r5 instances) |
 | 2018-12-10             | amazon-eks-node-(1.11,1.10)-v20181210 | v1.2.1 |
+| 2018-11-07             | amazon-eks-node-v25+                  | v1.2.1 (for t3 and r5 instances) |
+| 2018-08-30             | amazon-eks-node-v23+                  | v1.1.0 |
+| 2018-08-21             | amazon-eks-node-v23+                  | v1.1.0 |
 
 For older versions of the EKS AMI (v20-v22), you can find the CloudFormation
 templates in the same bucket under the path `s3://amazon-eks/1.10.3/2018-06-05/`.
