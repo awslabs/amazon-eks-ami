@@ -17,16 +17,17 @@ sudo yum update -y
 # Install necessary packages
 sudo yum install -y \
     aws-cfn-bootstrap \
+    chrony \
     conntrack \
     curl \
     jq \
     nfs-utils \
-    ntp \
     socat \
     unzip \
     wget
 
-sudo systemctl enable ntpd
+# Make sure Amazon Time Sync Service starts on boot.
+sudo chkconfig chronyd on
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
