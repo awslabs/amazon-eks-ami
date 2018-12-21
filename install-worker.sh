@@ -63,6 +63,9 @@ DOCKER_VERSION=${DOCKER_VERSION:-"18.06"}
 sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
 
+# Remove all options from sysconfig docker.
+sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
+
 sudo mkdir -p /etc/docker
 sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
 sudo chown root:root /etc/docker/daemon.json
