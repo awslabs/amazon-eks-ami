@@ -5,11 +5,14 @@
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
+    "docker_version": "18",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",
     "source_ami_id": "",
     "encrypted": "false",
-    "kms_key_id": ""
+    "kms_key_id": "",
+    "cni_version": "v0.6.0",
+    "cni_plugin_version": "v0.7.4"
   },
 
   "builders": [
@@ -45,10 +48,14 @@
           "creator": "{{user `creator`}}"
       },
       "tags": {
-          "created": "{{timestamp}}"
+          "created": "{{timestamp}}",
+          "docker_version": "{{ user `docker_version`}}",
+          "kubernetes": "{{ user `binary_bucket_path`}}",
+          "cni_version": "{{ user `cni_version`}}",
+          "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image"
+      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `binary_bucket_path`}}, docker:{{ user `docker_version`}})"
     }
   ],
 
@@ -69,7 +76,10 @@
         "AMI_NAME={{user `ami_name`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
-        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}"
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "DOCKER_VERSION={{user `docker_version`}}",
+        "CNI_VERSION={{user `cni_version`}}",
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}"
       ]
     }
   ],
