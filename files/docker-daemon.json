@@ -3,5 +3,12 @@
   "log-opts": {
     "max-size": "10m",
     "max-file": "10"
+  },
+  "default-ulimits": {
+    "nofile": {
+      "Name": "nofile",
+      "Soft": 2048,
+      "Hard": 8192
+    }
   }
 }
