@@ -21,8 +21,21 @@ invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
 ```bash
-make
+AWS_DEFAULT_REGION=<what you want> make
 ```
+
+### Using docker compose.
+Packer can be run using docker-compose, thus install it into your virtualenv (using virtualenvwrapper)
+```bash
+workon docker-compose
+pip install docker-compose
+```
+Run
+
+```bash
+USE_COMPOSE=true AWS_DEFAULT_REGION=<what you want> make
+```
+### Packer
 
 The Makefile runs Packer with the `eks-worker-al2.json` build specification
 template and the [amazon-ebs](https://www.packer.io/docs/builders/amazon-ebs.html)

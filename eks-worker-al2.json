@@ -1,6 +1,7 @@
 {
   "variables": {
     "aws_region": "us-west-2",
+    "build_tag": "",
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",

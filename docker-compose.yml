@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  packer:
+    image: hashicorp/packer:1.2.4
+    env_file:
+      - .env
+    working_dir: /build
+    volumes:
+      - .:/build
+      - ~/.aws:/root/.aws/
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+networks:
+  default:
+    external:
+      name: bridge
