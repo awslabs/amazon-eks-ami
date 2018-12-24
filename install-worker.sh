@@ -81,7 +81,6 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
-CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz.sha512
 sudo sha512sum -c cni-amd64-${CNI_VERSION}.tgz.sha512
