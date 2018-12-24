@@ -180,3 +180,5 @@ sudo rm -rf \
     /var/log/cloud-init-output.log
 
 sudo touch /etc/machine-id
+
+echo "Finished installing the worker"
