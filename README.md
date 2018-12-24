@@ -14,11 +14,6 @@ configured so that Packer can make calls to AWS API operations on your behalf.
 For more information, see [Authentication](https://www.packer.io/docs/builders/amazon.html#specifying-amazon-credentials)
 in the Packer documentation.
 
-**Note**
-The default instance type to build this AMI is an `m4.large` and does not
-qualify for the AWS free tier. You are charged for any instances created
-when building this AMI.
-
 ## Building the AMI
 
 A Makefile is provided to build the AMI, but it is just a small wrapper around

@@ -6,7 +6,7 @@
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large",
+    "instance_type": "t3.small",
     "source_ami_id": "",
     "encrypted": "false",
     "kms_key_id": ""
@@ -37,6 +37,8 @@
           "delete_on_termination": true
         }
       ],
+      "spot_price": "auto",
+      "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
       "ssh_username": "ec2-user",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
