@@ -80,8 +80,17 @@ sudo mkdir -p /etc/kubernetes/manifests
 sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
+sudo mkdir -p /etc/cni/net.d
 
 CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
+# Add the CNI loopback device
+cat <<EOF | sudo tee -a /etc/cni/net.d/99-loopback.conf
+{
+	"cniVersion": "${CNI_VERSION}",
+	"name": "lo",
+	"type": "loopback"
+}
+EOF
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz.sha512
 sudo sha512sum -c cni-amd64-${CNI_VERSION}.tgz.sha512
