@@ -13,7 +13,8 @@ ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --container-runtime docker \
     --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
-Restart=on-failure
+Restart=Always
+RestartForceExitStatus=SIGPIPE
 RestartSec=5
 KillMode=process
 
