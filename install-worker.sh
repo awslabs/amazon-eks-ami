@@ -31,11 +31,9 @@ sudo chkconfig chronyd on
 
 # Make sure that chronyd syncs RTC clock to the kernel.
 cat <<EOF | sudo tee -a /etc/chrony.conf
-
 # This directive enables kernel synchronisation (every 11 minutes) of the
 # real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
 rtcsync
-
 EOF
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
