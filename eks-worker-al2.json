@@ -18,7 +18,8 @@
     "cni_plugin_version": "v0.7.1",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
-    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}"
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
+    "docker_ebs_name": "/dev/sdf"
   },
 
   "builders": [
@@ -52,6 +53,12 @@
           "volume_type": "gp2",
           "volume_size": 20,
           "delete_on_termination": true
+        },
+        {
+          "device_name": "{{user `docker_ebs_name`}}",
+          "volume_type": "gp2",
+          "volume_size": 64,
+          "delete_on_termination": true
         }
       ],
       "ssh_username": "ec2-user",
@@ -83,6 +90,13 @@
       "type": "file",
       "source": "./files/",
       "destination": "/tmp/worker/"
+    },
+    {
+      "type": "shell",
+      "script": "setup_docker_ebs.sh",
+      "environment_vars": [
+        "DOCKER_EBS_NAME={{user `docker_ebs_name`}}"
+      ]
     },
     {
       "type": "shell",
