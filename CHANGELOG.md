@@ -1,5 +1,17 @@
 # Changelog
 
+### amazon-eks-node-1.11-v20190109 | amazon-eks-node-1.10-v20190109
+
+* 208c114 Make bootstrap script more readable
+* 44d18b7 Addresses #136 - set +e doesn't seem to work. Will return 0 or TEN_RANGE
+* 8a1d7c0 Use chrony for time and make sure it is enabled on startup. (#130)
+* b46b99a Only restart on failures
+* e13d401 Update kubelet.service to be resilient to crashing
+* 2f2401a Reversing order to make easier to read
+* d1c3e0c Added 1.11 build in Makefile
+* 9b8dc41 Fix rendering of the readme file
+* 1797887 Update changelog and readme for 1.10 and 1.11 v20181210 worker nodes
+
 ### amazon-eks-node-1.11-v20181210 | amazon-eks-node-1.10-v20181210
 * 87a2aec Added GitHub issue templates
 * 95138f1 Simplified ASG Update parameters
