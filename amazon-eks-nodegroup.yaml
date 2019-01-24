@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Amazon EKS - Node Group - Released 2018-08-30'
+Description: 'Amazon EKS - Node Group'
 
 Parameters:
 
@@ -106,7 +106,12 @@ Parameters:
 
   NodeAutoScalingGroupMaxSize:
     Type: Number
-    Description: Maximum size of Node Group ASG.
+    Description: Maximum size of Node Group ASG. Set to at least 1 greater than NodeAutoScalingGroupDesiredCapacity.
+    Default: 4
+
+  NodeAutoScalingGroupDesiredCapacity:
+    Type: Number
+    Description: Desired capacity of Node Group ASG.
     Default: 3
 
   NodeVolumeSize:
@@ -154,6 +159,7 @@ Metadata:
         Parameters:
           - NodeGroupName
           - NodeAutoScalingGroupMinSize
+          - NodeAutoScalingGroupDesiredCapacity
           - NodeAutoScalingGroupMaxSize
           - NodeInstanceType
           - NodeImageId
@@ -273,7 +279,7 @@ Resources:
   NodeGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      DesiredCapacity: !Ref NodeAutoScalingGroupMaxSize
+      DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
       LaunchConfigurationName: !Ref NodeLaunchConfig
       MinSize: !Ref NodeAutoScalingGroupMinSize
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
@@ -288,8 +294,9 @@ Resources:
         PropagateAtLaunch: 'true'
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MinInstancesInService: '1'
         MaxBatchSize: '1'
+        MinInstancesInService: !Ref NodeAutoScalingGroupDesiredCapacity
+        PauseTime: 'PT5M'
 
   NodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration

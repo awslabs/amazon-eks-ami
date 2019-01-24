@@ -6,16 +6,16 @@ Requires=docker.service
 
 [Service]
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
-ExecStart=/usr/bin/kubelet \
-    --cloud-provider=aws \
+ExecStart=/usr/bin/kubelet --cloud-provider aws \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
     --allow-privileged=true \
-    --config=/etc/kubernetes/kubelet/kubelet-config.json \
-    --kubeconfig=/var/lib/kubelet/kubeconfig \
-    --container-runtime=docker \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --container-runtime docker \
     --experimental-allowed-unsafe-sysctls=net.* \
-    --network-plugin=cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
+    --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
+RestartForceExitStatus=SIGPIPE
 RestartSec=5
 KillMode=process
 

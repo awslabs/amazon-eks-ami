@@ -3,7 +3,7 @@
     "aws_region": "us-east-1",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
+    "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
     "docker_version": "18",
     "creator": "{{env `USER`}}",
     "instance_type": "t3.small",

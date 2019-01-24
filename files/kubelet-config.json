@@ -49,5 +49,6 @@
     "memory.available": "60s",
     "nodefs.available": "60s"
   },
-  "failSwapOn": true
+  "failSwapOn": true,
+  "serverTLSBootstrap": true
 }
