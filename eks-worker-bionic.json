@@ -6,7 +6,7 @@
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
-    "docker_version": "17.12.1-0ubuntu1",
+    "docker_version": "18.06.1-0ubuntu1.2~18.04.1",
     "creator": "{{env `USER`}}",
     "instance_type": "m5.large",
     "source_ami_id": "",
