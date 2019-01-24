@@ -17,5 +17,5 @@ esac
 
 sudo mkdir -vp /var/lib/docker
 sudo mount $DOCKER_EBS_NAME /var/lib/docker
-fstab_opts="${FSTAB_OPTIONS:-'defaults,nofail,nodiratime,x-systemd.before=docker.service'}"
+fstab_opts="${FSTAB_OPTIONS:-defaults,nofail,nodiratime,x-systemd.before=docker.service}"
 fstab_fmt "$DOCKER_EBS_NAME" '/var/lib/docker' "$FSTYPE" "$fstab_opts" 0 2 | sudo tee -a /etc/fstab
