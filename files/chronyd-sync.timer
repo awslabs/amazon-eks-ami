@@ -1,8 +1,8 @@
 [Unit]
-Description=Hourly ntpdate timer
+Description=Half hour chronyd timer
 
 [Timer]
-OnCalendar=hourly
+OnCalendar=*:0/30
 RemainAfterElapse=yes
 
 [Install]

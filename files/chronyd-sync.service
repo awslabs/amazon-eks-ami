@@ -1,0 +1,6 @@
+[Unit]
+Description=Keep system time synced
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/chronyd -q

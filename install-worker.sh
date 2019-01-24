@@ -22,8 +22,6 @@ sudo yum install -y \
     curl \
     jq \
     nfs-utils \
-    ntp \
-    ntpdate \
     nmap-ncat \
     socat \
     unzip \
@@ -31,8 +29,8 @@ sudo yum install -y \
     wget \
     vim
 
-# Make sure Amazon Time Sync Service starts on boot.
-sudo chkconfig chronyd on
+# Make sure Amazon Time Sync Service DOES NOT start on boot.
+sudo chkconfig chronyd off
 
 # Make sure that chronyd syncs RTC clock to the kernel.
 cat <<EOF | sudo tee -a /etc/chrony.conf
@@ -54,15 +52,10 @@ fi
 ### Date/Time ##################################################################
 ################################################################################
 
-sudo timedatectl set-timezone UTC
-sudo systemctl stop ntpd
-sudo systemctl disable ntpd
-sudo systemctl mask ntpd
-
-sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
+sudo mv $TEMPLATE_DIR/chronyd-sync.* /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable ntpdate-sync.timer
-sudo systemctl restart ntpdate-sync.timer
+sudo systemctl enable chronyd-sync.timer
+sudo systemctl restart chronyd-sync.timer
 
 ################################################################################
 ### System Modules #############################################################
