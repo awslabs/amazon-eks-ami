@@ -22,8 +22,6 @@ sudo yum install -y \
     curl \
     jq \
     nfs-utils \
-    ntp \
-    ntpdate \
     nmap-ncat \
     socat \
     unzip \
@@ -49,20 +47,6 @@ sudo pip install --upgrade awscli
 if which swapoff ; then
   sudo swapoff --all --verbose
 fi
-
-################################################################################
-### Date/Time ##################################################################
-################################################################################
-
-sudo timedatectl set-timezone UTC
-sudo systemctl stop ntpd
-sudo systemctl disable ntpd
-sudo systemctl mask ntpd
-
-sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable ntpdate-sync.timer
-sudo systemctl restart ntpdate-sync.timer
 
 ################################################################################
 ### System Modules #############################################################
