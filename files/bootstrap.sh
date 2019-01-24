@@ -111,9 +111,7 @@ kubectl config \
 
 MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1)
 CIDRS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks)
-set +e
-TEN_RANGE=$(echo $CIDRS | grep -c '^10\..*')
-set -e
+TEN_RANGE=$(echo $CIDRS | grep -c '^10\..*' || true )
 DNS_CLUSTER_IP=10.100.0.10
 if [[ "$TEN_RANGE" != "0" ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
