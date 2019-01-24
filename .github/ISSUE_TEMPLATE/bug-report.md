@@ -17,8 +17,8 @@ about: Report a bug encountered using the EKS AMI
 **Environment**:
 - AWS Region:
 - Instance Type(s):
-- EKS Platform version (use `aws eks describe-cluster --name eks-mhausler-11-16-2018 --query cluster.platformVersion`):
-- Kubernetes version (use `aws eks describe-cluster --name eks-mhausler-11-16-2018 --query cluster.version`):
+- EKS Platform version (use `aws eks describe-cluster --name <name> --query cluster.platformVersion`):
+- Kubernetes version (use `aws eks describe-cluster --name <name> --query cluster.version`):
 - AMI Version:
 - Kernel (e.g. `uname -a`):
 - Release information (run `cat /tmp/release` on a node):
