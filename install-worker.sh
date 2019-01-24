@@ -16,41 +16,35 @@ sudo yum update -y
 
 # Install necessary packages
 sudo yum install -y \
-  aws-cfn-bootstrap \
-  conntrack \
-  curl \
-  jq \
-  nfs-utils \
-  ntp \
-  ntpdate \
-  nmap-ncat \
-  socat \
-  unzip \
-  util-linux \
-  wget \
-  vim
+    aws-cfn-bootstrap \
+    chrony \
+    conntrack \
+    curl \
+    jq \
+    nfs-utils \
+    ntp \
+    ntpdate \
+    nmap-ncat \
+    socat \
+    unzip \
+    util-linux \
+    wget \
+    vim
+
+# Make sure Amazon Time Sync Service starts on boot.
+sudo chkconfig chronyd on
+
+# Make sure that chronyd syncs RTC clock to the kernel.
+cat <<EOF | sudo tee -a /etc/chrony.conf
+# This directive enables kernel synchronisation (every 11 minutes) of the
+# real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
+rtcsync
+EOF
 
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
 rm get-pip.py
 sudo pip install --upgrade awscli
-
-if which swapoff ; then
-  sudo swapoff --all --verbose
-fi
-
-################################################################################
-### Date/Time ##################################################################
-################################################################################
-
-sudo timedatectl set-timezone UTC
-sudo systemctl stop ntpd
-sudo systemctl disable ntpd
-sudo systemctl mask ntpd
-
-sudo mv $TEMPLATE_DIR/ntpdate-sync.* /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable ntpdate-sync.timer
 
 if which swapoff ; then
   sudo swapoff --all --verbose
