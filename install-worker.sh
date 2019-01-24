@@ -86,27 +86,6 @@ sudo mkdir -vp /etc/security/limits.d
 sudo mv $TEMPLATE_DIR/limits.d/* /etc/security/limits.d/
 
 ################################################################################
-### System Modules #############################################################
-################################################################################
-
-sudo mkdir -vp /etc/modules-load.d
-sudo mv -v $TEMPLATE_DIR/modules-load.d/* /etc/modules-load.d/
-
-sudo systemctl daemon-reload
-sudo systemctl enable systemd-modules-load
-sudo systemctl restart systemd-modules-load
-
-sudo mkdir -vp /etc/sysctl.d
-sudo mv -v $TEMPLATE_DIR/sysctl.d/* /etc/sysctl.d/
-
-sudo systemctl daemon-reload
-sudo systemctl enable systemd-sysctl
-sudo systemctl restart systemd-sysctl
-
-sudo mkdir -vp /etc/security/limits.d
-sudo mv $TEMPLATE_DIR/limits.d/* /etc/security/limits.d/
-
-################################################################################
 ### iptables ###################################################################
 ################################################################################
 
