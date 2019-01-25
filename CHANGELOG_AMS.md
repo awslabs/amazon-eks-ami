@@ -1,5 +1,10 @@
 # Changelog
 
+### 2019-01-25
+
+* Switch to chrony instead of NTP.
+* Enable live restore for Docker daemon.
+
 ### 2018-11-06
 
 * Port kubelet and container-runtime health monitor from GCE K8s image.

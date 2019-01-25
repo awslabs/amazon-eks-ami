@@ -20,21 +20,19 @@ sudo apt-get upgrade -y >/dev/null
 # Install necessary packages
 sudo apt-get install -y --no-install-recommends \
     awscli \
+    chrony \
     conntrack \
     curl \
     htop \
     jq \
     nfs-common \
     nmap \
-    ntp \
     socat \
     screen \
     sysstat \
     unzip \
     wget \
     >/dev/null
-
-sudo systemctl enable ntp
 
 ################################################################################
 ### iptables ###################################################################
