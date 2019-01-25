@@ -1,5 +1,9 @@
 # Changelog
 
+### 2019-01-25
+
+* Enable live restore for Docker daemon.
+
 ### 2018-11-06
 
 * Port kubelet and container-runtime health monitor from GCE K8s image.
