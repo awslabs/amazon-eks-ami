@@ -28,5 +28,6 @@
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
+  "serializeImagePulls": false,
   "serverTLSBootstrap": true
 }
