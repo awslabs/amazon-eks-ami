@@ -22,6 +22,7 @@
     }
   },
   "clusterDomain": "cluster.local",
+  "hairpinMode": "hairpin-veth",
   "cgroupDriver": "cgroupfs",
   "featureGates": {
     "RotateKubeletServerCertificate": true
