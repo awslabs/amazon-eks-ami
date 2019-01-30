@@ -24,6 +24,7 @@
   "clusterDomain": "cluster.local",
   "hairpinMode": "hairpin-veth",
   "cgroupDriver": "cgroupfs",
+  "cgroupRoot": "/",
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
