@@ -23,6 +23,7 @@
   },
   "clusterDomain": "cluster.local",
   "cgroupDriver": "cgroupfs",
+  "cgroupRoot": "/",
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
