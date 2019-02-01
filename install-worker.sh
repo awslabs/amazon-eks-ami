@@ -7,15 +7,17 @@ IFS=$'\n\t'
 
 TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 
+export DEBIAN_FRONTEND=noninteractive
+
 ################################################################################
 ### Packages ###################################################################
 ################################################################################
 
 # Update the OS to begin with to catch up to the latest packages.
-sudo apt-get clean
-sudo apt update
-sudo apt-get update
-sudo apt-get upgrade -y >/dev/null
+sudo -E apt-get clean
+sudo -E apt update
+sudo -E apt-get update
+sudo -E apt-get upgrade -y -o Dpkg::Options::=--force-confnew >/dev/null
 
 # Install necessary packages
 sudo apt-get install -y --no-install-recommends \

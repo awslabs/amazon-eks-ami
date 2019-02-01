@@ -7,7 +7,7 @@
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large",
+    "instance_type": "m5.large",
     "source_ami_id": "",
     "encrypted": "false",
     "kms_key_id": ""
