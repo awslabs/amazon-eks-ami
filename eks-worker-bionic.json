@@ -33,22 +33,6 @@
       "spot_price": "auto",
       "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
       "ssh_username": "ubuntu",
-      "launch_block_device_mappings": [
-        {
-          "device_name": "/dev/xvda",
-          "volume_type": "gp2",
-          "volume_size": 8,
-          "delete_on_termination": true
-        }
-      ],
-      "ami_block_device_mappings": [
-        {
-          "device_name": "/dev/xvda",
-          "volume_type": "gp2",
-          "volume_size": 20,
-          "delete_on_termination": true
-        }
-      ],
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
