@@ -28,6 +28,7 @@ validate:
 		-color=false \
 		-var binary_bucket_path=1.10.11/2018-12-06/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-bionic.json
 
@@ -36,5 +37,6 @@ validate:
 		-color=false \
 		-var binary_bucket_path=1.11.5/2018-12-06/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-bionic.json
