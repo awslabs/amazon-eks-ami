@@ -59,6 +59,7 @@ sudo systemctl enable iptables-restore
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
+DOCKER_VERSION=${DOCKER_VERSION:-"17.06"}
 sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
 
@@ -89,12 +90,14 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
+CNI_VERSION=${CNI_VERSION:-"v0.6.0"}
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz
 wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-amd64-${CNI_VERSION}.tgz.sha512
 sudo sha512sum -c cni-amd64-${CNI_VERSION}.tgz.sha512
 sudo tar -xvf cni-amd64-${CNI_VERSION}.tgz -C /opt/cni/bin
 rm cni-amd64-${CNI_VERSION}.tgz cni-amd64-${CNI_VERSION}.tgz.sha512
 
+CNI_PLUGIN_VERSION=${CNI_PLUGIN_VERSION:-"v0.7.1"}
 wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz
 wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
 sudo sha512sum -c cni-plugins-amd64-${CNI_PLUGIN_VERSION}.tgz.sha512
