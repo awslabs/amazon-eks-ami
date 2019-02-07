@@ -22,7 +22,9 @@
     }
   },
   "clusterDomain": "cluster.local",
+  "hairpinMode": "hairpin-veth",
   "cgroupDriver": "cgroupfs",
+  "cgroupRoot": "/",
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
@@ -50,5 +52,6 @@
     "nodefs.available": "60s"
   },
   "failSwapOn": true,
+  "serializeImagePulls": false,
   "serverTLSBootstrap": true
 }

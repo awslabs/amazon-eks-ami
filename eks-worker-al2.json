@@ -5,11 +5,16 @@
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
     "docker_version": "18",
-    "creator": "{{env `USER`}}",
-    "instance_type": "t3.small",
     "aws_vpc_id": "{{env `AWS_VPC_ID`}}",
     "aws_subnet_id": "{{env `AWS_SUBNET_ID`}}",
-    "docker_ebs_name": "/dev/sdf"
+    "docker_ebs_name": "/dev/sdf",
+    "creator": "{{env `USER`}}",
+    "instance_type": "m4.large",
+    "source_ami_id": "",
+    "encrypted": "false",
+    "kms_key_id": "",
+    "cni_version": "v0.6.0",
+    "cni_plugin_version": "v0.7.1"
   },
   "builders": [
     {
@@ -55,13 +60,14 @@
         "Creator": "{{user `creator`}}"
       },
       "tags": {
-        "CreatedAt": "{{isotime}}",
-        "Owner": "{{user `creator`}}",
-        "Version": "{{user `binary_bucket_path`}}",
-        "DockerVersion": "{{user `docker_version`}}"
+        "created": "{{timestamp}}",
+        "docker_version": "{{ user `docker_version`}}",
+        "kubernetes": "{{ user `binary_bucket_path`}}",
+        "cni_version": "{{ user `cni_version`}}",
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "lumoslabs-eks-node-{{isotime | clean_ami_name}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image"
+      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `binary_bucket_path`}}, docker:{{ user `docker_version`}})"
     }
   ],
   "provisioners": [
@@ -92,7 +98,9 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "DOCKER_VERSION={{user `docker_version`}}"
+        "DOCKER_VERSION={{user `docker_version`}}",
+        "CNI_VERSION={{user `cni_version`}}",
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}"
       ]
     }
   ],

@@ -95,6 +95,7 @@ sudo systemctl enable iptables-restore
 ################################################################################
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
+DOCKER_VERSION=${DOCKER_VERSION:-"17.06"}
 sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
 sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
