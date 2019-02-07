@@ -9,5 +9,7 @@
       "Soft": 2048,
       "Hard": 8192
     }
-  }
+  },
+  "live-restore": true,
+  "max-concurrent-downloads": 10
 }
