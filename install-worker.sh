@@ -173,6 +173,8 @@ sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
+# 1.10 vs 1.11 diff - the flag, experimental-allowed-unsafe-sysctls, is renamed to allowed-unsafe-sysctls in 1.11
+if [[ $(kubelet --version) =~ ^.*1\.11.*$ ]] ; then sudo sed -i 's/experimental-//g' /etc/systemd/system/kubelet.service ; fi
 
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
