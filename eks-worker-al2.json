@@ -64,7 +64,8 @@
         "docker_version": "{{ user `docker_version`}}",
         "kubernetes": "{{ user `binary_bucket_path`}}",
         "cni_version": "{{ user `cni_version`}}",
-        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}",
+        "owner": "{{user `creator`}}"
       },
       "ami_name": "lumoslabs-eks-node-{{isotime | clean_ami_name}}",
       "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `binary_bucket_path`}}, docker:{{ user `docker_version`}})"
