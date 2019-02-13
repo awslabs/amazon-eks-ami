@@ -2,6 +2,8 @@
 
 ### amazon-eks-node-1.11-v20190211 | amazon-eks-node-1.10-v20190211
 
+Security Note: This AMI contains a build of Docker 17.06 that is patched for [CVE-2019-5736](https://aws.amazon.com/security/security-bulletins/AWS-2019-002/)
+
 * 71cd4b0 Updated max-pods for larger instance types
 * 28845f9 Allow parallel image pulls
 * 5cc7f41 Make it possible to set the DOCKER_VERSION and CNI_* that are used.
