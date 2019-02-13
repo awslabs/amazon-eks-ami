@@ -175,17 +175,22 @@ sudo rm -rf \
 
 # Clean up files to reduce confusion during debug
 sudo rm -rf \
+    /etc/hostname \
     /etc/machine-id \
+    /etc/resolv.conf \
     /etc/ssh/ssh_host* \
-    /root/.ssh/authorized_keys \
     /home/ec2-user/.ssh/authorized_keys \
-    /var/log/secure \
-    /var/log/wtmp \
-    /var/lib/cloud/sem \
+    /root/.ssh/authorized_keys \
     /var/lib/cloud/data \
     /var/lib/cloud/instance \
     /var/lib/cloud/instances \
+    /var/lib/cloud/sem \
+    /var/lib/dhclient/* \
+    /var/lib/dhcp/dhclient.* \
+    /var/lib/yum/history \
+    /var/log/cloud-init-output.log \
     /var/log/cloud-init.log \
-    /var/log/cloud-init-output.log
+    /var/log/secure \
+    /var/log/wtmp
 
 sudo touch /etc/machine-id
