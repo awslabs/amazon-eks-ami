@@ -1,5 +1,27 @@
 # Changelog
 
+### amazon-eks-node-1.11-v20190211 | amazon-eks-node-1.10-v20190211
+
+* 71cd4b0 Updated max-pods for larger instance types
+* 28845f9 Allow parallel image pulls
+* 5cc7f41 Make it possible to set the DOCKER_VERSION and CNI_* that are used.
+* dedf096 Enable live-restore capability in docker daemon
+* bed1c54 Replace Path: "/"
+* 10c5285 add spacing between remaining components
+* 2c60058 remove superflous linebreaks
+* e2f7dfa remove superflous lists
+* 342e387 consolidate list indentation style
+* 9856a22 ensure "Description" fields appear ealier in template
+* 06630cf remove default Path
+* 2823ba8 remove superflous quotes
+* 310215e Property --cgroup-root was not specified
+* 7d5a94b Set hairpin mode to "hairpin-veth"
+* 5479e95 disable docker0 bridge as it is not used
+* 491a913 add bip address from RFC5735 / RFC5737 This will reduce the number of possible conflicts to deploy on existing networks. https://tools.ietf.org/html/rfc5735 https://tools.ietf.org/html/rfc5737
+* f8c117f Allow (optional) smaller EBS root volumes with container optimized AMI
+* 7f6c8cb Remove trailing and leading lines.
+* 01cfe98 Enable syncing of rtc clock in chronyd daemon.
+
 ### amazon-eks-node-1.11-v20190109 | amazon-eks-node-1.10-v20190109
 
 * 208c114 Make bootstrap script more readable
@@ -13,6 +35,7 @@
 * 1797887 Update changelog and readme for 1.10 and 1.11 v20181210 worker nodes
 
 ### amazon-eks-node-1.11-v20181210 | amazon-eks-node-1.10-v20181210
+
 * 87a2aec Added GitHub issue templates
 * 95138f1 Simplified ASG Update parameters
 * 31f7d62 Swap order of `sed` and `kubectl config`
@@ -35,6 +58,7 @@
 * f27bc2e Update eni-max-pods.txt
 
 ### amazon-eks-node-v25
+
 * 45a12de Fix kube-proxy logrotate (#68)
 * 742df5e Change make targets to be .PHONY (#59)
 * eb0239f Add NodeSecurityGroup to outputs. (#58)

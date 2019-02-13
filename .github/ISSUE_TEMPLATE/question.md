@@ -17,3 +17,5 @@ about: Any question relating to the EKS AMI
 <!-- Put release info in the triple backticks below-->
 ```
 ```
+
+<!-- If this is a security issue, please do not discuss on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/ -->
