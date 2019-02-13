@@ -22,6 +22,9 @@ sudo yum install -y \
     curl \
     jq \
     nfs-utils \
+    amazon-ssm-agent \
+    aide\
+    less \
     socat \
     unzip \
     wget
@@ -40,6 +43,32 @@ curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 sudo python get-pip.py
 rm get-pip.py
 sudo pip install --upgrade awscli
+
+################################################################################
+### ClamAv #####################################################################
+################################################################################
+
+# Install epel repo
+sudo amazon-linux-extras install -y epel
+
+# Install ClamAv
+sudo yum -y install clamav-server clamav-data clamav-update clamav-filesystem clamav clamav-scanner-systemd clamav-devel clamav-lib clamav-server-systemd
+sudo yum -y install man
+
+sudo sed -i -e "s/^Example/#Example/" /etc/clamd.d/scan.conf
+
+sudo sh -c 'echo "LocalSocket /var/run/clamd.scan/clamd.sock" >> /etc/clamd.d/scan.conf'
+sudo su -c 'echo "FixStaleSocket yes" >> /etc/clamd.d/scan.conf'
+sudo su -c 'echo "LogFile /var/log/clamd.log" >> /etc/clamd.d/scan.conf"
+
+
+sudo freshclam
+
+sudo systemctl enable clamd@scan
+sudo systemctl start clamd@scan
+
+
+
 
 ################################################################################
 ### iptables ###################################################################
@@ -162,6 +191,14 @@ EOF
 sudo mv /tmp/release /etc/eks/release
 sudo chown root:root /etc/eks/*
 
+
+
+
+
+
+
+
+
 ################################################################################
 ### Cleanup ####################################################################
 ################################################################################
@@ -188,3 +225,10 @@ sudo rm -rf \
     /var/log/cloud-init-output.log
 
 sudo touch /etc/machine-id
+
+################################################################################
+### AIDE #######################################################################
+################################################################################
+
+sudo aide --init
+sudo mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
