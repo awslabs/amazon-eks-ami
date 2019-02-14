@@ -47,6 +47,10 @@ and terminates the instance after the AMI is created.
 The [EKS Terraform module](https://github.com/AdvMicrogrid/terraform-aws-eks)
 simplifies deployment of infrastructure for an EKS cluster.
 
+## Security
+
+For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/
+
 ## License Summary
 
 This sample code is made available under a modified MIT license. See the LICENSE file.
