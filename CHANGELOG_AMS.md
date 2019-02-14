@@ -1,5 +1,9 @@
 # Changelog
 
+### 2019-02-14
+
+* Switch to Docker 18.06.
+
 ### 2019-01-25
 
 * Switch to chrony instead of NTP.
