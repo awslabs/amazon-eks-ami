@@ -174,17 +174,22 @@ sudo rm -rf \
 
 # Clean up files to reduce confusion during debug
 sudo rm -rf \
+    /etc/hostname \
     /etc/machine-id \
+    /etc/resolv.conf \
     /etc/ssh/ssh_host* \
     /root/.ssh/authorized_keys \
     /home/ubuntu/.ssh/authorized_keys \
     /var/log/secure \
     /var/log/wtmp \
-    /var/lib/cloud/sem \
     /var/lib/cloud/data \
     /var/lib/cloud/instance \
     /var/lib/cloud/instances \
-    /var/log/cloud-init.log \
-    /var/log/cloud-init-output.log
+    /var/lib/cloud/sem \
+    /var/lib/dhclient/* \
+    /var/lib/dhcp/dhclient.* \
+    /var/lib/yum/history \
+    /var/log/cloud-init-output.log \
+    /var/log/cloud-init.log
 
 sudo touch /etc/machine-id

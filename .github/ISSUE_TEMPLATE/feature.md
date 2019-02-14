@@ -9,3 +9,4 @@ about: Suggest a feature to the EKS AMI
 
 **Why is this needed**:
 
+<!-- If this is a security issue, please do not discuss on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/ -->
