@@ -165,7 +165,7 @@ sudo chown root:root /etc/eks/*
 ### Cleanup ####################################################################
 ################################################################################
 
-# Clean up yum caches to reduce the image size
+# Clean up apt caches to reduce the image size
 sudo apt-get autoremove -y
 sudo rm -rf \
     $TEMPLATE_DIR  \
@@ -188,7 +188,6 @@ sudo rm -rf \
     /var/lib/cloud/sem \
     /var/lib/dhclient/* \
     /var/lib/dhcp/dhclient.* \
-    /var/lib/yum/history \
     /var/log/cloud-init-output.log \
     /var/log/cloud-init.log
 

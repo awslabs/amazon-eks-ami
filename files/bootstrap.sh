@@ -78,7 +78,6 @@ AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
 
 ### fix DNS resolution in 18.04
 
-rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 ### kubelet kubeconfig
