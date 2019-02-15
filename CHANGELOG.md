@@ -100,4 +100,4 @@ Note: CNI >= 1.2.1 is required for t3 and r5 instance support.
 
 * EKS Launch AMI
 
-<!-- git log --pretty=format:"* %h %s" -->
+<!-- git log --pretty=format:"* %h %s" $(git describe --abbrev=0 --tags)..HEAD -->

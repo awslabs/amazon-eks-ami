@@ -20,6 +20,7 @@ function print_help {
     echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
+    echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
 }
 
 POSITIONAL=()
@@ -51,6 +52,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --enable-docker-bridge)
+            ENABLE_DOCKER_BIDGE=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -67,6 +73,7 @@ USE_MAX_PODS="${USE_MAX_PODS:-true}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
+ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -113,7 +120,7 @@ if [[ "$TEN_RANGE" != "0" ]] ; then
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo "$(jq .clusterDNS=[\"$DNS_CLUSTER_IP\"] $KUBELET_CONFIG)" > $KUBELET_CONFIG
+echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
@@ -124,7 +131,7 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS=$(grep ^$INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
     set -o pipefail
     if [[ -n "$MAX_PODS" ]]; then
-        echo "$(jq .maxPods=$MAX_PODS $KUBELET_CONFIG)" > $KUBELET_CONFIG
+        echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
     else
         echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
     fi
@@ -140,6 +147,13 @@ if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
+fi
+
+if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
+    # Enabling the docker bridge network. We have to disable live-restore as it
+    # prevents docker from recreating the default bridge network on restart
+    jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json | tee  /etc/docker/daemon.json
+    systemctl restart docker
 fi
 
 systemctl daemon-reload
