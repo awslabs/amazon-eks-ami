@@ -150,8 +150,8 @@ t3.micro 4
 t3.small 8
 t3.medium 17
 t3.large 35
-t3.xlarge 44
-t3.2xlarge 44
+t3.xlarge 58
+t3.2xlarge 58
 x1.16xlarge 234
 x1.32xlarge 234
 x1e.xlarge 29
