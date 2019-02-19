@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --enable-docker-bridge)
-            ENABLE_DOCKER_BIDGE=$2
+            ENABLE_DOCKER_BRIDGE=$2
             shift
             shift
             ;;
@@ -152,7 +152,7 @@ fi
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
     # Enabling the docker bridge network. We have to disable live-restore as it
     # prevents docker from recreating the default bridge network on restart
-    jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json | tee  /etc/docker/daemon.json
+    echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
     systemctl restart docker
 fi
 
