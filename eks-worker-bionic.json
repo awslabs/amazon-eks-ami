@@ -1,6 +1,7 @@
 {
   "variables": {
     "aws_region": "us-west-2",
+    "aws_region_az": "us-west-2a",
     "build_tag": "",
     "ami_name": "bionic-eks-node",
     "binary_bucket_name": "amazon-eks",
@@ -20,6 +21,7 @@
     {
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
+      "availability_zone": "{{user `aws_region_az`}}",
       "source_ami": "{{user `source_ami_id`}}",
       "source_ami_filter": {
         "filters": {
