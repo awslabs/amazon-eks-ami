@@ -52,18 +52,21 @@ sudo systemctl enable iptables-restore
 ### Docker #####################################################################
 ################################################################################
 
-DOCKER_VERSION=${DOCKER_VERSION:-"18.06.1-0ubuntu1.2~18.04.1"}
-sudo apt-get install -y --no-install-recommends docker.io=${DOCKER_VERSION}
-sudo usermod -aG docker $USER
+INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
+if [[ "$INSTALL_DOCKER" == "true" ]]; then
+    DOCKER_VERSION=${DOCKER_VERSION:-"18.06.1-0ubuntu1.2~18.04.1"}
+    sudo apt-get install -y --no-install-recommends docker.io=${DOCKER_VERSION}
+    sudo usermod -aG docker $USER
 
-sudo mkdir -p /etc/docker
-sudo chmod 700 /etc/docker
-sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
-sudo chown root:root /etc/docker/daemon.json
+    sudo mkdir -p /etc/docker
+    sudo chmod 700 /etc/docker
+    sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+    sudo chown root:root /etc/docker/daemon.json
 
-# Enable docker daemon to start on boot.
-sudo systemctl daemon-reload
-sudo systemctl enable docker
+    # Enable docker daemon to start on boot.
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+fi
 
 ################################################################################
 ### Logrotate ##################################################################
