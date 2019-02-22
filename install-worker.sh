@@ -17,6 +17,7 @@ sudo yum update -y
 # Install necessary packages
 sudo yum install -y \
     aws-cfn-bootstrap \
+    awscli \
     chrony \
     conntrack \
     curl \
@@ -35,11 +36,6 @@ cat <<EOF | sudo tee -a /etc/chrony.conf
 # real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
 rtcsync
 EOF
-
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
 
 ################################################################################
 ### iptables ###################################################################
