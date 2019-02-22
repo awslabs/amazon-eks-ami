@@ -8,6 +8,14 @@ Parameters:
     Description: The EC2 Key Pair to allow SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
 
+  PublicIpAddress:
+    Description: Requests a public IP address from Amazon's public IP address pool.
+    Default: true
+    AllowedValues:
+      - true
+      - false
+    Type: String
+
   NodeImageId:
     Description: AMI id for the node instances.
     Type: AWS::EC2::Image::Id
@@ -164,6 +172,7 @@ Metadata:
           - NodeInstanceType
           - NodeImageId
           - NodeVolumeSize
+          - PublicIpAddress
           - KeyName
           - BootstrapArguments
       - Label:
@@ -296,7 +305,7 @@ Resources:
   NodeLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      AssociatePublicIpAddress: true
+      AssociatePublicIpAddress: !Ref PublicIpAddress
       IamInstanceProfile: !Ref NodeInstanceProfile
       ImageId: !Ref NodeImageId
       InstanceType: !Ref NodeInstanceType
