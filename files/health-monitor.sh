@@ -68,7 +68,7 @@ function kubelet_monitoring {
       # Print the response and/or errors.
       echo $output
       echo "Kubelet is unhealthy!"
-      systemctl kill kubelet
+      systemctl restart kubelet
       # Wait for a while, as we don't want to kill it again before it is really up.
       sleep 60
     else
