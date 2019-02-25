@@ -10,8 +10,8 @@
   "default-ulimits": {
     "nofile": {
       "Name": "nofile",
-      "Soft": 2048,
-      "Hard": 8192
+      "Soft": 65536,
+      "Hard": 65536
     }
   }
 }
