@@ -1,11 +1,11 @@
 {
   "variables": {
-    "kubernetes_version": "1.11",
+    "kubernetes_version": "1.12",
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
+    "binary_bucket_path": "",
     "docker_version": "18.06",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",

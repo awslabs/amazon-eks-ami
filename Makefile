@@ -16,9 +16,9 @@ SOURCE_AMI_ID ?= $(shell aws \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
 
-.PHONY: all validate ami 1.11 1.10
+.PHONY: all validate ami 1.12 1.11 1.10
 
-all: 1.11
+all: 1.12
 
 validate:
 	packer validate eks-worker-al2.json
@@ -36,5 +36,13 @@ validate:
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.11 \
 		-var binary_bucket_path=1.11.8/2019-03-13/bin/linux/amd64 \
+		-var source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-al2.json
+
+1.12: validate
+	packer build \
+		-var aws_region=$(AWS_REGION) \
+		-var kubernetes_version=1.12 \
+		-var binary_bucket_path=1.12.6/<fill>/bin/linux/amd64 \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-al2.json
