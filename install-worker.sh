@@ -113,15 +113,22 @@ if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
     S3_DOMAIN="s3"
 fi
 S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
-
+S3_PATH="s3://$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
 BINARIES=(
     kubelet
     kubectl
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
-    sudo wget $S3_URL_BASE/$binary
-    sudo wget $S3_URL_BASE/$binary.sha256
+    if which aws >/dev/null; then
+        echo "AWS cli present - using it to copy binaries from s3."
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    else
+        echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
+        sudo wget $S3_URL_BASE/$binary
+        sudo wget $S3_URL_BASE/$binary.sha256
+    fi
     sudo sha256sum -c $binary.sha256
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
