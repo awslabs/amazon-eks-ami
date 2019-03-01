@@ -27,12 +27,14 @@ validate:
 
 1.10: validate
 	packer build \
+		-var kubernetes_version=1.10 \
 		-var binary_bucket_path=1.10.11/2018-12-06/bin/linux/amd64 \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-al2.json
 
 1.11: validate
 	packer build \
+		-var kubernetes_version=1.11 \
 		-var binary_bucket_path=1.11.5/2018-12-06/bin/linux/amd64 \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-al2.json

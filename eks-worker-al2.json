@@ -1,5 +1,6 @@
 {
   "variables": {
+    "kubernetes_version": "1.11",
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
@@ -84,6 +85,7 @@
       "type": "shell",
       "script": "install-worker.sh",
       "environment_vars": [
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "AMI_NAME={{user `ami_name`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
