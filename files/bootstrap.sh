@@ -208,7 +208,7 @@ fi
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
     # Enabling the docker bridge network. We have to disable live-restore as it
     # prevents docker from recreating the default bridge network on restart
-    echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
+    echo "$(jq 'del(.bridge) | ."live-restore"=false | ."bip"="203.0.113.1/24"' /etc/docker/daemon.json)" > /etc/docker/daemon.json
     systemctl restart docker
 fi
 
