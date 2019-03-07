@@ -14,7 +14,10 @@
     "encrypted": "false",
     "kms_key_id": "",
     "cni_version": "v0.6.0",
-    "cni_plugin_version": "v0.7.1"
+    "cni_plugin_version": "v0.7.1",
+    "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}"
   },
 
   "builders": [
@@ -76,7 +79,10 @@
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
         "CNI_VERSION={{user `cni_version`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}"
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
     }
   ],
