@@ -1,7 +1,3 @@
-KUBERNETES_VERSION ?= 1.10.3
-
-DATE ?= $(shell date +%Y-%m-%d)
-
 # Defaults to Amazon Linux 2 LTS AMI
 # * use the us-west-2 minimal hvm image
 # https://aws.amazon.com/amazon-linux-2/release-notes/
@@ -28,13 +24,13 @@ validate:
 1.10: validate
 	packer build \
 		-var kubernetes_version=1.10 \
-		-var binary_bucket_path=1.10.11/2018-12-06/bin/linux/amd64 \
+		-var binary_bucket_path=1.10.13/2019-03-13/bin/linux/amd64 \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-al2.json
 
 1.11: validate
 	packer build \
 		-var kubernetes_version=1.11 \
-		-var binary_bucket_path=1.11.5/2018-12-06/bin/linux/amd64 \
+		-var binary_bucket_path=1.11.8/2019-03-13/bin/linux/amd64 \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-al2.json

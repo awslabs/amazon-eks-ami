@@ -5,7 +5,7 @@
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
+    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
     "docker_version": "18.06",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",
@@ -86,7 +86,6 @@
       "script": "install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "AMI_NAME={{user `ami_name`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",

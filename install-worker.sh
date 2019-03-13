@@ -175,7 +175,6 @@ cat <<EOF > /tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
-AMI_NAME="$AMI_NAME"
 ARCH="$(uname -m)"
 EOF
 sudo mv /tmp/release /etc/eks/release
