@@ -21,6 +21,7 @@ function print_help {
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
+    echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
 }
 
 POSITIONAL=()
@@ -57,6 +58,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --aws-api-retry-attempts)
+            API_RETRY_ATTEMPTS=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -74,6 +80,7 @@ B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
+API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -90,11 +97,26 @@ CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
     DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
-    aws eks describe-cluster \
-        --region=${AWS_DEFAULT_REGION} \
-        --name=${CLUSTER_NAME} \
-        --output=text \
-        --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint}' > $DESCRIBE_CLUSTER_RESULT
+    rc=0
+    # Retry the DescribleCluster API for API_RETRY_ATTEMPTS
+    for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
+        if [[ $attempt -gt 0 ]]; then
+        echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
+        fi
+        aws eks describe-cluster \
+            --region=${AWS_DEFAULT_REGION} \
+            --name=${CLUSTER_NAME} \
+            --output=text \
+            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+        if [[ $rc -eq 0 ]]; then
+            break
+        fi
+        if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
+            exit $rc
+        fi
+        sleep_ms="$(($attempt * $API_RETRY_ATTEMPTS * 100))"
+        sleep "${sleep_ms:0:-3}.${sleep_ms: -3}"
+    done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
 fi
