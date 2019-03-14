@@ -1,12 +1,13 @@
 {
   "variables": {
+    "kubernetes_version": "1.11",
     "aws_region": "us-west-2",
     "aws_region_az": "us-west-2a",
     "build_tag": "",
     "ami_name": "bionic-eks-node",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
+    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
     "docker_version": "18.06.1-0ubuntu1.2~18.04.1",
     "creator": "{{env `USER`}}",
     "instance_type": "m5.large",
@@ -73,7 +74,7 @@
       "type": "shell",
       "script": "install-worker.sh",
       "environment_vars": [
-        "AMI_NAME={{user `ami_name`}}",
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
