@@ -114,8 +114,8 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
             exit $rc
         fi
-        sleep_ms="$(($attempt * $API_RETRY_ATTEMPTS * 100))"
-        sleep "${sleep_ms:0:-3}.${sleep_ms: -3}"
+        sleep_sec="$(( $((1+$attempt)) * $API_RETRY_ATTEMPTS * 5))"
+        sleep $sleep_sec
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
