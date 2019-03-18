@@ -12,6 +12,8 @@
     "creator": "{{env `USER`}}",
     "instance_type": "m5.large",
     "source_ami_id": "",
+    "source_ami_owners": "099720109477",
+    "source_ami_filter_name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
     "encrypted": "false",
     "kms_key_id": "",
     "cni_version": "v0.6.0",
@@ -30,12 +32,12 @@
       "source_ami_filter": {
         "filters": {
           "architecture": "x86_64",
-          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
+          "name": "{{user `source_ami_filter_name`}}",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "099720109477" ],
+        "owners": [ "{{user `source_ami_owners`}}" ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -51,6 +53,7 @@
       "tags": {
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
+          "source_ami_id": "{{ user `source_ami_id`}}",
           "kubernetes": "{{ user `binary_bucket_path`}}",
           "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"

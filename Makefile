@@ -1,5 +1,8 @@
+AWS_REGION ?= us-west-2
 BUILD_TAG := $(or $(BUILD_TAG), $(shell date +%s))
-SOURCE_AMI_ID ?= $(shell aws ec2 describe-images \
+SOURCE_AMI_ID ?= $(shell aws \
+	--region $(AWS_REGION) \
+	ec2 describe-images \
 	--output text \
 	--filters \
 		Name=owner-id,Values=099720109477 \
@@ -9,8 +12,6 @@ SOURCE_AMI_ID ?= $(shell aws ec2 describe-images \
 		Name=architecture,Values=x86_64 \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
-
-AWS_DEFAULT_REGION = us-west-2
 
 .PHONY: all validate ami 1.11 1.10
 
@@ -22,6 +23,7 @@ validate:
 1.10: validate
 	packer build \
 		-color=false \
+		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.10 \
 		-var binary_bucket_path=1.10.13/2019-03-13/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
@@ -32,6 +34,7 @@ validate:
 1.11: validate
 	packer build \
 		-color=false \
+		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.11 \
 		-var binary_bucket_path=1.11.8/2019-03-13/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
