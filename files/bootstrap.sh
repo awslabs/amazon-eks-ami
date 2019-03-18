@@ -101,7 +101,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
     # Retry the DescribleCluster API for API_RETRY_ATTEMPTS
     for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
         if [[ $attempt -gt 0 ]]; then
-        echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
+            echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
         aws eks describe-cluster \
             --region=${AWS_DEFAULT_REGION} \
@@ -114,7 +114,8 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
             exit $rc
         fi
-        sleep_sec="$(( $((1+$attempt)) * $API_RETRY_ATTEMPTS * 5))"
+        jitter=$((1 + RANDOM % 10))
+        sleep_sec="$(( $(( 5 << $((1+$attempt)) )) + $jitter))"
         sleep $sleep_sec
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
