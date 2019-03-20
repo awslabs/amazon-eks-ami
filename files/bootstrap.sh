@@ -134,8 +134,9 @@ kubectl config \
 
 ### kubelet.service configuration
 
-MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+MAC=$(cat /sys/class/net/eth0/address)
+CIDRS=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks)
+TEN_RANGE=$(echo $CIDRS | tr ' ' '\n' | grep -c '^10\..*' || true )
 DNS_CLUSTER_IP=10.100.0.10
 if [[ "$TEN_RANGE" != "0" ]] ; then
     DNS_CLUSTER_IP=172.20.0.10;
