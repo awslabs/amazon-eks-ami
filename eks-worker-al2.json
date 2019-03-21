@@ -1,18 +1,24 @@
 {
   "variables": {
+    "kubernetes_version": "1.11",
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.5/2018-12-06/bin/linux/amd64",
-    "docker_version": "17.06",
+    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
+    "docker_version": "18.06",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",
     "source_ami_id": "",
+    "source_ami_owners": "137112412989",
+    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "encrypted": "false",
     "kms_key_id": "",
     "cni_version": "v0.6.0",
-    "cni_plugin_version": "v0.7.1"
+    "cni_plugin_version": "v0.7.1",
+    "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}"
   },
 
   "builders": [
@@ -23,12 +29,12 @@
       "source_ami_filter": {
         "filters": {
           "architecture": "x86_64",
-          "name": "amzn2-ami-minimal-hvm-*",
+          "name": "{{user `source_ami_filter_name`}}",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "137112412989" ],
+        "owners": [ "{{user `source_ami_owners`}}" ],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -58,6 +64,7 @@
       "tags": {
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
+          "source_ami_id": "{{ user `source_ami_id`}}",
           "kubernetes": "{{ user `binary_bucket_path`}}",
           "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
@@ -81,13 +88,16 @@
       "type": "shell",
       "script": "install-worker.sh",
       "environment_vars": [
-        "AMI_NAME={{user `ami_name`}}",
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
         "CNI_VERSION={{user `cni_version`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}"
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
     }
   ],

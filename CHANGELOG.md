@@ -1,6 +1,19 @@
 # Changelog
 
+### amazon-eks-node-1.11-v20190220 | amazon-eks-node-1.10-v20190220
+
+* c1934bb Made docker install optional
+* 0db49b4 Added enable-docker-bridge bootstrap argument
+* 5a57ab8 Increase ulimits for docker containers.
+* 4cf8ff5 Fix bug causing bootstrap.sh to fail for certain instance types
+* 42dfbd7 update docker version to 18.06
+* 9ac7eba Clean resolv.conf before snapshotting
+* 665c29d Updated changelog to clarify CVE-2019-5736
+* 71e5db6 Added security wording to issue templates
+
 ### amazon-eks-node-1.11-v20190211 | amazon-eks-node-1.10-v20190211
+
+Security Note: This AMI contains a build of Docker 17.06 that is patched for [CVE-2019-5736](https://aws.amazon.com/security/security-bulletins/AWS-2019-002/)
 
 * 71cd4b0 Updated max-pods for larger instance types
 * 28845f9 Allow parallel image pulls
@@ -98,4 +111,4 @@ Note: CNI >= 1.2.1 is required for t3 and r5 instance support.
 
 * EKS Launch AMI
 
-<!-- git log --pretty=format:"* %h %s" -->
+<!-- git log --pretty=format:"* %h %s" $(git describe --abbrev=0 --tags)..HEAD -->
