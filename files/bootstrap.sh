@@ -12,7 +12,7 @@ trap 'err_report $LINENO' ERR
 IFS=$'\n\t'
 
 function print_help {
-    echo "usage: $0 [options] <cluster-name>"
+    echo "usage: $0 <cluster-name> [options]"
     echo "Bootstraps an instance into an EKS cluster"
     echo ""
     echo "-h,--help print this help"
