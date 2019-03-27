@@ -7,6 +7,7 @@ DATE ?= $(shell date +%Y-%m-%d)
 # https://aws.amazon.com/amazon-linux-2/release-notes/
 SOURCE_AMI_ID ?= $(shell aws ec2 describe-images \
 	--output text \
+	--region us-west-2 \
 	--filters \
 		Name=owner-id,Values=137112412989 \
 		Name=virtualization-type,Values=hvm \

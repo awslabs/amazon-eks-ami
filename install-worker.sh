@@ -59,13 +59,13 @@ sudo sed -i -e "s/^Example/#Example/" /etc/clamd.d/scan.conf
 
 sudo sh -c 'echo "LocalSocket /var/run/clamd.scan/clamd.sock" >> /etc/clamd.d/scan.conf'
 sudo su -c 'echo "FixStaleSocket yes" >> /etc/clamd.d/scan.conf'
-sudo su -c 'echo "LogFile /var/log/clamd.log" >> /etc/clamd.d/scan.conf"
+sudo su -c 'echo "LogFile /var/log/clamd.log" >> /etc/clamd.d/scan.conf'
 
 
 sudo freshclam
 
-sudo systemctl enable clamd@scan
-sudo systemctl start clamd@scan
+#sudo systemctl enable clamd@scan
+#sudo systemctl start clamd@scan
 
 
 
@@ -88,7 +88,7 @@ sudo systemctl enable iptables-restore
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 sudo amazon-linux-extras enable docker
-DOCKER_VERSION=${DOCKER_VERSION:-"17.06"}
+DOCKER_VERSION=${DOCKER_VERSION:-"18.06"}
 sudo yum install -y docker-${DOCKER_VERSION}*
 sudo usermod -aG docker $USER
 
@@ -231,5 +231,30 @@ sudo touch /etc/machine-id
 ### AIDE #######################################################################
 ################################################################################
 
+# ignore /var 
+sudo sh -c "echo '!/var' >> /etc/aide.conf"
+sudo sh -c "echo '!/opt/cni' >> /etc/aide.conf"
+sudo sh -c "echo '!/etc/cni' >> /etc/aide.conf"
+sudo sh -c "echo '!/etc/kubernetes/pki' >> /etc/aide.conf"
+sudo sh -c "echo '!/etc/systemd/system' >> /etc/aide.conf"
+
+sudo touch /var/log/clamav.log
+sudo touch /var/log/aide/aide.log
+
+# generate crontab 
+sudo crontab /tmp/lessonly/lessonly-crontab
+
+sudo cp /tmp/lessonly/aide-startup.sh /bin/
+sudo chmod a+x /bin/aide-startup.sh
+
+sudo cp /tmp/lessonly/aide-startup.service /etc/systemd/system/ 
+sudo cp /tmp/lessonly/sysconfig-docker /etc/sysconfig/docker 
+
+sudo systemctl enable aide-startup.service
+
+sudo mv -f /tmp/lessonly/limits.conf /etc/security/limits.conf
+
+
+# build aide library
 sudo aide --init
 sudo mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
