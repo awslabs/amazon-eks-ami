@@ -58,8 +58,8 @@
           "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
-      "ami_name": "{{user `ami_name`}}-{{user `build_tag`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with Ubuntu 18.04 Bionic image"
+      "ami_name": "{{user `ami_name`}}-{{user `kubernetes_version`}}-{{user `build_tag`}}",
+      "ami_description": "EKS Kubernetes {{user `kubernetes_version`}} Worker AMI based on Ubuntu 18.04 Bionic"
     }
   ],
 
