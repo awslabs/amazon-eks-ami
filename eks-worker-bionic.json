@@ -1,13 +1,13 @@
 {
   "variables": {
-    "kubernetes_version": "1.11",
+    "kubernetes_version": "1.12",
     "aws_region": "us-west-2",
     "aws_region_az": "us-west-2a",
     "build_tag": "",
     "ami_name": "bionic-eks-node",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
+    "binary_bucket_path": "",
     "docker_version": "18.06.1-0ubuntu1.2~18.04.1",
     "creator": "{{env `USER`}}",
     "instance_type": "m5.large",
