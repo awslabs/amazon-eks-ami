@@ -20,7 +20,7 @@ node {
         }
 
         stage('build') {
-            sh 'make'
+            sh 'make -j 1.11 1.12'
         }
     } catch (Exception ex) {
         echo "ERROR: ${ex.toString()}"
