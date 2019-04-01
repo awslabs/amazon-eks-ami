@@ -1,11 +1,14 @@
 # Changelog
 
-### amazon-eks-node-1.12-v20190327 | amazon-eks-node-1.11-v20190327 | amazon-eks-node-1.10-v20190327
+### amazon-eks-node-1.12-v20190329 | amazon-eks-node-1.11-v20190329 | amazon-eks-node-1.10-v20190329
 
 Security Note: These AMIs contain builds of kubectl & CNI patched for [CVE-2019-1002101](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/) and [CVE-2019-9946](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/)
 
 Note: This release publishes first set of worker AMIs for EKS 1.12 launch
 
+* 77ae68a Correct version numbers in Changelog
+* 3e09987 Bump CNI plugin default value
+* fb0c393 Update eni-max-pods.txt (#231)
 * a809997 Update README with new worker AMIs published on 2019-03-27
 * a038aae Added 1.12 build in Makefile (#208)
 * 38eb8a8 Fixed search for 10.x CIDR range
