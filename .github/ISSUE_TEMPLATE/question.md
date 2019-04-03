@@ -13,7 +13,7 @@ about: Any question relating to the EKS AMI
 - Kubernetes version (use `aws eks describe-cluster --name <name> --query cluster.version`):
 - AMI Version:
 - Kernel (e.g. `uname -a`):
-- Release information (run `cat /tmp/release` on a node):
+- Release information (run `cat /etc/eks/release` on a node):
 <!-- Put release info in the triple backticks below-->
 ```
 ```
