@@ -1,24 +1,26 @@
 {
   "variables": {
-    "kubernetes_version": "1.12",
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
-    "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "",
-    "docker_version": "18.06",
     "creator": "{{env `USER`}}",
-    "instance_type": "m4.large",
-    "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "encrypted": "false",
-    "kms_key_id": "",
-    "cni_version": "v0.6.0",
-    "cni_plugin_version": "v0.7.5",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
-    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}"
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
+
+    "arch": "",
+    "instance_type": "",
+    "binary_bucket_name": "",
+    "docker_version": "",
+    "source_ami_id": "",
+    "kms_key_id": "",
+    "cni_version": "",
+    "cni_plugin_version": "",
+    "kubernetes_build_date": "",
+    "kubernetes_version": ""
   },
 
   "builders": [
@@ -28,8 +30,8 @@
       "source_ami": "{{user `source_ami_id`}}",
       "source_ami_filter": {
         "filters": {
-          "architecture": "x86_64",
           "name": "{{user `source_ami_filter_name`}}",
+          "architecture": "{{user `arch`}}",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
@@ -65,12 +67,12 @@
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
-          "kubernetes": "{{ user `binary_bucket_path`}}",
+          "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
           "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `binary_bucket_path`}}, docker:{{ user `docker_version`}})"
+      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],
 
@@ -90,7 +92,8 @@
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
         "CNI_VERSION={{user `cni_version`}}",

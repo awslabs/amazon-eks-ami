@@ -11,6 +11,11 @@
 # access the instance metadata, VPC DNS, and Time Sync services from the 32nd IP
 # address onwards. If access to these services is needed from all IP addresses
 # on the interface, we recommend using a maximum of 31 IP addresses per interface.
+a1.medium 8
+a1.large 29
+a1.xlarge 58
+a1.2xlarge 58
+a1.4xlarge 234
 c1.medium 12
 c1.xlarge 58
 c3.large 29

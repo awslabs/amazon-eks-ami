@@ -63,6 +63,16 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --pause-container-account)
+            PAUSE_CONTAINER_ACCOUNT=$2
+            shift
+            shift
+            ;;
+        --pause-container-version)
+            PAUSE_CONTAINER_VERSION=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -81,6 +91,8 @@ APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
+PAUSE_CONTAINER_ACCOUNT="${PAUSE_CONTAINER_ACCOUNT:-602401143452}"
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -89,6 +101,16 @@ fi
 
 ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
+
+MACHINE=$(uname -m)
+if [ "$MACHINE" == "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$MACHINE" == "aarch64" ]; then
+    ARCH="arm64"
+else
+    echo "Unknown machine architecture '$MACHINE'" >&2
+    exit 1
+fi
 
 ### kubelet kubeconfig
 
@@ -161,7 +183,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
