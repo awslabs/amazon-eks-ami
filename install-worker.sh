@@ -48,6 +48,8 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-rest
 sudo systemctl daemon-reload
 sudo systemctl enable iptables-restore
 
+echo ip_nat_ftp | sudo tee -a /etc/modules-load.d/modules.conf
+
 ################################################################################
 ### Docker #####################################################################
 ################################################################################
