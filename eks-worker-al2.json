@@ -1,11 +1,11 @@
 {
   "variables": {
-    "kubernetes_version": "1.11",
+    "kubernetes_version": "1.12",
     "aws_region": "us-west-2",
     "ami_name": "amazon-eks-node-{{timestamp}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.11.8/2019-03-13/bin/linux/amd64",
+    "binary_bucket_path": "",
     "docker_version": "18.06",
     "creator": "{{env `USER`}}",
     "instance_type": "m4.large",
@@ -15,7 +15,7 @@
     "encrypted": "false",
     "kms_key_id": "",
     "cni_version": "v0.6.0",
-    "cni_plugin_version": "v0.7.1",
+    "cni_plugin_version": "v0.7.5",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}"
