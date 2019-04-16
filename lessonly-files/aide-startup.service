@@ -1,0 +1,8 @@
+[Unit]
+Description = Check AIDE at startup
+
+[Service]
+ExecStart=/bin/aide-startup.sh
+
+[Install]
+WantedBy = multi-user.target

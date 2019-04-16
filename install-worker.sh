@@ -17,6 +17,7 @@ sudo yum update -y
 # Install necessary packages
 sudo yum install -y \
     aws-cfn-bootstrap \
+    awscli \
     chrony \
     conntrack \
     curl \
@@ -38,11 +39,6 @@ cat <<EOF | sudo tee -a /etc/chrony.conf
 # real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
 rtcsync
 EOF
-
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
 
 ################################################################################
 ### ClamAv #####################################################################
@@ -87,18 +83,25 @@ sudo systemctl enable iptables-restore
 ################################################################################
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-sudo amazon-linux-extras enable docker
-DOCKER_VERSION=${DOCKER_VERSION:-"18.06"}
-sudo yum install -y docker-${DOCKER_VERSION}*
-sudo usermod -aG docker $USER
 
-sudo mkdir -p /etc/docker
-sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
-sudo chown root:root /etc/docker/daemon.json
+INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
+if [[ "$INSTALL_DOCKER" == "true" ]]; then
+    sudo amazon-linux-extras enable docker
+    DOCKER_VERSION=${DOCKER_VERSION:-"18.06"}
+    sudo yum install -y docker-${DOCKER_VERSION}*
+    sudo usermod -aG docker $USER
 
-# Enable docker daemon to start on boot.
-sudo systemctl daemon-reload
-sudo systemctl enable docker
+    # Remove all options from sysconfig docker.
+    sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
+
+    sudo mkdir -p /etc/docker
+    sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+    sudo chown root:root /etc/docker/daemon.json
+
+    # Enable docker daemon to start on boot.
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker
+fi
 
 ################################################################################
 ### Logrotate ##################################################################
@@ -139,20 +142,35 @@ if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
     S3_DOMAIN="s3"
 fi
 S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
-
+S3_PATH="s3://$BINARY_BUCKET_NAME/$BINARY_BUCKET_PATH"
 BINARIES=(
     kubelet
     kubectl
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
-    sudo wget $S3_URL_BASE/$binary
-    sudo wget $S3_URL_BASE/$binary.sha256
+    if [[ ! -z "$AWS_ACCESS_KEY_ID" ]]; then
+        echo "AWS cli present - using it to copy binaries from s3."
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    else
+        echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
+        sudo wget $S3_URL_BASE/$binary
+        sudo wget $S3_URL_BASE/$binary.sha256
+    fi
     sudo sha256sum -c $binary.sha256
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
 done
 sudo rm *.sha256
+
+KUBELET_CONFIG=""
+if [ "$KUBERNETES_VERSION" = "1.10" ] || [ "$KUBERNETES_VERSION" = "1.11" ]; then
+    KUBELET_CONFIG=kubelet-config.json
+else
+    # For newer versions use this config to fix https://github.com/kubernetes/kubernetes/issues/74412.
+    KUBELET_CONFIG=kubelet-config-with-secret-polling.json
+fi
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
@@ -160,7 +178,7 @@ sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
+sudo mv $TEMPLATE_DIR/$KUBELET_CONFIG /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
@@ -186,7 +204,6 @@ cat <<EOF > /tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
-AMI_NAME="$AMI_NAME"
 ARCH="$(uname -m)"
 EOF
 sudo mv /tmp/release /etc/eks/release
@@ -212,18 +229,23 @@ sudo rm -rf \
 
 # Clean up files to reduce confusion during debug
 sudo rm -rf \
+    /etc/hostname \
     /etc/machine-id \
+    /etc/resolv.conf \
     /etc/ssh/ssh_host* \
-    /root/.ssh/authorized_keys \
     /home/ec2-user/.ssh/authorized_keys \
-    /var/log/secure \
-    /var/log/wtmp \
-    /var/lib/cloud/sem \
+    /root/.ssh/authorized_keys \
     /var/lib/cloud/data \
     /var/lib/cloud/instance \
     /var/lib/cloud/instances \
+    /var/lib/cloud/sem \
+    /var/lib/dhclient/* \
+    /var/lib/dhcp/dhclient.* \
+    /var/lib/yum/history \
+    /var/log/cloud-init-output.log \
     /var/log/cloud-init.log \
-    /var/log/cloud-init-output.log
+    /var/log/secure \
+    /var/log/wtmp
 
 sudo touch /etc/machine-id
 
@@ -253,6 +275,9 @@ sudo cp /tmp/lessonly/sysconfig-docker /etc/sysconfig/docker
 sudo systemctl enable aide-startup.service
 
 sudo mv -f /tmp/lessonly/limits.conf /etc/security/limits.conf
+
+# Update network sysctl settings
+sudo cp /tmp/lessonly/network-sysctl.conf /etc/sysctl.d/network-sysctl.conf
 
 
 # build aide library
