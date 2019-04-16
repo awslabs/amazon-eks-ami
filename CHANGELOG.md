@@ -1,5 +1,32 @@
 # Changelog
 
+### amazon-eks-node-1.12-v20190329 | amazon-eks-node-1.11-v20190329 | amazon-eks-node-1.10-v20190329
+
+Security Note: These AMIs contain builds of kubectl & CNI patched for [CVE-2019-1002101](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/) and [CVE-2019-9946](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/)
+
+Note: This release publishes first set of worker AMIs for EKS 1.12 launch
+
+* 77ae68a Correct version numbers in Changelog
+* 3e09987 Bump CNI plugin default value
+* fb0c393 Update eni-max-pods.txt (#231)
+* a809997 Update README with new worker AMIs published on 2019-03-27
+* a038aae Added 1.12 build in Makefile (#208)
+* 38eb8a8 Fixed search for 10.x CIDR range
+* 91ed091 Updated describe-cluster retry/backoff exponential with jitter
+* 907df9f Updated the sleep time to seconds from milliseconds
+* bc4216c Retry logic for describe cluster API call
+* 325f1cc Fixed regex to match 10.x in all cases
+* 7df0912 provide region during build
+* 086c6a3 Ability to provide custom ami during build
+* 6090f20 Updated binaries to latest releases
+* 04c520d Create custom kubelet config with TTL-based secret-caching
+* e5e5678 Fix downloading binaries from public s3 bucket.
+* ae9b7d7 Fix: mac address is returned with trailing slash which breaks CIDR call resulting in false ten range
+* 954d8b0 Allow pulling node binaries from private bucket (#175)
+* 9f20002 Removed ulimit reduction
+* a052b53 changed kube-proxy log rotation from create to copytruncate
+* d2c26e8 Switched to RPM install for AWS CLI
+
 ### amazon-eks-node-1.11-v20190220 | amazon-eks-node-1.10-v20190220
 
 * c1934bb Made docker install optional
