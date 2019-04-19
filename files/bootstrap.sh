@@ -22,6 +22,7 @@ function print_help {
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
+    echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
 }
 
 POSITIONAL=()
@@ -63,6 +64,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --docker-config-json)
+            DOCKER_CONFIG_JSON=$2
+            shift
+            shift
+            ;;
         --pause-container-account)
             PAUSE_CONTAINER_ACCOUNT=$2
             shift
@@ -91,6 +97,7 @@ APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
+DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 PAUSE_CONTAINER_ACCOUNT="${PAUSE_CONTAINER_ACCOUNT:-602401143452}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
 
@@ -191,6 +198,11 @@ if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
+fi
+
+# Replace with custom docker config contents.
+if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
+    echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
 fi
 
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
