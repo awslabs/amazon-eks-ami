@@ -20,7 +20,9 @@
     "cni_version": "",
     "cni_plugin_version": "",
     "kubernetes_build_date": "",
-    "kubernetes_version": ""
+    "kubernetes_version": "",
+    "subnet_id": "",
+    "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `binary_bucket_path`}}, docker:{{ user `docker_version`}})"
   },
 
   "builders": [
@@ -36,7 +38,7 @@
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "{{user `source_ami_owners`}}" ],
+        "owners": ["{{user `source_ami_owners`}}"],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -61,7 +63,7 @@
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
-          "creator": "{{user `creator`}}"
+        "creator": "{{user `creator`}}"
       },
       "tags": {
           "created": "{{timestamp}}",
@@ -73,7 +75,9 @@
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})",
-      "temporary_security_group_source_cidr": "{{user `temporary_security_group_source_cidr`}}"
+      "temporary_security_group_source_cidr": "{{user `temporary_security_group_source_cidr`}}",
+      "ami_description": "{{user `ami_description`}}",
+      "subnet_id": "{{ user `subnet_id` }}"
     }
   ],
 
