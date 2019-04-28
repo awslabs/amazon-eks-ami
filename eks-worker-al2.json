@@ -80,7 +80,6 @@
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
-      "ami_description": "{{user `ami_description`}}",
       "subnet_id": "{{ user `subnet_id` }}",
       "ssh_interface": "{{ user `ssh_interface` }}",
       "associate_public_ip_address": "{{user `associate_public_ip_address`}}"
