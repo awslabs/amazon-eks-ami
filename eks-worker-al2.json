@@ -94,12 +94,12 @@
     },
     {
       "type": "file",
-      "source": "./files/",
+      "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
     },
     {
       "type": "shell",
-      "script": "install-worker.sh",
+      "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
