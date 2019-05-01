@@ -94,6 +94,7 @@ m5.2xlarge 58
 m5.4xlarge 234
 m5.12xlarge 234
 m5.24xlarge 737
+m5.metal 737
 m5a.large 29
 m5a.xlarge 58
 m5a.2xlarge 58
@@ -130,6 +131,7 @@ r5.2xlarge 58
 r5.4xlarge 234
 r5.12xlarge 234
 r5.24xlarge 737
+r5.metal 737
 r5a.large 29
 r5a.xlarge 58
 r5a.2xlarge 58
@@ -142,6 +144,7 @@ r5d.2xlarge 58
 r5d.4xlarge 234
 r5d.12xlarge 234
 r5d.24xlarge 737
+r5d.metal 737
 t1.micro 4
 t2.nano 4
 t2.micro 4
@@ -171,3 +174,4 @@ z1d.2xlarge 58
 z1d.3xlarge 234
 z1d.6xlarge 234
 z1d.12xlarge 737
+z1d.metal 737
