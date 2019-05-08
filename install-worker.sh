@@ -170,7 +170,8 @@ done
 sudo rm *.sha256
 
 KUBELET_CONFIG=""
-if [ "$KUBERNETES_VERSION" = "1.10" ] || [ "$KUBERNETES_VERSION" = "1.11" ]; then
+KUBERNETES_MINOR_VERSION=${KUBERNETES_VERSION%.*}
+if [ "$KUBERNETES_MINOR_VERSION" = "1.10" ] || [ "$KUBERNETES_MINOR_VERSION" = "1.11" ]; then
     KUBELET_CONFIG=kubelet-config.json
 else
     # For newer versions use this config to fix https://github.com/kubernetes/kubernetes/issues/74412.
