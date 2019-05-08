@@ -91,9 +91,8 @@
       "script": "install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
         "CNI_VERSION={{user `cni_version`}}",
