@@ -6,6 +6,9 @@ ARCH ?= x86_64
 BINARY_BUCKET_NAME ?= amazon-eks
 SOURCE_AMI_OWNERS ?= 137112412989
 
+PACKER_BINARY ?= packer
+AWS_BINARY ?= aws
+
 ifeq ($(ARCH), arm64)
 INSTANCE_TYPE ?= a1.large
 else
@@ -26,14 +29,14 @@ all: 1.10 1.11 1.12
 
 .PHONY: validate
 validate:
-	packer validate \
+	$(PACKER_BINARY) validate \
 		-var instance_type=$(INSTANCE_TYPE) \
 		eks-worker-al2.json
 
 .PHONY: k8s
 k8s: validate
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(VERSION)$(T_GREEN) on $(T_YELLOW)$(ARCH)$(T_RESET)"
-	$(eval SOURCE_AMI_ID := $(shell aws ec2 describe-images \
+	$(eval SOURCE_AMI_ID := $(shell $(AWS_BINARY) ec2 describe-images \
 		--output text \
 		--filters \
 			Name=owner-id,Values=$(SOURCE_AMI_OWNERS) \
@@ -47,7 +50,7 @@ k8s: validate
 		echo "$(T_RED)Failed to find candidate AMI!$(T_RESET)"; \
 		exit 1; \
 	fi
-	packer build \
+	$(PACKER_BINARY) build \
 		-var instance_type=$(INSTANCE_TYPE) \
 		-var kubernetes_version=$(VERSION) \
 		-var kubernetes_build_date=$(KUBERNETES_BUILD_DATE) \
