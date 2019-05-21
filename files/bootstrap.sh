@@ -137,7 +137,8 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
             --name=${CLUSTER_NAME} \
             --output=text \
             --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
-        if [[ $rc -eq 0 ]]; then
+        # Sometimes AWS API returns None to CA and endpoint, it's necessary to retry if it happens
+        if [[ $rc -eq 0 ]] && ! grep -q "None" $DESCRIBE_CLUSTER_RESULT; then
             break
         fi
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
