@@ -203,6 +203,7 @@ fi
 # Replace with custom docker config contents.
 if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
     echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
+    systemctl restart docker
 fi
 
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
