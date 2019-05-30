@@ -79,9 +79,9 @@ EOF
 
 # Make tsc the clock source
 if grep --quiet tsc /sys/devices/system/clocksource/clocksource0/available_clocksource; then
-    sudo bash -c "echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource"
+    echo "tsc" | sudo tee /sys/devices/system/clocksource/clocksource0/current_clocksource
 else
-    sudo logger "tsc as a clock source is not applicable, skipping."
+    echo "tsc as a clock source is not applicable, skipping."
 fi
 
 ################################################################################
