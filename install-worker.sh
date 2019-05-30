@@ -63,6 +63,10 @@ sudo yum install -y \
     unzip \
     wget
 
+################################################################################
+### Time #######################################################################
+################################################################################
+
 # Make sure Amazon Time Sync Service starts on boot.
 sudo chkconfig chronyd on
 
@@ -72,6 +76,13 @@ cat <<EOF | sudo tee -a /etc/chrony.conf
 # real-time clock. Note that it can’t be used along with the 'rtcfile' directive.
 rtcsync
 EOF
+
+# Make tsc the clock source
+if grep --quiet tsc /sys/devices/system/clocksource/clocksource0/available_clocksource; then
+    echo "tsc" | sudo tee /sys/devices/system/clocksource/clocksource0/current_clocksource
+else
+    echo "tsc as a clock source is not applicable, skipping."
+fi
 
 ################################################################################
 ### iptables ###################################################################
