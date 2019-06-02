@@ -132,6 +132,11 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
+
+        aws eks wait cluster-active \
+            --region=${AWS_DEFAULT_REGION} \
+            --name=${CLUSTER_NAME}
+
         aws eks describe-cluster \
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
