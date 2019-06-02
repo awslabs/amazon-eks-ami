@@ -132,13 +132,17 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
+
+        aws eks wait cluster-active \
+            --region=${AWS_DEFAULT_REGION} \
+            --name=${CLUSTER_NAME}
+
         aws eks describe-cluster \
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
             --output=text \
             --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
-        # Sometimes AWS API returns None to CA and endpoint, it's necessary to retry if it happens
-        if [[ $rc -eq 0 ]] && ! grep -q "None" $DESCRIBE_CLUSTER_RESULT; then
+        if [[ $rc -eq 0 ]]; then
             break
         fi
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
