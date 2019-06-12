@@ -32,6 +32,7 @@ validate_env_set KUBERNETES_BUILD_DATE
 ### Machine Architecture #######################################################
 ################################################################################
 
+OS=$(uname -s | tr '[[:upper:]]' '[[:lower:]]')
 MACHINE=$(uname -m)
 if [ "$MACHINE" == "x86_64" ]; then
     ARCH="amd64"
@@ -138,19 +139,19 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
-wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
-wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
-sudo sha512sum -c cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
-sudo tar -xvf cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
-rm cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
+wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+sudo sha512sum -c cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+sudo tar -xvf cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
+rm cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz cni-plugins-${OS}-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="s3-$BINARY_BUCKET_REGION"
 if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
     S3_DOMAIN="s3"
 fi
-S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
-S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/$OS/$ARCH"
+S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/$OS/$ARCH"
 
 BINARIES=(
     kubelet
