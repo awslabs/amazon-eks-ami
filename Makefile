@@ -51,6 +51,7 @@ k8s: validate
 		exit 1; \
 	fi
 	$(PACKER_BINARY) build \
+		-var aws_region=$(AWS_DEFAULT_REGION) \
 		-var instance_type=$(INSTANCE_TYPE) \
 		-var kubernetes_version=$(VERSION) \
 		-var kubernetes_build_date=$(KUBERNETES_BUILD_DATE) \
