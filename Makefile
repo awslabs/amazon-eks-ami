@@ -44,7 +44,7 @@ validate:
 
 .PHONY: k8s
 k8s: validate
-	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(VERSION)$(T_GREEN) on $(T_YELLOW)$(ARCH)$(T_RESET)"
+	@echo -e "$(T_GREEN)Building AMI for version $(T_YELLOW)$(VERSION)$(T_GREEN) on $(T_YELLOW)$(ARCH)$(T_RESET)"
 	$(eval SOURCE_AMI_ID := $(shell $(AWS_BINARY) ec2 describe-images \
 		--output text \
 		--filters \
@@ -56,7 +56,7 @@ k8s: validate
 			Name=state,Values=available \
 		--query 'max_by(Images[], &CreationDate).ImageId'))
 	@if [ -z "$(SOURCE_AMI_ID)" ]; then\
-		echo "$(T_RED)Failed to find candidate AMI!$(T_RESET)"; \
+		echo -e "$(T_RED)Failed to find candidate AMI!$(T_RESET)"; \
 		exit 1; \
 	fi
 	$(PACKER_BINARY) build \
