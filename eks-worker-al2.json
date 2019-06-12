@@ -20,13 +20,17 @@
     "cni_version": "",
     "cni_plugin_version": "",
     "kubernetes_build_date": "",
-    "kubernetes_version": ""
+    "kubernetes_version": "",
+    "aws_vpc_id": "",
+    "aws_subnet_id": ""
   },
 
   "builders": [
     {
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
+      "vpc_id": "{{user `aws_vpc_id`}}",
+      "subnet_id": "{{user `aws_subnet_id`}}",
       "source_ami": "{{user `source_ami_id`}}",
       "source_ami_filter": {
         "filters": {

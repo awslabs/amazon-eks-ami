@@ -9,6 +9,16 @@ SOURCE_AMI_OWNERS ?= 137112412989
 PACKER_BINARY ?= packer
 AWS_BINARY ?= aws
 
+AWS_VPC_ID =
+ifeq ($(strip $(AWS_VPC_ID)),)
+$(error Please set AWS_VPC_ID)
+endif
+
+AWS_SUBNET_ID =
+ifeq ($(strip $(AWS_SUBNET_ID)),)
+$(error Please set AWS_SUBNET_ID)
+endif
+
 ifeq ($(ARCH), arm64)
 INSTANCE_TYPE ?= a1.large
 else
@@ -61,6 +71,8 @@ k8s: validate
 		-var cni_version=$(CNI_VERSION) \
 		-var cni_plugin_version=$(CNI_PLUGIN_VERSION) \
 		-var docker_version=$(DOCKER_VERSION) \
+		-var aws_vpc_id=$(AWS_VPC_ID) \
+		-var aws_subnet_id=$(AWS_SUBNET_ID) \
 		eks-worker-al2.json
 
 .PHONY: 1.10
