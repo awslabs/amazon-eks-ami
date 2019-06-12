@@ -1,6 +1,5 @@
 DOCKER_VERSION ?= 18.06
 KUBERNETES_BUILD_DATE ?= 2019-03-27
-CNI_VERSION ?= v0.7.1
 CNI_PLUGIN_VERSION ?= v0.8.1
 ARCH ?= x86_64
 BINARY_BUCKET_NAME ?= amazon-eks
@@ -68,7 +67,6 @@ k8s: validate
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		-var arch=$(ARCH) \
 		-var binary_bucket_name=$(BINARY_BUCKET_NAME) \
-		-var cni_version=$(CNI_VERSION) \
 		-var cni_plugin_version=$(CNI_PLUGIN_VERSION) \
 		-var docker_version=$(DOCKER_VERSION) \
 		-var aws_vpc_id=$(AWS_VPC_ID) \

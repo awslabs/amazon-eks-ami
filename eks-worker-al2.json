@@ -17,7 +17,6 @@
     "docker_version": "",
     "source_ami_id": "",
     "kms_key_id": "",
-    "cni_version": "",
     "cni_plugin_version": "",
     "kubernetes_build_date": "",
     "kubernetes_version": "",
@@ -72,7 +71,6 @@
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
           "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-          "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
@@ -99,7 +97,6 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
-        "CNI_VERSION={{user `cni_version`}}",
         "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
