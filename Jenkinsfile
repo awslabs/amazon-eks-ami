@@ -40,6 +40,7 @@ OGPipeline(containers) {
     // Check version
     container('packer') {
       sh 'packer version'
+      sh 'apk add --no-cache build-base'
     }
 
     // Save the configuration as an artifact
