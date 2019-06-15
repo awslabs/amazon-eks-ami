@@ -40,7 +40,9 @@ OGPipeline(containers) {
     // Check version
     container('packer') {
       sh 'packer version'
-      sh 'apk add --no-cache build-base'
+      sh 'apk add --no-cache build-base python py-pip'
+      sh 'pip install --upgrade awscli'
+
     }
 
     // Save the configuration as an artifact
