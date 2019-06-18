@@ -1,7 +1,7 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "amazon-eks-node-{{timestamp}}",
+    "ami_name": "og-amazon-eks-node-{{timestamp}}",
     "ami_regions":"us-west-2,us-east-1",
     "binary_bucket_region": "us-west-2",
     "creator": "{{env `USER`}}",
