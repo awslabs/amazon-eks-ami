@@ -5,6 +5,8 @@ CNI_PLUGIN_VERSION ?= v0.7.5
 ARCH ?= x86_64
 BINARY_BUCKET_NAME ?= amazon-eks
 SOURCE_AMI_OWNERS ?= 137112412989
+OG_IMAGE_VERSION ?= 1.0.0
+AMI_REGIONS ?= us-west-2,us-east-1
 
 PACKER_BINARY ?= packer
 AWS_BINARY ?= aws
@@ -60,6 +62,8 @@ k8s: validate
 		-var cni_version=$(CNI_VERSION) \
 		-var cni_plugin_version=$(CNI_PLUGIN_VERSION) \
 		-var docker_version=$(DOCKER_VERSION) \
+		-var og_image_version=$(OG_IMAGE_VERSION) \
+		-var ami_regions=$(AMI_REGIONS) \
 		eks-worker-al2.json
 
 .PHONY: 1.10

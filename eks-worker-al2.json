@@ -1,12 +1,12 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "amazon-eks-node-{{timestamp}}",
+    "ami_name": "og-amazon-eks-node-{{timestamp}}",
     "binary_bucket_region": "us-west-2",
     "creator": "{{env `USER`}}",
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
-    "encrypted": "false",
+    "encrypted": "true",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
@@ -20,7 +20,9 @@
     "cni_version": "",
     "cni_plugin_version": "",
     "kubernetes_build_date": "",
-    "kubernetes_version": ""
+    "kubernetes_version": "",
+    "og_image_version": "",
+    "ami_regions": ""
   },
 
   "builders": [
@@ -69,10 +71,12 @@
           "source_ami_id": "{{ user `source_ami_id`}}",
           "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
           "cni_version": "{{ user `cni_version`}}",
-          "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+          "cni_plugin_version": "{{ user `cni_plugin_version`}}",
+          "og_image_version": "{{ user `og_image_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
+      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})",
+      "ami_regions":  "{{user `ami_regions`}}" 
     }
   ],
 
