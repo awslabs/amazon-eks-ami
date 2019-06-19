@@ -24,13 +24,21 @@ OGPipeline(containers) {
     // Get all relevant Git information
     config.git = [:]
     config.git.isPullRequest = env.CHANGE_ID.asBoolean() // Only set if its a pull request
+
+    echo "Initial Configuration: ${utils.jsonify(config)}"
+
     if (config.accountIds.isEmpty()) {
       if (config.git.isPullRequest){
+        echo 'Using default account for pull request build'
         config.accountIds = config.awsAccountsOnPullRequest
+
       } else {
+        echo 'Using default accounts for merge builds'
         config.accountIds = config.awsAccountsOnMerge
       }
     }
+
+    echo "Account IDs to build images for: ${utils.jsonify(config.accountIds)}"
 
     // Check version
     container('devops') {
@@ -45,22 +53,24 @@ OGPipeline(containers) {
   stage('Bake Encrypted AMIs') {
     def jobs = config.accountIds.collectEntries { accountId ->
       def job = {
-        withCredentials([usernamePassword(credentialsId: accountId, passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-          if (config.dry) {
-            echo "Would have ran: 'make VERSION=${KUBERNETES_VERSION} k8s'"
-            sh "touch ${PACKER_IMAGE_MANIFEST}"
-          } else {
+        if (config.dry) {
+          echo "Would have ran: 'make AMI_REGIONS=${config.regions} VERSION=${KUBERNETES_VERSION} k8s'"
+          sh "touch ${PACKER_IMAGE_MANIFEST}"
+        } else {
+
+          withCredentials([usernamePassword(credentialsId: accountId, passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
             container('devops') {
               sh "make AMI_REGIONS=${config.regions} VERSION=${KUBERNETES_VERSION} k8s"
-            }
-          }
+            } // container
+          }// withCredentials
         }
       }
+
       [accountId, job]
-    }
+    } // jobs
 
     parallel jobs
 
     archiveArtifacts(artifacts: PACKER_IMAGE_MANIFEST, fingerprint: true)
-  }
+  } // stage('Bake Encrypted AMIs')
 }
