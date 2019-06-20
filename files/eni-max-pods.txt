@@ -33,7 +33,9 @@ c5.xlarge 58
 c5.2xlarge 58
 c5.4xlarge 234
 c5.9xlarge 234
+c5.12xlarge 234
 c5.18xlarge 737
+c5.24xlarge 737
 c5d.large 29
 c5d.xlarge 58
 c5d.2xlarge 58
