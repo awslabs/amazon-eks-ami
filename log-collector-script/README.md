@@ -21,18 +21,28 @@ The project can be used in normal or enable_debug(**Caution: enable_debug will p
 
 ```
 # sudo bash eks-log-collector.sh --help
-USAGE: eks-log-collector --mode=collect|enable_debug
-       eks-log-collector --help
+USAGE: eks-log-collector --help [ --mode=collect|enable_debug --ignore_introspection=true|false --ignore_metrics=true|false ]
 
 OPTIONS:
-     --mode  Sets the desired mode of the script. For more information,
-             see the MODES section.
-     --help  Show this help message.
+   --mode  Has two parameters  1) collect or 2) enable_debug,:
+             collect        Gathers basic operating system, Docker daemon, and
+                            Amazon EKS related config files and logs. This is the default mode.
+             enable_debug   Enables debug mode for the Docker daemon(Not for production use)
 
-MODES:
-     collect        Gathers basic operating system, Docker daemon, and Amazon
-                    EKS related config files and logs. This is the default mode.
-     enable_debug   Enables debug mode for the Docker daemon
+   --ignore_introspection   To ignore introspection of IPAMD; Pass this flag if DISABLE_INTROSPECTION is enabled on CNI
+   
+   --ignore_metrics         To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI
+
+   --help  Show this help message.
+
+Example to Ignore IPAMD introspection: 
+sudo bash eks-log-collector.sh --ignore_introspection=true
+
+Example to Ignore IPAMD Prometheus metrics collection:  
+sudo bash eks-log-collector.sh --ignore_metrics=true
+
+Example to Ignore IPAMD introspection and Prometheus metrics collection:
+sudo bash eks-log-collector.sh --ignore_introspection=true --ignore_metrics=true   
 ```
 #### Example output in normal mode
 The following output shows this project running in normal mode.
@@ -40,7 +50,7 @@ The following output shows this project running in normal mode.
 ```
 sudo bash eks-log-collector.sh
 
-	This is version 0.0.4. New versions can be found at https://github.com/awslabs/amazon-eks-ami
+	This is version 0.5.0. New versions can be found at https://github.com/awslabs/amazon-eks-ami
 
 Trying to collect common operating system logs... 
 Trying to collect kernel logs... 
