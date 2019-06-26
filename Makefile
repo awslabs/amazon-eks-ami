@@ -73,10 +73,6 @@ k8s: validate
 		-var aws_subnet_id=$(AWS_SUBNET_ID) \
 		eks-worker-al2.json
 
-.PHONY: 1.10
-1.10: validate
-	$(MAKE) VERSION=1.10.13 k8s
-
 .PHONY: 1.11
 1.11: validate
 	$(MAKE) VERSION=1.11.9 k8s
