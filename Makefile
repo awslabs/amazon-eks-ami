@@ -34,16 +34,15 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.11 1.12 1.13
+all: 1.11 1.12.7 1.12.9 1.13
 
 .PHONY: validate
 validate:
-	$(PACKER_BINARY) validate \
-		-var instance_type=$(INSTANCE_TYPE) \
-		eks-worker-al2.json
+	$(PACKER_BINARY) validate -var instance_type=$(INSTANCE_TYPE) eks-worker-al2.json
 
 .PHONY: k8s
 k8s: validate
+	@$(AWS_BINARY) s3 ls s3://amazon-eks/$(VERSION)/$(KUBERNETES_BUILD_DATE)/bin/ >/dev/null 2>&1
 	@echo -e "$(T_GREEN)Building AMI for version $(T_YELLOW)$(VERSION)$(T_GREEN) on $(T_YELLOW)$(ARCH)$(T_RESET)"
 	$(eval SOURCE_AMI_ID := $(shell $(AWS_BINARY) ec2 describe-images \
 		--output text \
@@ -77,10 +76,14 @@ k8s: validate
 1.11: validate
 	$(MAKE) VERSION=1.11.9 k8s
 
-.PHONY: 1.12
-1.12: validate
+.PHONY: 1.12.7
+1.12.7: validate
 	$(MAKE) VERSION=1.12.7 k8s
+
+.PHONY: 1.12.9
+1.12.9: validate
+	$(MAKE) VERSION=1.12.9 KUBERNETES_BUILD_DATE=2019-06-21 k8s
 
 .PHONY: 1.13
 1.13: validate
-	$(MAKE) VERSION=1.13.7 k8s
+	$(MAKE) VERSION=1.13.7 KUBERNETES_BUILD_DATE=2019-06-11 k8s
