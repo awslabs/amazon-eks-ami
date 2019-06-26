@@ -77,8 +77,9 @@ cat <<EOF | sudo tee -a /etc/chrony.conf
 rtcsync
 EOF
 
-# Make tsc the clock source
-if grep --quiet tsc /sys/devices/system/clocksource/clocksource0/available_clocksource; then
+# If current clocksource is xen, switch to tsc
+if grep --quiet xen /sys/devices/system/clocksource/clocksource0/current_clocksource &&
+  grep --quiet tsc /sys/devices/system/clocksource/clocksource0/available_clocksource; then
     echo "tsc" | sudo tee /sys/devices/system/clocksource/clocksource0/current_clocksource
 else
     echo "tsc as a clock source is not applicable, skipping."

@@ -1,5 +1,27 @@
 # Changelog
 
+### amazon-eks-node-1.13-v20190614 | amazon-eks-node-1.12-v20190614 | amazon-eks-node-1.11-v20190614 | amazon-eks-node-1.10-v20190614 | amazon-eks-gpu-node-1.13-v20190614 | amazon-eks-gpu-node-1.12-v20190614 | amazon-eks-gpu-node-1.11-v20190614 | amazon-eks-gpu-node-1.10-v20190614
+
+Security Note: These AMIs contain OS(AmazonLinux2) patched for [CVE-2019-11477, CVE-2019-11478, CVE-2019-11479](https://aws.amazon.com/security/security-bulletins/AWS-2019-005/)
+
+Note: This release also publishes first set of worker AMIs for EKS 1.13 launch
+
+* b1726c1 Fix issue with 1.10 build
+* f2525cb Change clocksource only if using xen
+* 16bd031 files/kubelet: specify "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+* 88ca2ac Retry if AWS API returns None (#274)
+* 6f3354a Add a docker daemon restart after custom daemon.json
+* 92e33a8 Making tsc the clock source (#272)
+* eccfa3a Use kubernetes minor version to choose kubelet config
+* 32d2ac4 Update nodegroup values
+* 5b99e15 Add new instance types
+* b061339 Restrict kubelet to only use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 for tls cipher suites
+* fe39deb add build spec for amazon's internal build process
+* b5a78b9 add options to configure packer/aws binary
+* ac67f2a Allow custom config for docker daemon
+* ca5559a Add ARM support
+* 2caf69b Updated bug-report.md and question.md instructions to currently existing release info location - /etc/eks/release (#242)
+
 ### amazon-eks-node-1.12-v20190329 | amazon-eks-node-1.11-v20190329 | amazon-eks-node-1.10-v20190329
 
 Security Note: These AMIs contain builds of kubectl & CNI patched for [CVE-2019-1002101](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/) and [CVE-2019-9946](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/)
