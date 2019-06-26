@@ -80,3 +80,7 @@ k8s: validate
 .PHONY: 1.12
 1.12: validate
 	$(MAKE) VERSION=1.12.7 k8s
+
+.PHONY: 1.13
+1.13: validate
+	$(MAKE) VERSION=1.13.7 k8s
