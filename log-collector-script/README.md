@@ -7,7 +7,7 @@
 
 * Run this project as the root user:
 ```
-curl -O https://raw.githubusercontent.com/nithu0115/eks-logs-collector/master/eks-log-collector.sh
+curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/eks-log-collector.sh
 sudo bash eks-log-collector.sh
 ```
 
