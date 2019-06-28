@@ -159,13 +159,7 @@ fi
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
-kubectl config \
-    --kubeconfig /var/lib/kubelet/kubeconfig \
-    set-cluster \
-    kubernetes \
-    --certificate-authority=/etc/kubernetes/pki/ca.crt \
-    --server=$APISERVER_ENDPOINT
-
+sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
