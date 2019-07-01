@@ -162,7 +162,6 @@ S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin
 
 BINARIES=(
     kubelet
-    kubectl
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
