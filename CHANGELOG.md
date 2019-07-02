@@ -1,5 +1,14 @@
 # Changelog
 
+### amazon-eks-node-1.13-v20190701 | amazon-eks-node-1.12-v20190701 | amazon-eks-node-1.11-v20190701 | amazon-eks-node-1.10-v20190701 | amazon-eks-gpu-node-1.13-v20190701 | amazon-eks-gpu-node-1.12-v20190701 | amazon-eks-gpu-node-1.11-v20190701 | amazon-eks-gpu-node-1.10-v20190701
+
+Note: The AMI no longer contains kubectl. If you rely on kubectl being present, you can download it from the S3 bucket `s3://amazon-eks/`
+
+* ca61cc2 remove kubectl dependency (#295)
+* 400dd58 Update eks-log-collector.sh URL on readme
+* e4fe057 Moving log collector script to Amazon eks ami repo (#243)
+* e8b50ba add changelog for 20190614
+
 ### amazon-eks-node-1.13-v20190614 | amazon-eks-node-1.12-v20190614 | amazon-eks-node-1.11-v20190614 | amazon-eks-node-1.10-v20190614 | amazon-eks-gpu-node-1.13-v20190614 | amazon-eks-gpu-node-1.12-v20190614 | amazon-eks-gpu-node-1.11-v20190614 | amazon-eks-gpu-node-1.10-v20190614
 
 Security Note: These AMIs contain OS(AmazonLinux2) patched for [CVE-2019-11477, CVE-2019-11478, CVE-2019-11479](https://aws.amazon.com/security/security-bulletins/AWS-2019-005/)
