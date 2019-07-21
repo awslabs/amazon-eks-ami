@@ -23,7 +23,7 @@
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "arch": null,
     "instance_type": null,
-    "ami_description": "A Redhat RHEL 8 EKS-optimized node.",
+    "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
 
     "ssh_interface": "",
     "ssh_username": "ec2-user",
@@ -58,7 +58,7 @@
           "delete_on_termination": true
         }
       ],
-      "ami_block_device_mappings": [
+      "ami_block_device_mappings": [    
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
@@ -78,6 +78,7 @@
       },
       "subnet_id": "{{user `subnet_id`}}",
       "tags": {
+          "Name": "{{user `ami_name`}}",
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
