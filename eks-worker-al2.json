@@ -22,7 +22,15 @@
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "arch": null,
-    "instance_type": null
+    "instance_type": null,
+    "ami_description": "A Redhat RHEL 8 EKS-optimized node.",
+
+    "ssh_interface": "",
+    "ssh_username": "ec2-user",
+    "temporary_security_group_source_cidrs": "",
+    "associate_public_ip_address": ""
+  
+
   },
 
   "builders": [
@@ -58,7 +66,10 @@
           "delete_on_termination": true
         }
       ],
-      "ssh_username": "ec2-user",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_interface": "{{user `ssh_interface`}}",
+      "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
