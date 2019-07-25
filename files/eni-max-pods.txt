@@ -184,7 +184,7 @@ t3.xlarge 58
 t3.2xlarge 58
 t3a.nano 4
 t3a.micro 4
-t3a.small 11
+t3a.small 8
 t3a.medium 17
 t3a.large 35
 t3a.xlarge 58
