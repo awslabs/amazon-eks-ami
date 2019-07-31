@@ -1,7 +1,7 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "amazon-eks-node-{{user `kubernetes_version`}}-v{{isotime `20060102`}}",
+    "ami_name": null,
     "creator": "{{env `USER`}}",
     "encrypted": "false",
     "kms_key_id": "",
