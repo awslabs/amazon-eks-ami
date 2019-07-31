@@ -22,7 +22,15 @@
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "arch": null,
-    "instance_type": null
+    "instance_type": null,
+    "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
+
+    "ssh_interface": "",
+    "ssh_username": "ec2-user",
+    "temporary_security_group_source_cidrs": "",
+    "associate_public_ip_address": "",
+    "subnet_id": ""
+
   },
 
   "builders": [
@@ -50,7 +58,7 @@
           "delete_on_termination": true
         }
       ],
-      "ami_block_device_mappings": [
+      "ami_block_device_mappings": [    
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
@@ -58,14 +66,19 @@
           "delete_on_termination": true
         }
       ],
-      "ssh_username": "ec2-user",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_interface": "{{user `ssh_interface`}}",
+      "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
           "creator": "{{user `creator`}}"
       },
+      "subnet_id": "{{user `subnet_id`}}",
       "tags": {
+          "Name": "{{user `ami_name`}}",
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
@@ -74,7 +87,7 @@
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
+      "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],
 
@@ -85,12 +98,12 @@
     },
     {
       "type": "file",
-      "source": "./files/",
+      "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
     },
     {
       "type": "shell",
-      "script": "install-worker.sh",
+      "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
