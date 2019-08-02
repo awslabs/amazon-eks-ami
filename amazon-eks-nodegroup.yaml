@@ -8,6 +8,10 @@ Parameters:
     Description: The EC2 Key Pair to allow SSH access to the instances
     Type: AWS::EC2::KeyPair::KeyName
 
+  MySecurityGroups:
+    Description: Set you hope to add Secury Groups to the instances
+    Type: List<AWS::EC2::SecurityGroup::Id>
+
   NodeImageId:
     Description: AMI id for the node instances.
     Type: AWS::EC2::Image::Id
@@ -426,8 +430,11 @@ Resources:
       ImageId: !Ref NodeImageId
       InstanceType: !Ref NodeInstanceType
       KeyName: !Ref KeyName
-      SecurityGroups:
-        - !Ref NodeSecurityGroup
+      SecurityGroups: !Split
+        - ","
+        - !Sub
+          - "${MySecurityGroupidList},${NodeSecurityGroup}"
+          - MySecurityGroupidList: !Join [",",!Ref "MySecurityGroups"]
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
