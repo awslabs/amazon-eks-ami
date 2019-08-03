@@ -9,7 +9,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
 
   MySecurityGroups:
-    Description: Set you hope to add Secury Groups to the instances
+    Description: Set you hope to add Security Groups to the instances
     Type: List<AWS::EC2::SecurityGroup::Id>
 
   NodeImageId:
