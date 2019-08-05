@@ -17,20 +17,20 @@ sudo yum update -y
 # Install necessary packages
 sudo yum install -y \
     aws-cfn-bootstrap \
+    awscli \
+    chrony \
     conntrack \
     curl \
+    jq \
+    ec2-instance-connect \
     nfs-utils \
-    ntp \
     socat \
     unzip \
-    wget
+    ntp \
+    wget \
+    git
 
 sudo systemctl enable ntpd
-
-curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-sudo python get-pip.py
-rm get-pip.py
-sudo pip install --upgrade awscli
 
 ################################################################################
 ### iptables ###################################################################

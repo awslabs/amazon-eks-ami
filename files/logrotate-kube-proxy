@@ -1,4 +1,6 @@
 /var/log/kube-proxy.log {
+    copytruncate
+    missingok
     rotate 5
     daily
     compress
