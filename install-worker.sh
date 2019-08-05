@@ -55,7 +55,7 @@ sudo yum install -y gcc kernel-devel-$(uname -r) dkms
 # https://gist.github.com/wangruohui/df039f0dc434d6486f5d4d098aa52d07#install-dependencies
 # option -s is used for silent installation which should used for batch installation. For installation on a single computer, this option should be turned off for more installtion information
 # option --dkms is used for register dkms module into the kernel so that update of the kernel will not require a reinstallation of the driver. This option should be turned on by default. 
-aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+sudo aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
 sudo /bin/sh ./NVIDIA-Linux-x86_64*.run --dkms -s
 
 # Optimizing GPU Settings (P2, P3, and G3 Instances)
@@ -117,16 +117,6 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.re
 
 # Install nvidia-docker2 and reload the Docker daemon configuration
 sudo yum install -y nvidia-docker2
-
-# Debug docker service options
-sudo mkdir /etc/systemd/system/docker.service.d
-sudo ls -lah /etc/systemd/system/docker.service.d/
-# Create /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
-sudo touch /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
-sudo chmod 666 /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
-sudo echo "[Service]" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
-sudo echo "ExecStart=" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
-sudo echo "ExecStart=/usr/bin/dockerd --default-runtime=nvidia" >> /etc/systemd/system/docker.service.d/nvidia-docker-dropin.conf
 
 # Remove all options from sysconfig docker.
 sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
