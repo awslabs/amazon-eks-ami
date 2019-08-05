@@ -1,16 +1,34 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "amazon-eks-node-{{timestamp}}",
+    "ami_name": null,
     "iam_role": "epam-vae-nvidia-builder-profile",
+
+    "creator": "{{env `USER`}}",
+    "encrypted": "true",
+    "kms_key_id": "",
+    
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "binary_bucket_path": "1.10.3/2018-07-26/bin/linux/amd64",
-    "creator": "{{env `USER`}}",
-    "instance_type": "g3.4xlarge",
+    "kubernetes_version": null,
+    "kubernetes_build_date": null,
+    "docker_version": "18.06",
+    "cni_version": "v0.6.0",
+    "cni_plugin_version": "v0.7.5",
+    
     "source_ami_id": "",
-    "encrypted": "true",
-    "kms_key_id": ""
+    "source_ami_owners": "137112412989",
+    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
+    "arch": null,
+    "instance_type": "g3.4xlarge",
+    "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
+
+    "ssh_interface": "",
+    "ssh_username": "ec2-user",
+    "temporary_security_group_source_cidrs": "",
+    "associate_public_ip_address": "",
+    "subnet_id": ""
+
   },
 
   "builders": [
@@ -20,13 +38,13 @@
       "source_ami": "{{user `source_ami_id`}}",
       "source_ami_filter": {
         "filters": {
-          "architecture": "x86_64",
-          "name": "amzn2-ami-minimal-hvm-*",
+          "name": "{{user `source_ami_filter_name`}}",
+          "architecture": "{{user `arch`}}",
           "root-device-type": "ebs",
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [ "137112412989" ],
+        "owners": [ "{{user `source_ami_owners`}}" ],
         "most_recent": true
       },
       "iam_instance_profile": "{{user `iam_role`}}",
@@ -35,22 +53,40 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
+          "volume_size": 4,
+          "delete_on_termination": true
+        }
+      ],
+      "ami_block_device_mappings": [    
+        {
+          "device_name": "/dev/xvda",
+          "volume_type": "gp2",
           "volume_size": 20,
           "delete_on_termination": true
         }
       ],
-      "ssh_username": "ec2-user",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_interface": "{{user `ssh_interface`}}",
+      "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
           "creator": "{{user `creator`}}"
       },
+      "subnet_id": "{{user `subnet_id`}}",
       "tags": {
-          "created": "{{timestamp}}"
+          "Name": "{{user `ami_name`}}",
+          "created": "{{timestamp}}",
+          "docker_version": "{{ user `docker_version`}}",
+          "source_ami_id": "{{ user `source_ami_id`}}",
+          "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
+          "cni_version": "{{ user `cni_version`}}",
+          "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image"
+      "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],
 
@@ -61,7 +97,7 @@
     },
     {
       "type": "file",
-      "source": "./files/",
+      "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
     },
     {
@@ -73,10 +109,18 @@
       "type": "shell",
       "script": "install-worker.sh",
       "pause_before": "120s",
+      "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "BINARY_BUCKET_PATH={{user `binary_bucket_path`}}",
-        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}"
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "DOCKER_VERSION={{user `docker_version`}}",
+        "CNI_VERSION={{user `cni_version`}}",
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
     }
   ],
