@@ -34,7 +34,7 @@ make createInstanceProfile
 The Makefile runs aws cloudformation to create the AWS IAM Role and InstanceProfile which will be used by Packer EBS builder Wait for the AWS IAM Role and EC2 Instance Profile to be created.
 
 ```bash
-make
+make 1.13.g3
 ```
 
 The Makefile runs Packer with the `eks-worker-al2.json` build specification
