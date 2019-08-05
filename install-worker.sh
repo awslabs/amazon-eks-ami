@@ -66,20 +66,6 @@ sudo nvidia-persistenced
 sudo nvidia-smi --auto-boost-default=0
 sudo nvidia-smi -ac 2505,1177
 
-# Install necessary packages
-sudo yum install -y \
-    aws-cfn-bootstrap \
-    awscli \
-    chrony \
-    conntrack \
-    curl \
-    jq \
-    ec2-instance-connect \
-    nfs-utils \
-    socat \
-    unzip \
-    wget
-
 ################################################################################
 ### Time #######################################################################
 ################################################################################
@@ -113,19 +99,16 @@ sudo echo "Removed NVIDIA GRID original config, override it from template."
 sudo cp -fpa /etc/nvidia/gridd.conf.template /etc/nvidia/gridd.conf
 sudo echo "Activated NVIDIA GRID Virtual Applications."
 
-# Enable forwarding via iptables
-sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable iptables-restore
-
 ################################################################################
 ### Docker #####################################################################
 ################################################################################
 
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+sudo amazon-linux-extras enable docker
+DOCKER_VERSION=${DOCKER_VERSION:-"18.06"}
+sudo yum install -y docker-${DOCKER_VERSION}*
+sudo usermod -aG docker $USER
+
 
 # Add the package repositories
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)

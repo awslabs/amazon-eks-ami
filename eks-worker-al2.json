@@ -23,11 +23,13 @@
     "instance_type": "g3.4xlarge",
     "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
 
-    "ssh_interface": "",
+    "ssh_interface": "public_dns",
+    "ssh_keypair_name": "epam-devops-oregon",
+    "ssh_private_key_file": "/home/csabi/.ssh/epam-devops-oregon.pem",
     "ssh_username": "ec2-user",
-    "temporary_security_group_source_cidrs": "",
-    "associate_public_ip_address": "",
-    "subnet_id": ""
+    "temporary_security_group_source_cidrs": "195.56.119.209/32",
+    "associate_public_ip_address": "true",
+    "subnet_id": "subnet-0e16800dcdebe928f"
 
   },
 
@@ -67,6 +69,8 @@
       ],
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
+      "ssh_keypair_name": "{{ user `ssh_keypair_name`}}",
+      "ssh_private_key_file": "{{ user `ssh_private_key_file`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
       "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
@@ -107,7 +111,6 @@
     },
     {
       "type": "shell",
-      "script": "install-worker.sh",
       "pause_before": "120s",
       "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [

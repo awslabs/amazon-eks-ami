@@ -35,7 +35,7 @@ ami: validate
 .PHONY: k8s
 k8s: validate
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(PACKER_BINARY) build $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)=$($(packerVar)),)) eks-worker-al2.json
+	$(PACKER_BINARY) build -on-error=ask $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)=$($(packerVar)),)) eks-worker-al2.json
 
 .PHONY: 1.10
 1.10:
@@ -52,3 +52,7 @@ k8s: validate
 .PHONY: 1.13
 1.13:
 	$(MAKE) k8s kubernetes_version=1.13.7 kubernetes_build_date=2019-06-11
+
+.PHONY: 1.13.g3
+1.13.g3:
+	$(MAKE) k8s kubernetes_version=1.13.7 kubernetes_build_date=2019-06-11 instance_type=g3.4xlarge
