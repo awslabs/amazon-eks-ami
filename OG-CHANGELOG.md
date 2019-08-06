@@ -1,5 +1,9 @@
 # Changelog
 
+1.2.0 - 08/06/2019
+-----------------------
+- Adding `southwest-aws` as an option for an account to create the AMI in
+
 1.1.0 - 06/20/2019
 -----------------------
 - Upgrade to EKS 1.13
