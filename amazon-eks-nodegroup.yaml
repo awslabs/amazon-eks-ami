@@ -256,6 +256,7 @@ Parameters:
   BootstrapArguments:
     Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
     Type: String
+    Default: ""
 
   NodeGroupName:
     Description: Unique identifier for the Node Group.
