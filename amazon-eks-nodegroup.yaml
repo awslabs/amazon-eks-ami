@@ -256,7 +256,6 @@ Parameters:
   BootstrapArguments:
     Description: Arguments to pass to the bootstrap script. See files/bootstrap.sh in https://github.com/awslabs/amazon-eks-ami
     Type: String
-    Default: ""
 
   NodeGroupName:
     Description: Unique identifier for the Node Group.
@@ -446,6 +445,7 @@ Resources:
           !Sub |
             #!/bin/bash
             set -o xtrace
+            sudo bash -lc "echo \"fs.inotify.max_user_watches = 524288\" >> /etc/sysctl.conf && sysctl -p"
             /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
             /opt/aws/bin/cfn-signal --exit-code $? \
                      --stack  ${AWS::StackName} \
