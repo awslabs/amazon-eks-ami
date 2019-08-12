@@ -22,6 +22,7 @@ function print_help {
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
+    echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
 }
 
 POSITIONAL=()
@@ -63,6 +64,21 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --docker-config-json)
+            DOCKER_CONFIG_JSON=$2
+            shift
+            shift
+            ;;
+        --pause-container-account)
+            PAUSE_CONTAINER_ACCOUNT=$2
+            shift
+            shift
+            ;;
+        --pause-container-version)
+            PAUSE_CONTAINER_VERSION=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -81,6 +97,18 @@ APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
+DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
+
+function get_pause_container_account_for_region () {
+    local region="$1"
+    case "${region}" in
+    ap-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}";;
+    *)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
+    esac
+}
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -89,6 +117,16 @@ fi
 
 ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
+
+MACHINE=$(uname -m)
+if [ "$MACHINE" == "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$MACHINE" == "aarch64" ]; then
+    ARCH="arm64"
+else
+    echo "Unknown machine architecture '$MACHINE'" >&2
+    exit 1
+fi
 
 ### kubelet kubeconfig
 
@@ -103,6 +141,11 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
+
+        aws eks wait cluster-active \
+            --region=${AWS_DEFAULT_REGION} \
+            --name=${CLUSTER_NAME}
+
         aws eks describe-cluster \
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
@@ -125,13 +168,7 @@ fi
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
-kubectl config \
-    --kubeconfig /var/lib/kubelet/kubeconfig \
-    set-cluster \
-    kubernetes \
-    --certificate-authority=/etc/kubernetes/pki/ca.crt \
-    --server=$APISERVER_ENDPOINT
-
+sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
@@ -161,7 +198,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=602401143452.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-amd64:3.1'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}").dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
@@ -169,6 +206,12 @@ if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
+fi
+
+# Replace with custom docker config contents.
+if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
+    echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
+    systemctl restart docker
 fi
 
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then

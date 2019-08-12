@@ -1,0 +1,44 @@
+{
+   "schemaVersion":"2.2",
+   "description":"EKS Log Collector",
+    "parameters":{
+       "bucketName":{
+           "type": "String",
+           "default": "Enabled"
+        }
+    },
+   "mainSteps":[
+      {
+         "action":"aws:runShellScript",
+         "name":"PatchLinux",
+         "precondition":{
+            "StringEquals":[
+               "platformType",
+               "Linux"
+            ]
+         },
+         "inputs":{
+            "runCommand":[
+               "curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/eks-log-collector.sh",
+               "bash ./eks-log-collector.sh  >/dev/null 2>&1",
+               "echo \"EKS logs collected\"",
+               "if [ -f /usr/local/bin/aws ]; then",
+               "echo \"AWS_already_installed\"",
+               "else",
+               "echo \"Installing AWSCLI\"",
+               "curl \"https://s3.amazonaws.com/aws-cli/awscli-bundle.zip\" -o \"awscli-bundle.zip\"  >/dev/null 2>&1",
+               "yum install unzip -y  >/dev/null 2>&1",
+               "unzip awscli-bundle.zip  >/dev/null 2>&1",
+               "./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws",
+               "echo \"AWSCLI version is\"",
+               "/usr/local/bin/aws --version",
+               "fi",
+               "echo \"Pushing to S3\"",
+               "/usr/local/bin/aws s3 cp --recursive /opt/log-collector/ s3://{{bucketName}}",
+               "echo \"Logs uploaded to S3\""
+            ]
+         }
+      }
+   ]
+}
+
