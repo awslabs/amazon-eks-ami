@@ -1,4 +1,23 @@
 # Changelog
+### AMI Release v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+#### Changes
+* 0468404 change the amiName pattern to use minor version (#307)
+* 19ff806 2107 allow private ssh when building (#303)
+* 2b9b501 add support for ap-east-1 region (#305)
+* ccae017 Fix t3a.small limit
+* f409acd Add new m5 and r5 instances
+* 8bbf269 Add c5.12xlarge and c5.24xlarge instances
+* 1f83c10 refactor packer variables
+* 41f4dd9 Install ec2-instance-connect
+* a40bd46 Added CHANGELOG for v20190701
+
+
 
 ### amazon-eks-node-1.13-v20190701 | amazon-eks-node-1.12-v20190701 | amazon-eks-node-1.11-v20190701 | amazon-eks-node-1.10-v20190701 | amazon-eks-gpu-node-1.13-v20190701 | amazon-eks-gpu-node-1.12-v20190701 | amazon-eks-gpu-node-1.11-v20190701 | amazon-eks-gpu-node-1.10-v20190701
 
