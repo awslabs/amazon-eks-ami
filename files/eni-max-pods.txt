@@ -208,6 +208,9 @@ t3a.medium 17
 t3a.large 35
 t3a.xlarge 58
 t3a.2xlarge 58
+u-6tb1.metal 147
+u-9tb1.metal 147
+u-12tb1.metal 147
 x1.16xlarge 234
 x1.32xlarge 234
 x1e.xlarge 29
