@@ -1,4 +1,24 @@
 # Changelog
+### AMI Release v20190906
+* amazon-eks-node-1.14-v20190906
+* amazon-eks-gpu-node-1.14-v20190906
+* amazon-eks-node-1.13-v20190906
+* amazon-eks-gpu-node-1.13-v20190906
+* amazon-eks-node-1.12-v20190906
+* amazon-eks-gpu-node-1.12-v20190906
+* amazon-eks-node-1.11-v20190906
+* amazon-eks-gpu-node-1.11-v20190906
+
+Changes:
+* c1ae2f3  Adding new directory and file for 1.14 and above by removing --allow-privileged=true flag (#327)
+* 5335ea8 add support for me-south-1 region (#322)
+* c4e03c1 Update list of instance types (#320)
+* 389f4ba update S3_URL_BASE environment variable in install-worker.sh
+
+Kubernetes Changes:
+* Kubelet patches with [HTTP2-cve](https://nvd.nist.gov/vuln/detail/CVE-2019-9512)
+* Kubelet patched with fix for https://github.com/kubernetes/kubernetes/issues/78164
+
 ### AMI Release v20190814
 * amazon-eks-node-1.13-v20190814
 * amazon-eks-gpu-node-1.13-v20190814
