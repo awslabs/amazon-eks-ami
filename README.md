@@ -61,6 +61,7 @@ versions by running `aws s3 ls s3://amazon-eks/cloudformation/`.
 
 | CloudFormation Version | EKS AMI versions                           | [amazon-vpc-cni-k8s](https://github.com/aws/amazon-vpc-cni-k8s/releases) |
 | ---------------------- | ------------------------------------------ | -------------------- |
+| 2019-09-17             | amazon-eks-node-(1.14,1.13,1.12,1.11)-v20190906 | v1.5.3
 | 2019-02-11             | amazon-eks-node-(1.12,1.11,1.10)-v20190327 | v1.3.2 (for p3dn.24xlarge instances) |
 | 2019-02-11             | amazon-eks-node-(1.11,1.10)-v20190220      | v1.3.2 (for p3dn.24xlarge instances) |
 | 2019-02-11             | amazon-eks-node-(1.11,1.10)-v20190211      | v1.3.2 (for p3dn.24xlarge instances) |
