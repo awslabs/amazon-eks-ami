@@ -64,6 +64,13 @@ g3s.xlarge 58
 g3.4xlarge 234
 g3.8xlarge 234
 g3.16xlarge 452
+g4dn.xlarge 29
+g4dn.2xlarge 29
+g4dn.4xlarge 29
+g4dn.8xlarge 58
+g4dn.16xlarge 58
+g4dn.12xlarge 234
+g4dn.metal 737
 h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
