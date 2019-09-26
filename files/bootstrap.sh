@@ -17,6 +17,7 @@ function print_help {
     echo ""
     echo "-h,--help print this help"
     echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
+    echo "--max-pods-override Sets --max-pods for the kubelet using a user specified value rather than the value retrieved from MAX_PODS_FILE."
     echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
@@ -36,6 +37,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --use-max-pods)
             USE_MAX_PODS="$2"
+            shift
+            shift
+            ;;
+        --max-pods-override)
+            MAX_PODS_OVERRIDE="$2"
             shift
             shift
             ;;
@@ -92,6 +98,7 @@ CLUSTER_NAME="$1"
 set -u
 
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
+MAX_PODS_OVERRIDE="${MAX_PODS_OVERRIDE:-0}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
@@ -186,7 +193,9 @@ echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONF
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 
-if [[ "$USE_MAX_PODS" = "true" ]]; then
+if [[ "$MAX_PODS_OVERRIDE" != "0" ]]; then
+    echo "$(jq ".maxPods=$MAX_PODS_OVERRIDE" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+elif [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
     set +o pipefail
     MAX_PODS=$(grep ^$INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
