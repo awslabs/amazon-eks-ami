@@ -1,4 +1,20 @@
 # Changelog
+
+### AMI Release v20190927
+* amazon-eks-node-1.14-v20190927
+* amazon-eks-gpu-node-1.14-v20190927
+* amazon-eks-node-1.13-v20190927
+* amazon-eks-gpu-node-1.13-v20190927
+* amazon-eks-node-1.12-v20190927
+* amazon-eks-gpu-node-1.12-v20190927
+* amazon-eks-node-1.11-v20190927
+* amazon-eks-gpu-node-1.11-v20190927
+
+Changes:
+* 0f11f6c Add G4DN instance family to node group template
+* ade31b0 Add support for g4 instance family
+* d9147f1 sync nodegroup template to latest available
+
 ### AMI Release v20190906
 * amazon-eks-node-1.14-v20190906
 * amazon-eks-gpu-node-1.14-v20190906
@@ -10,7 +26,7 @@
 * amazon-eks-gpu-node-1.11-v20190906
 
 Changes:
-* c1ae2f3  Adding new directory and file for 1.14 and above by removing --allow-privileged=true flag (#327)
+* c1ae2f3 Adding new directory and file for 1.14 and above by removing --allow-privileged=true flag (#327)
 * 5335ea8 add support for me-south-1 region (#322)
 * c4e03c1 Update list of instance types (#320)
 * 389f4ba update S3_URL_BASE environment variable in install-worker.sh
