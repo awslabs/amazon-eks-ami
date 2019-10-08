@@ -94,12 +94,13 @@
   "provisioners": [
     {
       "type": "shell",
-      "inline": ["mkdir -p /tmp/worker/"]
+      "inline": ["mkdir -p /home/ec2-user/worker/"],
+      "remote_folder": "/home/ec2-user"
     },
     {
       "type": "file",
       "source": "{{template_dir}}/files/",
-      "destination": "/tmp/worker/"
+      "destination": "/home/ec2-user/worker/"
     },
     {
       "type": "shell",
@@ -115,7 +116,8 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
-      ]
+      ],
+      "remote_folder": "/home/ec2-user"
     }
   ],
   "post-processors": [

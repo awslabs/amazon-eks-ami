@@ -5,7 +5,7 @@ set -o nounset
 set -o errexit
 IFS=$'\n\t'
 
-TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
+TEMPLATE_DIR=${TEMPLATE_DIR:-/home/ec2-user/worker}
 
 ################################################################################
 ### Validate Required Arguments ################################################
@@ -229,7 +229,7 @@ BUILD_KERNEL="$(uname -r)"
 ARCH="$(uname -m)"
 EOF
 sudo mv /tmp/release /etc/eks/release
-sudo chown root:root /etc/eks/*
+sudo chown root:root /etc/eks/{bootstrap.sh,eni-max-pods.txt,release}
 
 ################################################################################
 ### Cleanup ####################################################################
