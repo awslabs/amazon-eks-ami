@@ -28,6 +28,16 @@
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
+  "evictionHard": {
+    "memory.available": "100Mi",
+    "nodefs.available": "10%",
+    "nodefs.inodesFree": "5%"
+  },
+  "kubeReserved": {
+    "cpu": "60m",
+    "ephemeral-storage": "1Gi",
+    "memory": "0.24Gi"
+  },
   "serializeImagePulls": false,
   "serverTLSBootstrap": true
 }
