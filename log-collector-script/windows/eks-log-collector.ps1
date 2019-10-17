@@ -363,6 +363,6 @@ if ($RunMode -eq "Collect"){
     Write-Host "Disabling Debug for Docker" -foregroundcolor "blue"
     disable_debug
 } else {
-    Write-Host "You need to specify either Collect,Debug or DisableDebug RunMode" -ForegroundColor "red" 
+    Write-Host "You need to specify either Collect, EnableDebug or DisableDebug RunMode" -ForegroundColor "red" 
     Break
 }

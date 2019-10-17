@@ -21,7 +21,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.5.1"
+readonly PROGRAM_VERSION="0.5.2"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -177,7 +177,10 @@ log_parameters() {
 systemd_check() {
   if  command -v systemctl >/dev/null 2>&1; then
       INIT_TYPE="systemd"
-    else
+    if command -v snap >/dev/null 2>&1; then
+      INIT_TYPE="snap"
+    fi
+  else
       INIT_TYPE="other"
   fi
 }
@@ -337,7 +340,7 @@ get_docker_logs() {
   try "collect Docker daemon logs"
 
   case "${INIT_TYPE}" in
-    systemd)
+    systemd|snap)
       journalctl --unit=docker --since "${DAYS_10}" > "${COLLECT_DIR}"/docker/docker.log
       ;;
     other)
@@ -372,6 +375,11 @@ get_k8s_info() {
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
     kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
 
+  elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
+    KUBECONFIG="/var/lib/kubelet/kubeconfig"
+    command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
+    kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  
   else
     echo "======== Unable to find KUBECONFIG, IGNORING POD DATA =========" >> "${COLLECT_DIR}"/kubelet/svc.log
   fi
@@ -384,6 +392,11 @@ get_k8s_info() {
       for entry in kubelet kube-proxy; do
         systemctl cat "${entry}" > "${COLLECT_DIR}"/kubelet/"${entry}"_service.txt 2>&1
       done
+      ;;
+    snap)
+      timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
+
+      timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/"${entry}"_service.txt 2>&1
       ;;
     *)
       warning "The current operating system is not supported."
@@ -448,7 +461,7 @@ get_cni_config() {
 get_pkgtype() {
   if [[ "$(command -v rpm )" ]]; then
     PACKAGE_TYPE=rpm
-  elif [[ "$(command -v deb )" ]]; then
+  elif [[ "$(command -v dpkg )" ]]; then
     PACKAGE_TYPE=deb
   else
     PACKAGE_TYPE='unknown'
@@ -477,7 +490,7 @@ get_system_services() {
   try "collect active system services"
 
   case "${INIT_TYPE}" in
-    systemd)
+    systemd|snap)
       systemctl list-units > "${COLLECT_DIR}"/system/services.txt 2>&1
       ;;
     other)
