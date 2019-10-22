@@ -111,6 +111,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
 }
+PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION}
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -200,7 +202,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}").dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER_IMAGE'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
