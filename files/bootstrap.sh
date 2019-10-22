@@ -111,8 +111,6 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
 }
-PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION}
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -131,6 +129,10 @@ else
     echo "Unknown machine architecture '$MACHINE'" >&2
     exit 1
 fi
+
+PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}}
+PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
 
@@ -202,7 +204,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER_IMAGE'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
