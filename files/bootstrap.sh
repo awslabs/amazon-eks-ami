@@ -112,6 +112,91 @@ function get_pause_container_account_for_region () {
     esac
 }
 
+# Helper function which calculates the amount of the given resource (either CPU or memory)
+# to reserve in a given resource range, specified by a start and end of the range and a percentage
+# of the resource to reserve. Note that we return zero if the start of the resource range is
+# greater than the total resource capacity on the node. Additionally, if the end range exceeds the total
+# resource capacity of the node, we use the total resource capacity as the end of the range.
+# Args:
+#   $1 total available resource on the worker node in input unit (either millicores for CPU or Mi for memory)
+#   $2 start of the resource range in input unit
+#   $3 end of the resource range in input unit
+#   $4 percentage of range to reserve in percent*100 (to allow for two decimal digits)
+# Return:
+#   amount of resource to reserve in input unit
+get_resource_to_reserve_in_range() {
+  local total_resource_on_instance=$1
+  local start_range=$2
+  local end_range=$3
+  local percentage=$4
+  resources_to_reserve="0"
+  if (( $total_resource_on_instance > $start_range )); then
+    resources_to_reserve=$(((($total_resource_on_instance < $end_range ? \
+        $total_resource_on_instance : $end_range) - $start_range) * $percentage / 100 / 100))
+  fi
+  echo $resources_to_reserve
+}
+
+# Calculates the amount of memory to reserve for the kubelet in mebibytes from the total memory available on the instance.
+# From the total memory capacity of this worker node, we calculate the memory resources to reserve
+# by reserving a percentage of the memory in each range up to the total memory available on the instance.
+# We are using these memory ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
+# 255 Mi of memory for machines with less than 1024Mi of memory
+# 25% of the first 4096Mi of memory
+# 20% of the next 4096Mi of memory (up to 8192Mi)
+# 10% of the next 8192Mi of memory (up to 16384Mi)
+# 6% of the next 114688Mi of memory (up to 131072Mi)
+# 2% of any memory above 131072Mi
+# Args:
+#   $1 total available memory on the machine in Mi
+# Return:
+#   memory to reserve in Mi for the kubelet
+get_memory_mebibytes_to_reserve() {
+  local total_memory_on_instance=$1
+  local memory_ranges=(0 4096 8192 16384 131072 $total_memory_on_instance)
+  local memory_percentage_reserved_for_ranges=(2500 2000 1000 600 200)
+  if (( $total_memory_on_instance <= 1024 )); then
+    memory_to_reserve="255"
+  else
+    memory_to_reserve="0"
+    for i in ${!memory_percentage_reserved_for_ranges[@]}; do
+      local start_range=${memory_ranges[$i]}
+      local end_range=${memory_ranges[(($i+1))]}
+      local percentage_to_reserve_for_range=${memory_percentage_reserved_for_ranges[$i]}
+      memory_to_reserve=$(($memory_to_reserve + \
+          $(get_resource_to_reserve_in_range $total_memory_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
+    done
+  fi
+  echo $memory_to_reserve
+}
+
+# Calculates the amount of CPU to reserve for the kubelet in millicores from the total number of vCPUs available on the instance.
+# From the total core capacity of this worker node, we calculate the CPU resources to reserve by reserving a percentage
+# of the available cores in each range up to the total number of cores available on the instance.
+# We are using these CPU ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
+# 6% of the first core
+# 1% of the next core (up to 2 cores)
+# 0.5% of the next 2 cores (up to 4 cores)
+# 0.25% of any cores above 4 cores
+# Args:
+#   $1 total number of millicores on the instance (number of vCPUs * 1000)
+# Return:
+#   CPU resources to reserve in millicores (m)
+get_cpu_millicores_to_reserve() {
+  local total_cpu_on_instance=$1
+  local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
+  local cpu_percentage_reserved_for_ranges=(600 100 50 25)
+  cpu_to_reserve="0"
+  for i in ${!cpu_percentage_reserved_for_ranges[@]}; do
+    local start_range=${cpu_ranges[$i]}
+    local end_range=${cpu_ranges[(($i+1))]}
+    local percentage_to_reserve_for_range=${cpu_percentage_reserved_for_ranges[$i]}
+    cpu_to_reserve=$(($cpu_to_reserve + \
+        $(get_resource_to_reserve_in_range $total_cpu_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
+  done
+  echo $cpu_to_reserve
+}
+
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
     exit  1
@@ -186,6 +271,22 @@ fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+
+# Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
+# calls calculate the CPU and memory resources to reserve for the kubelet based on instance type of the worker node.
+# Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
+# with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
+
+# gets the memory and CPU capacity of the worker node
+MEMORY_MI=$(free -m | grep Mem | awk '{print $2}')
+CPU_MILLICORES=$(($(nproc) * 1000))
+# calculates the amount of each resource to reserve
+mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MEMORY_MI)
+cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve $CPU_MILLICORES)
+# writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
+echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
+    '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
