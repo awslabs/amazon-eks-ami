@@ -104,9 +104,20 @@ KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
-PAUSE_CONTAINER_ACCOUNT="${PAUSE_CONTAINER_ACCOUNT:-602401143452}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
 DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-10.100.0.10}"
+
+function get_pause_container_account_for_region () {
+    local region="$1"
+    case "${region}" in
+    ap-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}";;
+    me-south-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}";;
+    *)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
+    esac
+}
 
 if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
@@ -189,7 +200,7 @@ fi
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}").dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}:$PAUSE_CONTAINER_VERSION'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
