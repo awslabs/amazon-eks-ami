@@ -111,7 +111,10 @@ Parameters:
       - c5d.2xlarge
       - c5d.4xlarge
       - c5d.9xlarge
+      - c5d.12xlarge
       - c5d.18xlarge
+      - c5d.24xlarge
+      - c5d.metal
       - c5n.large
       - c5n.xlarge
       - c5n.2xlarge
