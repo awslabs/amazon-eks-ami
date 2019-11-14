@@ -25,9 +25,12 @@
   "hairpinMode": "hairpin-veth",
   "cgroupDriver": "cgroupfs",
   "cgroupRoot": "/",
+  "eventRecordQPS": 0,
   "featureGates": {
     "RotateKubeletServerCertificate": true
   },
+  "protectKernelDefaults": true,
+  "readOnlyPort": 0,
   "serializeImagePulls": false,
   "serverTLSBootstrap": true
 }
