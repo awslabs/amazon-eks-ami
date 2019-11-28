@@ -32,5 +32,6 @@
   "protectKernelDefaults": true,
   "readOnlyPort": 0,
   "serializeImagePulls": false,
-  "serverTLSBootstrap": true
+  "serverTLSBootstrap": true,
+  "tlsCipherSuites": ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
 }
