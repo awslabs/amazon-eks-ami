@@ -331,13 +331,3 @@ fi
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
-
-# Wait for the TLS certificate and private key to be present and add these to the config file so they are picked up the next time the kubelet starts.
-# These cannot be added upfront because they are not present when the kubelet first starts, and adding them would cause the kubelet to crash.
-TLS_CERT_FILE="/var/lib/kubelet/pki/kubelet-server-current.pem"
-while [[ ! -f $TLS_CERT_FILE ]]
-do
-  sleep 1
-done
-echo "$(jq ".tlsCertFile=\"$TLS_CERT_FILE\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
-echo "$(jq ".tlsPrivateKeyFile=\"$TLS_CERT_FILE\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
