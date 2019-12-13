@@ -64,6 +64,9 @@ sudo yum install -y \
     unzip \
     wget
 
+# Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
+if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
+
 ################################################################################
 ### Time #######################################################################
 ################################################################################
@@ -181,14 +184,7 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
-KUBELET_CONFIG=""
 KUBERNETES_MINOR_VERSION=${KUBERNETES_VERSION%.*}
-if [ "$KUBERNETES_MINOR_VERSION" = "1.10" ] || [ "$KUBERNETES_MINOR_VERSION" = "1.11" ]; then
-    KUBELET_CONFIG=kubelet-config.json
-else
-    # For newer versions use this config to fix https://github.com/kubernetes/kubernetes/issues/74412.
-    KUBELET_CONFIG=kubelet-config-with-secret-polling.json
-fi
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
@@ -200,7 +196,7 @@ else
     sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 fi
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/$KUBELET_CONFIG /etc/kubernetes/kubelet/kubelet-config.json
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
