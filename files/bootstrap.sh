@@ -105,7 +105,6 @@ ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
-DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-10.100.0.10}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -179,6 +178,17 @@ echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
+
+if [ -z ${DNS_CLUSTER_IP+x} ]; then
+    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    DNS_CLUSTER_IP=10.100.0.10
+    if [[ "$TEN_RANGE" != "0" ]]; then
+        DNS_CLUSTER_IP=172.20.0.10
+    fi
+else
+    DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-10.100.0.10}"
+fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
