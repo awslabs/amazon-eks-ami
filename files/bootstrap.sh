@@ -187,7 +187,7 @@ if [ -z ${DNS_CLUSTER_IP+x} ]; then
         DNS_CLUSTER_IP=172.20.0.10
     fi
 else
-    DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-10.100.0.10}"
+    DNS_CLUSTER_IP="${DNS_CLUSTER_IP}"
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
