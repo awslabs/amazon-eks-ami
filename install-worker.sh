@@ -102,6 +102,21 @@ sudo systemctl daemon-reload
 sudo systemctl enable iptables-restore
 
 ################################################################################
+### IPVS #######################################################################
+################################################################################
+
+# Check if IPVS should be enabled
+if [[ "$NETFILTER_MODULE" == "ipvs" ]]; then
+  sudo yum install ipvsadm -y
+  sudo modprobe ip_vs
+  sudo modprobe ip_vs_rr
+  sudo modprobe ip_vs_wrr
+  sudo modprobe ip_vs_sh
+  sudo modprobe nf_conntrack_ipv4
+  echo "IPVS modules have been enabled"
+fi
+
+################################################################################
 ### Docker #####################################################################
 ################################################################################
 
