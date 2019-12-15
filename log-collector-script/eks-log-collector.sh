@@ -236,6 +236,7 @@ collect() {
   get_mounts_info
   get_selinux_info
   get_iptables_info
+  get_ipvs_info
   get_pkglist
   get_system_services
   get_docker_info
@@ -300,6 +301,14 @@ get_iptables_info() {
   iptables --wait 1 --numeric --verbose --list --table nat > "${COLLECT_DIR}"/networking/iptables-nat.txt
   iptables --wait 1 --numeric --verbose --list > "${COLLECT_DIR}"/networking/iptables.txt
   iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
+
+  ok
+}
+
+get_ipvs_info() {
+  try "collect ipvs information"
+
+  ipvsadm -l -n > "${COLLECT_DIR}"/networking/ipvs_rules.txt
 
   ok
 }
