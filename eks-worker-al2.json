@@ -29,8 +29,9 @@
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
     "associate_public_ip_address": "",
-    "subnet_id": ""
+    "subnet_id": "",
 
+    "netfilter_module": "iptables"
   },
 
   "builders": [
@@ -114,7 +115,8 @@
         "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
-        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "NETFILTER_MODULE={{user `netfilter_module`}}"
       ]
     }
   ],
