@@ -53,6 +53,7 @@ Function create_working_dir{
     try {
         Write-Host "Creating temporary directory"
         New-Item -type directory -path $info_system -Force >$null
+        New-Item -type directory -path $info_system\eks -Force >$null
         New-Item -type directory -path $info_system\docker -Force >$null
         New-Item -type directory -path $info_system\firewall -Force >$null
         New-Item -type directory -path $info_system\kubelet -Force >$null
