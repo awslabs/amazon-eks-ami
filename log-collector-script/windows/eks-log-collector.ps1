@@ -198,6 +198,18 @@ Function get_docker_info{
     }
 }
 
+Function get_eks_logs{
+    try {
+        Write-Host "Collecting EKS logs"
+        copy C:\ProgramData\Amazon\EKS\logs\* $info_system\eks\
+        Write-Host "OK" -foregroundcolor "green"
+    }
+    catch{
+        Write-Error "Unable to collect ECS Agent logs"
+        Break
+    }
+}
+
 Function get_k8s_info{
     try {
         Write-Host "Collecting Kubelet logs"
@@ -339,6 +351,7 @@ Function collect{
     get_docker_info
     get_k8s_info
     get_docker_logs
+    get_eks_logs
     get_network_info
 
 }
