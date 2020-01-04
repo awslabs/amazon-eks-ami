@@ -363,40 +363,40 @@ get_k8s_info() {
 
   if [[ -n "${KUBECONFIG:-}" ]]; then
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
 
   elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
     KUBECONFIG="/etc/eksctl/kubeconfig.yaml"
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
 
   elif [[ -f /etc/systemd/system/kubelet.service ]]; then
     KUBECONFIG=`grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}'`
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
 
   elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
     KUBECONFIG="/var/lib/kubelet/kubeconfig"
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
   
   else
     echo "======== Unable to find KUBECONFIG, IGNORING POD DATA =========" >> "${COLLECT_DIR}"/kubelet/svc.log
   fi
 
+  # Try to copy the kubeconfig file if kubectl command doesn't exist
+  [[ (! -f "${COLLECT_DIR}/kubelet/kubeconfig.yaml") && ( -n ${KUBECONFIG}) ]] && cp ${KUBECONFIG} "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+
   case "${INIT_TYPE}" in
     systemd)
       timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
-      timeout 75 journalctl --unit=kubeproxy --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubeproxy.log
 
-      for entry in kubelet kube-proxy; do
-        systemctl cat "${entry}" > "${COLLECT_DIR}"/kubelet/"${entry}"_service.txt 2>&1
-      done
+      systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
 
-      timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/"${entry}"_service.txt 2>&1
+      timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/kubelet-eks_service.txt 2>&1
       ;;
     *)
       warning "The current operating system is not supported."
