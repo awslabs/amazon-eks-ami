@@ -23,6 +23,7 @@ function print_help {
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+    echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
 }
 
 POSITIONAL=()
@@ -76,6 +77,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --pause-container-version)
             PAUSE_CONTAINER_VERSION=$2
+            shift
+            shift
+            ;;
+        --dns-cluster-ip)
+            DNS_CLUSTER_IP=$2
             shift
             shift
             ;;
@@ -262,11 +268,15 @@ sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
-MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
-DNS_CLUSTER_IP=10.100.0.10
-if [[ "$TEN_RANGE" != "0" ]] ; then
-    DNS_CLUSTER_IP=172.20.0.10;
+if [ -z ${DNS_CLUSTER_IP+x} ]; then
+    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    DNS_CLUSTER_IP=10.100.0.10
+    if [[ "$TEN_RANGE" != "0" ]]; then
+        DNS_CLUSTER_IP=172.20.0.10
+    fi
+else
+    DNS_CLUSTER_IP="${DNS_CLUSTER_IP}"
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
