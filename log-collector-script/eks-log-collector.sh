@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 
 # Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
@@ -171,7 +171,7 @@ version_output() {
 log_parameters() {
   echo mode: "${mode}" >> "${COLLECT_DIR}"/system/script-params.txt
   echo ignore_introspection: "${ignore_introspection}" >> "${COLLECT_DIR}"/system/script-params.txt
-  echo ignore_metrics: "${ignore_metrics}" >> "${COLLECT_DIR}"/system/script-params.txt 
+  echo ignore_metrics: "${ignore_metrics}" >> "${COLLECT_DIR}"/system/script-params.txt
 }
 
 systemd_check() {
@@ -186,8 +186,8 @@ create_directories() {
   # Make sure the directory the script lives in is there. Not an issue if
   # the EKS AMI is used, as it will have it.
   mkdir --parents "${PROGRAM_DIR}"
-  
-  # Common directors creation 
+
+  # Common directors creation
   for directory in ${COMMON_DIRECTORIES[*]}; do
     mkdir --parents "${COLLECT_DIR}"/"${directory}"
   done
@@ -294,7 +294,7 @@ get_selinux_info() {
 
 get_iptables_info() {
   try "collect iptables information"
-  
+
   iptables --wait 1 --numeric --verbose --list --table mangle > "${COLLECT_DIR}"/networking/iptables-mangle.txt
   iptables --wait 1 --numeric --verbose --list --table filter > "${COLLECT_DIR}"/networking/iptables-filter.txt
   iptables --wait 1 --numeric --verbose --list --table nat > "${COLLECT_DIR}"/networking/iptables-nat.txt
@@ -401,7 +401,7 @@ get_ipamd_info() {
     done
   else
     echo "Ignoring IPAM introspection stats as mentioned"| tee -a "${COLLECT_DIR}"/ipamd/ipam_introspection_ignore.txt
-   
+
   fi
 
   if [[ "${ignore_metrics}" == "false" ]]; then
@@ -418,7 +418,7 @@ get_sysctls_info() {
   try "collect sysctls information"
   # dump all sysctls
   sysctl --all >> "${COLLECT_DIR}"/sysctls/sysctl_all.txt 2>/dev/null
-  
+
   ok
 }
 
@@ -440,7 +440,7 @@ get_cni_config() {
 
     if [[ -e "/etc/cni/net.d/" ]]; then
         cp --force --recursive --dereference /etc/cni/net.d/* "${COLLECT_DIR}"/cni/
-    fi  
+    fi
 
   ok
 }
@@ -500,7 +500,7 @@ get_system_services() {
 get_docker_info() {
   try "collect Docker daemon information"
 
-  if [[ "$(pgrep dockerd)" -ne 0 ]]; then
+  if [[ "$(pgrep -o dockerd)" -ne 0 ]]; then
     timeout 75 docker info > "${COLLECT_DIR}"/docker/docker-info.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker info output \" "
     timeout 75 docker ps --all --no-trunc > "${COLLECT_DIR}"/docker/docker-ps.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker ps --all --no-truc output \" "
     timeout 75 docker images > "${COLLECT_DIR}"/docker/docker-images.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker images output \" "
@@ -543,7 +543,7 @@ enable_docker_debug() {
 confirm_enable_docker_debug() {
     read -r -p "${1:-Enabled Docker Debug will restart the Docker Daemon and restart all running container. Are you sure? [y/N]} " USER_INPUT
     case "$USER_INPUT" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             enable_docker_debug
             ;;
         *)
