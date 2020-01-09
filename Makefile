@@ -61,6 +61,6 @@ k8s: validate
 	$(MAKE) k8s kubernetes_version=1.14.6 kubernetes_build_date=2019-08-22
 
 .PHONY: 1.14.g3
-1.14:
+1.14.g3:
 	$(MAKE) k8s kubernetes_version=1.14.6 kubernetes_build_date=2019-08-22  instance_type=g3.4xlarge
 
