@@ -353,12 +353,17 @@ Parameters:
     Type: "AWS::EC2::VPC::Id"
     Description: The VPC of the worker instances
 
+Mappings:
+  PartitionMap:
+    aws:
+      EC2ServicePrincipal: "ec2.amazonaws.com"
+    aws-cn:
+      EC2ServicePrincipal: "ec2.amazonaws.com.cn"
 Conditions:
   HasNodeImageId: !Not
     - "Fn::Equals":
         - Ref: NodeImageId
         - ""
-
 Resources:
   NodeInstanceRole:
     Type: "AWS::IAM::Role"
@@ -369,13 +374,13 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - ec2.amazonaws.com
+                - !FindInMap [PartitionMap, !Ref "AWS::Partition", EC2ServicePrincipal]
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
       Path: /
 
   NodeInstanceProfile:
