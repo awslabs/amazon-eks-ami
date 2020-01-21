@@ -113,6 +113,10 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}";;
     me-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}";;
+    cn-north-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}";;
+    cn-northwest-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -210,6 +214,7 @@ fi
 
 ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
+AWS_SERVICES_DOMAIN=$(curl -s http://169.254.169.254/2018-09-24/meta-data/services/domain)
 
 MACHINE=$(uname -m)
 if [ "$MACHINE" == "x86_64" ]; then
@@ -222,7 +227,7 @@ else
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause-${ARCH}}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
@@ -266,6 +271,7 @@ echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
+sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 if [ -z ${DNS_CLUSTER_IP+x} ]; then
