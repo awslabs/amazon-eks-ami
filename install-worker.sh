@@ -225,7 +225,7 @@ BUILD_KERNEL="$(uname -r)"
 ARCH="$(uname -m)"
 EOF
 sudo mv /tmp/release /etc/eks/release
-sudo chown root:root /etc/eks/*
+sudo chown -R root:root /etc/eks
 
 ################################################################################
 ### Cleanup ####################################################################

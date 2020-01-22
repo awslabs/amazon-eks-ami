@@ -29,7 +29,9 @@
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
     "associate_public_ip_address": "",
-    "subnet_id": ""
+    "subnet_id": "",
+    "remote_folder": "",
+    "launch_block_device_mappings_volume_size": "4"
 
   },
 
@@ -54,7 +56,7 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 4,
+          "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
           "delete_on_termination": true
         }
       ],
@@ -94,6 +96,7 @@
   "provisioners": [
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["mkdir -p /tmp/worker/"]
     },
     {
@@ -103,6 +106,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
