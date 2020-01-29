@@ -28,6 +28,7 @@
     "ssh_interface": "",
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
+    "security_group_id": "",
     "associate_public_ip_address": "",
     "subnet_id": "",
 
@@ -70,6 +71,7 @@
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "security_group_id": "{{user `security_group_id`}}",
       "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
