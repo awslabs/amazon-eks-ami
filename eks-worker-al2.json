@@ -29,8 +29,9 @@
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
     "associate_public_ip_address": "",
-    "subnet_id": ""
+    "subnet_id": "",
 
+    "additional_yum_repos": ""
   },
 
   "builders": [
@@ -102,8 +103,15 @@
       "destination": "/tmp/worker/"
     },
     {
+        "type": "shell",
+        "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+        "environment_vars": [
+          "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+        ]
+    },
+    {
       "type": "shell",
-      "script": "{{template_dir}}/install-worker.sh",
+      "script": "{{template_dir}}/scripts/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
@@ -116,6 +124,17 @@
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "environment_vars": [
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/scripts/validate.sh"
     }
   ],
   "post-processors": [
