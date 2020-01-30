@@ -8,10 +8,10 @@ dependencies:
   source:
     dirs:
       - src: files/
+      - src: scripts/
     files:
       - src: Makefile
       - src: eks-worker-al2.json
-      - src: install-worker.sh
       - src: amazon-eks-nodegroup.yaml
 archive:
   name: amazon-eks-ami.tar.gz
