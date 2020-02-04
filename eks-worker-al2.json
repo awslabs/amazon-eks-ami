@@ -40,6 +40,8 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "ami_users": "{{user `ami_users`}}",
+      "snapshot_users": "{{user `ami_users`}}",
       "source_ami_filter": {
         "filters": {
           "name": "{{user `source_ami_filter_name`}}",
