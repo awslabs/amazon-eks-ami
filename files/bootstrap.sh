@@ -211,10 +211,10 @@ if [ -z "$CLUSTER_NAME" ]; then
     echo "CLUSTER_NAME is not defined"
     exit  1
 fi
-
-ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
+ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone -H "X-aws-ec2-metadata-token: $TOKEN")
 AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
-AWS_SERVICES_DOMAIN=$(curl -s http://169.254.169.254/2018-09-24/meta-data/services/domain)
+AWS_SERVICES_DOMAIN=$(curl -s http://169.254.169.254/2018-09-24/meta-data/services/domain -H "X-aws-ec2-metadata-token: $TOKEN")
 
 MACHINE=$(uname -m)
 if [ "$MACHINE" == "x86_64" ]; then
@@ -276,8 +276,8 @@ sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 if [ -z ${DNS_CLUSTER_IP+x} ]; then
-    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -H "X-aws-ec2-metadata-token: $TOKEN" -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks -H "X-aws-ec2-metadata-token: $TOKEN" | grep -c '^10\..*' || true )
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
         DNS_CLUSTER_IP=172.20.0.10
@@ -305,8 +305,8 @@ echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.availabl
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
-INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4 -H "X-aws-ec2-metadata-token: $TOKEN")
+INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type -H "X-aws-ec2-metadata-token: $TOKEN")
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
