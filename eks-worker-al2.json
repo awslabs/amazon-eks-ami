@@ -28,12 +28,13 @@
     "ssh_interface": "",
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
+    "security_group_id": "",
     "associate_public_ip_address": "",
     "subnet_id": "",
     "remote_folder": "",
     "launch_block_device_mappings_volume_size": "4",
-    "ami_users": ""
-
+    "ami_users": "",
+    "additional_yum_repos": ""
   },
 
   "builders": [
@@ -74,6 +75,7 @@
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "security_group_id": "{{user `security_group_id`}}",
       "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
@@ -108,9 +110,20 @@
       "destination": "/tmp/worker/"
     },
     {
+        "type": "shell",
+        "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+        "environment_vars": [
+          "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+        ]
+    },
+    {
       "type": "shell",
+<<<<<<< HEAD
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/install-worker.sh",
+=======
+      "script": "{{template_dir}}/scripts/install-worker.sh",
+>>>>>>> upstream/master
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
@@ -123,6 +136,17 @@
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "environment_vars": [
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/scripts/validate.sh"
     }
   ],
   "post-processors": [
