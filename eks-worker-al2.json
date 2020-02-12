@@ -118,12 +118,9 @@
     },
     {
       "type": "shell",
-<<<<<<< HEAD
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/install-worker.sh",
-=======
       "script": "{{template_dir}}/scripts/install-worker.sh",
->>>>>>> upstream/master
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
