@@ -119,7 +119,6 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/install-worker.sh",
       "script": "{{template_dir}}/scripts/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
@@ -136,6 +135,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
