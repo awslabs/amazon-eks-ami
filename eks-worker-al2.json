@@ -111,6 +111,7 @@
     },
     {
         "type": "shell",
+        "remote_folder": "{{ user `remote_folder`}}",
         "script": "{{template_dir}}/scripts/install_additional_repos.sh",
         "environment_vars": [
           "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
