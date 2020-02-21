@@ -24,7 +24,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.11 1.12 1.13 1.14
+all: 1.12 1.13 1.14
 
 .PHONY: validate
 validate:
