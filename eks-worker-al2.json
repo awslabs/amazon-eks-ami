@@ -31,7 +31,9 @@
     "security_group_id": "",
     "associate_public_ip_address": "",
     "subnet_id": "",
-
+    "remote_folder": "",
+    "launch_block_device_mappings_volume_size": "4",
+    "ami_users": "",
     "additional_yum_repos": ""
   },
 
@@ -40,6 +42,8 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "ami_users": "{{user `ami_users`}}",
+      "snapshot_users": "{{user `ami_users`}}",
       "source_ami_filter": {
         "filters": {
           "name": "{{user `source_ami_filter_name`}}",
@@ -56,7 +60,7 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 4,
+          "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
           "delete_on_termination": true
         }
       ],
@@ -97,6 +101,7 @@
   "provisioners": [
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["mkdir -p /tmp/worker/"]
     },
     {
@@ -106,6 +111,7 @@
     },
     {
         "type": "shell",
+        "remote_folder": "{{ user `remote_folder`}}",
         "script": "{{template_dir}}/scripts/install_additional_repos.sh",
         "environment_vars": [
           "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
@@ -113,6 +119,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
@@ -129,6 +136,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
@@ -136,6 +144,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/validate.sh"
     }
   ],
