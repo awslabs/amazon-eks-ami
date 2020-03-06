@@ -21,7 +21,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.5.2"
+readonly PROGRAM_VERSION="0.6.0"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -32,7 +32,6 @@ INIT_TYPE=""
 PACKAGE_TYPE=""
 
 # Script run defaults
-mode='collect'
 ignore_introspection='false'
 ignore_metrics='false'
 
@@ -85,13 +84,9 @@ IPAMD_DATA=(
 
 help() {
   echo ""
-  echo "USAGE: ${PROGRAM_NAME} --help [ --mode=collect|enable_debug --ignore_introspection=true|false --ignore_metrics=true|false ]"
+  echo "USAGE: ${PROGRAM_NAME} --help [ --ignore_introspection=true|false --ignore_metrics=true|false ]"
   echo ""
   echo "OPTIONS:"
-  echo "   --mode  Has two parameters  1) collect or 2) enable_debug,:"
-  echo "             collect        Gathers basic operating system, Docker daemon, and"
-  echo "                            Amazon EKS related config files and logs. This is the default mode."
-  echo "             enable_debug   Enables debug mode for the Docker daemon(Not for production use)"
   echo ""
   echo "   --ignore_introspection To ignore introspection of IPAMD; Pass this flag if DISABLE_INTROSPECTION is enabled on CNI"
   echo ""
@@ -110,9 +105,6 @@ parse_options() {
     val="$(echo "${arg}" | awk -F '=' '{print $2}')"
 
     case "${param}" in
-      mode)
-        eval "${param}"="${val}"
-        ;;
       ignore_introspection)
         eval "${param}"="${val}"
         ;;
@@ -169,7 +161,6 @@ version_output() {
 }
 
 log_parameters() {
-  echo mode: "${mode}" >> "${COLLECT_DIR}"/system/script-params.txt
   echo ignore_introspection: "${ignore_introspection}" >> "${COLLECT_DIR}"/system/script-params.txt
   echo ignore_metrics: "${ignore_metrics}" >> "${COLLECT_DIR}"/system/script-params.txt
 }
@@ -250,11 +241,6 @@ collect() {
   get_docker_logs
 }
 
-enable_debug() {
-  init
-  enable_docker_debug
-}
-
 pack() {
   try "archive gathered information"
 
@@ -264,10 +250,8 @@ pack() {
 }
 
 finished() {
-  if [[ "${mode}" == "collect" ]]; then
-      cleanup
-      echo -e "\n\tDone... your bundled logs are located in ${PROGRAM_DIR}/eks_${INSTANCE_ID}_$(date --utc +%Y-%m-%d_%H%M-%Z)_${PROGRAM_VERSION}.tar.gz\n"
-  fi
+  cleanup
+  echo -e "\n\tDone... your bundled logs are located in ${PROGRAM_DIR}/eks_${INSTANCE_ID}_$(date --utc +%Y-%m-%d_%H%M-%Z)_${PROGRAM_VERSION}.tar.gz\n"
 }
 
 get_mounts_info() {
@@ -314,6 +298,18 @@ get_common_logs() {
     if [[ -e "/var/log/${entry}" ]]; then
         if [[ "${entry}" == "messages" ]]; then
           tail -c 10M /var/log/messages > "${COLLECT_DIR}"/var_log/messages
+          continue
+        fi
+        if [[ "${entry}" == "containers" ]]; then
+          cp --force --recursive /var/log/containers/aws-node* "${COLLECT_DIR}"/var_log/
+          cp --force --recursive /var/log/containers/coredns-* "${COLLECT_DIR}"/var_log/
+          cp --force --recursive /var/log/containers/kube-proxy* "${COLLECT_DIR}"/var_log/
+          continue
+        fi
+        if [[ "${entry}" == "pods" ]]; then
+          cp --force --recursive /var/log/pods/kube-system_aws-node* "${COLLECT_DIR}"/var_log/
+          cp --force --recursive /var/log/pods//kube-system_coredns* "${COLLECT_DIR}"/var_log/
+          cp --force --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/
           continue
         fi
       cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/
@@ -525,59 +521,11 @@ get_docker_info() {
   ok
 }
 
-enable_docker_debug() {
-  try "enable debug mode for the Docker daemon"
-
-  case "${PACKAGE_TYPE}" in
-    rpm)
-
-      if [[ -e /etc/sysconfig/docker ]] && grep -q "^\s*OPTIONS=\"-D" /etc/sysconfig/docker
-      then
-        echo "Debug mode is already enabled."
-        ok
-      else
-        if [[ -e /etc/sysconfig/docker ]]; then
-          echo "OPTIONS=\"-D \$OPTIONS\"" >> /etc/sysconfig/docker
-
-          try "restart Docker daemon to enable debug mode"
-          service docker restart
-          ok
-        fi
-      fi
-      ;;
-    *)
-      warning "The current operating system is not supported."
-
-      ok
-      ;;
-  esac
-}
-
-confirm_enable_docker_debug() {
-    read -r -p "${1:-Enabled Docker Debug will restart the Docker Daemon and restart all running container. Are you sure? [y/N]} " USER_INPUT
-    case "$USER_INPUT" in
-        [yY][eE][sS]|[yY])
-            enable_docker_debug
-            ;;
-        *)
-            die "\"No\" was selected."
-            ;;
-    esac
-}
-
+# -----------------------------------------------------------------------------
+# Entrypoint
 parse_options "$@"
 
-case "${mode}" in
-  collect)
-    collect
-    pack
-    finished
-    ;;
-  enable_debug)
-    confirm_enable_docker_debug
-    finished
-    ;;
-  *)
-    help && exit 1
-    ;;
-esac
+collect
+pack
+finished
+

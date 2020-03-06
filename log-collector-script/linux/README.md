@@ -21,14 +21,9 @@ The project can be used in normal or enable_debug(**Caution: enable_debug will p
 
 ```
 # sudo bash eks-log-collector.sh --help
-USAGE: eks-log-collector --help [ --mode=collect|enable_debug --ignore_introspection=true|false --ignore_metrics=true|false ]
+USAGE: eks-log-collector --help [ --ignore_introspection=true|false --ignore_metrics=true|false ]
 
 OPTIONS:
-   --mode  Has two parameters  1) collect or 2) enable_debug,:
-             collect        Gathers basic operating system, Docker daemon, and
-                            Amazon EKS related config files and logs. This is the default mode.
-             enable_debug   Enables debug mode for the Docker daemon(Not for production use)
-
    --ignore_introspection   To ignore introspection of IPAMD; Pass this flag if DISABLE_INTROSPECTION is enabled on CNI
    
    --ignore_metrics         To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI

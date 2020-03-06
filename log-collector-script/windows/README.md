@@ -15,18 +15,7 @@ Invoke-WebRequest -OutFile eks-log-collector.ps1 https://raw.githubusercontent.c
 The project can be used in normal or Enable/Disable Debug(**Caution: Enable/Disable Debug will restart Docker daemon which would kill running containers**).
 
 ```
-# eks-log-collector.ps1
-USAGE: eks-log-collector [ -RunMode =Collect|EnableDebug|DisableDebug ]
-
-OPTIONS:
-   -RunMode  Has three parameters  1) Collect, 2) EnableDebug 3) DisableDebug:
-             Collect       Gathers basic operating system, Docker daemon, and
-                           Amazon EKS related config files and logs. This is the default mode.
-             EnableDebug   Enables debug mode for Docker daemon (Not for production use)
-             DisableDebug  Disable debug mode for Docker daemon
-
-Enables debug mode for the Docker daemon: 
-eks-log-collector.ps1 -RunMode EnableDebug 
+USAGE: .\eks-log-collector.ps1
 ```
 #### Example output in normal mode
 The following output shows this project running in normal mode.
