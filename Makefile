@@ -51,4 +51,4 @@ k8s: validate
  
 .PHONY: 1.15
 1.15:
-	$(MAKE) k8s kubernetes_version=1.15.10 kubernetes_build_date=2020-02-14
+	$(MAKE) k8s kubernetes_version=1.15.10 kubernetes_build_date=2020-02-22
