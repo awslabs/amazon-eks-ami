@@ -401,7 +401,6 @@ Resources:
 
   NodeSecurityGroupIngress:
     Type: "AWS::EC2::SecurityGroupIngress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow node to communicate with each other
       FromPort: 0
@@ -412,7 +411,6 @@ Resources:
 
   ClusterControlPlaneSecurityGroupIngress:
     Type: "AWS::EC2::SecurityGroupIngress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods to communicate with the cluster API Server
       FromPort: 443
@@ -423,7 +421,6 @@ Resources:
 
   ControlPlaneEgressToNodeSecurityGroup:
     Type: "AWS::EC2::SecurityGroupEgress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with worker Kubelet and pods
       DestinationSecurityGroupId: !Ref NodeSecurityGroup
@@ -434,7 +431,6 @@ Resources:
 
   ControlPlaneEgressToNodeSecurityGroupOn443:
     Type: "AWS::EC2::SecurityGroupEgress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
       DestinationSecurityGroupId: !Ref NodeSecurityGroup
@@ -445,7 +441,6 @@ Resources:
 
   NodeSecurityGroupFromControlPlaneIngress:
     Type: "AWS::EC2::SecurityGroupIngress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
       FromPort: 1025
@@ -456,7 +451,6 @@ Resources:
 
   NodeSecurityGroupFromControlPlaneOn443Ingress:
     Type: "AWS::EC2::SecurityGroupIngress"
-    DependsOn: NodeSecurityGroup
     Properties:
       Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
       FromPort: 443
@@ -468,7 +462,7 @@ Resources:
   NodeLaunchConfig:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
-      AssociatePublicIpAddress: "true"
+      AssociatePublicIpAddress: true
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -503,15 +497,15 @@ Resources:
       MinSize: !Ref NodeAutoScalingGroupMinSize
       Tags:
         - Key: Name
-          PropagateAtLaunch: "true"
+          PropagateAtLaunch: true
           Value: !Sub ${ClusterName}-${NodeGroupName}-Node
         - Key: !Sub kubernetes.io/cluster/${ClusterName}
-          PropagateAtLaunch: "true"
+          PropagateAtLaunch: true
           Value: owned
       VPCZoneIdentifier: !Ref Subnets
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MaxBatchSize: "1"
+        MaxBatchSize: 1
         MinInstancesInService: !Ref NodeAutoScalingGroupDesiredCapacity
         PauseTime: PT5M
 
