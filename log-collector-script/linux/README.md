@@ -45,7 +45,7 @@ The following output shows this project running in normal mode.
 ```
 sudo bash eks-log-collector.sh
 
-	This is version 0.5.0. New versions can be found at https://github.com/awslabs/amazon-eks-ami
+	This is version 0.6.1. New versions can be found at https://github.com/awslabs/amazon-eks-ami
 
 Trying to collect common operating system logs... 
 Trying to collect kernel logs... 
@@ -64,7 +64,7 @@ Trying to collect running Docker containers and gather container data...
 Trying to collect Docker daemon logs... 
 Trying to archive gathered information... 
 
-	Done... your bundled logs are located in /opt/log-collector/eks_i-0717c9d54b6cfaa19_2019-02-02_0103-UTC_0.0.4.tar.gz
+	Done... your bundled logs are located in /var/log/eks_i-0717c9d54b6cfaa19_2020-03-24_0103-UTC_0.6.1.tar.gz
 ```
 
 
