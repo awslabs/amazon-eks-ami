@@ -110,6 +110,7 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
+    sudo groupadd -fog 1950 docker && sudo useradd --gid 1950 docker
     sudo yum install -y docker-${DOCKER_VERSION}*
     sudo usermod -aG docker $USER
 
@@ -190,11 +191,7 @@ sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
-if [ "$KUBERNETES_MINOR_VERSION" = "1.14" ]; then
-    sudo mv $TEMPLATE_DIR/1.14/kubelet.service /etc/systemd/system/kubelet.service
-else
-    sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
-fi
+sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
