@@ -159,6 +159,10 @@ Parameters:
       - i3en.6xlarge
       - i3en.12xlarge
       - i3en.24xlarge
+      - inf1.xlarge
+      - inf1.2xlarge
+      - inf1.6xlarge
+      - inf1.24xlarge
       - m1.small
       - m1.medium
       - m1.large
