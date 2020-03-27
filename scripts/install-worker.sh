@@ -167,7 +167,6 @@ S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin
 
 BINARIES=(
     kubelet
-    aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
     if [[ ! -z "$AWS_ACCESS_KEY_ID" ]]; then
