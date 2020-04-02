@@ -66,6 +66,17 @@ sudo yum install -y \
 sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
 
 ################################################################################
+### AWS Inspector Agent ########################################################
+################################################################################
+
+# Download the agent installation script
+wget https://inspector-agent.amazonaws.com/linux/latest/install
+# Install and turn off and auto-update process  
+sudo bash install -u false
+# Remove the agent installation script
+rm install
+
+################################################################################
 ### Time #######################################################################
 ################################################################################
 
