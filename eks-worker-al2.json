@@ -120,7 +120,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/scripts/upgrade_kernel.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/install-worker.sh",
+      "pause_before": "90s",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
