@@ -147,40 +147,21 @@ get_resource_to_reserve_in_range() {
   echo $resources_to_reserve
 }
 
-# Calculates the amount of memory to reserve for the kubelet in mebibytes from the total memory available on the instance.
-# From the total memory capacity of this worker node, we calculate the memory resources to reserve
-# by reserving a percentage of the memory in each range up to the total memory available on the instance.
-# We are using these memory ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
-# 255 Mi of memory for machines with less than 1024Mi of memory
-# 25% of the first 4096Mi of memory
-# 20% of the next 4096Mi of memory (up to 8192Mi)
-# 10% of the next 8192Mi of memory (up to 16384Mi)
-# 6% of the next 114688Mi of memory (up to 131072Mi)
-# 2% of any memory above 131072Mi
+# Calculates the amount of memory to reserve for kubeReserved in mebibytes. KubeReserved is a function of pod
+# density so we are calculating the amount of memory to reserve for Kubernetes systems daemons by
+# considering the maximum number of pods this instance type supports.
 # Args:
-#   $1 total available memory on the machine in Mi
+#   $1 the instance type of the worker node
 # Return:
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
-  local total_memory_on_instance=$1
-  local memory_ranges=(0 4096 8192 16384 131072 $total_memory_on_instance)
-  local memory_percentage_reserved_for_ranges=(2500 2000 1000 600 200)
-  if (( $total_memory_on_instance <= 1024 )); then
-    memory_to_reserve="255"
-  else
-    memory_to_reserve="0"
-    for i in ${!memory_percentage_reserved_for_ranges[@]}; do
-      local start_range=${memory_ranges[$i]}
-      local end_range=${memory_ranges[(($i+1))]}
-      local percentage_to_reserve_for_range=${memory_percentage_reserved_for_ranges[$i]}
-      memory_to_reserve=$(($memory_to_reserve + \
-          $(get_resource_to_reserve_in_range $total_memory_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
-    done
-  fi
+  local instance_type=$1
+  max_num_pods=$(cat /etc/eks/eni-max-pods.txt | grep $instance_type | awk '{print $2;}')
+  memory_to_reserve=$((11 * $max_num_pods + 255))
   echo $memory_to_reserve
 }
 
-# Calculates the amount of CPU to reserve for the kubelet in millicores from the total number of vCPUs available on the instance.
+# Calculates the amount of CPU to reserve for kubeReserved in millicores from the total number of vCPUs available on the instance.
 # From the total core capacity of this worker node, we calculate the CPU resources to reserve by reserving a percentage
 # of the available cores in each range up to the total number of cores available on the instance.
 # We are using these CPU ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
@@ -188,12 +169,10 @@ get_memory_mebibytes_to_reserve() {
 # 1% of the next core (up to 2 cores)
 # 0.5% of the next 2 cores (up to 4 cores)
 # 0.25% of any cores above 4 cores
-# Args:
-#   $1 total number of millicores on the instance (number of vCPUs * 1000)
 # Return:
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
-  local total_cpu_on_instance=$1
+  local total_cpu_on_instance=$(($(nproc) * 1000))
   local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
@@ -289,24 +268,21 @@ fi
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
+INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
-# calls calculate the CPU and memory resources to reserve for the kubelet based on instance type of the worker node.
+# calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
 # Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
-# gets the memory and CPU capacity of the worker node
-MEMORY_MI=$(free -m | grep Mem | awk '{print $2}')
-CPU_MILLICORES=$(($(nproc) * 1000))
 # calculates the amount of each resource to reserve
-mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MEMORY_MI)
-cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve $CPU_MILLICORES)
+mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $INSTANCE_TYPE)
+cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve)
 # writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
 echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
-
-INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
@@ -348,3 +324,4 @@ fi
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
+
