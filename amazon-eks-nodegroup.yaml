@@ -359,6 +359,10 @@ Mappings:
       EC2ServicePrincipal: "ec2.amazonaws.com"
     aws-cn:
       EC2ServicePrincipal: "ec2.amazonaws.com.cn"
+    aws-iso:
+      EC2ServicePrincipal: "ec2.c2s.ic.gov"
+    aws-iso-b:
+      EC2ServicePrincipal: "ec2.sc2s.sgov.gov"
 Conditions:
   HasNodeImageId: !Not
     - "Fn::Equals":
