@@ -408,7 +408,7 @@ get_ipamd_info() {
   if [[ "${ignore_introspection}" == "false" ]]; then
     try "collect L-IPAMD introspectioon information"
     for entry in ${IPAMD_DATA[*]}; do
-      curl --max-time 3 --silent http://localhost:61679/v1/"${entry}" >> "${COLLECT_DIR}"/ipamd/"${entry}".txt
+      curl --max-time 3 --silent http://localhost:61679/v1/"${entry}" >> "${COLLECT_DIR}"/ipamd/"${entry}".json
     done
   else
     echo "Ignoring IPAM introspection stats as mentioned"| tee -a "${COLLECT_DIR}"/ipamd/ipam_introspection_ignore.txt
