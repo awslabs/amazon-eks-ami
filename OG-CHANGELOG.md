@@ -1,5 +1,9 @@
 # Changelog
 
+1.4.0 - 04/17/2020
+-----------------------
+- Upgrade to EKS 1.15
+
 1.3.0 - 04/01/2020
 -----------------------
 - Adding AWS Inspector Agent

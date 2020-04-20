@@ -1,0 +1,81 @@
+{
+   "schemaVersion": "2.2",
+   "description": "EKS Log Collector",
+   "parameters": {
+      "bucketName": {
+         "type": "String",
+         "default": "Enabled"
+      }
+   },
+   "mainSteps": [
+      {
+         "action": "aws:runShellScript",
+         "name": "PatchLinux",
+         "precondition": {
+            "StringEquals": [
+               "platformType",
+               "Linux"
+            ]
+         },
+         "inputs": {
+            "runCommand": [
+               "curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh",
+               "bash ./eks-log-collector.sh  >/dev/null 2>&1",
+               "echo \"EKS logs collected\"",
+               "if [ -f /usr/local/bin/aws ]; then",
+               "echo \"AWS_already_installed\"",
+               "else",
+               "echo \"Installing AWSCLI\"",
+               "curl \"https://s3.amazonaws.com/aws-cli/awscli-bundle.zip\" -o \"awscli-bundle.zip\"  >/dev/null 2>&1",
+               "yum install unzip -y  >/dev/null 2>&1",
+               "unzip awscli-bundle.zip  >/dev/null 2>&1",
+               "./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws",
+               "echo \"AWSCLI version is\"",
+               "/usr/local/bin/aws --version",
+               "fi",
+               "echo \"Pushing to S3\"",
+               "/usr/local/bin/aws s3 cp /var/log/eks_i* s3://{{bucketName}}",
+               "echo \"Logs uploaded to S3\""
+            ]
+         }
+      },
+      {
+         "precondition": {
+            "StringEquals": [
+               "platformType",
+               "Windows"
+            ]
+         },
+         "action": "aws:runPowerShellScript",
+         "name": "PatchWindows",
+         "inputs": {
+            "runCommand": [
+               "if (!(Get-Module 'AWSPowerShell')) { ",
+               "    Write-Host 'AWSPowerShell does not exist' ",
+               "    Install-Module -Name AWSPowerShell -Force ",
+               "} ",
+               "try { ",
+               "    Write-Host 'Downloading EKS Log collector script' ",
+               "    Invoke-WebRequest -UseBasicParsing  'https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/windows/eks-log-collector.ps1' -OutFile  eks-log-collector.ps1 ",
+               "} ",
+               "catch { ",
+               "    Write-Host 'Uploaded to S3 failed' ",
+               "    break ",
+               "} ",
+               "powershell .\\eks-log-collector.ps1",
+               "try { ",
+               "    Write-Host 'Pushing to S3' ",
+               "    Write-S3Object -BucketName {{bucketName}} -Folder C:\\log-collector -KeyPrefix eks-log-collector\\ -SearchPattern *.zip ",
+               "    Write-Host 'Logs uploaded to S3' ",
+               "} ",
+               "catch { ",
+               "    Write-Host 'Uploaded to S3 failed' ",
+               "    break ",
+               "} ",
+               "",
+               "Remove-Item -Force .\\eks-log-collector.ps1 -ErrorAction Ignore "
+            ]
+         }
+      }
+   ]
+}

@@ -1,28 +1,42 @@
 {
   "variables": {
     "aws_region": "us-west-2",
-    "ami_name": "og-amazon-eks-node-{{timestamp}}",
-    "binary_bucket_region": "us-west-2",
+    "ami_name": null,
     "creator": "{{env `USER`}}",
-    "source_ami_owners": "137112412989",
-    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "encrypted": "true",
+    "kms_key_id": "",
+    
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
 
-    "arch": "",
-    "instance_type": "",
-    "binary_bucket_name": "",
-    "docker_version": "",
+    "binary_bucket_name": "amazon-eks",
+    "binary_bucket_region": "us-west-2",
+    "kubernetes_version": null,
+    "kubernetes_build_date": null,
+    "docker_version": "19.03.6ce-1.amzn2",
+    "cni_version": "v0.6.0",
+    "cni_plugin_version": "v0.7.6",
+    "og_image_version": "1.2.0",
+    "ami_regions": "us-west-2,us-east-1",
+
     "source_ami_id": "",
-    "kms_key_id": "",
-    "cni_version": "",
-    "cni_plugin_version": "",
-    "kubernetes_build_date": "",
-    "kubernetes_version": "",
-    "og_image_version": "",
-    "ami_regions": ""
+    "source_ami_owners": "137112412989",
+    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
+    "arch": null,
+    "instance_type": "m4.large",
+    "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
+
+    "ssh_interface": "",
+    "ssh_username": "ec2-user",
+    "temporary_security_group_source_cidrs": "",
+    "security_group_id": "",
+    "associate_public_ip_address": "",
+    "subnet_id": "",
+    "remote_folder": "",
+    "launch_block_device_mappings_volume_size": "4",
+    "ami_users": "",
+    "additional_yum_repos": ""
   },
 
   "builders": [
@@ -30,6 +44,8 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "ami_users": "{{user `ami_users`}}",
+      "snapshot_users": "{{user `ami_users`}}",
       "source_ami_filter": {
         "filters": {
           "name": "{{user `source_ami_filter_name`}}",
@@ -46,11 +62,11 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 4,
+          "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
           "delete_on_termination": true
         }
       ],
-      "ami_block_device_mappings": [
+      "ami_block_device_mappings": [    
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
@@ -58,14 +74,20 @@
           "delete_on_termination": true
         }
       ],
-      "ssh_username": "ec2-user",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ssh_interface": "{{user `ssh_interface`}}",
+      "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
+      "security_group_id": "{{user `security_group_id`}}",
+      "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
           "creator": "{{user `creator`}}"
       },
+      "subnet_id": "{{user `subnet_id`}}",
       "tags": {
+          "Name": "{{user `ami_name`}}",
           "created": "{{timestamp}}",
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
@@ -75,24 +97,41 @@
           "og_image_version": "{{ user `og_image_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})",
-      "ami_regions":  "{{user `ami_regions`}}" 
+      "ami_regions":  "{{user `ami_regions`}}",
+      "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],
 
   "provisioners": [
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["mkdir -p /tmp/worker/"]
     },
     {
       "type": "file",
-      "source": "./files/",
+      "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
     },
     {
+        "type": "shell",
+        "remote_folder": "{{ user `remote_folder`}}",
+        "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+        "environment_vars": [
+          "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+        ]
+    },
+    {
       "type": "shell",
-      "script": "install-worker.sh",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/scripts/upgrade_kernel.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/install-worker.sh",
+      "pause_before": "90s",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
@@ -105,6 +144,19 @@
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "environment_vars": [
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/validate.sh"
     }
   ],
   "post-processors": [

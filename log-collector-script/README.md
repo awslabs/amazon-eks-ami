@@ -1,0 +1,2 @@
+### <span style="font-family: times, serif; font-size:16pt; font-style:italic;"> EKS Logs Collector
+<span  style="font-family: calibri, Garamond, 'Comic Sans MS' ;">This project was created to collect Amazon EKS log files and OS logs for troubleshooting Amazon EKS customer support cases.</span>

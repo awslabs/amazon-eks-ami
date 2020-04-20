@@ -58,13 +58,14 @@ sudo yum install -y \
     conntrack \
     curl \
     jq \
+    ec2-instance-connect \
     nfs-utils \
     socat \
     unzip \
     wget
     
 sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-
+ 
 ################################################################################
 ### AWS Inspector Agent ########################################################
 ################################################################################
@@ -75,6 +76,9 @@ wget https://inspector-agent.amazonaws.com/linux/latest/install
 sudo bash install -u false
 # Remove the agent installation script
 rm install
+
+# Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
+if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
 
 ################################################################################
 ### Time #######################################################################
@@ -119,6 +123,7 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
+    sudo groupadd -fog 1950 docker && sudo useradd --gid 1950 docker
     sudo yum install -y docker-${DOCKER_VERSION}*
     sudo usermod -aG docker $USER
 
@@ -166,16 +171,15 @@ sudo tar -xvf cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
 rm cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-S3_DOMAIN="s3-$BINARY_BUCKET_REGION"
-if [ "$BINARY_BUCKET_REGION" = "us-east-1" ]; then
-    S3_DOMAIN="s3"
+S3_DOMAIN="amazonaws.com"
+if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
+    S3_DOMAIN="amazonaws.com.cn"
 fi
-S3_URL_BASE="https://$S3_DOMAIN.amazonaws.com/$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
 BINARIES=(
     kubelet
-    kubectl
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
@@ -194,22 +198,16 @@ for binary in ${BINARIES[*]} ; do
 done
 sudo rm *.sha256
 
-KUBELET_CONFIG=""
 KUBERNETES_MINOR_VERSION=${KUBERNETES_VERSION%.*}
-if [ "$KUBERNETES_MINOR_VERSION" = "1.10" ] || [ "$KUBERNETES_MINOR_VERSION" = "1.11" ]; then
-    KUBELET_CONFIG=kubelet-config.json
-else
-    # For newer versions use this config to fix https://github.com/kubernetes/kubernetes/issues/74412.
-    KUBELET_CONFIG=kubelet-config-with-secret-polling.json
-fi
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/$KUBELET_CONFIG /etc/kubernetes/kubelet/kubelet-config.json
+sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
@@ -238,7 +236,7 @@ BUILD_KERNEL="$(uname -r)"
 ARCH="$(uname -m)"
 EOF
 sudo mv /tmp/release /etc/eks/release
-sudo chown root:root /etc/eks/*
+sudo chown -R root:root /etc/eks
 
 ################################################################################
 ### Cleanup ####################################################################
