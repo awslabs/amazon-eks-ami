@@ -28,6 +28,7 @@ validate_env_set CNI_VERSION
 validate_env_set CNI_PLUGIN_VERSION
 validate_env_set KUBERNETES_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
+validate_env_set PULL_CNI_FROM_GITHUB
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -145,18 +146,6 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
-wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-${ARCH}-${CNI_VERSION}.tgz
-wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-${ARCH}-${CNI_VERSION}.tgz.sha512
-sudo sha512sum -c cni-${ARCH}-${CNI_VERSION}.tgz.sha512
-sudo tar -xvf cni-${ARCH}-${CNI_VERSION}.tgz -C /opt/cni/bin
-rm cni-${ARCH}-${CNI_VERSION}.tgz cni-${ARCH}-${CNI_VERSION}.tgz.sha512
-
-wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
-wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
-sudo sha512sum -c cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
-sudo tar -xvf cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
-rm cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
-
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="amazonaws.com"
 if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
@@ -183,6 +172,41 @@ for binary in ${BINARIES[*]} ; do
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
 done
+
+if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
+    echo "Downloading CNI assets from Github"
+    wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-${ARCH}-${CNI_VERSION}.tgz
+    wget https://github.com/containernetworking/cni/releases/download/${CNI_VERSION}/cni-${ARCH}-${CNI_VERSION}.tgz.sha512
+
+    wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
+    wget https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+    sudo sha512sum -c cni-${ARCH}-${CNI_VERSION}.tgz.sha512
+    sudo sha512sum -c cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+    rm cni-${ARCH}-${CNI_VERSION}.tgz.sha512
+    rm cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz.sha512
+else
+    CNI_BINARIES=(
+            cni-${ARCH}-${CNI_VERSION}.tgz
+            cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
+    )
+    for binary in ${CNI_BINARIES[*]} ; do
+        if [[ ! -z "$AWS_ACCESS_KEY_ID" ]]; then
+            echo "AWS cli present - using it to copy binaries from s3."
+            aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
+            aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+            sudo sha256sum -c $binary.sha256
+        else
+            echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
+            sudo wget $S3_URL_BASE/$binary
+            sudo wget $S3_URL_BASE/$binary.sha256
+        fi
+    done
+fi
+sudo tar -xvf cni-${ARCH}-${CNI_VERSION}.tgz -C /opt/cni/bin
+sudo tar -xvf cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz -C /opt/cni/bin
+rm cni-${ARCH}-${CNI_VERSION}.tgz
+rm cni-plugins-${ARCH}-${CNI_PLUGIN_VERSION}.tgz
+
 sudo rm *.sha256
 
 KUBERNETES_MINOR_VERSION=${KUBERNETES_VERSION%.*}
