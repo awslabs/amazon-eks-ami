@@ -18,6 +18,10 @@ ifeq ($(aws_region), cn-northwest-1)
 source_ami_owners ?= 141808717104
 endif
 
+ifeq ($(aws_region), us-gov-west-1)
+source_ami_owners ?= 045324592363
+endif
+
 T_RED := \e[0;31m
 T_GREEN := \e[0;32m
 T_YELLOW := \e[0;33m
@@ -48,7 +52,7 @@ k8s: validate
 .PHONY: 1.14
 1.14:
 	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
- 
+
 .PHONY: 1.15
 1.15:
 	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
