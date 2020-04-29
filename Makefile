@@ -1,5 +1,5 @@
 PACKER_BINARY ?= packer
-PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date docker_version cni_version cni_plugin_version source_ami_id source_ami_owners arch instance_type security_group_id additional_yum_repos
+PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date docker_version cni_version cni_plugin_version source_ami_id source_ami_owners arch instance_type security_group_id additional_yum_repos pull_cni_from_github
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
@@ -39,16 +39,16 @@ k8s: validate
 
 .PHONY: 1.12
 1.12:
-	$(MAKE) k8s kubernetes_version=1.12.10 kubernetes_build_date=2020-01-22
+	$(MAKE) k8s kubernetes_version=1.12.10 kubernetes_build_date=2020-04-17 pull_cni_from_github=true
 
 .PHONY: 1.13
 1.13:
-	$(MAKE) k8s kubernetes_version=1.13.12 kubernetes_build_date=2020-01-22
+	$(MAKE) k8s kubernetes_version=1.13.12 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
 
 .PHONY: 1.14
 1.14:
-	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-01-22
+	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
  
 .PHONY: 1.15
 1.15:
-	$(MAKE) k8s kubernetes_version=1.15.10 kubernetes_build_date=2020-02-22
+	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
