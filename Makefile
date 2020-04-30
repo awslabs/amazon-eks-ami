@@ -56,3 +56,8 @@ k8s: validate
 .PHONY: 1.15
 1.15:
 	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
+
+.PHONY: 1.16
+1.16:
+	$(MAKE) k8s kubernetes_version=1.16.8 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
+
