@@ -10,6 +10,8 @@ Metadata:
         Parameters:
           - ClusterName
           - ClusterControlPlaneSecurityGroup
+          - Base64ClusterCA
+          - ClusterAPIServerEndpoint
       - Label:
           default: Worker Node Configuration
         Parameters:
@@ -42,6 +44,14 @@ Parameters:
   ClusterName:
     Type: String
     Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
+    
+  Base64ClusterCA:
+    Type: String
+    Descrption: Base64 encoded certificate authority of the cluster
+    
+  ClusterAPIServerEndpoint:
+    Type: String
+    Description: API server endpoint of the cluster
 
   KeyName:
     Type: "AWS::EC2::KeyPair::KeyName"
@@ -495,7 +505,7 @@ Resources:
         "Fn::Sub": |
           #!/bin/bash
           set -o xtrace
-          /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+          /etc/eks/bootstrap.sh ${ClusterName} --b64-cluster-ca ${Base64ClusterCA} --apiserver-endpoint ${ClusterAPIServerEndpoint} ${BootstrapArguments}
           /opt/aws/bin/cfn-signal --exit-code $? \
                    --stack  ${AWS::StackName} \
                    --resource NodeGroup  \
