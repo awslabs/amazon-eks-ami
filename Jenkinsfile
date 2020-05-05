@@ -3,13 +3,13 @@
 @Library('OGJenkinsLib@3.18.0') _
 
 final GIT_REPOSITORY_NAME = 'amazon-eks-ami'
-final KUBERNETES_VERSION = '1.15.10'
+final KUBERNETES_VERSION = '1.15.11'
 final PACKER_IMAGE_MANIFEST = 'manifest.json'
 final OG_IMAGE_VERSION = '1.2.0'
 def config = [:]  // Pipeline configuration
 
 def containers = [
-  OGContainer('devops', "${env.INTERNAL_REGISTRY_HOSTNAME}/devops", '2.3.0', [resourceLimitCpu: '2000m', resourceLimitMemory: '2Gi'])
+  OGContainer('devops', "${env.INTERNAL_REGISTRY_HOSTNAME}/devops", '3.1.0', [resourceLimitCpu: '2000m', resourceLimitMemory: '2Gi'])
 ]
 
 OGPipeline(containers) {
