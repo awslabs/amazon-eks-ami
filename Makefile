@@ -3,10 +3,10 @@ PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region 
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
-kubernetes_build_date ?= 2020-02-22
+kubernetes_build_date ?= 2020-04-16
 aws_region ?= $(AWS_DEFAULT_REGION)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
-ami_name ?= og-amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+ami_name ?= og-amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= a1.large
@@ -47,8 +47,8 @@ k8s: validate
 
 .PHONY: 1.14
 1.14:
-	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-01-22
+	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-04-16
  
 .PHONY: 1.15
 1.15:
-	$(MAKE) k8s kubernetes_version=1.15.10 kubernetes_build_date=2020-02-22
+	$(MAKE) k8s kubernetes_version=1.15.11 kkubernetes_build_date=2020-04-16
