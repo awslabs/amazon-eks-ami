@@ -1,5 +1,10 @@
 # Changelog
 
+1.4.2 - 05/06/2020
+-----------------------
+- downgraded docker version to 18.09.9ce-2.amzn2
+- cni plugin version downgraded v0.7.5  
+
 1.4.1 - 05/04/2020
 -----------------------
 - Upgrade to EKS 1.15.11
