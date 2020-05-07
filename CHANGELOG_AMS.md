@@ -1,5 +1,9 @@
 # Changelog
 
+### 2020-05-07
+
+* Switch to Docker 19.03.6
+
 ### 2019-02-14
 
 * Switch to Docker 18.06.
