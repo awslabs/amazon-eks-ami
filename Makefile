@@ -57,7 +57,7 @@ validate:
 	packer build \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.13 \
-		-var binary_bucket_path=1.13.12/2019-03-27/bin/linux/amd64 \
+		-var binary_bucket_path=1.13.12/2020-04-16/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
@@ -67,7 +67,7 @@ validate:
 	packer build \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.14 \
-		-var binary_bucket_path=1.14.9/2019-03-27/bin/linux/amd64 \
+		-var binary_bucket_path=1.14.9/2020-04-16/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
