@@ -160,7 +160,7 @@ get_resource_to_reserve_in_range() {
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
   local instance_type=$1
-  max_num_pods=$(cat /etc/eks/eni-max-pods.txt | grep $instance_type | awk '{print $2;}')
+  max_num_pods=$(cat /etc/eks/eni-max-pods.txt | grep -v "^#" | grep $instance_type | awk '{print $2;}')
   memory_to_reserve=$((11 * $max_num_pods + 255))
   echo $memory_to_reserve
 }
