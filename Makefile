@@ -13,7 +13,7 @@ SOURCE_AMI_ID ?= $(shell aws \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
 
-.PHONY: all validate ami 1.12 1.11 1.10
+.PHONY: all validate ami 1.13 1.12 1.11 1.10
 
 all: 1.12
 
@@ -47,6 +47,16 @@ validate:
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.12 \
 		-var binary_bucket_path=1.12.7/2019-03-27/bin/linux/amd64 \
+		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
+		-var source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-bionic.json
+
+1.13: validate
+	packer build \
+		-var aws_region=$(AWS_REGION) \
+		-var kubernetes_version=1.13 \
+		-var binary_bucket_path=1.13.12/2019-03-27/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
