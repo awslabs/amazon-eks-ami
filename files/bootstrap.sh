@@ -281,7 +281,9 @@ INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 
 #calculate the max number of pods per instance type
 MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^$INSTANCE_TYPE/"' { print $2 }')
+set -o pipefail
 if [ -z "$MAX_PODS" ]; then
     echo 'No entry for $INSTANCE_TYPE in $MAX_PODS_FILE'
     exit 1
@@ -296,8 +298,6 @@ echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_mill
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
-    set +o pipefail
-    set -o pipefail
     if [[ -n "$MAX_PODS" ]]; then
         echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
     else
