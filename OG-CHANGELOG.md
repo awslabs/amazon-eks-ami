@@ -1,5 +1,9 @@
 # Changelog
 
+1.5.0 - 05/12/2020
+-----------------------
+- Sync code with upstream
+
 1.4.2 - 05/06/2020
 -----------------------
 - downgraded docker version to 18.09.9ce-2.amzn2

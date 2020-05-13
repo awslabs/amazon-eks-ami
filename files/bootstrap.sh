@@ -117,6 +117,10 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}";;
     cn-northwest-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}";;
+    us-gov-west-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
+    us-gov-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
