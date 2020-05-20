@@ -301,17 +301,17 @@ get_common_logs() {
           continue
         fi
         if [[ "${entry}" == "containers" ]]; then
-          cp --force --recursive /var/log/containers/aws-node* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/containers/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/containers/coredns-* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/containers/kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/aws-node* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/coredns-* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           continue
         fi
         if [[ "${entry}" == "pods" ]]; then
-          cp --force --recursive /var/log/pods/kube-system_aws-node* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/pods/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/pods/kube-system_coredns* "${COLLECT_DIR}"/var_log/ 2>/dev/null
-          cp --force --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_aws-node* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_coredns* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           continue
         fi
       cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/ 2>/dev/null
