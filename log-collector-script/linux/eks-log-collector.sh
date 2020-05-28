@@ -189,7 +189,12 @@ create_directories() {
 
 get_instance_metadata() {
   readonly INSTANCE_ID=$(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
-  echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
+  echo "Instance ID = ${INSTANCE_ID}" >> "${COLLECT_DIR}"/system/instance-metadata.txt
+  echo "Instance Type:" $(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null) >> "${COLLECT_DIR}"/system/instance-metadata.txt
+  readonly MAC=$(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/mac/ 2>/dev/null)
+  echo "Local-IPv4s:" $(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/network/interfaces/macs/"${MAC}"/local-ipv4s 2>/dev/null) >> "${COLLECT_DIR}"/system/instance-metadata.txt
+  echo "VPC CIDR Blocks:" $(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/network/interfaces/macs/"${MAC}"/vpc-ipv4-cidr-blocks 2>/dev/null) >> "${COLLECT_DIR}"/system/instance-metadata.txt
+  echo "Security Groups:" $(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/network/interfaces/macs/"${MAC}"/security-group-ids/ 2>/dev/null) >> "${COLLECT_DIR}"/system/instance-metadata.txt
 }
 
 is_diskfull() {
