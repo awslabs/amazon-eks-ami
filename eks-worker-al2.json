@@ -114,6 +114,15 @@
     },
     {
       "type": "shell",
+      "inline": ["mkdir -p /tmp/lessonly/"]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/lessonly-files/",
+      "destination": "/tmp/lessonly/"
+    },
+    {
+      "type": "shell",
       "script": "{{template_dir}}/install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
