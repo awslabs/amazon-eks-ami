@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.6.1"
+readonly PROGRAM_VERSION="0.6.2"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -434,6 +434,12 @@ get_sysctls_info() {
 
 get_networking_info() {
   try "collect networking infomation"
+
+  # conntrack info
+  echo "*** Output of conntrack -S *** " >> "${COLLECT_DIR}"/networking/conntrack.txt
+  timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
+  echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
+  timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
 
   # ifconfig
   timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
