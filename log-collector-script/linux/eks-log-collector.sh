@@ -377,7 +377,7 @@ get_k8s_info() {
     KUBECONFIG="/var/lib/kubelet/kubeconfig"
     command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
     command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view  --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
-  
+
   else
     echo "======== Unable to find KUBECONFIG, IGNORING POD DATA =========" >> "${COLLECT_DIR}"/kubelet/svc.log
   fi
@@ -406,7 +406,7 @@ get_k8s_info() {
 
 get_ipamd_info() {
   if [[ "${ignore_introspection}" == "false" ]]; then
-    try "collect L-IPAMD introspectioon information"
+    try "collect L-IPAMD introspection information"
     for entry in ${IPAMD_DATA[*]}; do
       curl --max-time 3 --silent http://localhost:61679/v1/"${entry}" >> "${COLLECT_DIR}"/ipamd/"${entry}".json
     done
@@ -420,6 +420,9 @@ get_ipamd_info() {
   else
     echo "Ignoring Prometheus Metrics collection as mentioned"| tee -a "${COLLECT_DIR}"/ipamd/ipam_metrics_ignore.txt
   fi
+
+  try "collect L-IPAMD checkpoint"
+  cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
 
   ok
 }
