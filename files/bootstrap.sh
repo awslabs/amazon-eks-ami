@@ -23,6 +23,7 @@ function print_help {
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+    echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
 }
 
 POSITIONAL=()
@@ -79,6 +80,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --dns-cluster-ip)
+            DNS_CLUSTER_IP=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -107,6 +113,14 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}";;
     me-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}";;
+    cn-north-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}";;
+    cn-northwest-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}";;
+    us-gov-west-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
+    us-gov-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -137,40 +151,21 @@ get_resource_to_reserve_in_range() {
   echo $resources_to_reserve
 }
 
-# Calculates the amount of memory to reserve for the kubelet in mebibytes from the total memory available on the instance.
-# From the total memory capacity of this worker node, we calculate the memory resources to reserve
-# by reserving a percentage of the memory in each range up to the total memory available on the instance.
-# We are using these memory ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
-# 255 Mi of memory for machines with less than 1024Mi of memory
-# 25% of the first 4096Mi of memory
-# 20% of the next 4096Mi of memory (up to 8192Mi)
-# 10% of the next 8192Mi of memory (up to 16384Mi)
-# 6% of the next 114688Mi of memory (up to 131072Mi)
-# 2% of any memory above 131072Mi
+# Calculates the amount of memory to reserve for kubeReserved in mebibytes. KubeReserved is a function of pod
+# density so we are calculating the amount of memory to reserve for Kubernetes systems daemons by
+# considering the maximum number of pods this instance type supports.
 # Args:
-#   $1 total available memory on the machine in Mi
+#   $1 the instance type of the worker node
 # Return:
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
-  local total_memory_on_instance=$1
-  local memory_ranges=(0 4096 8192 16384 131072 $total_memory_on_instance)
-  local memory_percentage_reserved_for_ranges=(2500 2000 1000 600 200)
-  if (( $total_memory_on_instance <= 1024 )); then
-    memory_to_reserve="255"
-  else
-    memory_to_reserve="0"
-    for i in ${!memory_percentage_reserved_for_ranges[@]}; do
-      local start_range=${memory_ranges[$i]}
-      local end_range=${memory_ranges[(($i+1))]}
-      local percentage_to_reserve_for_range=${memory_percentage_reserved_for_ranges[$i]}
-      memory_to_reserve=$(($memory_to_reserve + \
-          $(get_resource_to_reserve_in_range $total_memory_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
-    done
-  fi
+  local instance_type=$1
+  max_num_pods=$(cat /etc/eks/eni-max-pods.txt | grep $instance_type | awk '{print $2;}')
+  memory_to_reserve=$((11 * $max_num_pods + 255))
   echo $memory_to_reserve
 }
 
-# Calculates the amount of CPU to reserve for the kubelet in millicores from the total number of vCPUs available on the instance.
+# Calculates the amount of CPU to reserve for kubeReserved in millicores from the total number of vCPUs available on the instance.
 # From the total core capacity of this worker node, we calculate the CPU resources to reserve by reserving a percentage
 # of the available cores in each range up to the total number of cores available on the instance.
 # We are using these CPU ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
@@ -178,12 +173,10 @@ get_memory_mebibytes_to_reserve() {
 # 1% of the next core (up to 2 cores)
 # 0.5% of the next 2 cores (up to 4 cores)
 # 0.25% of any cores above 4 cores
-# Args:
-#   $1 total number of millicores on the instance (number of vCPUs * 1000)
 # Return:
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
-  local total_cpu_on_instance=$1
+  local total_cpu_on_instance=$(($(nproc) * 1000))
   local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
@@ -204,6 +197,7 @@ fi
 
 ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
+AWS_SERVICES_DOMAIN=$(curl -s http://169.254.169.254/2018-09-24/meta-data/services/domain)
 
 MACHINE=$(uname -m)
 if [ "$MACHINE" == "x86_64" ]; then
@@ -216,7 +210,7 @@ else
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/eks/pause-${ARCH}}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause-${ARCH}}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
@@ -226,9 +220,10 @@ CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
     DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
-    rc=0
-    # Retry the DescribleCluster API for API_RETRY_ATTEMPTS
+
+    # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
     for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
+        rc=0
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
@@ -260,36 +255,38 @@ echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
+sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
-MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
-DNS_CLUSTER_IP=10.100.0.10
-if [[ "$TEN_RANGE" != "0" ]] ; then
-    DNS_CLUSTER_IP=172.20.0.10;
+if [ -z ${DNS_CLUSTER_IP+x} ]; then
+    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    DNS_CLUSTER_IP=10.100.0.10
+    if [[ "$TEN_RANGE" != "0" ]]; then
+        DNS_CLUSTER_IP=172.20.0.10
+    fi
+else
+    DNS_CLUSTER_IP="${DNS_CLUSTER_IP}"
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
+INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
-# calls calculate the CPU and memory resources to reserve for the kubelet based on instance type of the worker node.
+# calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
 # Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
-# gets the memory and CPU capacity of the worker node
-MEMORY_MI=$(free -m | grep Mem | awk '{print $2}')
-CPU_MILLICORES=$(($(nproc) * 1000))
 # calculates the amount of each resource to reserve
-mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MEMORY_MI)
-cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve $CPU_MILLICORES)
+mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $INSTANCE_TYPE)
+cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve)
 # writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
 echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
-
-INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
