@@ -361,17 +361,21 @@ Mappings:
   PartitionMap:
     aws:
       EC2ServicePrincipal: "ec2.amazonaws.com"
+    aws-us-gov:
+      EC2ServicePrincipal: "ec2.amazonaws.com"
     aws-cn:
       EC2ServicePrincipal: "ec2.amazonaws.com.cn"
     aws-iso:
       EC2ServicePrincipal: "ec2.c2s.ic.gov"
     aws-iso-b:
       EC2ServicePrincipal: "ec2.sc2s.sgov.gov"
+
 Conditions:
   HasNodeImageId: !Not
     - "Fn::Equals":
         - Ref: NodeImageId
         - ""
+
 Resources:
   NodeInstanceRole:
     Type: "AWS::IAM::Role"
@@ -473,39 +477,45 @@ Resources:
       SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
       ToPort: 443
 
-  NodeLaunchConfig:
-    Type: "AWS::AutoScaling::LaunchConfiguration"
+  NodeLaunchTemplate:
+    Type: "AWS::EC2::LaunchTemplate"
     Properties:
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            DeleteOnTermination: true
-            VolumeSize: !Ref NodeVolumeSize
-            VolumeType: gp2
-      IamInstanceProfile: !Ref NodeInstanceProfile
-      ImageId: !If
-        - HasNodeImageId
-        - Ref: NodeImageId
-        - Ref: NodeImageIdSSMParam
-      InstanceType: !Ref NodeInstanceType
-      KeyName: !Ref KeyName
-      SecurityGroups:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              DeleteOnTermination: true
+              VolumeSize: !Ref NodeVolumeSize
+              VolumeType: gp2
+        IamInstanceProfile:
+          Arn: !GetAtt NodeInstanceProfile.Arn
+        ImageId: !If
+          - HasNodeImageId
+          - Ref: NodeImageId
+          - Ref: NodeImageIdSSMParam
+        InstanceType: !Ref NodeInstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds:
         - Ref: NodeSecurityGroup
-      UserData: !Base64
-        "Fn::Sub": |
-          #!/bin/bash
-          set -o xtrace
-          /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
-          /opt/aws/bin/cfn-signal --exit-code $? \
-                   --stack  ${AWS::StackName} \
-                   --resource NodeGroup  \
-                   --region ${AWS::Region}
+        UserData: !Base64
+          "Fn::Sub": |
+            #!/bin/bash
+            set -o xtrace
+            /etc/eks/bootstrap.sh ${ClusterName} ${BootstrapArguments}
+            /opt/aws/bin/cfn-signal --exit-code $? \
+                     --stack  ${AWS::StackName} \
+                     --resource NodeGroup  \
+                     --region ${AWS::Region}
+        MetadataOptions:
+          "HttpPutResponseHopLimit" : 2
 
   NodeGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
       DesiredCapacity: !Ref NodeAutoScalingGroupDesiredCapacity
-      LaunchConfigurationName: !Ref NodeLaunchConfig
+      LaunchTemplate:
+        LaunchTemplateId: !Ref NodeLaunchTemplate
+        Version: !GetAtt NodeLaunchTemplate.LatestVersionNumber
       MaxSize: !Ref NodeAutoScalingGroupMaxSize
       MinSize: !Ref NodeAutoScalingGroupMinSize
       Tags:
