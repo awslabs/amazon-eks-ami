@@ -257,9 +257,15 @@ sudo chown -R root:root /etc/eks
 
 
 
+################################################################################
+### SOPHOS INSTALL ###############################################################
+################################################################################
 
 
+sudo /tmp/lessonly/sophos_install.sh
 
+# unregister the AMI builder so new machines will register upon startup
+sudo /opt/sophos-av/engine/register-sophos-cloud --deregister
 
 
 ################################################################################
@@ -294,11 +300,7 @@ sudo rm -rf \
 
 sudo touch /etc/machine-id
 
-# generate crontab 
-sudo crontab /tmp/lessonly/lessonly-crontab
-
-
-sudo cp /tmp/lessonly/sysconfig-docker /etc/sysconfig/docker 
+sudo cp /tmp/lessonly/sysconfig-docker /etc/sysconfig/docker
 
 
 sudo mv -f /tmp/lessonly/limits.conf /etc/security/limits.conf
