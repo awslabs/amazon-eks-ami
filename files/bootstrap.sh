@@ -17,6 +17,7 @@ function print_help {
     echo ""
     echo "-h,--help print this help"
     echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
+    echo "--using-custom-eniconfig Calculates --max-pods for use with custom ENIConfig. (default: false)"
     echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
@@ -37,6 +38,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --use-max-pods)
             USE_MAX_PODS="$2"
+            shift
+            shift
+            ;;
+        --using-custom-eniconfig)
+            USING_CUSTOM_ENICONFIG="$2"
             shift
             shift
             ;;
@@ -98,6 +104,7 @@ CLUSTER_NAME="$1"
 set -u
 
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
+USING_CUSTOM_ENICONFIG="${USING_CUSTOM_ENICONFIG:-false}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
@@ -281,12 +288,20 @@ INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
 #calculate the max number of pods per instance type
-MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+ENI_DATA_FILE="/etc/eks/instance-eni-data.txt"
 set +o pipefail
-MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^$INSTANCE_TYPE/"' { print $2 }')
+# * First IP on each ENI is not used for pods
+# * 2 additional host-networking pods (AWS ENI and kube-proxy) are accounted for
+MAX_PODS=$(cat $ENI_DATA_FILE | awk "/^$INSTANCE_TYPE/"' { print $2 * ($3 - 1) + 2 }')
+
+# Handle cases where using custom ENIConfig
+if [ $USING_CUSTOM_ENICONFIG ]; then
+    MAX_PODS=$(cat $ENI_DATA_FILE | awk "/^$INSTANCE_TYPE/"' { print ($2 - 1) * ($3 - 1) + 2 }')
+fi
+
 set -o pipefail
 if [ -z "$MAX_PODS" ]; then
-    echo 'No entry for $INSTANCE_TYPE in $MAX_PODS_FILE'
+    echo 'No entry for $INSTANCE_TYPE in $ENI_DATA_FILE'
     exit 1
 fi
 
