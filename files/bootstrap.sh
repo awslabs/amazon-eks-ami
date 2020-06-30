@@ -259,8 +259,8 @@ sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 if [ -z ${DNS_CLUSTER_IP+x} ]; then
-    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    MAC=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
         DNS_CLUSTER_IP=172.20.0.10
@@ -272,8 +272,8 @@ fi
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
-INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+INTERNAL_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+INSTANCE_TYPE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
 # calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
