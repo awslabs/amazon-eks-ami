@@ -28,6 +28,7 @@ readonly LOG_DIR="/var/log"
 readonly COLLECT_DIR="/tmp/${PROGRAM_NAME}"
 readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
 readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
+readonly TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
 INSTANCE_ID=""
 INIT_TYPE=""
 PACKAGE_TYPE=""
@@ -189,7 +190,7 @@ create_directories() {
 }
 
 get_instance_metadata() {
-  readonly INSTANCE_ID=$(curl --max-time 3 --silent http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
+  readonly INSTANCE_ID=$(curl --max-time 3 -H "X-aws-ec2-metadata-token: $TOKEN" --silent http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
   echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
 }
 
