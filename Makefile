@@ -28,7 +28,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.12 1.13 1.14 1.15
+all: 1.14 1.15 1.16 1.17
 
 .PHONY: validate
 validate:
@@ -41,23 +41,18 @@ k8s: validate
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-.PHONY: 1.12
-1.12:
-	$(MAKE) k8s kubernetes_version=1.12.10 kubernetes_build_date=2020-04-17 pull_cni_from_github=true
-
-.PHONY: 1.13
-1.13:
-	$(MAKE) k8s kubernetes_version=1.13.12 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
-
 .PHONY: 1.14
 1.14:
-	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
 
 .PHONY: 1.15
 1.15:
-	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
 
 .PHONY: 1.16
 1.16:
-	$(MAKE) k8s kubernetes_version=1.16.8 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.16.12 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
 
+.PHONY: 1.17
+1.17:
+	$(MAKE) k8s kubernetes_version=1.17.7 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
