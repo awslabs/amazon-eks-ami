@@ -25,7 +25,7 @@ readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/l
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
 readonly LOG_DIR="/var/log"
-readonly COLLECT_DIR="/tmp/${PROGRAM_NAME}"
+readonly COLLECT_DIR="/tmp/eks-log-collector"
 readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
 readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
 readonly TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
@@ -209,7 +209,12 @@ is_diskfull() {
 }
 
 cleanup() {
-  rm --recursive --force "${COLLECT_DIR}" >/dev/null 2>&1
+  #guard rails to avoid accidental deletion of unknown data
+  if [[ "${COLLECT_DIR}" == "/tmp/eks-log-collector" ]]; then
+    rm --recursive --force "${COLLECT_DIR}" >/dev/null 2>&1
+  else
+    echo "Unable to Cleanup as {COLLECT_DIR} variable is modified. Please cleanup manually!"
+  fi
 }
 
 init() {
