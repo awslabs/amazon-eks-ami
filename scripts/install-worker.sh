@@ -136,6 +136,7 @@ fi
 sudo mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
 sudo mv $TEMPLATE_DIR/logrotate.conf /etc/logrotate.conf
 sudo chown root:root /etc/logrotate.d/kube-proxy
+sudo chown root:root /etc/logrotate.conf
 sudo mkdir -p /var/log/journal
 
 ################################################################################
