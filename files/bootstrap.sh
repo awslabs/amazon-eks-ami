@@ -104,7 +104,7 @@ KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
-PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -204,17 +204,13 @@ AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" htt
 AWS_SERVICES_DOMAIN=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2018-09-24/meta-data/services/domain)
 
 MACHINE=$(uname -m)
-if [ "$MACHINE" == "x86_64" ]; then
-    ARCH="amd64"
-elif [ "$MACHINE" == "aarch64" ]; then
-    ARCH="arm64"
-else
+if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
     echo "Unknown machine architecture '$MACHINE'" >&2
     exit 1
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause-${ARCH}}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
