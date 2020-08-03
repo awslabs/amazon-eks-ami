@@ -306,6 +306,8 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
     fi
 fi
 
+mkdir -p /etc/systemd/system/kubelet.service.d
+
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
 Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER'
