@@ -186,8 +186,8 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
 else
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
-        aws s3 cp --region "$BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz" .
-        aws s3 cp --region "$BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256" .
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
         sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
     else
         echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
