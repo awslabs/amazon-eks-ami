@@ -1,5 +1,11 @@
 # Changelog
 
+1.5.1 - 08/04/2020
+-----------------------
+- docker version updated to `19.03.6ce-4.amzn2`
+- Updated latest build date for 1.15.11  to `2020-07-17`
+- Updated `kernel.pid_max = 999999`
+
 1.5.0 - 05/12/2020
 -----------------------
 - Sync code with upstream
