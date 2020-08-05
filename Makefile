@@ -15,7 +15,7 @@ SOURCE_AMI_ID ?= $(shell aws \
 
 DOCKER_PACKER = docker run -v /mnt/.aws/credentials:/root/.aws/credentials \
 	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
-	-v `pwd`/:/workspace -w /workspace\
+	-v `pwd`/:/workspace -w /workspace \
 	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
 
 .PHONY: all validate ami 1.13 1.12 1.11 1.10
