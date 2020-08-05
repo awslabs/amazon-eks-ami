@@ -13,15 +13,20 @@ SOURCE_AMI_ID ?= $(shell aws \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
 
+DOCKER_PACKER = docker run -v /mnt/.aws/credentials:/root/.aws/credentials \
+	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
+	-v `pwd`/:/workspace -w /workspace\
+	hashicorp/packer:light
+
 .PHONY: all validate ami 1.13 1.12 1.11 1.10
 
 all: 1.12
 
 validate:
-	packer validate eks-worker-bionic.json
+	$(DOCKER_PACKER) validate /workspace/eks-worker-bionic.json
 
 1.10: validate
-	packer build \
+	$(DOCKER_PACKER) build \
 		-color=false \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.10 \
@@ -32,7 +37,7 @@ validate:
 		eks-worker-bionic.json
 
 1.11: validate
-	packer build \
+	$(DOCKER_PACKER) build \
 		-color=false \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.11 \
@@ -43,7 +48,7 @@ validate:
 		eks-worker-bionic.json
 
 1.12: validate
-	packer build \
+	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.12 \
 		-var binary_bucket_path=1.12.7/2019-03-27/bin/linux/amd64 \
@@ -54,7 +59,7 @@ validate:
 
 
 1.13: validate
-	packer build \
+	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.13 \
 		-var binary_bucket_path=1.13.12/2020-04-16/bin/linux/amd64 \
@@ -64,7 +69,7 @@ validate:
 		eks-worker-bionic.json
 
 1.14: validate
-	packer build \
+	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.14 \
 		-var binary_bucket_path=1.14.9/2020-04-16/bin/linux/amd64 \
