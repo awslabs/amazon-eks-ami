@@ -23,6 +23,7 @@ Metadata:
           - NodeVolumeSize
           - KeyName
           - BootstrapArguments
+          - DisableIMDSv1
       - Label:
           default: Worker Network Configuration
         Parameters:
@@ -73,8 +74,15 @@ Parameters:
 
   NodeImageIdSSMParam:
     Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
-    Default: /aws/service/eks/optimized-ami/1.14/amazon-linux-2/recommended/image_id
-    Description: AWS Systems Manager Parameter Store parameter of the AMI ID for the worker node instances.
+    Default: /aws/service/eks/optimized-ami/1.17/amazon-linux-2/recommended/image_id
+    Description: AWS Systems Manager Parameter Store parameter of the AMI ID for the worker node instances. Change this value to match the version of Kubernetes you are using.
+
+  DisableIMDSv1:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "false"
+      - "true"
 
   NodeInstanceType:
     Type: String
@@ -121,6 +129,24 @@ Parameters:
       - c5n.4xlarge
       - c5n.9xlarge
       - c5n.18xlarge
+      - c6g.medium
+      - c6g.large
+      - c6g.xlarge
+      - c6g.2xlarge
+      - c6g.4xlarge
+      - c6g.8xlarge
+      - c6g.12xlarge
+      - c6g.16xlarge
+      - c6g.metal
+      - c6gd.medium
+      - c6gd.large
+      - c6gd.xlarge
+      - c6gd.2xlarge
+      - c6gd.4xlarge
+      - c6gd.8xlarge
+      - c6gd.12xlarge
+      - c6gd.16xlarge
+      - c6gd.metal
       - cc2.8xlarge
       - cr1.8xlarge
       - d2.xlarge
@@ -228,6 +254,24 @@ Parameters:
       - m5n.12xlarge
       - m5n.16xlarge
       - m5n.24xlarge
+      - m6g.medium
+      - m6g.large
+      - m6g.xlarge
+      - m6g.2xlarge
+      - m6g.4xlarge
+      - m6g.8xlarge
+      - m6g.12xlarge
+      - m6g.16xlarge
+      - m6g.metal
+      - m6gd.medium
+      - m6gd.large
+      - m6gd.xlarge
+      - m6gd.2xlarge
+      - m6gd.4xlarge
+      - m6gd.8xlarge
+      - m6gd.12xlarge
+      - m6gd.16xlarge
+      - m6gd.metal
       - p2.xlarge
       - p2.8xlarge
       - p2.16xlarge
@@ -301,6 +345,24 @@ Parameters:
       - r5n.12xlarge
       - r5n.16xlarge
       - r5n.24xlarge
+      - r6g.medium
+      - r6g.large
+      - r6g.xlarge
+      - r6g.2xlarge
+      - r6g.4xlarge
+      - r6g.8xlarge
+      - r6g.12xlarge
+      - r6g.16xlarge
+      - r6g.metal
+      - r6gd.medium
+      - r6gd.large
+      - r6gd.xlarge
+      - r6gd.2xlarge
+      - r6gd.4xlarge
+      - r6gd.8xlarge
+      - r6gd.12xlarge
+      - r6gd.16xlarge
+      - r6gd.metal
       - t1.micro
       - t2.nano
       - t2.micro
@@ -373,8 +435,13 @@ Mappings:
 Conditions:
   HasNodeImageId: !Not
     - "Fn::Equals":
-        - Ref: NodeImageId
-        - ""
+      - !Ref NodeImageId
+      - ""
+
+  IMDSv1Disabled:
+    "Fn::Equals":
+      - !Ref DisableIMDSv1
+      - "true"
 
 Resources:
   NodeInstanceRole:
@@ -400,7 +467,7 @@ Resources:
     Properties:
       Path: /
       Roles:
-        - Ref: NodeInstanceRole
+        - !Ref NodeInstanceRole
 
   NodeSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
@@ -491,12 +558,12 @@ Resources:
           Arn: !GetAtt NodeInstanceProfile.Arn
         ImageId: !If
           - HasNodeImageId
-          - Ref: NodeImageId
-          - Ref: NodeImageIdSSMParam
+          - !Ref NodeImageId
+          - !Ref NodeImageIdSSMParam
         InstanceType: !Ref NodeInstanceType
         KeyName: !Ref KeyName
         SecurityGroupIds:
-        - Ref: NodeSecurityGroup
+        - !Ref NodeSecurityGroup
         UserData: !Base64
           "Fn::Sub": |
             #!/bin/bash
@@ -507,7 +574,12 @@ Resources:
                      --resource NodeGroup  \
                      --region ${AWS::Region}
         MetadataOptions:
-          "HttpPutResponseHopLimit" : 2
+          HttpPutResponseHopLimit : 2
+          HttpEndpoint: enabled
+          HttpTokens: !If
+            - IMDSv1Disabled
+            - required
+            - optional
 
   NodeGroup:
     Type: "AWS::AutoScaling::AutoScalingGroup"
