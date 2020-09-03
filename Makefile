@@ -5,7 +5,6 @@ K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
 
 aws_region ?= $(AWS_DEFAULT_REGION)
-source_ami_owners ?= $(SOURCE_AMI_OWNERS)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
 ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 arch ?= x86_64
