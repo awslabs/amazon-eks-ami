@@ -11,11 +11,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2020-07-27T21:19:16-07:00
+# This file was generated at 2020-09-03T14:12:27-07:00
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
-# * 2 additional host-networking pods (AWS ENI and kube-proxy) are accounted for
+# * +2 for for the pods that use host-networking (AWS CNI and kube-proxy)
 #
 #   # of ENI * (# of IPv4 per ENI - 1) + 2
 #
