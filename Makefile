@@ -1,5 +1,5 @@
 PACKER_BINARY ?= packer
-PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date docker_version cni_version cni_plugin_version source_ami_id source_ami_owners arch instance_type security_group_id additional_yum_repos pull_cni_from_github enable_fips_mode
+PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date docker_version cni_plugin_version source_ami_id source_ami_owners arch instance_type security_group_id additional_yum_repos pull_cni_from_github enable_fips_mode
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
