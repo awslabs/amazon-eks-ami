@@ -6,7 +6,7 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 aws_region ?= $(AWS_DEFAULT_REGION)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v2$(shell date +'%Y%m%d')
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= a1.large

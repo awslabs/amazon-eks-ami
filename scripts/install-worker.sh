@@ -265,8 +265,32 @@ sudo chown -R root:root /etc/eks
 sudo /tmp/lessonly/sophos_install.sh
 
 # unregister the AMI builder so new machines will register upon startup
-sudo /opt/sophos-av/engine/register-sophos-cloud --deregister
+sudo /opt/sophos-spl/base/bin/registerCentral --deregister
 
+##############################
+### CLAMAV
+#############################
+
+sudo amazon-linux-extras install -y epel
+sudo yum -y install clamav-server clamav-data clamav-update clamav-filesystem clamav clamav-scanner-systemd clamav-devel clamav-lib clamav-server-systemd
+
+sudo  mkdir /var/log/clam
+sudo  chown clamscan:clamscan /var/log/clam
+
+sudo cp /tmp/lessonly/clamav-logrotate.conf /etc/logrotate.d/clamav-scan.conf
+sudo cp /tmp/lessonly/clamav-scan.conf /etc/clamd.d/scan.conf
+
+sudo mkdir  /var/log/freshclam
+sudo chown  clamupdate:clamupdate /var/log/freshclam
+
+sudo cp /tmp/lessonly/freshclam.conf /etc/freshclam.conf
+sudo cp /tmp/lessonly/freshclam-logrotate.conf /etc/logrotate.d/clamav-update
+
+sudo systemctl enable clamd@scan.service
+sudo systemctl enable clamonacc.service
+sudo systemctl enable clamav-freshclam.service
+
+sudo freshclam
 
 ################################################################################
 ### Cleanup ####################################################################
@@ -307,4 +331,35 @@ sudo mv -f /tmp/lessonly/limits.conf /etc/security/limits.conf
 
 # Update network sysctl settings
 sudo cp /tmp/lessonly/network-sysctl.conf /etc/sysctl.d/network-sysctl.conf
+sudo cp /tmp/lessonly/fs-sysctl.conf /etc/sysctl.d/fs-sysctl.conf
 
+
+
+###################################
+# AWS Inspector Suggested Rules
+###################################
+
+# disable HFS
+#echo   'install hfs /bin/true'  | sudo tee -a  /etc/modprobe.d/hfs.conf
+#echo   'install squashfs /bin/true'  | sudo tee -a  /etc/modprobe.d/squashfs.conf
+
+# audit sudoers
+#echo '-w /etc/sudoers -p wa -k scope' | sudo tee -a /etc/audit/rules.d/audit.rules
+#echo '-w /etc/sudoers.d/ -p wa -k scope' | sudo tee -a /etc/audit/rules.d/audit.rules
+
+# collect session initiation information
+#echo '-w /var/run/utmp -p wa -k session'| sudo tee -a /etc/audit/rules.d/audit.rules
+#echo '-w /var/log/wtmp -p wa -k logins'| sudo tee -a /etc/audit/rules.d/audit.rules
+#echo '-w /var/log/btmp -p wa -k logins'| sudo tee -a /etc/audit/rules.d/audit.rules
+
+# fix crontab permissions
+#sudo chown root:root /etc/crontab
+#sudo chmod og-rwx /etc/crontab
+
+
+#######################################
+## More Cleanup
+#######################################
+
+# Disable SSH (we don't use it)
+#sudo systemctl disable sshd
