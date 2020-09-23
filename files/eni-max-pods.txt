@@ -15,7 +15,7 @@
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
-# * +2 for for the pods that use host-networking (AWS CNI and kube-proxy)
+# * +2 for the pods that use host-networking (AWS CNI and kube-proxy)
 #
 #   # of ENI * (# of IPv4 per ENI - 1) + 2
 #
