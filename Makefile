@@ -6,12 +6,13 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 aws_region ?= $(AWS_DEFAULT_REGION)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= a1.large
+ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
 instance_type ?= m4.large
+ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
@@ -43,16 +44,20 @@ k8s: validate
 
 .PHONY: 1.14
 1.14:
-	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-09-18 pull_cni_from_github=true
 
 .PHONY: 1.15
 1.15:
-	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-09-18 pull_cni_from_github=true
 
 .PHONY: 1.16
 1.16:
-	$(MAKE) k8s kubernetes_version=1.16.12 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.16.13 kubernetes_build_date=2020-09-18 pull_cni_from_github=true
 
 .PHONY: 1.17
 1.17:
-	$(MAKE) k8s kubernetes_version=1.17.7 kubernetes_build_date=2020-07-08 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.17.11 kubernetes_build_date=2020-09-18 pull_cni_from_github=true
+
+.PHONY: 1.18
+1.18:
+	$(MAKE) k8s kubernetes_version=1.18.8 kubernetes_build_date=2020-09-18 pull_cni_from_github=true
