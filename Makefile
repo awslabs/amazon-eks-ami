@@ -20,7 +20,7 @@ DOCKER_PACKER = docker run -v /mnt/.aws/credentials:/root/.aws/credentials \
 
 .PHONY: all validate ami 1.15 1.14 1.13 1.12 1.11 1.10
 
-all: 1.15
+all: 1.15 1.14
 
 validate:
 	$(DOCKER_PACKER) validate /workspace/eks-worker-bionic.json

@@ -211,3 +211,4 @@ sudo rm -rf \
     /var/log/cloud-init.log
 
 sudo touch /etc/machine-id
+sudo chmod -x /etc/cron.daily/apt-compat

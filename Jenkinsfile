@@ -22,7 +22,7 @@ node {
         stage('build') {
             withAWS(credentials: 'jenkins-agent', region: 'us-west-2') {
                 sh "aws --region us-west-2 ecr get-login-password | docker login --username AWS --password-stdin 876270261134.dkr.ecr.us-west-2.amazonaws.com"
-                sh 'make -j2 1.15'
+                sh 'make -j2 all'
             }
         }
     } catch (Exception ex) {
