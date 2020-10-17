@@ -212,3 +212,5 @@ sudo rm -rf \
 
 sudo touch /etc/machine-id
 sudo chmod -x /etc/cron.daily/apt-compat
+echo 'APT::Periodic::Update-Package-Lists "0";
+APT::Periodic::Unattended-Upgrade "0";' | sudo tee /etc/apt/apt.conf.d/20auto-upgrades
