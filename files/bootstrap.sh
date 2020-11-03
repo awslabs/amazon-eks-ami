@@ -24,6 +24,8 @@ function print_help {
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+    echo "--pause-container-account The AWS account (number) to pull the pause container from"
+    echo "--pause-container-version The tag of the pause container"
 }
 
 POSITIONAL=()
