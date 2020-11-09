@@ -291,10 +291,10 @@ INSTANCE_TYPE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169
 #calculate the max number of pods per instance type
 MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
 set +o pipefail
-MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^$INSTANCE_TYPE/"' { print $2 }')
+MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
-if [ -z "$MAX_PODS" ]; then
-    echo 'No entry for $INSTANCE_TYPE in $MAX_PODS_FILE'
+if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
     exit 1
 fi
 
