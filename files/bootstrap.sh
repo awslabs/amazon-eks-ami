@@ -161,7 +161,7 @@ get_resource_to_reserve_in_range() {
 # density so we are calculating the amount of memory to reserve for Kubernetes systems daemons by
 # considering the maximum number of pods this instance type supports.
 # Args:
-#   $1 the instance type of the worker node
+#   $1 the max number of pods per instance type (MAX_PODS) based on values from /etc/eks/eni-max-pods.txt
 # Return:
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
