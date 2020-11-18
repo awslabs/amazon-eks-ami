@@ -342,3 +342,31 @@ fi
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
+
+# gpu boost clock
+if  command -v nvidia-smi &>/dev/null ; then
+   echo "nvidia-smi found"
+
+   sudo nvidia-smi -pm 1 # set persistence mode
+   sudo nvidia-smi --auto-boost-default=0
+
+   GPUNAME=$(nvidia-smi -L | head -n1)
+   echo $GPUNAME
+
+   # set application clock to maximum
+   if [[ $GPUNAME == *"A100"* ]]; then
+      nvidia-smi -ac 1215,1410
+   elif [[ $GPUNAME == *"V100"* ]]; then
+      nvidia-smi -ac 877,1530
+   elif [[ $GPUNAME == *"K80"* ]]; then
+      nvidia-smi -ac 2505,875
+   elif [[ $GPUNAME == *"T4"* ]]; then
+      nvidia-smi -ac 5001,1590
+   elif [[ $GPUNAME == *"M60"* ]]; then
+      nvidia-smi -ac 2505,1177
+   else
+      echo "unsupported gpu"
+   fi
+else
+    echo "nvidia-smi not found"
+fi
