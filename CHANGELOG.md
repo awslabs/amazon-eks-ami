@@ -1,5 +1,32 @@
 # Changelog
 
+### AMI Release v20201117
+* amazon-eks-gpu-node-1.18-v20201117
+* amazon-eks-gpu-node-1.17-v20201117
+* amazon-eks-gpu-node-1.16-v20201117
+* amazon-eks-gpu-node-1.15-v20201117
+* amazon-eks-arm64-node-1.18-v20201117
+* amazon-eks-arm64-node-1.17-v20201117
+* amazon-eks-arm64-node-1.16-v20201117
+* amazon-eks-arm64-node-1.15-v20201117
+* amazon-eks-node-1.18-v20201117
+* amazon-eks-node-1.17-v20201117
+* amazon-eks-node-1.16-v20201117
+* amazon-eks-node-1.15-v20201117
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-07/
+* s3://amazon-eks/1.17.12/2020-11-07/
+* s3://amazon-eks/1.16.15/2020-11-07/
+* s3://amazon-eks/1.15.12/2020-11-07/
+
+Notable changes :
+* Bug fix [#526](https://github.com/awslabs/amazon-eks-ami/pull/526)
+* GPU AMIs - Nvidia driver version update to 450.51.06, cuda version update to 11.0
+* Updated kernel version to 4.14.203 and fix for soft lockup issue
+* Downgraded containerd version to 1.3.2 to fix pods getting stuck in the Terminating state
+
+
 ### AMI Release v20201112
 * amazon-eks-gpu-node-1.18-v20201112
 * amazon-eks-gpu-node-1.17-v20201112
