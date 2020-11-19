@@ -15,10 +15,10 @@
 * amazon-eks-node-1.15-v20201117
 
 Binaries used to build these AMIs are published :
-* s3://amazon-eks/1.18.9/2020-11-02/
-* s3://amazon-eks/1.17.12/2020-11-02/
-* s3://amazon-eks/1.16.15/2020-11-02/
-* s3://amazon-eks/1.15.12/2020-11-02/
+* s3://amazon-eks/1.18.9/2020-11-07/
+* s3://amazon-eks/1.17.12/2020-11-07/
+* s3://amazon-eks/1.16.15/2020-11-07/
+* s3://amazon-eks/1.15.12/2020-11-07/
 
 Notable changes :
 * Bug fix [#526](https://github.com/awslabs/amazon-eks-ami/pull/526)
