@@ -192,12 +192,18 @@ get_instance_id() {
 
   INSTANCE_ID_FILE="/var/lib/cloud/data/instance-id"
 
-  if grep -q '^i-' "$INSTANCE_ID_FILE"; then
-    cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
-  else
-    warning "Unable to find EC2 Instance Id. Skipped Instance Id."
-  fi
+  timeout 75 readonly INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 
+  if [ 0 -eq $? ]; then # Check if previous command was successful.
+    echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
+  else
+    if grep -q '^i-' "$INSTANCE_ID_FILE"; then
+      cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
+      readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
+    else
+      warning "Unable to find EC2 Instance Id. Skipped Instance Id."
+    fi
+  fi
 }
 
 is_diskfull() {
