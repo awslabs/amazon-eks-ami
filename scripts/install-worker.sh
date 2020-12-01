@@ -24,6 +24,7 @@ validate_env_set() {
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
 validate_env_set DOCKER_VERSION
+validate_env_set CONTAINERD_VERSION
 validate_env_set CNI_PLUGIN_VERSION
 validate_env_set KUBERNETES_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
@@ -125,7 +126,7 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     # Due to an issue with the latest containerd, customers are seeing
     # pods getting stuck in terminating, so we need to downgrade containerd
     # until the issue is fixed upstream or we have another workaround.
-    sudo yum downgrade -y containerd-1.3.2-1.amzn2
+    sudo yum downgrade -y containerd-${CONTAINERD_VERSION}
 
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
