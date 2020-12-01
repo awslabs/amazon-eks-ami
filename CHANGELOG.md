@@ -1,5 +1,30 @@
 # Changelog
 
+### AMI Release v20201126
+* amazon-eks-gpu-node-1.18-v20201126
+* amazon-eks-gpu-node-1.17-v20201126
+* amazon-eks-gpu-node-1.16-v20201126
+* amazon-eks-gpu-node-1.15-v20201126
+* amazon-eks-arm64-node-1.18-v20201126
+* amazon-eks-arm64-node-1.17-v20201126
+* amazon-eks-arm64-node-1.16-v20201126
+* amazon-eks-arm64-node-1.15-v20201126
+* amazon-eks-node-1.18-v20201126
+* amazon-eks-node-1.17-v20201126
+* amazon-eks-node-1.16-v20201126
+* amazon-eks-node-1.15-v20201126
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+
+* Containerd patch for CVE-2020-15257
+
+
 ### AMI Release v20201117
 * amazon-eks-gpu-node-1.18-v20201117
 * amazon-eks-gpu-node-1.17-v20201117
