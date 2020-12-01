@@ -22,7 +22,7 @@ Binaries used to build these AMIs are published :
 
 Notable changes :
 
-* Containerd patch for CVE-2020-15257
+* Containerd patch for CVE-2020-15257 (containerd-1.4.1-2)
 
 
 ### AMI Release v20201117
