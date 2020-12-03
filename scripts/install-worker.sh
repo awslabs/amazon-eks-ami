@@ -122,10 +122,6 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
     sudo chown root:root /etc/docker/daemon.json
 
-    # https://github.com/awslabs/amazon-eks-ami/issues/563
-    # Due to an issue with the latest containerd, customers are seeing
-    # pods getting stuck in terminating, so we need to downgrade containerd
-    # until the issue is fixed upstream or we have another workaround.
     sudo yum downgrade -y containerd-${CONTAINERD_VERSION}
 
     # Enable docker daemon to start on boot.
