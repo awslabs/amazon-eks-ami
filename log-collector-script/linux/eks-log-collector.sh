@@ -299,10 +299,10 @@ get_selinux_info() {
 get_iptables_info() {
   try "collect iptables information"
 
-  iptables --wait 1 --numeric --verbose --list --table mangle > "${COLLECT_DIR}"/networking/iptables-mangle.txt
-  iptables --wait 1 --numeric --verbose --list --table filter > "${COLLECT_DIR}"/networking/iptables-filter.txt
-  iptables --wait 1 --numeric --verbose --list --table nat > "${COLLECT_DIR}"/networking/iptables-nat.txt
-  iptables --wait 1 --numeric --verbose --list > "${COLLECT_DIR}"/networking/iptables.txt
+  iptables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/iptables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-mangle.txt
+  iptables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/iptables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-filter.txt
+  iptables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/iptables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-nat.txt
+  iptables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/iptables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables.txt
   iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
 
   ok
