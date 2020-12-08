@@ -13,7 +13,7 @@ ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
-RestartForceExitStatus=SIGPIPE
+RestartForceExitStatus=SIGPIPE SIGKILL
 RestartSec=5
 KillMode=process
 
