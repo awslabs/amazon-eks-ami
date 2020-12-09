@@ -24,6 +24,8 @@ function print_help {
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+    echo "--pause-container-account The AWS account (number) to pull the pause container from"
+    echo "--pause-container-version The tag of the pause container"
 }
 
 POSITIONAL=()
@@ -100,11 +102,13 @@ set -u
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
+SERVICE_IPV4_CIDR="${SERVICE_IPV4_CIDR:-}"
+DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
-PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1}"
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -117,6 +121,14 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}";;
     cn-northwest-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}";;
+    us-gov-west-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
+    us-gov-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
+    af-south-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
+    eu-south-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -147,40 +159,20 @@ get_resource_to_reserve_in_range() {
   echo $resources_to_reserve
 }
 
-# Calculates the amount of memory to reserve for the kubelet in mebibytes from the total memory available on the instance.
-# From the total memory capacity of this worker node, we calculate the memory resources to reserve
-# by reserving a percentage of the memory in each range up to the total memory available on the instance.
-# We are using these memory ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
-# 255 Mi of memory for machines with less than 1024Mi of memory
-# 25% of the first 4096Mi of memory
-# 20% of the next 4096Mi of memory (up to 8192Mi)
-# 10% of the next 8192Mi of memory (up to 16384Mi)
-# 6% of the next 114688Mi of memory (up to 131072Mi)
-# 2% of any memory above 131072Mi
+# Calculates the amount of memory to reserve for kubeReserved in mebibytes. KubeReserved is a function of pod
+# density so we are calculating the amount of memory to reserve for Kubernetes systems daemons by
+# considering the maximum number of pods this instance type supports.
 # Args:
-#   $1 total available memory on the machine in Mi
+#   $1 the max number of pods per instance type (MAX_PODS) based on values from /etc/eks/eni-max-pods.txt
 # Return:
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
-  local total_memory_on_instance=$1
-  local memory_ranges=(0 4096 8192 16384 131072 $total_memory_on_instance)
-  local memory_percentage_reserved_for_ranges=(2500 2000 1000 600 200)
-  if (( $total_memory_on_instance <= 1024 )); then
-    memory_to_reserve="255"
-  else
-    memory_to_reserve="0"
-    for i in ${!memory_percentage_reserved_for_ranges[@]}; do
-      local start_range=${memory_ranges[$i]}
-      local end_range=${memory_ranges[(($i+1))]}
-      local percentage_to_reserve_for_range=${memory_percentage_reserved_for_ranges[$i]}
-      memory_to_reserve=$(($memory_to_reserve + \
-          $(get_resource_to_reserve_in_range $total_memory_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
-    done
-  fi
+  local max_num_pods=$1
+  memory_to_reserve=$((11 * $max_num_pods + 255))
   echo $memory_to_reserve
 }
 
-# Calculates the amount of CPU to reserve for the kubelet in millicores from the total number of vCPUs available on the instance.
+# Calculates the amount of CPU to reserve for kubeReserved in millicores from the total number of vCPUs available on the instance.
 # From the total core capacity of this worker node, we calculate the CPU resources to reserve by reserving a percentage
 # of the available cores in each range up to the total number of cores available on the instance.
 # We are using these CPU ranges from GKE (https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture#node_allocatable):
@@ -188,12 +180,10 @@ get_memory_mebibytes_to_reserve() {
 # 1% of the next core (up to 2 cores)
 # 0.5% of the next 2 cores (up to 4 cores)
 # 0.25% of any cores above 4 cores
-# Args:
-#   $1 total number of millicores on the instance (number of vCPUs * 1000)
 # Return:
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
-  local total_cpu_on_instance=$1
+  local total_cpu_on_instance=$(($(nproc) * 1000))
   local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
@@ -212,22 +202,19 @@ if [ -z "$CLUSTER_NAME" ]; then
     exit  1
 fi
 
-ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-AWS_DEFAULT_REGION=$(echo $ZONE | awk '{print substr($0, 1, length($0)-1)}')
-AWS_SERVICES_DOMAIN=$(curl -s http://169.254.169.254/2018-09-24/meta-data/services/domain)
+
+TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
+AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
+AWS_SERVICES_DOMAIN=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2018-09-24/meta-data/services/domain)
 
 MACHINE=$(uname -m)
-if [ "$MACHINE" == "x86_64" ]; then
-    ARCH="amd64"
-elif [ "$MACHINE" == "aarch64" ]; then
-    ARCH="arm64"
-else
+if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
     echo "Unknown machine architecture '$MACHINE'" >&2
     exit 1
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause-${ARCH}}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
@@ -235,7 +222,7 @@ PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
-if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
+if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
     # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
@@ -253,7 +240,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
             --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
         if [[ $rc -eq 0 ]]; then
             break
         fi
@@ -266,6 +253,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] && [[ -z "${APISERVER_ENDPOINT}" ]]; then
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
+    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
 fi
 
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
@@ -275,50 +263,60 @@ sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
-if [ -z ${DNS_CLUSTER_IP+x} ]; then
-    MAC=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-    TEN_RANGE=$(curl -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+if [[ -z "${DNS_CLUSTER_IP}" ]]; then
+  if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
+    #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+    DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
+  else
+    MAC=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
-        DNS_CLUSTER_IP=172.20.0.10
+      DNS_CLUSTER_IP=172.20.0.10
     fi
+  fi
 else
-    DNS_CLUSTER_IP="${DNS_CLUSTER_IP}"
+  DNS_CLUSTER_IP="${DNS_CLUSTER_IP}"
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
+INTERNAL_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4)
+INSTANCE_TYPE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
+
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
-# calls calculate the CPU and memory resources to reserve for the kubelet based on instance type of the worker node.
+# calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
 # Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
-# gets the memory and CPU capacity of the worker node
-MEMORY_MI=$(free -m | grep Mem | awk '{print $2}')
-CPU_MILLICORES=$(($(nproc) * 1000))
+#calculate the max number of pods per instance type
+MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+set +o pipefail
+MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
+set -o pipefail
+if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
+    exit 1
+fi
+
 # calculates the amount of each resource to reserve
-mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MEMORY_MI)
-cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve $CPU_MILLICORES)
+mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MAX_PODS)
+cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve)
 # writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
 echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
-INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
-
 if [[ "$USE_MAX_PODS" = "true" ]]; then
-    MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
-    set +o pipefail
-    MAX_PODS=$(grep ^$INSTANCE_TYPE $MAX_PODS_FILE | awk '{print $2}')
-    set -o pipefail
     if [[ -n "$MAX_PODS" ]]; then
         echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
     else
         echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
     fi
 fi
+
+mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]

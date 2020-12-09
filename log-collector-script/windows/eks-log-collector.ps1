@@ -17,9 +17,6 @@
 .EXAMPLE 
     eks-log-collector.ps1
     Gather basic operating system, Docker daemon, and kubelet logs. 
-.EXAMPLE 
-    eks-log-collector.ps1 -RunMode EnableDebug
-    Enables debug mode for the Docker daemon.
 
 #>
 
@@ -279,41 +276,6 @@ Function get_network_info{
         Break
     }
 }
-Function enable_docker_debug{
-    try {
-        Write-Host "Enabling debug mode for the Docker Service"
-        if (sc.exe qc docker | where-object {$_ -like '*-D*'}){
-            Write-Host "Debug mode already enabled" -foregroundcolor "yellow"
-        }
-        else {
-            sc.exe config docker binPath= "C:\Program Files\Docker\dockerd.exe --run-service -D"
-            Restart-service Docker
-            Write-Host "OK" -foregroundcolor "green" 
-        } 
-    }
-    catch {
-        Write-Error "Failed to enable debug mode"
-        Break
-    }
-}
-
-Function disable_docker_debug{
-    try {
-        Write-Host "Disabling debug mode for the Docker Service"
-        if (sc.exe qc docker | where-object {$_ -like '*-D*'}){
-            sc.exe config docker binPath= "C:\Program Files\Docker\dockerd.exe --run-service"
-            Restart-service Docker
-            Write-Host "OK" -foregroundcolor "green"    
-        }
-        else {
-            Write-Host "Debug mode already disabled" -foregroundcolor "yellow"
-        } 
-    }
-    catch {
-        Write-Error "Failed to disable debug mode"
-        Break
-    }
-}
 
 Function cleanup{
     Write-Host "Cleaning up directory"
@@ -357,26 +319,14 @@ Function collect{
 
 }
 
-Function enable_debug{
-    enable_docker_debug
-}
-
-Function disable_debug{
-    disable_docker_debug
-}
-   
-if ($RunMode -eq "Collect"){
+#--------------------------
+#Main-function
+Function main {   
     Write-Host "Running Default(Collect) Mode" -foregroundcolor "blue"
     cleanup
     collect
     pack 
-} elseif ($RunMode -eq "EnableDebug"){
-    Write-Host "Enabling Debug for Docker" -foregroundcolor "blue"
-    enable_debug
-} elseif ($RunMode -eq "DisableDebug"){
-    Write-Host "Disabling Debug for Docker" -foregroundcolor "blue"
-    disable_debug
-} else {
-    Write-Host "You need to specify either Collect, EnableDebug or DisableDebug RunMode" -ForegroundColor "red" 
-    Break
 }
+
+#Entry point
+main
