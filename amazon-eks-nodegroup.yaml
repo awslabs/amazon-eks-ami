@@ -173,6 +173,16 @@ Parameters:
       - d2.4xlarge
       - d2.8xlarge
       - d2.xlarge
+      - d3.2xlarge
+      - d3.4xlarge
+      - d3.8xlarge
+      - d3.xlarge
+      - d3en.12xlarge
+      - d3en.2xlarge
+      - d3en.4xlarge
+      - d3en.6xlarge
+      - d3en.8xlarge
+      - d3en.xlarge
       - f1.16xlarge
       - f1.2xlarge
       - f1.4xlarge
@@ -182,6 +192,9 @@ Parameters:
       - g3.4xlarge
       - g3.8xlarge
       - g3s.xlarge
+      - g4ad.16xlarge
+      - g4ad.4xlarge
+      - g4ad.8xlarge
       - g4dn.12xlarge
       - g4dn.16xlarge
       - g4dn.2xlarge
@@ -284,6 +297,13 @@ Parameters:
       - m5n.8xlarge
       - m5n.large
       - m5n.xlarge
+      - m5zn.12xlarge
+      - m5zn.2xlarge
+      - m5zn.3xlarge
+      - m5zn.6xlarge
+      - m5zn.large
+      - m5zn.metal
+      - m5zn.xlarge
       - m6g.12xlarge
       - m6g.16xlarge
       - m6g.2xlarge
@@ -302,6 +322,7 @@ Parameters:
       - m6gd.medium
       - m6gd.metal
       - m6gd.xlarge
+      - mac1.metal
       - p2.16xlarge
       - p2.8xlarge
       - p2.xlarge
@@ -346,6 +367,15 @@ Parameters:
       - r5ad.8xlarge
       - r5ad.large
       - r5ad.xlarge
+      - r5b.12xlarge
+      - r5b.16xlarge
+      - r5b.24xlarge
+      - r5b.2xlarge
+      - r5b.4xlarge
+      - r5b.8xlarge
+      - r5b.large
+      - r5b.metal
+      - r5b.xlarge
       - r5d.12xlarge
       - r5d.16xlarge
       - r5d.24xlarge
