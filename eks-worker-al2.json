@@ -32,7 +32,8 @@
     "remote_folder": "",
     "launch_block_device_mappings_volume_size": "4",
     "ami_users": "",
-    "additional_yum_repos": ""
+    "additional_yum_repos": "",
+    "sonobuoy_e2e_registry": ""
   },
   "builders": [
     {
@@ -140,7 +141,8 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "CLEANUP_IMAGE={{user `cleanup_image`}}"
+        "CLEANUP_IMAGE={{user `cleanup_image`}}",
+        "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}"
       ]
     },
     {

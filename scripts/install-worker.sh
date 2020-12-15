@@ -129,6 +129,11 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo systemctl enable docker
 fi
 
+if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
+    sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
+    sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
+fi
+
 ################################################################################
 ### Logrotate ##################################################################
 ################################################################################
