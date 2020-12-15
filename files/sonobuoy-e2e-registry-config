@@ -1,0 +1,5 @@
+dockerLibraryRegistry: SONOBUOY_E2E_REGISTRY/library
+e2eRegistry: SONOBUOY_E2E_REGISTRY/kubernetes-e2e-test-images
+gcRegistry: SONOBUOY_E2E_REGISTRY
+googleContainerRegistry: SONOBUOY_E2E_REGISTRY/google-containers
+sampleRegistry: SONOBUOY_E2E_REGISTRY/google-samples
