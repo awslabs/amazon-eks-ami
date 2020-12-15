@@ -1,5 +1,30 @@
 # Changelog
 
+### AMI Release v20201211
+* amazon-eks-gpu-node-1.18-v20201211
+* amazon-eks-gpu-node-1.17-v20201211
+* amazon-eks-gpu-node-1.16-v20201211
+* amazon-eks-gpu-node-1.15-v20201211
+* amazon-eks-arm64-node-1.18-v20201211
+* amazon-eks-arm64-node-1.17-v20201211
+* amazon-eks-arm64-node-1.16-v20201211
+* amazon-eks-arm64-node-1.15-v20201211
+* amazon-eks-node-1.18-v20201211
+* amazon-eks-node-1.17-v20201211
+* amazon-eks-node-1.16-v20201211
+* amazon-eks-node-1.15-v20201211
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Bug fix for the issue with rngd on EKS worker ami that's built with AL2 source ami.
+* Bug fix for grub issue introduced by new nvidia driver
+* Patch for CVE-2020-1971 (https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-1971)
+
 ### AMI Release v20201126
 * amazon-eks-gpu-node-1.18-v20201126
 * amazon-eks-gpu-node-1.17-v20201126
