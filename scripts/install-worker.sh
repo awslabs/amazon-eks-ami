@@ -285,6 +285,6 @@ if [[ "$CLEANUP_IMAGE" == "true" ]]; then
         /var/log/cloud-init.log \
         /var/log/secure \
         /var/log/wtmp
-done
+fi
 
 sudo touch /etc/machine-id
