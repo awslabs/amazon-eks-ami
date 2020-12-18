@@ -129,11 +129,6 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo systemctl enable docker
 fi
 
-if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
-    sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
-    sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
-fi
-
 ################################################################################
 ### Logrotate ##################################################################
 ################################################################################
@@ -234,6 +229,11 @@ sudo mkdir -p /etc/eks
 sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
+
+if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
+    sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
+    sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
+fi
 
 ################################################################################
 ### AMI Metadata ###############################################################
