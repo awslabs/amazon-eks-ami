@@ -1,5 +1,42 @@
 # Changelog
 
+### AMI Release v20210112
+* amazon-eks-gpu-node-1.18-v20210112
+* amazon-eks-gpu-node-1.17-v20210112
+* amazon-eks-gpu-node-1.16-v20210112
+* amazon-eks-gpu-node-1.15-v20210112
+* amazon-eks-arm64-node-1.18-v20210112
+* amazon-eks-arm64-node-1.17-v20210112
+* amazon-eks-arm64-node-1.16-v20210112
+* amazon-eks-arm64-node-1.15-v20210112
+* amazon-eks-node-1.18-v20210112
+* amazon-eks-node-1.17-v20210112
+* amazon-eks-node-1.16-v20210112
+* amazon-eks-node-1.15-v20210112
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Update ulimit for memlock to unlimited
+* Update ulimit for max_user_watches and max_file_count
+* Fix position of sonobuoy e2e registry config check (#590)
+* Update Makefile to support sonobuoy e2e registry config override (#588)
+* fix syntax error in install script (#582) introduced by #522
+* Feature flag the cleanup of the image (#522)
+* Add iptables rule count to log collector
+* GPU Boost clock setup for performance improvement (#573)
+* add support for sonobuoy e2e registry overrides (#585) for MVP
+* ensure kubelet.service.d directory exists (#519)
+* (bootstrap): document pause container parameters (#556)
+* add SIGKILL to RestartForceExitStatus (#554)
+* fix containerd_version typo in Makefile (#584)
+* Update systemd to always restart kubelet to support dynamic kubelet configuration (#578)
+* Add missing instance types (#580)
+
 ### AMI Release v20201211
 * amazon-eks-gpu-node-1.18-v20201211
 * amazon-eks-gpu-node-1.17-v20201211
