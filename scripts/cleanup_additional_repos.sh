@@ -10,6 +10,7 @@ if [ -z "${ADDITIONAL_YUM_REPOS}" ]; then
 fi
 
 
+# shellcheck disable=SC2016
 AWK_CMD='
 BEGIN {RS=";";FS=","}
 {

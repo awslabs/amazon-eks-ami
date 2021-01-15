@@ -102,6 +102,7 @@ parse_options() {
 
   for i in $(seq "${count}"); do
     eval arg="\$$i"
+    # shellcheck disable=SC2154
     param="$(echo "${arg}" | awk -F '=' '{print $1}' | sed -e 's|--||')"
     val="$(echo "${arg}" | awk -F '=' '{print $2}')"
 
@@ -195,8 +196,7 @@ get_instance_id() {
     cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
     readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
   else
-    readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
-    if [ 0 -eq $? ]; then # Check if previous command was successful.
+    if readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id); then
       echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
     else
       warning "Unable to find EC2 Instance Id. Skipped Instance Id."
@@ -456,10 +456,12 @@ get_networking_info() {
   try "collect networking infomation"
 
   # conntrack info
-  echo "*** Output of conntrack -S *** " >> "${COLLECT_DIR}"/networking/conntrack.txt
-  timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
-  echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
-  timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
+  {
+    echo "*** Output of conntrack -S *** "
+    timeout 75 conntrack -S
+    echo "*** Output of conntrack -L ***"
+    timeout 75 conntrack -L
+  } >> "${COLLECT_DIR}"/networking/conntrack.txt
 
   # ifconfig
   timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
