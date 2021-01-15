@@ -157,12 +157,12 @@ function get_token() {
 
   while [[ retries -gt 0 && $result -ne 0 ]]
   do
-    retries=$[$retries-1]
+    retries=$((retries-1))
     token=$(_get_token)
     result=$?
-    [[ $result != 0 ]] && sleep 5
+    [[ "$result" != 0 ]] && sleep 5
   done
-  [[ $result == 0 ]] && echo "$token"
+  [[ "$result" == 0 ]] && echo "$token"
   return $result
 }
 
@@ -170,14 +170,15 @@ function _get_meta_data() {
   local path=$1
   local metadata_result=
 
-  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/$path)
+  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/"$path")
   http_result=$(echo "$metadata_result" | tail -n 1)
   if [[ "$http_result" != "200" ]]
   then
       echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
       return 1
   else
-      local lines=$(echo "$metadata_result" | wc -l)
+      local lines
+      lines=$(echo "$metadata_result" | wc -l)
       echo "$metadata_result" | head -n $(( lines - 1 ))
       return 0
   fi
@@ -191,8 +192,8 @@ function get_meta_data() {
 
   while [[ retries -gt 0 && $result -ne 0 ]]
   do
-    retries=$[$retries-1]
-    metadata=$(_get_meta_data $path)
+    retries=$((retries-1))
+    metadata=$(_get_meta_data "$path")
     result=$?
     [[ $result != 0 ]] && TOKEN=$(get_token)
   done
@@ -218,9 +219,9 @@ get_resource_to_reserve_in_range() {
   local end_range=$3
   local percentage=$4
   resources_to_reserve="0"
-  if (( $total_resource_on_instance > $start_range )); then
-    resources_to_reserve=$(((($total_resource_on_instance < $end_range ? \
-        $total_resource_on_instance : $end_range) - $start_range) * $percentage / 100 / 100))
+  if (( "$total_resource_on_instance" > "$start_range" )); then
+    resources_to_reserve=$(((("$total_resource_on_instance" < "$end_range" ? \
+        "$total_resource_on_instance" : "$end_range") - "$start_range") * "$percentage" / 100 / 100))
   fi
   echo $resources_to_reserve
 }
@@ -234,7 +235,7 @@ get_resource_to_reserve_in_range() {
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
   local max_num_pods=$1
-  memory_to_reserve=$((11 * $max_num_pods + 255))
+  memory_to_reserve=$((11 * "$max_num_pods" + 255))
   echo $memory_to_reserve
 }
 
@@ -250,15 +251,15 @@ get_memory_mebibytes_to_reserve() {
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
   local total_cpu_on_instance=$(($(nproc) * 1000))
-  local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
+  local cpu_ranges=(0 1000 2000 4000 "$total_cpu_on_instance")
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
-  for i in ${!cpu_percentage_reserved_for_ranges[@]}; do
+  for i in "${!cpu_percentage_reserved_for_ranges[@]}"; do
     local start_range=${cpu_ranges[$i]}
     local end_range=${cpu_ranges[(($i+1))]}
     local percentage_to_reserve_for_range=${cpu_percentage_reserved_for_ranges[$i]}
-    cpu_to_reserve=$(($cpu_to_reserve + \
-        $(get_resource_to_reserve_in_range $total_cpu_on_instance $start_range $end_range $percentage_to_reserve_for_range)))
+    cpu_to_reserve=$(("$cpu_to_reserve" + \
+        $(get_resource_to_reserve_in_range "$total_cpu_on_instance" "$start_range" "$end_range" "$percentage_to_reserve_for_range")))
   done
   echo $cpu_to_reserve
 }
@@ -292,21 +293,21 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
     # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
-    for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
+    for attempt in $(seq 0 "$API_RETRY_ATTEMPTS"); do
         rc=0
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
 
         aws eks wait cluster-active \
-            --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME}
+            --region="${AWS_DEFAULT_REGION}" \
+            --name="${CLUSTER_NAME}"
 
         aws eks describe-cluster \
-            --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME} \
+            --region="${AWS_DEFAULT_REGION}" \
+            --name="${CLUSTER_NAME}" \
             --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > "$DESCRIBE_CLUSTER_RESULT" || rc=$?
         if [[ $rc -eq 0 ]]; then
             break
         fi
@@ -314,23 +315,23 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
             exit $rc
         fi
         jitter=$((1 + RANDOM % 10))
-        sleep_sec="$(( $(( 5 << $((1+$attempt)) )) + $jitter))"
+        sleep_sec="$(( $(( 5 << "$((1+"$attempt"))" )) + "$jitter"))"
         sleep $sleep_sec
     done
-    B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
-    APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
-    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
+    B64_CLUSTER_CA=$(awk '{print $1}' "$DESCRIBE_CLUSTER_RESULT")
+    APISERVER_ENDPOINT=$(awk '{print $2}' "$DESCRIBE_CLUSTER_RESULT")
+    SERVICE_IPV4_CIDR=$(awk '{print $3}' "$DESCRIBE_CLUSTER_RESULT")
 fi
 
-echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
+echo "$B64_CLUSTER_CA" | base64 -d > "$CA_CERTIFICATE_FILE_PATH"
 
-sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
-sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
-sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
+sed -i "s,CLUSTER_NAME,$CLUSTER_NAME,g" /var/lib/kubelet/kubeconfig
+sed -i "s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g" /var/lib/kubelet/kubeconfig
+sed -i "s,AWS_REGION,$AWS_DEFAULT_REGION,g" /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
-  if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
+  if [[ -n "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
     #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
     DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
   else
@@ -346,7 +347,8 @@ else
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+# shellcheck disable=SC2005
+echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
 
 INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
 INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
@@ -359,7 +361,7 @@ INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
 #calculate the max number of pods per instance type
 MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
 set +o pipefail
-MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
+MAX_PODS=$(awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }' "$MAX_PODS_FILE")
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
     echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
@@ -367,16 +369,19 @@ if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
 fi
 
 # calculates the amount of each resource to reserve
-mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve $MAX_PODS)
+mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve "$MAX_PODS")
 cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve)
 # writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
-echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+# shellcheck disable=SC2005
+echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
+# shellcheck disable=SC2005
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
-    '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+    '. += {kubeReserved: {"cpu": "$cpu_millicores_to_reserve", "ephemeral-storage": "1Gi", "memory": "$mebibytes_to_reserve"}}' "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
     if [[ -n "$MAX_PODS" ]]; then
-        echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+        # shellcheck disable=SC2005
+        echo "$(jq ".maxPods=$MAX_PODS" "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
     else
         echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
     fi
@@ -409,6 +414,7 @@ if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
 
     # Enabling the docker bridge network. We have to disable live-restore as it
     # prevents docker from recreating the default bridge network on restart
+    # shellcheck disable=SC2005
     echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
     systemctl restart docker
 fi
@@ -421,13 +427,12 @@ systemctl start kubelet
 if  command -v nvidia-smi &>/dev/null ; then
    echo "nvidia-smi found"
 
-   nvidia-smi -q > /tmp/nvidia-smi-check
-   if [[ "$?" == "0" ]]; then
+   if nvidia-smi -q > /tmp/nvidia-smi-check; then
       sudo nvidia-smi -pm 1 # set persistence mode
       sudo nvidia-smi --auto-boost-default=0
 
       GPUNAME=$(nvidia-smi -L | head -n1)
-      echo $GPUNAME
+      echo "$GPUNAME"
 
       # set application clock to maximum
       if [[ $GPUNAME == *"A100"* ]]; then

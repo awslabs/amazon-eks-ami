@@ -97,7 +97,7 @@ fi
 # Enable forwarding via iptables
 sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
 
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
+sudo mv "$TEMPLATE_DIR/iptables-restore.service" /etc/systemd/system/iptables-restore.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable iptables-restore
@@ -112,18 +112,18 @@ INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
     sudo groupadd -fog 1950 docker
-    sudo useradd --gid $(getent group docker | cut -d: -f3) docker
-    sudo yum install -y docker-${DOCKER_VERSION}*
-    sudo usermod -aG docker $USER
+    sudo useradd --gid "$(getent group docker | cut -d: -f3)" docker
+    sudo yum install -y docker-"${DOCKER_VERSION}"*
+    sudo usermod -aG docker "$USER"
 
     # Remove all options from sysconfig docker.
     sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 
     sudo mkdir -p /etc/docker
-    sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+    sudo mv "$TEMPLATE_DIR/docker-daemon.json" /etc/docker/daemon.json
     sudo chown root:root /etc/docker/daemon.json
 
-    sudo yum downgrade -y containerd-${CONTAINERD_VERSION}
+    sudo yum downgrade -y "containerd-${CONTAINERD_VERSION}"
 
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
@@ -136,8 +136,8 @@ fi
 
 # kubelet uses journald which has built-in rotation and capped size.
 # See man 5 journald.conf
-sudo mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
-sudo mv $TEMPLATE_DIR/logrotate.conf /etc/logrotate.conf
+sudo mv "$TEMPLATE_DIR/logrotate-kube-proxy" /etc/logrotate.d/kube-proxy
+sudo mv "$TEMPLATE_DIR/logrotate.conf" /etc/logrotate.conf
 sudo chown root:root /etc/logrotate.d/kube-proxy
 sudo chown root:root /etc/logrotate.conf
 sudo mkdir -p /var/log/journal
@@ -170,16 +170,16 @@ BINARIES=(
 for binary in ${BINARIES[*]} ; do
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
-        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
-        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary" .
+        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary.sha256" .
     else
         echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
-        sudo wget $S3_URL_BASE/$binary
-        sudo wget $S3_URL_BASE/$binary.sha256
+        sudo wget "$S3_URL_BASE/$binary"
+        sudo wget "$S3_URL_BASE/$binary.sha256"
     fi
-    sudo sha256sum -c $binary.sha256
-    sudo chmod +x $binary
-    sudo mv $binary /usr/bin/
+    sudo sha256sum -c "$binary.sha256"
+    sudo chmod +x "$binary"
+    sudo mv "$binary" /usr/bin/
 done
 
 # Since CNI 0.7.0, all releases are done in the plugins repo.
@@ -194,8 +194,8 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
 else
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
-        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
-        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
+        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz" .
+        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256" .
     else
         echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
         sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
@@ -210,11 +210,11 @@ sudo rm ./*.sha256
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
-sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv "$TEMPLATE_DIR/kubelet-kubeconfig" /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
-sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mv "$TEMPLATE_DIR/kubelet.service" /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
+sudo mv "$TEMPLATE_DIR/kubelet-config.json" /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 
@@ -227,13 +227,13 @@ sudo systemctl disable kubelet
 ################################################################################
 
 sudo mkdir -p /etc/eks
-sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
-sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
+sudo mv "$TEMPLATE_DIR/eni-max-pods.txt" /etc/eks/eni-max-pods.txt
+sudo mv "$TEMPLATE_DIR/bootstrap.sh" /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
 
 if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
-    sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
-    sudo sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
+    sudo mv "$TEMPLATE_DIR/sonobuoy-e2e-registry-config" /etc/eks/sonobuoy-e2e-registry-config
+    sudo sed -i "s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g" /etc/eks/sonobuoy-e2e-registry-config
 fi
 
 ################################################################################
@@ -278,7 +278,7 @@ if [[ "$CLEANUP_IMAGE" == "true" ]]; then
     # Clean up yum caches to reduce the image size
     sudo yum clean all
     sudo rm -rf \
-        $TEMPLATE_DIR  \
+        "$TEMPLATE_DIR"  \
         /var/cache/yum
 
     # Clean up files to reduce confusion during debug
