@@ -9,7 +9,6 @@ if [ -z "${ADDITIONAL_YUM_REPOS}" ]; then
   exit 0
 fi
 
-
 # shellcheck disable=SC2016
 AWK_CMD='
 BEGIN {RS=";";FS=","}
@@ -25,4 +24,4 @@ BEGIN {RS=";";FS=","}
 }
 {cmd="rm -f " Repo; system(cmd)}
 '
-sudo awk "$AWK_CMD" <<< "${ADDITIONAL_YUM_REPOS}"
+sudo awk "$AWK_CMD" <<<"${ADDITIONAL_YUM_REPOS}"
