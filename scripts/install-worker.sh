@@ -11,14 +11,14 @@ TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 ### Validate Required Arguments ################################################
 ################################################################################
 validate_env_set() {
-    (
-        set +o nounset
+  (
+    set +o nounset
 
-        if [ -z "${!1}" ]; then
-            echo "Packer variable '$1' was not set. Aborting"
-            exit 1
-        fi
-    )
+    if [ -z "${!1}" ]; then
+      echo "Packer variable '$1' was not set. Aborting"
+      exit 1
+    fi
+  )
 }
 
 validate_env_set BINARY_BUCKET_NAME
@@ -36,12 +36,12 @@ validate_env_set PULL_CNI_FROM_GITHUB
 
 MACHINE=$(uname -m)
 if [ "$MACHINE" == "x86_64" ]; then
-    ARCH="amd64"
+  ARCH="amd64"
 elif [ "$MACHINE" == "aarch64" ]; then
-    ARCH="arm64"
+  ARCH="arm64"
 else
-    echo "Unknown machine architecture '$MACHINE'" >&2
-    exit 1
+  echo "Unknown machine architecture '$MACHINE'" >&2
+  exit 1
 fi
 
 ################################################################################
@@ -53,17 +53,17 @@ sudo yum update -y
 
 # Install necessary packages
 sudo yum install -y \
-    aws-cfn-bootstrap \
-    awscli \
-    chrony \
-    conntrack \
-    curl \
-    jq \
-    ec2-instance-connect \
-    nfs-utils \
-    socat \
-    unzip \
-    wget
+  aws-cfn-bootstrap \
+  awscli \
+  chrony \
+  conntrack \
+  curl \
+  jq \
+  ec2-instance-connect \
+  nfs-utils \
+  socat \
+  unzip \
+  wget
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
@@ -85,9 +85,9 @@ EOF
 # If current clocksource is xen, switch to tsc
 if grep --quiet xen /sys/devices/system/clocksource/clocksource0/current_clocksource &&
   grep --quiet tsc /sys/devices/system/clocksource/clocksource0/available_clocksource; then
-    echo "tsc" | sudo tee /sys/devices/system/clocksource/clocksource0/current_clocksource
+  echo "tsc" | sudo tee /sys/devices/system/clocksource/clocksource0/current_clocksource
 else
-    echo "tsc as a clock source is not applicable, skipping."
+  echo "tsc as a clock source is not applicable, skipping."
 fi
 
 ################################################################################
@@ -110,24 +110,24 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
-    sudo amazon-linux-extras enable docker
-    sudo groupadd -fog 1950 docker
-    sudo useradd --gid "$(getent group docker | cut -d: -f3)" docker
-    sudo yum install -y docker-"${DOCKER_VERSION}"*
-    sudo usermod -aG docker "$USER"
+  sudo amazon-linux-extras enable docker
+  sudo groupadd -fog 1950 docker
+  sudo useradd --gid "$(getent group docker | cut -d: -f3)" docker
+  sudo yum install -y docker-"${DOCKER_VERSION}"*
+  sudo usermod -aG docker "$USER"
 
-    # Remove all options from sysconfig docker.
-    sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
+  # Remove all options from sysconfig docker.
+  sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 
-    sudo mkdir -p /etc/docker
-    sudo mv "$TEMPLATE_DIR/docker-daemon.json" /etc/docker/daemon.json
-    sudo chown root:root /etc/docker/daemon.json
+  sudo mkdir -p /etc/docker
+  sudo mv "$TEMPLATE_DIR/docker-daemon.json" /etc/docker/daemon.json
+  sudo chown root:root /etc/docker/daemon.json
 
-    sudo yum downgrade -y "containerd-${CONTAINERD_VERSION}"
+  sudo yum downgrade -y "containerd-${CONTAINERD_VERSION}"
 
-    # Enable docker daemon to start on boot.
-    sudo systemctl daemon-reload
-    sudo systemctl enable docker
+  # Enable docker daemon to start on boot.
+  sudo systemctl daemon-reload
+  sudo systemctl enable docker
 fi
 
 ################################################################################
@@ -154,54 +154,54 @@ sudo mkdir -p /opt/cni/bin
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="amazonaws.com"
 if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-    S3_DOMAIN="amazonaws.com.cn"
+  S3_DOMAIN="amazonaws.com.cn"
 elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ]; then
-    S3_DOMAIN="c2s.ic.gov"
+  S3_DOMAIN="c2s.ic.gov"
 elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
-    S3_DOMAIN="sc2s.sgov.gov"
+  S3_DOMAIN="sc2s.sgov.gov"
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
 BINARIES=(
-    kubelet
-    aws-iam-authenticator
+  kubelet
+  aws-iam-authenticator
 )
-for binary in ${BINARIES[*]} ; do
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-        echo "AWS cli present - using it to copy binaries from s3."
-        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary" .
-        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary.sha256" .
-    else
-        echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
-        sudo wget "$S3_URL_BASE/$binary"
-        sudo wget "$S3_URL_BASE/$binary.sha256"
-    fi
-    sudo sha256sum -c "$binary.sha256"
-    sudo chmod +x "$binary"
-    sudo mv "$binary" /usr/bin/
+for binary in ${BINARIES[*]}; do
+  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    echo "AWS cli present - using it to copy binaries from s3."
+    aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary" .
+    aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/$binary.sha256" .
+  else
+    echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
+    sudo wget "$S3_URL_BASE/$binary"
+    sudo wget "$S3_URL_BASE/$binary.sha256"
+  fi
+  sudo sha256sum -c "$binary.sha256"
+  sudo chmod +x "$binary"
+  sudo mv "$binary" /usr/bin/
 done
 
 # Since CNI 0.7.0, all releases are done in the plugins repo.
 CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
 
 if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
-    echo "Downloading CNI plugins from Github"
-    wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz"
-    wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz.sha512"
-    sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
-    rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
+  echo "Downloading CNI plugins from Github"
+  wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz"
+  wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz.sha512"
+  sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
+  rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
 else
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-        echo "AWS cli present - using it to copy binaries from s3."
-        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz" .
-        aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256" .
-    else
-        echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
-        sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
-        sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
-    fi
-    sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    echo "AWS cli present - using it to copy binaries from s3."
+    aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz" .
+    aws s3 cp --region "$BINARY_BUCKET_REGION" "$S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256" .
+  else
+    echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
+    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
+    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  fi
+  sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
 fi
 sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
 rm "${CNI_PLUGIN_FILENAME}.tgz"
@@ -217,7 +217,6 @@ sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mv "$TEMPLATE_DIR/kubelet-config.json" /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
-
 sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
 sudo systemctl disable kubelet
@@ -232,16 +231,16 @@ sudo mv "$TEMPLATE_DIR/bootstrap.sh" /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
 
 if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
-    sudo mv "$TEMPLATE_DIR/sonobuoy-e2e-registry-config" /etc/eks/sonobuoy-e2e-registry-config
-    sudo sed -i "s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g" /etc/eks/sonobuoy-e2e-registry-config
+  sudo mv "$TEMPLATE_DIR/sonobuoy-e2e-registry-config" /etc/eks/sonobuoy-e2e-registry-config
+  sudo sed -i "s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g" /etc/eks/sonobuoy-e2e-registry-config
 fi
 
 ################################################################################
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
-cat <<EOF > /tmp/release
+BASE_AMI_ID=$(curl -s http://169.254.169.254/latest/meta-data/ami-id)
+cat <<EOF >/tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
@@ -268,38 +267,37 @@ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
 echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf
 echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 
-
 ################################################################################
 ### Cleanup ####################################################################
 ################################################################################
 
 CLEANUP_IMAGE="${CLEANUP_IMAGE:-true}"
 if [[ "$CLEANUP_IMAGE" == "true" ]]; then
-    # Clean up yum caches to reduce the image size
-    sudo yum clean all
-    sudo rm -rf \
-        "$TEMPLATE_DIR"  \
-        /var/cache/yum
+  # Clean up yum caches to reduce the image size
+  sudo yum clean all
+  sudo rm -rf \
+    "$TEMPLATE_DIR" \
+    /var/cache/yum
 
-    # Clean up files to reduce confusion during debug
-    sudo rm -rf \
-        /etc/hostname \
-        /etc/machine-id \
-        /etc/resolv.conf \
-        /etc/ssh/ssh_host* \
-        /home/ec2-user/.ssh/authorized_keys \
-        /root/.ssh/authorized_keys \
-        /var/lib/cloud/data \
-        /var/lib/cloud/instance \
-        /var/lib/cloud/instances \
-        /var/lib/cloud/sem \
-        /var/lib/dhclient/* \
-        /var/lib/dhcp/dhclient.* \
-        /var/lib/yum/history \
-        /var/log/cloud-init-output.log \
-        /var/log/cloud-init.log \
-        /var/log/secure \
-        /var/log/wtmp
+  # Clean up files to reduce confusion during debug
+  sudo rm -rf \
+    /etc/hostname \
+    /etc/machine-id \
+    /etc/resolv.conf \
+    /etc/ssh/ssh_host* \
+    /home/ec2-user/.ssh/authorized_keys \
+    /root/.ssh/authorized_keys \
+    /var/lib/cloud/data \
+    /var/lib/cloud/instance \
+    /var/lib/cloud/instances \
+    /var/lib/cloud/sem \
+    /var/lib/dhclient/* \
+    /var/lib/dhcp/dhclient.* \
+    /var/lib/yum/history \
+    /var/log/cloud-init-output.log \
+    /var/log/cloud-init.log \
+    /var/log/secure \
+    /var/log/wtmp
 fi
 
 sudo touch /etc/machine-id

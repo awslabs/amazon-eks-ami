@@ -5,93 +5,93 @@ set -o nounset
 set -o errexit
 
 err_report() {
-    echo "Exited with error on line $1"
+  echo "Exited with error on line $1"
 }
 trap 'err_report $LINENO' ERR
 
 IFS=$'\n\t'
 
 function print_help {
-    echo "usage: $0 [options] <cluster-name>"
-    echo "Bootstraps an instance into an EKS cluster"
-    echo ""
-    echo "-h,--help print this help"
-    echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
-    echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
-    echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
-    echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
-    echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
-    echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
-    echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
-    echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
-    echo "--pause-container-account The AWS account (number) to pull the pause container from"
-    echo "--pause-container-version The tag of the pause container"
+  echo "usage: $0 [options] <cluster-name>"
+  echo "Bootstraps an instance into an EKS cluster"
+  echo ""
+  echo "-h,--help print this help"
+  echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
+  echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
+  echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
+  echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
+  echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
+  echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
+  echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+  echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+  echo "--pause-container-account The AWS account (number) to pull the pause container from"
+  echo "--pause-container-version The tag of the pause container"
 }
 
 POSITIONAL=()
 
 while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        -h|--help)
-            print_help
-            exit 1
-            ;;
-        --use-max-pods)
-            USE_MAX_PODS="$2"
-            shift
-            shift
-            ;;
-        --b64-cluster-ca)
-            B64_CLUSTER_CA=$2
-            shift
-            shift
-            ;;
-        --apiserver-endpoint)
-            APISERVER_ENDPOINT=$2
-            shift
-            shift
-            ;;
-        --kubelet-extra-args)
-            KUBELET_EXTRA_ARGS=$2
-            shift
-            shift
-            ;;
-        --enable-docker-bridge)
-            ENABLE_DOCKER_BRIDGE=$2
-            shift
-            shift
-            ;;
-        --aws-api-retry-attempts)
-            API_RETRY_ATTEMPTS=$2
-            shift
-            shift
-            ;;
-        --docker-config-json)
-            DOCKER_CONFIG_JSON=$2
-            shift
-            shift
-            ;;
-        --pause-container-account)
-            PAUSE_CONTAINER_ACCOUNT=$2
-            shift
-            shift
-            ;;
-        --pause-container-version)
-            PAUSE_CONTAINER_VERSION=$2
-            shift
-            shift
-            ;;
-        --dns-cluster-ip)
-            DNS_CLUSTER_IP=$2
-            shift
-            shift
-            ;;
-        *)    # unknown option
-            POSITIONAL+=("$1") # save it in an array for later
-            shift # past argument
-            ;;
-    esac
+  key="$1"
+  case $key in
+  -h | --help)
+    print_help
+    exit 1
+    ;;
+  --use-max-pods)
+    USE_MAX_PODS="$2"
+    shift
+    shift
+    ;;
+  --b64-cluster-ca)
+    B64_CLUSTER_CA=$2
+    shift
+    shift
+    ;;
+  --apiserver-endpoint)
+    APISERVER_ENDPOINT=$2
+    shift
+    shift
+    ;;
+  --kubelet-extra-args)
+    KUBELET_EXTRA_ARGS=$2
+    shift
+    shift
+    ;;
+  --enable-docker-bridge)
+    ENABLE_DOCKER_BRIDGE=$2
+    shift
+    shift
+    ;;
+  --aws-api-retry-attempts)
+    API_RETRY_ATTEMPTS=$2
+    shift
+    shift
+    ;;
+  --docker-config-json)
+    DOCKER_CONFIG_JSON=$2
+    shift
+    shift
+    ;;
+  --pause-container-account)
+    PAUSE_CONTAINER_ACCOUNT=$2
+    shift
+    shift
+    ;;
+  --pause-container-version)
+    PAUSE_CONTAINER_VERSION=$2
+    shift
+    shift
+    ;;
+  --dns-cluster-ip)
+    DNS_CLUSTER_IP=$2
+    shift
+    shift
+    ;;
+  *)                   # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift              # past argument
+    ;;
+  esac
 done
 
 set +u
@@ -110,28 +110,37 @@ API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 
-function get_pause_container_account_for_region () {
-    local region="$1"
-    case "${region}" in
-    ap-east-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}";;
-    me-south-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}";;
-    cn-north-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}";;
-    cn-northwest-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}";;
-    us-gov-west-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
-    us-gov-east-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
-    af-south-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
-    eu-south-1)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
-    *)
-        echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
-    esac
+function get_pause_container_account_for_region() {
+  local region="$1"
+  case "${region}" in
+  ap-east-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}"
+    ;;
+  me-south-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}"
+    ;;
+  cn-north-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}"
+    ;;
+  cn-northwest-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}"
+    ;;
+  us-gov-west-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}"
+    ;;
+  us-gov-east-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}"
+    ;;
+  af-south-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}"
+    ;;
+  eu-south-1)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}"
+    ;;
+  *)
+    echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}"
+    ;;
+  esac
 }
 
 function _get_token() {
@@ -140,13 +149,12 @@ function _get_token() {
 
   token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
   http_result=$(echo "$token_result" | tail -n 1)
-  if [[ "$http_result" != "200" ]]
-  then
-      echo -e "Failed to get token:\n$token_result"
-      return 1
+  if [[ "$http_result" != "200" ]]; then
+    echo -e "Failed to get token:\n$token_result"
+    return 1
   else
-      echo "$token_result" | head -n 1
-      return 0
+    echo "$token_result" | head -n 1
+    return 0
   fi
 }
 
@@ -155,9 +163,8 @@ function get_token() {
   local retries=20
   local result=1
 
-  while [[ retries -gt 0 && $result -ne 0 ]]
-  do
-    retries=$((retries-1))
+  while [[ retries -gt 0 && $result -ne 0 ]]; do
+    retries=$((retries - 1))
     token=$(_get_token)
     result=$?
     [[ "$result" != 0 ]] && sleep 5
@@ -172,15 +179,14 @@ function _get_meta_data() {
 
   metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/"$path")
   http_result=$(echo "$metadata_result" | tail -n 1)
-  if [[ "$http_result" != "200" ]]
-  then
-      echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
-      return 1
+  if [[ "$http_result" != "200" ]]; then
+    echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
+    return 1
   else
-      local lines
-      lines=$(echo "$metadata_result" | wc -l)
-      echo "$metadata_result" | head -n $(( lines - 1 ))
-      return 0
+    local lines
+    lines=$(echo "$metadata_result" | wc -l)
+    echo "$metadata_result" | head -n $((lines - 1))
+    return 0
   fi
 }
 
@@ -190,9 +196,8 @@ function get_meta_data() {
   local retries=20
   local result=1
 
-  while [[ retries -gt 0 && $result -ne 0 ]]
-  do
-    retries=$((retries-1))
+  while [[ retries -gt 0 && $result -ne 0 ]]; do
+    retries=$((retries - 1))
     metadata=$(_get_meta_data "$path")
     result=$?
     [[ $result != 0 ]] && TOKEN=$(get_token)
@@ -219,9 +224,9 @@ get_resource_to_reserve_in_range() {
   local end_range=$3
   local percentage=$4
   resources_to_reserve="0"
-  if (( "$total_resource_on_instance" > "$start_range" )); then
+  if (("$total_resource_on_instance" > "$start_range")); then
     resources_to_reserve=$(((("$total_resource_on_instance" < "$end_range" ? \
-        "$total_resource_on_instance" : "$end_range") - "$start_range") * "$percentage" / 100 / 100))
+      "$total_resource_on_instance" : "$end_range") - "$start_range") * "$percentage" / 100 / 100))
   fi
   echo $resources_to_reserve
 }
@@ -256,19 +261,18 @@ get_cpu_millicores_to_reserve() {
   cpu_to_reserve="0"
   for i in "${!cpu_percentage_reserved_for_ranges[@]}"; do
     local start_range=${cpu_ranges[$i]}
-    local end_range=${cpu_ranges[(($i+1))]}
+    local end_range=${cpu_ranges[(($i + 1))]}
     local percentage_to_reserve_for_range=${cpu_percentage_reserved_for_ranges[$i]}
     cpu_to_reserve=$(("$cpu_to_reserve" + \
-        $(get_resource_to_reserve_in_range "$total_cpu_on_instance" "$start_range" "$end_range" "$percentage_to_reserve_for_range")))
+      $(get_resource_to_reserve_in_range "$total_cpu_on_instance" "$start_range" "$end_range" "$percentage_to_reserve_for_range")))
   done
   echo $cpu_to_reserve
 }
 
 if [ -z "$CLUSTER_NAME" ]; then
-    echo "CLUSTER_NAME is not defined"
-    exit  1
+  echo "CLUSTER_NAME is not defined"
+  exit 1
 fi
-
 
 TOKEN=$(get_token)
 AWS_DEFAULT_REGION=$(get_meta_data 'latest/dynamic/instance-identity/document' | jq .region -r)
@@ -276,8 +280,8 @@ AWS_SERVICES_DOMAIN=$(get_meta_data '2018-09-24/meta-data/services/domain')
 
 MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
-    echo "Unknown machine architecture '$MACHINE'" >&2
-    exit 1
+  echo "Unknown machine architecture '$MACHINE'" >&2
+  exit 1
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
@@ -290,40 +294,40 @@ CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
-    DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
+  DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
-    # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
-    for attempt in $(seq 0 "$API_RETRY_ATTEMPTS"); do
-        rc=0
-        if [[ $attempt -gt 0 ]]; then
-            echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
-        fi
+  # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
+  for attempt in $(seq 0 "$API_RETRY_ATTEMPTS"); do
+    rc=0
+    if [[ $attempt -gt 0 ]]; then
+      echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
+    fi
 
-        aws eks wait cluster-active \
-            --region="${AWS_DEFAULT_REGION}" \
-            --name="${CLUSTER_NAME}"
+    aws eks wait cluster-active \
+      --region="${AWS_DEFAULT_REGION}" \
+      --name="${CLUSTER_NAME}"
 
-        aws eks describe-cluster \
-            --region="${AWS_DEFAULT_REGION}" \
-            --name="${CLUSTER_NAME}" \
-            --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > "$DESCRIBE_CLUSTER_RESULT" || rc=$?
-        if [[ $rc -eq 0 ]]; then
-            break
-        fi
-        if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
-            exit $rc
-        fi
-        jitter=$((1 + RANDOM % 10))
-        sleep_sec="$(( $(( 5 << "$((1+"$attempt"))" )) + "$jitter"))"
-        sleep $sleep_sec
-    done
-    B64_CLUSTER_CA=$(awk '{print $1}' "$DESCRIBE_CLUSTER_RESULT")
-    APISERVER_ENDPOINT=$(awk '{print $2}' "$DESCRIBE_CLUSTER_RESULT")
-    SERVICE_IPV4_CIDR=$(awk '{print $3}' "$DESCRIBE_CLUSTER_RESULT")
+    aws eks describe-cluster \
+      --region="${AWS_DEFAULT_REGION}" \
+      --name="${CLUSTER_NAME}" \
+      --output=text \
+      --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' >"$DESCRIBE_CLUSTER_RESULT" || rc=$?
+    if [[ $rc -eq 0 ]]; then
+      break
+    fi
+    if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
+      exit $rc
+    fi
+    jitter=$((1 + RANDOM % 10))
+    sleep_sec="$(($((5 << "$((1 + "$attempt"))")) + "$jitter"))"
+    sleep $sleep_sec
+  done
+  B64_CLUSTER_CA=$(awk '{print $1}' "$DESCRIBE_CLUSTER_RESULT")
+  APISERVER_ENDPOINT=$(awk '{print $2}' "$DESCRIBE_CLUSTER_RESULT")
+  SERVICE_IPV4_CIDR=$(awk '{print $3}' "$DESCRIBE_CLUSTER_RESULT")
 fi
 
-echo "$B64_CLUSTER_CA" | base64 -d > "$CA_CERTIFICATE_FILE_PATH"
+echo "$B64_CLUSTER_CA" | base64 -d >"$CA_CERTIFICATE_FILE_PATH"
 
 sed -i "s,CLUSTER_NAME,$CLUSTER_NAME,g" /var/lib/kubelet/kubeconfig
 sed -i "s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g" /var/lib/kubelet/kubeconfig
@@ -331,12 +335,12 @@ sed -i "s,AWS_REGION,$AWS_DEFAULT_REGION,g" /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
-  if [[ -n "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
+  if [[ -n "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
     #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
     DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
   else
     MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
-    TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
+    TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true)
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
       DNS_CLUSTER_IP=172.20.0.10
@@ -348,7 +352,7 @@ fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 # shellcheck disable=SC2005
-echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
+echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" "$KUBELET_CONFIG")" >"$KUBELET_CONFIG"
 
 INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
 INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
@@ -364,8 +368,8 @@ set +o pipefail
 MAX_PODS=$(awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }' "$MAX_PODS_FILE")
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-    exit 1
+  echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
+  exit 1
 fi
 
 # calculates the amount of each resource to reserve
@@ -373,29 +377,29 @@ mebibytes_to_reserve=$(get_memory_mebibytes_to_reserve "$MAX_PODS")
 cpu_millicores_to_reserve=$(get_cpu_millicores_to_reserve)
 # writes kubeReserved and evictionHard to the kubelet-config using the amount of CPU and memory to be reserved
 # shellcheck disable=SC2005
-echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
+echo "$(jq '. += {"evictionHard": {"memory.available": "100Mi", "nodefs.available": "10%", "nodefs.inodesFree": "5%"}}' "$KUBELET_CONFIG")" >"$KUBELET_CONFIG"
 # shellcheck disable=SC2005
 echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_millicores_to_reserve "${cpu_millicores_to_reserve}m" \
-    '. += {kubeReserved: {"cpu": "$cpu_millicores_to_reserve", "ephemeral-storage": "1Gi", "memory": "$mebibytes_to_reserve"}}' "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
+  '. += {kubeReserved: {"cpu": "$cpu_millicores_to_reserve", "ephemeral-storage": "1Gi", "memory": "$mebibytes_to_reserve"}}' "$KUBELET_CONFIG")" >"$KUBELET_CONFIG"
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
-    if [[ -n "$MAX_PODS" ]]; then
-        # shellcheck disable=SC2005
-        echo "$(jq ".maxPods=$MAX_PODS" "$KUBELET_CONFIG")" > "$KUBELET_CONFIG"
-    else
-        echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
-    fi
+  if [[ -n "$MAX_PODS" ]]; then
+    # shellcheck disable=SC2005
+    echo "$(jq ".maxPods=$MAX_PODS" "$KUBELET_CONFIG")" >"$KUBELET_CONFIG"
+  else
+    echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
+  fi
 fi
 
 mkdir -p /etc/systemd/system/kubelet.service.d
 
-cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
+cat <<EOF >/etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
 Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
-    cat <<EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
+  cat <<EOF >/etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
@@ -403,20 +407,20 @@ fi
 
 # Replace with custom docker config contents.
 if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
-    mkdir -p /etc/docker
+  mkdir -p /etc/docker
 
-    echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
-    systemctl restart docker
+  echo "$DOCKER_CONFIG_JSON" >/etc/docker/daemon.json
+  systemctl restart docker
 fi
 
 if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
-    mkdir -p /etc/docker
+  mkdir -p /etc/docker
 
-    # Enabling the docker bridge network. We have to disable live-restore as it
-    # prevents docker from recreating the default bridge network on restart
-    # shellcheck disable=SC2005
-    echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
-    systemctl restart docker
+  # Enabling the docker bridge network. We have to disable live-restore as it
+  # prevents docker from recreating the default bridge network on restart
+  # shellcheck disable=SC2005
+  echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" >/etc/docker/daemon.json
+  systemctl restart docker
 fi
 
 systemctl daemon-reload
@@ -424,33 +428,33 @@ systemctl enable kubelet
 systemctl start kubelet
 
 # gpu boost clock
-if  command -v nvidia-smi &>/dev/null ; then
-   echo "nvidia-smi found"
+if command -v nvidia-smi &>/dev/null; then
+  echo "nvidia-smi found"
 
-   if nvidia-smi -q > /tmp/nvidia-smi-check; then
-      sudo nvidia-smi -pm 1 # set persistence mode
-      sudo nvidia-smi --auto-boost-default=0
+  if nvidia-smi -q >/tmp/nvidia-smi-check; then
+    sudo nvidia-smi -pm 1 # set persistence mode
+    sudo nvidia-smi --auto-boost-default=0
 
-      GPUNAME=$(nvidia-smi -L | head -n1)
-      echo "$GPUNAME"
+    GPUNAME=$(nvidia-smi -L | head -n1)
+    echo "$GPUNAME"
 
-      # set application clock to maximum
-      if [[ $GPUNAME == *"A100"* ]]; then
-         nvidia-smi -ac 1215,1410
-      elif [[ $GPUNAME == *"V100"* ]]; then
-         nvidia-smi -ac 877,1530
-      elif [[ $GPUNAME == *"K80"* ]]; then
-         nvidia-smi -ac 2505,875
-      elif [[ $GPUNAME == *"T4"* ]]; then
-         nvidia-smi -ac 5001,1590
-      elif [[ $GPUNAME == *"M60"* ]]; then
-         nvidia-smi -ac 2505,1177
-      else
-         echo "unsupported gpu"
-      fi
-   else
-      cat /tmp/nvidia-smi-check
-   fi
+    # set application clock to maximum
+    if [[ $GPUNAME == *"A100"* ]]; then
+      nvidia-smi -ac 1215,1410
+    elif [[ $GPUNAME == *"V100"* ]]; then
+      nvidia-smi -ac 877,1530
+    elif [[ $GPUNAME == *"K80"* ]]; then
+      nvidia-smi -ac 2505,875
+    elif [[ $GPUNAME == *"T4"* ]]; then
+      nvidia-smi -ac 5001,1590
+    elif [[ $GPUNAME == *"M60"* ]]; then
+      nvidia-smi -ac 2505,1177
+    else
+      echo "unsupported gpu"
+    fi
+  else
+    cat /tmp/nvidia-smi-check
+  fi
 else
-    echo "nvidia-smi not found"
+  echo "nvidia-smi not found"
 fi
