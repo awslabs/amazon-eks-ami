@@ -1,5 +1,30 @@
 # Changelog
 
+### AMI Release v20210125
+* amazon-eks-gpu-node-1.18-v20210125
+* amazon-eks-gpu-node-1.17-v20210125
+* amazon-eks-gpu-node-1.16-v20210125
+* amazon-eks-gpu-node-1.15-v20210125
+* amazon-eks-arm64-node-1.18-v20210125
+* amazon-eks-arm64-node-1.17-v20210125
+* amazon-eks-arm64-node-1.16-v20210125
+* amazon-eks-arm64-node-1.15-v20210125
+* amazon-eks-node-1.18-v20210125
+* amazon-eks-node-1.17-v20210125
+* amazon-eks-node-1.16-v20210125
+* amazon-eks-node-1.15-v20210125
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* ARM AMIs built with m6g.large instance type (#601) 
+* Add Support for c6gn instance type (#597)
+* Patch for CVE-2021-3156 (https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-3156)
+
 ### AMI Release v20210112
 * amazon-eks-gpu-node-1.18-v20210112
 * amazon-eks-gpu-node-1.17-v20210112
