@@ -1,5 +1,28 @@
 # Changelog
 
+### AMI Release v20210208
+* amazon-eks-gpu-node-1.18-v20210208
+* amazon-eks-gpu-node-1.17-v20210208
+* amazon-eks-gpu-node-1.16-v20210208
+* amazon-eks-gpu-node-1.15-v20210208
+* amazon-eks-arm64-node-1.18-v20210208
+* amazon-eks-arm64-node-1.17-v20210208
+* amazon-eks-arm64-node-1.16-v20210208
+* amazon-eks-arm64-node-1.15-v20210208
+* amazon-eks-node-1.18-v20210208
+* amazon-eks-node-1.17-v20210208
+* amazon-eks-node-1.16-v20210208
+* amazon-eks-node-1.15-v20210208
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Patch for [ALAS-2021-1588](https://alas.aws.amazon.com/AL2/ALAS-2021-1588.html)
+
 ### AMI Release v20210125
 * amazon-eks-gpu-node-1.18-v20210125
 * amazon-eks-gpu-node-1.17-v20210125
