@@ -132,8 +132,6 @@ Resources:
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: "us-west-2" # amazon-eks S3 bucket is in us-west-2
-          - Name: PACKER_VERSION
-            Value: "1.7.0"
           - Name: PACKER_LOG
             Value: !If
               - IsPackerLog
@@ -159,8 +157,9 @@ Resources:
             install:
               commands:
                 - echo "Installing Packer..."
-                - curl -qL -o packer.zip https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip && unzip packer.zip
-                - export PATH=${PATH}:${CODEBUILD_SRC_DIR}
+                - curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+                - apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+                - apt-get update && apt-get install -y packer build-essential
             build:
               commands:
                 - echo "Building Packer template, eks-worker-al2.json"
@@ -172,7 +171,7 @@ Resources:
                 - |
                   if [ "${AWS_REGION}" != "us-west-2" ] ; then
                     echo "Copying AMI from us-west-2 to ${AWS_REGION}"
-                    IMAGE_ID=`cat manifest.json | jq '.builds[0].artifact_id' | cut -d ":" -f2 | tr -d '"'`
+                    IMAGE_ID=`cat manifest.json | jq '.builds[0].artifact_id' | cut -d ':' -f2 | tr -d '"'`
                     IMAGE_NAME=`aws ec2 describe-images --region us-west-2 --image-ids ${IMAGE_ID} | jq '.Images[0].Name' | tr -d '"'`
                     aws ec2 copy-image --source-region us-west-2 --source-image-id ${IMAGE_ID} --name "${IMAGE_NAME}" --region ${AWS_REGION}
                     aws ec2 deregister-image --image-id ${IMAGE_ID} --region us-west-2
