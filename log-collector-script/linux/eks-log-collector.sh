@@ -540,7 +540,7 @@ get_containerd_info() {
 
     if [[ "$(pgrep -o containerd)" -ne 0 ]]; then
         timeout 75 containerd config dump > "${COLLECT_DIR}"/containerd/containerd-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
-        timeout 75 jouralctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 journalctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
     else
         warning "The Containerd daemon is not running."
     fi
