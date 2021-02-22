@@ -34,7 +34,7 @@
                "/usr/local/bin/aws --version",
                "fi",
                "echo \"Pushing to S3\"",
-               "/usr/local/bin/aws s3 cp /var/log/eks_i* s3://{{bucketName}}",
+               "/usr/local/bin/aws s3 cp $(ls -1 /var/log/eks_i* | tail -1) s3://{{bucketName}} && rm /var/log/eks_i*",
                "echo \"Logs uploaded to S3\""
             ]
          }
