@@ -386,7 +386,7 @@ mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
