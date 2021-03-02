@@ -20,6 +20,8 @@
          "inputs": {
             "runCommand": [
                "curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh",
+               "echo \"Cleaning old eks-log-collector files\"",
+               "rm /var/log/eks_i*",
                "bash ./eks-log-collector.sh  >/dev/null 2>&1",
                "echo \"EKS logs collected\"",
                "if [ -f /usr/local/bin/aws ]; then",
@@ -34,7 +36,7 @@
                "/usr/local/bin/aws --version",
                "fi",
                "echo \"Pushing to S3\"",
-               "/usr/local/bin/aws s3 cp $(ls -1 /var/log/eks_i* | tail -1) s3://{{bucketName}} && rm /var/log/eks_i*",
+               "/usr/local/bin/aws s3 cp /var/log/eks_i* s3://{{bucketName}}",
                "echo \"Logs uploaded to S3\""
             ]
          }
