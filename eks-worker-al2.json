@@ -1,9 +1,9 @@
 {
   "variables": {
-    "aws_region": "us-west-2",
+    "aws_region": "us-east-1",
     "ami_name": null,
     "creator": "{{env `USER`}}",
-    "encrypted": "false",
+    "encrypted": "true",
     "kms_key_id": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
@@ -29,7 +29,7 @@
     "temporary_security_group_source_cidrs": "",
     "security_group_id": "",
     "associate_public_ip_address": "",
-    "subnet_id": "",
+    "subnet_id": "subnet-09d4f3a9bc981735f",
     "remote_folder": "",
     "launch_block_device_mappings_volume_size": "4",
     "ami_users": "",
