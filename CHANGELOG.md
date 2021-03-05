@@ -1,5 +1,39 @@
 # Changelog
 
+### AMI Release v20210302
+* amazon-eks-gpu-node-1.19-v20210302
+* amazon-eks-gpu-node-1.18-v20210302
+* amazon-eks-gpu-node-1.17-v20210302
+* amazon-eks-gpu-node-1.16-v20210302
+* amazon-eks-gpu-node-1.15-v20210302
+* amazon-eks-arm64-node-1.19-v20210302
+* amazon-eks-arm64-node-1.18-v20210302
+* amazon-eks-arm64-node-1.17-v20210302
+* amazon-eks-arm64-node-1.16-v20210302
+* amazon-eks-arm64-node-1.15-v20210302
+* amazon-eks-node-1.19-v20210302
+* amazon-eks-node-1.18-v20210302
+* amazon-eks-node-1.17-v20210302
+* amazon-eks-node-1.16-v20210302
+* amazon-eks-node-1.15-v20210302
+
+Binaries used to build these AMIs are published:
+- s3://amazon-eks/1.19.6/2021-01-05/
+- s3://amazon-eks/1.18.9/2020-11-02/
+- s3://amazon-eks/1.17.12/2020-11-02/
+- s3://amazon-eks/1.16.15/2020-11-02/
+- s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+- files/bootstrap.sh: ensure /etc/docker exists before writing to it (#611)
+- GPU AMIs now use docker `daemon.json` defined in https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
+- Patch for CVE-2021-3177
+- check that nvidia-smi is configured correctly before updating GPU clocks (#613)
+- Fix Makefile indentation for 1.19 (#616)
+- Increase fs.inotify.max_user_instances to 8192 from the default of 128 (#614)
+- use dynamic lookup of docker gid (#622)
+- bump docker version to 19.03.13ce-1 (#624) 
+
 ### AMI Release v20210208
 * amazon-eks-gpu-node-1.19-v20210208
 * amazon-eks-gpu-node-1.18-v20210208
