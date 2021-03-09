@@ -20,6 +20,8 @@
          "inputs": {
             "runCommand": [
                "curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh",
+               "echo \"Cleaning old eks-log-collector files\"",
+               "rm /var/log/eks_i*",
                "bash ./eks-log-collector.sh  >/dev/null 2>&1",
                "echo \"EKS logs collected\"",
                "if [ -f /usr/local/bin/aws ]; then",
