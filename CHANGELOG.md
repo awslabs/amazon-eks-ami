@@ -1,5 +1,33 @@
 # Changelog
 
+### AMI Release v20210310
+* amazon-eks-gpu-node-1.19-v20210310
+* amazon-eks-gpu-node-1.18-v20210310
+* amazon-eks-gpu-node-1.17-v20210310
+* amazon-eks-gpu-node-1.16-v20210310
+* amazon-eks-gpu-node-1.15-v20210310
+* amazon-eks-arm64-node-1.19-v20210310
+* amazon-eks-arm64-node-1.18-v20210310
+* amazon-eks-arm64-node-1.17-v20210310
+* amazon-eks-arm64-node-1.16-v20210310
+* amazon-eks-arm64-node-1.15-v20210310
+* amazon-eks-node-1.19-v20210310
+* amazon-eks-node-1.18-v20210309
+* amazon-eks-node-1.17-v20210309
+* amazon-eks-node-1.16-v20210309
+* amazon-eks-node-1.15-v20210309
+
+Binaries used to build these AMIs are published :
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+- Updates Nvidia drivers to version `460.27.04`
+- GPU AMIs no longer uses `daemon.json` defined in https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
+
 ### AMI Release v20210302
 * amazon-eks-gpu-node-1.19-v20210302
 * amazon-eks-gpu-node-1.18-v20210302
