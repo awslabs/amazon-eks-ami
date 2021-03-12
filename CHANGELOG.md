@@ -30,8 +30,9 @@ Notable changes :
 
 ### AMI Release v20210302
 
-#### GPU AMIs in this release are not compatible with any eksctl version after [eksctl 0.34.0](https://github.com/weaveworks/eksctl/releases/tag/0.34.0)
-* amazon-eks-gpu-node-1.19-v20210302]
+**GPU AMIs in this release are not compatible with any eksctl version after [eksctl 0.34.0](https://github.com/weaveworks/eksctl/releases/tag/0.34.0)**
+
+* amazon-eks-gpu-node-1.19-v20210302
 * amazon-eks-gpu-node-1.18-v20210302
 * amazon-eks-gpu-node-1.17-v20210302
 * amazon-eks-gpu-node-1.16-v20210302
