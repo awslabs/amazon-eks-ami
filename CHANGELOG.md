@@ -29,6 +29,9 @@ Notable changes :
 - GPU AMIs no longer uses `daemon.json` defined in https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
 
 ### AMI Release v20210302
+
+**GPU AMIs in this release are not compatible with any eksctl version after [eksctl 0.34.0](https://github.com/weaveworks/eksctl/releases/tag/0.34.0)**
+
 * amazon-eks-gpu-node-1.19-v20210302
 * amazon-eks-gpu-node-1.18-v20210302
 * amazon-eks-gpu-node-1.17-v20210302
