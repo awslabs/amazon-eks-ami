@@ -63,11 +63,23 @@
           "volume_type": "gp2",
           "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
           "delete_on_termination": true
+        },
+        {
+          "device_name":"/dev/xvdb",
+          "volume_type":"gp2",
+          "volume_size": 20,
+          "delete_on_termination":true
         }
       ],
       "ami_block_device_mappings": [
         {
           "device_name": "/dev/xvda",
+          "volume_type": "gp2",
+          "volume_size": 10,
+          "delete_on_termination": true
+        },
+        {
+          "device_name": "/dev/xvdb",
           "volume_type": "gp2",
           "volume_size": 20,
           "delete_on_termination": true
@@ -102,20 +114,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install_additional_repos.sh",
-      "environment_vars": [
-        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "expect_disconnect": true,
-      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
+      "script": "{{template_dir}}/scripts/initialize.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "KERNEL_VERSION={{user `kernel_version`}}"
-      ]
+        "KERNEL_VERSION={{user `kernel_version`}}",
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+      ],
+      "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'"
     },
     {
       "type": "shell",
@@ -153,15 +159,18 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "scripts": [
+        "{{template_dir}}/scripts/cis-benchmark-al2.sh",
+        "{{template_dir}}/scripts/cis-benchmark-docker.sh",
+        "{{template_dir}}/scripts/cis-benchmark-eks.sh",
+        "{{template_dir}}/scripts/cleanup.sh",
+        "{{template_dir}}/scripts/validate.sh"
+      ],
       "environment_vars": [
-        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/validate.sh"
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}",
+        "CLEANUP_IMAGE={{user `cleanup_image`}}"
+      ],
+      "execute_command":"echo 'packer' | {{.Vars}} sudo -S -E bash -eux '{{.Path}}'"
     }
   ],
   "post-processors": [
