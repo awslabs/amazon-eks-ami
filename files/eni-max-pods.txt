@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2021-01-13T12:54:18-08:00
+# This file was generated at 2021-03-16T15:26:13-07:00
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
@@ -229,6 +229,7 @@ m5dn.2xlarge 58
 m5dn.4xlarge 234
 m5dn.8xlarge 234
 m5dn.large 29
+m5dn.metal 737
 m5dn.xlarge 58
 m5n.12xlarge 234
 m5n.16xlarge 737
@@ -237,6 +238,7 @@ m5n.2xlarge 58
 m5n.4xlarge 234
 m5n.8xlarge 234
 m5n.large 29
+m5n.metal 737
 m5n.xlarge 58
 m5zn.12xlarge 737
 m5zn.2xlarge 58
@@ -333,6 +335,7 @@ r5dn.2xlarge 58
 r5dn.4xlarge 234
 r5dn.8xlarge 234
 r5dn.large 29
+r5dn.metal 737
 r5dn.xlarge 58
 r5n.12xlarge 234
 r5n.16xlarge 737
@@ -341,6 +344,7 @@ r5n.2xlarge 58
 r5n.4xlarge 234
 r5n.8xlarge 234
 r5n.large 29
+r5n.metal 737
 r5n.xlarge 58
 r6g.12xlarge 234
 r6g.16xlarge 737
@@ -402,6 +406,15 @@ x1e.32xlarge 234
 x1e.4xlarge 58
 x1e.8xlarge 58
 x1e.xlarge 29
+x2gd.12xlarge 234
+x2gd.16xlarge 737
+x2gd.2xlarge 58
+x2gd.4xlarge 234
+x2gd.8xlarge 234
+x2gd.large 29
+x2gd.medium 8
+x2gd.metal 737
+x2gd.xlarge 58
 z1d.12xlarge 737
 z1d.2xlarge 58
 z1d.3xlarge 234
