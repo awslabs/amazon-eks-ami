@@ -300,15 +300,16 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
 
         aws eks wait cluster-active \
             --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME}
-
-        aws eks describe-cluster \
-            --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME} \
-            --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --name=${CLUSTER_NAME} || rc=$?
         if [[ $rc -eq 0 ]]; then
-            break
+            aws eks describe-cluster \
+                --region=${AWS_DEFAULT_REGION} \
+                --name=${CLUSTER_NAME} \
+                --output=text \
+                --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            if [[ $rc -eq 0 ]]; then
+                break
+            fi
         fi
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
             exit $rc
