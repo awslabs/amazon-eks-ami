@@ -17,6 +17,7 @@ function print_help {
     echo ""
     echo "-h,--help print this help"
     echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
+    echo "--max-pods Max number of pods for the node. (default: value per instance type from /etc/eks/eni-max-pods.txt)"
     echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
@@ -39,6 +40,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --use-max-pods)
             USE_MAX_PODS="$2"
+            shift
+            shift
+            ;;
+        --max-pods)
+            MAX_PODS="$2"
             shift
             shift
             ;;
@@ -100,6 +106,7 @@ CLUSTER_NAME="$1"
 set -u
 
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
+MAX_PODS="${MAX_PODS:-}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 SERVICE_IPV4_CIDR="${SERVICE_IPV4_CIDR:-}"
@@ -356,14 +363,16 @@ INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
 # Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
-#calculate the max number of pods per instance type
-MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
-set +o pipefail
-MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
-set -o pipefail
-if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-    exit 1
+if [ -z "$MAX_PODS" ]; then
+   #calculate the max number of pods per instance type
+   MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+   set +o pipefail
+   MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
+   set -o pipefail
+   if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
+      echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
+      exit 1
+   fi
 fi
 
 # calculates the amount of each resource to reserve
