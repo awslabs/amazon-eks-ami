@@ -29,10 +29,6 @@ Notable changes :
 - Updates Nvidia drivers to version `460.32.03`
 - patch for CVE-2021-27363, CVE-2021-27364, CVE-2021-27365
 - set kubelet log verbosity to 2
-- Fix 'Unknown options:' when multiple /var/log/eks_i* files exists
-- update log-collector-script to pull configure-multicard-interfaces logs
-- Remove the redundant conditional statement
-- add source_ami_filter_name to makefile PACKER_VARIABLES
 
 ### AMI Release v20210310
 * amazon-eks-gpu-node-1.19-v20210310
