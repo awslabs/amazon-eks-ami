@@ -1,5 +1,35 @@
 # Changelog
 
+### AMI Release v20210322
+
+* amazon-eks-gpu-node-1.19-v20210322
+* amazon-eks-gpu-node-1.18-v20210322
+* amazon-eks-gpu-node-1.17-v20210322
+* amazon-eks-gpu-node-1.16-v20210322
+* amazon-eks-gpu-node-1.15-v20210322
+* amazon-eks-arm64-node-1.19-v20210322
+* amazon-eks-arm64-node-1.18-v20210322
+* amazon-eks-arm64-node-1.17-v20210322
+* amazon-eks-arm64-node-1.16-v20210322
+* amazon-eks-arm64-node-1.15-v20210322
+* amazon-eks-node-1.19-v20210322
+* amazon-eks-node-1.18-v20210322
+* amazon-eks-node-1.17-v20210322
+* amazon-eks-node-1.16-v20210322
+* amazon-eks-node-1.15-v20210322
+
+Binaries used to build these AMIs are published :
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+- Updates Nvidia drivers to version `460.32.03`
+- patch for CVE-2021-27363, CVE-2021-27364, CVE-2021-27365
+- set kubelet log verbosity to 2
+
 ### AMI Release v20210310
 * amazon-eks-gpu-node-1.19-v20210310
 * amazon-eks-gpu-node-1.18-v20210310
