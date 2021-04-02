@@ -1,5 +1,36 @@
 # Changelog
 
+### AMI Release v20210329
+
+* amazon-eks-gpu-node-1.19-v20210329
+* amazon-eks-gpu-node-1.18-v20210329
+* amazon-eks-gpu-node-1.17-v20210329
+* amazon-eks-gpu-node-1.16-v20210329
+* amazon-eks-gpu-node-1.15-v20210329
+* amazon-eks-arm64-node-1.19-v20210329
+* amazon-eks-arm64-node-1.18-v20210329
+* amazon-eks-arm64-node-1.17-v20210329
+* amazon-eks-arm64-node-1.16-v20210329
+* amazon-eks-arm64-node-1.15-v20210329
+* amazon-eks-node-1.19-v20210329
+* amazon-eks-node-1.18-v20210329
+* amazon-eks-node-1.17-v20210329
+* amazon-eks-node-1.16-v20210329
+* amazon-eks-node-1.15-v20210329
+
+Binaries used to build these AMIs are published:
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+A regression was introduced to the 4.14 Amazon Linux Kernel where I/O could slow significantly after running some workloads for a long period of time (observations point to between 4 hours and several days). This release contains the Kernel patch which fixes the above issue.
+
+
+
+
 ### AMI Release v20210322
 
 * amazon-eks-gpu-node-1.19-v20210322
