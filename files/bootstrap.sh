@@ -363,16 +363,18 @@ INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
 # Note that allocatable memory and CPU resources on worker nodes is calculated by the Kubernetes scheduler
 # with this formula when scheduling pods: Allocatable = Capacity - Reserved - Eviction Threshold.
 
-if [ -z "$MAX_PODS" ]; then
-   #calculate the max number of pods per instance type
-   MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
-   set +o pipefail
-   MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
-   set -o pipefail
-   if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-      echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-      exit 1
-   fi
+#calculate the max number of pods per instance type
+MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
+set +o pipefail
+MAX_PODS_PER_INSTANCE=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
+set -o pipefail
+if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
+   echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
+   exit 1
+fi
+
+if [ -z "$MAX_PODS" ] || [ "$MAX_PODS" -gt "$MAX_PODS_PER_INSTANCE" ]; then
+  MAX_PODS=$MAX_PODS_PER_INSTANCE
 fi
 
 # calculates the amount of each resource to reserve
