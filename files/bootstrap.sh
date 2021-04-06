@@ -368,13 +368,13 @@ MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
 set +o pipefail
 MAX_PODS_PER_INSTANCE=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
-if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-   echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-   exit 1
+if [ -z "$MAX_PODS_PER_INSTANCE" ] || [ -z "$INSTANCE_TYPE" ]; then
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
+    exit 1
 fi
 
 if [ -z "$MAX_PODS" ] || [ "$MAX_PODS" -gt "$MAX_PODS_PER_INSTANCE" ]; then
-  MAX_PODS=$MAX_PODS_PER_INSTANCE
+    MAX_PODS=$MAX_PODS_PER_INSTANCE
 fi
 
 # calculates the amount of each resource to reserve
