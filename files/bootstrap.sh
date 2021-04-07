@@ -419,8 +419,8 @@ if  command -v nvidia-smi &>/dev/null ; then
 
    nvidia-smi -q > /tmp/nvidia-smi-check
    if [[ "$?" == "0" ]]; then
-      sudo nvidia-smi -pm 1 # set persistence mode
-      sudo nvidia-smi --auto-boost-default=0
+      nvidia-smi -pm 1 # set persistence mode
+      nvidia-smi --auto-boost-default=0
 
       GPUNAME=$(nvidia-smi -L | head -n1)
       echo $GPUNAME
