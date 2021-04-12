@@ -172,7 +172,11 @@ BINARIES=(
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    if [ "${PRIVATE_BIN_REPO}" != "" ]; then
+        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for coping binaries."
+        sudo wget ${PRIVATE_BIN_REPO}/$binary
+        sudo wget ${PRIVATE_BIN_REPO}/$binary.sha256
+    elif [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
@@ -196,7 +200,11 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
     sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
     rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
 else
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    if [ "${PRIVATE_BIN_REPO}" != "" ]; then
+        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for coping binaries"
+        sudo wget ${PRIVATE_BIN_REPO}/${CNI_PLUGIN_FILENAME}.tgz
+        sudo wget ${PRIVATE_BIN_REPO}/${CNI_PLUGIN_FILENAME}.tgz.sha256
+    elif [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
