@@ -173,7 +173,7 @@ BINARIES=(
 )
 for binary in ${BINARIES[*]} ; do
     if [ "${PRIVATE_BIN_REPO}" != "" ]; then
-        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for coping binaries."
+        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for copying binaries."
         sudo wget ${PRIVATE_BIN_REPO}/$binary
         sudo wget ${PRIVATE_BIN_REPO}/$binary.sha256
     elif [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
@@ -201,7 +201,7 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
     rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
 else
     if [ "${PRIVATE_BIN_REPO}" != "" ]; then
-        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for coping binaries"
+        echo "Using PRIVATE_BIN_REPO ${PRIVATE_BIN_REPO} as source for copying binaries"
         sudo wget ${PRIVATE_BIN_REPO}/${CNI_PLUGIN_FILENAME}.tgz
         sudo wget ${PRIVATE_BIN_REPO}/${CNI_PLUGIN_FILENAME}.tgz.sha256
     elif [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
