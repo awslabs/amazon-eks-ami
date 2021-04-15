@@ -1,5 +1,34 @@
 # Changelog
 
+### AMI Release v20210414
+
+* amazon-eks-gpu-node-1.19-v20210414
+* amazon-eks-gpu-node-1.18-v20210414
+* amazon-eks-gpu-node-1.17-v20210414
+* amazon-eks-gpu-node-1.16-v20210414
+* amazon-eks-gpu-node-1.15-v20210414
+* amazon-eks-arm64-node-1.19-v20210414
+* amazon-eks-arm64-node-1.18-v20210414
+* amazon-eks-arm64-node-1.17-v20210414
+* amazon-eks-arm64-node-1.16-v20210414
+* amazon-eks-arm64-node-1.15-v20210414
+* amazon-eks-node-1.19-v20210414
+* amazon-eks-node-1.18-v20210414
+* amazon-eks-node-1.17-v20210414
+* amazon-eks-node-1.16-v20210414
+* amazon-eks-node-1.15-v20210414
+
+Binaries used to build these AMIs are published:
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+A regression was introduced for 1.19 AMI in the last release as a result of runc version update to `1.0.0-rc93` causing nodes to flap between `Ready` and `NotReady`, more details [#648](https://github.com/awslabs/amazon-eks-ami/issues/648). We are reverting the runc version back to 1.0.0-rc92.
+
+
 ### AMI Release v20210329
 
 * amazon-eks-gpu-node-1.19-v20210329
