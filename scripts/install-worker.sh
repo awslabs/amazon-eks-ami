@@ -25,6 +25,7 @@ validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
 validate_env_set DOCKER_VERSION
 validate_env_set CONTAINERD_VERSION
+validate_env_set RUNC_VERSION
 validate_env_set CNI_PLUGIN_VERSION
 validate_env_set KUBERNETES_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
@@ -127,7 +128,11 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
 
     # runc `1.0.0-rc93` resulted in a regression: https://github.com/awslabs/amazon-eks-ami/issues/648
     # pinning it to `1.0.0-rc92`
-    sudo yum downgrade -y runc.${MACHINE} 1.0.0-0.1.20200826.gitff819c7.amzn2
+    sudo yum downgrade -y runc.${MACHINE} ${RUNC_VERSION}
+
+    # install versionlock plugin and lock runc, containerd and docker versions
+    sudo yum install -y yum-plugin-versionlock
+    sudo yum versionlock runc-* containerd-* docker-*
 
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
