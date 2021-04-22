@@ -129,6 +129,10 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     # pinning it to `1.0.0-rc92`
     sudo yum downgrade -y runc.${MACHINE} 1.0.0-0.1.20200826.gitff819c7.amzn2
 
+    # install versionlock plugin and lock runc, containerd versions
+    sudo yum install -y yum-plugin-versionlock
+    sudo yum versionlock runc-* containerd-*
+
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
     sudo systemctl enable docker
