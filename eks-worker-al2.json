@@ -15,9 +15,8 @@
     "kubernetes_version": null,
     "kubernetes_build_date": null,
     "docker_version": "19.03.6ce-4.amzn2",
-    "cni_version": "v0.6.0",
-    "cni_plugin_version": "v0.7.5",
-    "og_image_version": "1.2.0",
+    "cni_plugin_version": "v0.8.6",
+    "og_image_version": "1.3.0",
     "ami_regions": "us-west-2,us-east-1",
     "pull_cni_from_github": "true",
 
@@ -71,7 +70,7 @@
         {
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
-          "volume_size": 20,
+          "volume_size": 200,
           "delete_on_termination": true
         }
       ],
@@ -93,7 +92,6 @@
           "docker_version": "{{ user `docker_version`}}",
           "source_ami_id": "{{ user `source_ami_id`}}",
           "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-          "cni_version": "{{ user `cni_version`}}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}",
           "og_image_version": "{{ user `og_image_version`}}"
       },
@@ -139,7 +137,6 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
-        "CNI_VERSION={{user `cni_version`}}",
         "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",

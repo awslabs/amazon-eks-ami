@@ -1,5 +1,12 @@
 # Changelog
 
+1.5.2 - 08/04/2021
+-----------------------
+- Updated latest build date for 1.16.15 to `2020-11-02`
+- Updated cni plugin version to `v0.8.6`
+- Updated K8s version to `1.16.15`
+- Increase Volume size from 20GB to 200GB
+
 1.5.1 - 08/04/2020
 -----------------------
 - docker version updated to `19.03.6ce-4.amzn2`
