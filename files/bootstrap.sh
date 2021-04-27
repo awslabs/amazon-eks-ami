@@ -26,6 +26,7 @@ function print_help {
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
     echo "--pause-container-account The AWS account (number) to pull the pause container from"
     echo "--pause-container-version The tag of the pause container"
+    echo "--container-runtime Specify a container runtime (default: dockerd)"
 }
 
 POSITIONAL=()
@@ -87,6 +88,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --container-runtime)
+            CONTAINER_RUNTIME=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -109,6 +115,7 @@ ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -390,6 +397,22 @@ if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
+fi
+
+# Replace dockerd with containerd
+if [[ "$CONTAINER_RUNTIME" -eq "containerd" ]]; then
+    cat <<EOF > /etc/systemd/system/kubelet.service.d/50-kubelet-container-runtime.conf
+[Service]
+ExecStart=
+ExecStart=/usr/bin/kubelet --cloud-provider aws \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --container-runtime remote \
+    --container-runtime-endpoint "unix:///run/containerd/containerd.sock" \
+    --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
+EOF
+elif [[ "$CONTAINER_RUNTIME" -ne "dockerd" ]]; then
+    echo "Container runtime ${CONTAINER_RUNTIME} is not supported."
 fi
 
 # Replace with custom docker config contents.
