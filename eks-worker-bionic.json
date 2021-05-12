@@ -41,8 +41,6 @@
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
-      "spot_price": "auto",
-      "spot_price_auto_product": "Linux/UNIX (Amazon VPC)",
       "ssh_username": "ubuntu",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
