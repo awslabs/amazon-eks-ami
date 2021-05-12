@@ -107,3 +107,14 @@ validate:
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
 		eks-worker-bionic.json
+
+1.18: validate
+	$(DOCKER_PACKER) build \
+		-var aws_region=$(AWS_REGION) \
+			-var kubernetes_version=1.18 \
+		-var binary_bucket_path=1.18.9/2020-11-02/bin/linux/amd64 \
+		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
+		-var source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-bionic.json
+
