@@ -1,7 +1,7 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service iptables-restore.service
+After=docker.service iptables-restore.service cloud-init.service
 Requires=docker.service
 
 [Service]
