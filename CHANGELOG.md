@@ -1,5 +1,35 @@
 # Changelog
 
+## AMI Release v20210512
+
+* amazon-eks-gpu-node-1.19-v20210512
+* amazon-eks-gpu-node-1.18-v20210512
+* amazon-eks-gpu-node-1.17-v20210512
+* amazon-eks-gpu-node-1.16-v20210512
+* amazon-eks-gpu-node-1.15-v20210512
+* amazon-eks-arm64-node-1.19-v20210512
+* amazon-eks-arm64-node-1.18-v20210512
+* amazon-eks-arm64-node-1.17-v20210512
+* amazon-eks-arm64-node-1.16-v20210512
+* amazon-eks-arm64-node-1.15-v20210512
+* amazon-eks-node-1.19-v20210512
+* amazon-eks-node-1.18-v20210512
+* amazon-eks-node-1.17-v20210512
+* amazon-eks-node-1.16-v20210512
+* amazon-eks-node-1.15-v20210512
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+* Release 1.20 AMIs
+
 ## AMI Release v20210501
 
 * amazon-eks-gpu-node-1.19-v20210501
