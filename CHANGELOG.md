@@ -1,5 +1,37 @@
 # Changelog
 
+## AMI Release v20210518
+
+* amazon-eks-gpu-node-1.19-v20210518
+* amazon-eks-gpu-node-1.18-v20210518
+* amazon-eks-gpu-node-1.17-v20210518
+* amazon-eks-gpu-node-1.16-v20210518
+* amazon-eks-gpu-node-1.15-v20210518
+* amazon-eks-arm64-node-1.19-v20210518
+* amazon-eks-arm64-node-1.18-v20210518
+* amazon-eks-arm64-node-1.17-v20210518
+* amazon-eks-arm64-node-1.16-v20210518
+* amazon-eks-arm64-node-1.15-v20210518
+* amazon-eks-node-1.19-v20210518
+* amazon-eks-node-1.18-v20210518
+* amazon-eks-node-1.17-v20210518
+* amazon-eks-node-1.16-v20210518
+* amazon-eks-node-1.15-v20210518
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+* `runc` version upgrade to `rc93`
+* [fix](https://github.com/opencontainers/runc/pull/2871) for [#2530](https://github.com/opencontainers/runc/issues/2530) backported to `rc93`
+* [`runc` CVE 2021-30465](https://github.com/opencontainers/runc/security/advisories/GHSA-c3xm-pvg7-gh7r) patch backported to `rc93`
+
 ## AMI Release v20210512
 
 * amazon-eks-gpu-node-1.19-v20210512

@@ -114,7 +114,21 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
     sudo groupadd -fog 1950 docker
     sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+
+    # install version lock to put a lock on dependecies
+    sudo yum install -y yum-plugin-versionlock
+
+    # install runc and lock version
+    sudo yum install -y runc-${RUNC_VERSION}
+    sudo yum versionlock runc-*
+
+    # install containerd and lock version
+    sudo yum install -y containerd-${CONTAINERD_VERSION}
+    sudo yum versionlock containerd-*
+
+    # install docker and lock version
     sudo yum install -y docker-${DOCKER_VERSION}*
+    sudo yum versionlock docker-*
     sudo usermod -aG docker $USER
 
     # Remove all options from sysconfig docker.
@@ -123,16 +137,6 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo mkdir -p /etc/docker
     sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
     sudo chown root:root /etc/docker/daemon.json
-
-    sudo yum downgrade -y containerd-${CONTAINERD_VERSION}
-
-    # runc `1.0.0-rc93` resulted in a regression: https://github.com/awslabs/amazon-eks-ami/issues/648
-    # pinning it to `1.0.0-rc92`
-    sudo yum downgrade -y runc.${MACHINE} ${RUNC_VERSION}
-
-    # install versionlock plugin and lock runc, containerd and docker versions
-    sudo yum install -y yum-plugin-versionlock
-    sudo yum versionlock runc-* containerd-* docker-*
 
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
