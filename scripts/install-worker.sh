@@ -64,7 +64,11 @@ sudo yum install -y \
     nfs-utils \
     socat \
     unzip \
-    wget
+    wget \
+    htop \
+    vim \
+    ipvsadm \
+    yum-cron
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
