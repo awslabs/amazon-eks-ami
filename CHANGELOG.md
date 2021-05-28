@@ -29,7 +29,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.15.12/2020-11-02/
 
 AMI details:
-* kernal: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
+* kernel: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
 * dockerd: 19.03.13-ce
 * containerd: 1.4.1
 * runc: 1.0.0-rc93
@@ -70,7 +70,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.15.12/2020-11-02/
 
 AMI details:
-* kernal: 5.4.110-54.189.amzn2.x86_64 (1.19 and above), 4.14.231-173.361.amzn2.x86_64 (1.18 and below)
+* kernel: 5.4.110-54.189.amzn2.x86_64 (1.19 and above), 4.14.231-173.361.amzn2.x86_64 (1.18 and below)
 * dockerd: 19.03.13-ce
 * containerd: 1.4.1
 * runc: 1.0.0-rc93
