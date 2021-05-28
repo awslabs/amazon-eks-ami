@@ -1,5 +1,46 @@
 # Changelog
 
+## AMI Release v20210526
+* amazon-eks-gpu-node-1.20-v20210526
+* amazon-eks-gpu-node-1.19-v20210526
+* amazon-eks-gpu-node-1.18-v20210526
+* amazon-eks-gpu-node-1.17-v20210526
+* amazon-eks-gpu-node-1.16-v20210526
+* amazon-eks-gpu-node-1.15-v20210526
+* amazon-eks-arm64-node-1.20-v20210526
+* amazon-eks-arm64-node-1.19-v20210526
+* amazon-eks-arm64-node-1.18-v20210526
+* amazon-eks-arm64-node-1.17-v20210526
+* amazon-eks-arm64-node-1.16-v20210526
+* amazon-eks-arm64-node-1.15-v20210526
+* amazon-eks-node-1.20-v20210526
+* amazon-eks-node-1.19-v20210526
+* amazon-eks-node-1.18-v20210526
+* amazon-eks-node-1.17-v20210526
+* amazon-eks-node-1.16-v20210526
+* amazon-eks-node-1.15-v20210526
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0
+
+
+Notable changes:
+* [CVE-2021-25215](https://access.redhat.com/security/cve/CVE-2021-25215) patch
+* kenel patch for following CVEs: [CVE-2021-31829](https://access.redhat.com/security/cve/CVE-2021-31829), [CVE-2021-23133](https://access.redhat.com/security/cve/CVE-2021-23133), [CVE-2020-29374](https://access.redhat.com/security/cve/CVE-2020-29374)
+
 ## AMI Release v20210519
 * amazon-eks-gpu-node-1.20-v20210519
 * amazon-eks-gpu-node-1.19-v20210519
@@ -29,7 +70,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.15.12/2020-11-02/
 
 AMI details:
-* kernal: 5.4.110-54.189.amzn2.x86_64 (1.19 and above), 4.14.231-173.361.amzn2.x86_64 (1.18 and below)
+* kernel: 5.4.110-54.189.amzn2.x86_64 (1.19 and above), 4.14.231-173.361.amzn2.x86_64 (1.18 and below)
 * dockerd: 19.03.13-ce
 * containerd: 1.4.1
 * runc: 1.0.0-rc93
