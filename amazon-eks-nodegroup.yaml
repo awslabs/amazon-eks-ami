@@ -296,6 +296,7 @@ Parameters:
       - m5dn.4xlarge
       - m5dn.8xlarge
       - m5dn.large
+      - m5dn.metal
       - m5dn.xlarge
       - m5n.12xlarge
       - m5n.16xlarge
@@ -304,6 +305,7 @@ Parameters:
       - m5n.4xlarge
       - m5n.8xlarge
       - m5n.large
+      - m5n.metal
       - m5n.xlarge
       - m5zn.12xlarge
       - m5zn.2xlarge
@@ -400,6 +402,7 @@ Parameters:
       - r5dn.4xlarge
       - r5dn.8xlarge
       - r5dn.large
+      - r5dn.metal
       - r5dn.xlarge
       - r5n.12xlarge
       - r5n.16xlarge
@@ -408,6 +411,7 @@ Parameters:
       - r5n.4xlarge
       - r5n.8xlarge
       - r5n.large
+      - r5n.metal
       - r5n.xlarge
       - r6g.12xlarge
       - r6g.16xlarge
@@ -456,10 +460,14 @@ Parameters:
       - t4g.nano
       - t4g.small
       - t4g.xlarge
+      - u-12tb1.112xlarge
       - u-12tb1.metal
       - u-18tb1.metal
       - u-24tb1.metal
+      - u-6tb1.112xlarge
+      - u-6tb1.56xlarge
       - u-6tb1.metal
+      - u-9tb1.112xlarge
       - u-9tb1.metal
       - x1.16xlarge
       - x1.32xlarge
@@ -469,6 +477,15 @@ Parameters:
       - x1e.4xlarge
       - x1e.8xlarge
       - x1e.xlarge
+      - x2gd.12xlarge
+      - x2gd.16xlarge
+      - x2gd.2xlarge
+      - x2gd.4xlarge
+      - x2gd.8xlarge
+      - x2gd.large
+      - x2gd.medium
+      - x2gd.metal
+      - x2gd.xlarge
       - z1d.12xlarge
       - z1d.2xlarge
       - z1d.3xlarge
