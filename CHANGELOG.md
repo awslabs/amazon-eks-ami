@@ -1,5 +1,45 @@
 # Changelog
 
+## AMI Release v20210621
+* amazon-eks-gpu-node-1.20-v20210621
+* amazon-eks-gpu-node-1.19-v20210621
+* amazon-eks-gpu-node-1.18-v20210621
+* amazon-eks-gpu-node-1.17-v20210621
+* amazon-eks-gpu-node-1.16-v20210621
+* amazon-eks-gpu-node-1.15-v20210621
+* amazon-eks-arm64-node-1.20-v20210621
+* amazon-eks-arm64-node-1.19-v20210621
+* amazon-eks-arm64-node-1.18-v20210621
+* amazon-eks-arm64-node-1.17-v20210621
+* amazon-eks-arm64-node-1.16-v20210621
+* amazon-eks-arm64-node-1.15-v20210621
+* amazon-eks-node-1.20-v20210621
+* amazon-eks-node-1.19-v20210621
+* amazon-eks-node-1.18-v20210621
+* amazon-eks-node-1.17-v20210621
+* amazon-eks-node-1.16-v20210621
+* amazon-eks-node-1.15-v20210621
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0
+* SSM agent: 3.0.1295.0
+
+Notable changes:
+* The SSM Agent will now be automatically installed
+
 ## AMI Release v20210526
 * amazon-eks-gpu-node-1.20-v20210526
 * amazon-eks-gpu-node-1.19-v20210526
