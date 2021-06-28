@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# login to private docker registry before pulling
+# sudo docker login -u <login1> -p <password2> <registry1>
+# sudo docker login -u <login1> -p <password2> <registry2>
