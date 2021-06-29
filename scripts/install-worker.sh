@@ -269,7 +269,6 @@ if [ "$BINARY_BUCKET_REGION" != "us-iso-east-1" ] && [ "$BINARY_BUCKET_REGION" !
     fi
 
     sudo systemctl enable amazon-ssm-agent
-    sudo systemctl start amazon-ssm-agent
 fi
 
 ################################################################################
