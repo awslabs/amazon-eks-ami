@@ -261,6 +261,20 @@ if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
 fi
 
 ################################################################################
+### SSM Agent ##################################################################
+################################################################################
+
+if [ "$BINARY_BUCKET_REGION" != "us-iso-east-1" ] && [ "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]; then
+    if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
+        sudo yum install -y https://s3.cn-north-1.amazonaws.com.cn/amazon-ssm-cn-north-1/latest/linux_$ARCH/amazon-ssm-agent.rpm
+    else
+        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$ARCH/amazon-ssm-agent.rpm
+    fi
+
+    sudo systemctl enable amazon-ssm-agent
+fi
+
+################################################################################
 ### AMI Metadata ###############################################################
 ################################################################################
 
