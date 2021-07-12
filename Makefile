@@ -3,7 +3,7 @@ PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region 
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
-kubernetes_build_date ?= 2020-11-02
+kubernetes_build_date ?= 2021-05-13
 aws_region ?= $(AWS_DEFAULT_REGION)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
 ami_name ?= og-amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
@@ -28,7 +28,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.14 1.15 1.16
+all: 1.15 1.16 1.17
 
 .PHONY: validate
 validate:
@@ -41,10 +41,6 @@ k8s: validate
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-.PHONY: 1.14
-1.14:
-	$(MAKE) k8s kubernetes_version=1.14.9 kubernetes_build_date=2020-04-16 pull_cni_from_github=true
-
 .PHONY: 1.15
 1.15:
 	$(MAKE) k8s kubernetes_version=1.15.11 kubernetes_build_date=2020-07-17 pull_cni_from_github=true
@@ -52,3 +48,7 @@ k8s: validate
 .PHONY: 1.16
 1.16:
 	$(MAKE) k8s kubernetes_version=1.16.15 kubernetes_build_date=2020-11-02 pull_cni_from_github=true
+
+.PHONY: 1.17
+1.17:
+	$(MAKE) k8s kubernetes_version=1.17.17 kubernetes_build_date=2021-05-13 pull_cni_from_github=true
