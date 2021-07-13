@@ -1,7 +1,7 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service
+After=docker.service iptables-restore.service
 Requires=docker.service
 
 [Service]
@@ -12,8 +12,7 @@ ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --container-runtime docker \
     --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
-Restart=on-failure
-RestartForceExitStatus=SIGPIPE
+Restart=always
 RestartSec=5
 KillMode=process
 

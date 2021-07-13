@@ -3,6 +3,9 @@
 <span style="font-family: calibri, Garamond, 'Comic Sans MS' ;">This project was created to collect Amazon EKS log files and OS logs for troubleshooting Amazon EKS customer support cases.</span>
 
 #### Usage
+
+At a high level, you run this script on your Kubernetes node, and it will collect system information, configuration and logs that will assist in troubleshooting issues with your node. AWS support and service team engineers can use this information once provided via a customer support case.
+
 * Collect EKS logs using SSM agent, jump to below [section](#collect-eks-logs-using-ssm-agent) _(or)_
 
 * Run this project as the root user:
