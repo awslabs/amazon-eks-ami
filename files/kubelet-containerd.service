@@ -1,0 +1,22 @@
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service
+Requires=containerd.service
+
+[Service]
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
+ExecStart=/usr/bin/kubelet --cloud-provider aws \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --container-runtime remote \
+    --container-runtime-endpoint unix:///run/dockershim.sock \
+    --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
+
+Restart=on-failure
+RestartForceExitStatus=SIGPIPE
+RestartSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
