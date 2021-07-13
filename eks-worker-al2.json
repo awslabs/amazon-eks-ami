@@ -61,7 +61,7 @@
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/xvda",
-          "volume_type": "gp2",
+          "volume_type": "gp3",
           "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
           "delete_on_termination": true
         }
