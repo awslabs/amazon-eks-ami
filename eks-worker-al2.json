@@ -3,7 +3,7 @@
     "aws_region": "us-west-2",
     "ami_name": null,
     "creator": "{{env `USER`}}",
-    "encrypted": "false",
+    "encrypted": "true",
     "kms_key_id": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
@@ -60,6 +60,8 @@
       "instance_type": "{{user `instance_type`}}",
       "launch_block_device_mappings": [
         {
+          "encrypted": "{{user `encrypted`}}",
+          "kms_key_id": "{{user `kms_key_id`}}",
           "device_name": "/dev/xvda",
           "volume_type": "gp2",
           "volume_size": "{{user `launch_block_device_mappings_volume_size`}}",
