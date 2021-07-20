@@ -24,7 +24,7 @@
 * amazon-eks-node-1.16-v20210716
 * amazon-eks-node-1.15-v20210716
 
-EKS AMI release for Kubernetes version 1.21.
+EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov-west-1 and us-gov-east-1 aren't a part of this release)
 * Note: The containerd has patch for CVE-2-21-32760
 
 Containerd runtime support
