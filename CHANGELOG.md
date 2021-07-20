@@ -30,6 +30,8 @@ EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov
 Containerd runtime support
 The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
 
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
+
 ## AMI Release v20210716
 
 * amazon-eks-gpu-node-1.21-v20210716
@@ -60,6 +62,7 @@ EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov
 Containerd runtime support
 The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
 
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
 
 ## AMI Release v20210628
 * amazon-eks-gpu-node-1.20-v20210628
