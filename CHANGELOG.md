@@ -1,5 +1,77 @@
 # Changelog
 
+## AMI Release v20210716
+
+* amazon-eks-gpu-node-1.21-v20210716
+* amazon-eks-gpu-node-1.20-v20210716
+* amazon-eks-gpu-node-1.19-v20210716
+* amazon-eks-gpu-node-1.18-v20210716
+* amazon-eks-gpu-node-1.17-v20210716
+* amazon-eks-gpu-node-1.16-v20210716
+* amazon-eks-gpu-node-1.15-v20210716
+* amazon-eks-arm64-node-1.21-v20210716
+* amazon-eks-arm64-node-1.20-v20210716
+* amazon-eks-arm64-node-1.19-v20210716
+* amazon-eks-arm64-node-1.18-v20210716
+* amazon-eks-arm64-node-1.17-v20210716
+* amazon-eks-arm64-node-1.16-v20210716
+* amazon-eks-arm64-node-1.15-v20210716
+* amazon-eks-node-1.21-v20210716
+* amazon-eks-node-1.20-v20210716
+* amazon-eks-node-1.19-v20210716
+* amazon-eks-node-1.18-v20210716
+* amazon-eks-node-1.17-v20210716
+* amazon-eks-node-1.16-v20210716
+* amazon-eks-node-1.15-v20210716
+
+EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov-west-1 and us-gov-east-1 aren't a part of this release)
+* Note: The containerd has patch for CVE-2-21-32760
+
+Containerd runtime support
+The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
+
+
+## AMI Release v20210628
+* amazon-eks-gpu-node-1.20-v20210628
+* amazon-eks-gpu-node-1.19-v20210628
+* amazon-eks-gpu-node-1.18-v20210628
+* amazon-eks-gpu-node-1.17-v20210628
+* amazon-eks-gpu-node-1.16-v20210628
+* amazon-eks-gpu-node-1.15-v20210628
+* amazon-eks-arm64-node-1.20-v20210628
+* amazon-eks-arm64-node-1.19-v20210628
+* amazon-eks-arm64-node-1.18-v20210628
+* amazon-eks-arm64-node-1.17-v20210628
+* amazon-eks-arm64-node-1.16-v20210628
+* amazon-eks-arm64-node-1.15-v20210628
+* amazon-eks-node-1.20-v20210628
+* amazon-eks-node-1.19-v20210628
+* amazon-eks-node-1.18-v20210628
+* amazon-eks-node-1.17-v20210628
+* amazon-eks-node-1.16-v20210628
+* amazon-eks-node-1.15-v20210628
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2 (1.19 and above), 4.14.232-177.418.amzn2 (1.18 and below)
+* dockerd: 19.03.13ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 460.73.01
+* SSM agent: 3.0.1295.0
+
+Notable changes:
+
+Includes the latest security patches for [systemd](https://alas.aws.amazon.com/AL2/ALAS-2021-1647.html), [python3](https://alas.aws.amazon.com/AL2/ALAS-2021-1670.html) and others.
+
 ## AMI Release v20210621
 * amazon-eks-gpu-node-1.20-v20210621
 * amazon-eks-gpu-node-1.19-v20210621

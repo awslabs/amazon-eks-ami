@@ -98,14 +98,8 @@ fi
 ################################################################################
 ### iptables ###################################################################
 ################################################################################
-
-# Enable forwarding via iptables
-sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable iptables-restore
+sudo mkdir -p /etc/eks
+sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 
 ################################################################################
 ### Docker #####################################################################
@@ -144,8 +138,33 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
 
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
-    sudo systemctl enable docker
 fi
+
+###############################################################################
+### Containerd setup ##########################################################
+###############################################################################
+
+sudo mkdir -p /etc/eks/containerd
+if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
+    ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
+    echo "containerd config is already present"
+else 
+    sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+fi
+
+sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
+
+cat <<EOF | sudo tee -a /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+cat <<EOF | sudo tee -a /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
 
 ################################################################################
 ### Logrotate ##################################################################
@@ -264,15 +283,7 @@ fi
 ### SSM Agent ##################################################################
 ################################################################################
 
-if [ "$BINARY_BUCKET_REGION" != "us-iso-east-1" ] && [ "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]; then
-    if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-        sudo yum install -y https://s3.cn-north-1.amazonaws.com.cn/amazon-ssm-cn-north-1/latest/linux_$ARCH/amazon-ssm-agent.rpm
-    else
-        sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_$ARCH/amazon-ssm-agent.rpm
-    fi
-
-    sudo systemctl enable amazon-ssm-agent
-fi
+sudo yum install -y amazon-ssm-agent
 
 ################################################################################
 ### AMI Metadata ###############################################################
