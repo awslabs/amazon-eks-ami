@@ -96,7 +96,7 @@
           "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
           "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
-      "ami_name": "{{user `ami_name`}}",
+      "ami_name": "{{user `ami_name`}}-1",
       "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version`}}, docker:{{ user `docker_version`}})"
     }
   ],

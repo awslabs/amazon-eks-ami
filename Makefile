@@ -11,7 +11,7 @@ arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= a1.large
 else
-instance_type ?= m4.large
+instance_type ?= m5.large
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
