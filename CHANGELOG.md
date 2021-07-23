@@ -1,5 +1,32 @@
 # Changelog
 
+## AMI Release v20210722
+
+* amazon-eks-gpu-node-1.21-v20210722
+* amazon-eks-gpu-node-1.20-v20210722
+* amazon-eks-gpu-node-1.19-v20210722
+* amazon-eks-gpu-node-1.18-v20210722
+* amazon-eks-gpu-node-1.17-v20210722
+* amazon-eks-gpu-node-1.16-v20210722
+* amazon-eks-gpu-node-1.15-v20210722
+* amazon-eks-arm64-node-1.21-v20210722
+* amazon-eks-arm64-node-1.20-v20210722
+* amazon-eks-arm64-node-1.19-v20210722
+* amazon-eks-arm64-node-1.18-v20210722
+* amazon-eks-arm64-node-1.17-v20210722
+* amazon-eks-arm64-node-1.16-v20210722
+* amazon-eks-arm64-node-1.15-v20210722
+* amazon-eks-node-1.21-v20210722
+* amazon-eks-node-1.20-v20210722
+* amazon-eks-node-1.19-v20210722
+* amazon-eks-node-1.18-v20210722
+* amazon-eks-node-1.17-v20210722
+* amazon-eks-node-1.16-v20210722
+* amazon-eks-node-1.15-v20210722
+
+Notable changes:
+* This release includes the security patch for the [kernel](https://alas.aws.amazon.com/ALAS-2021-1524.html), for CVE-2021-33909.
+
 ## AMI Release v20210720
 
 * amazon-eks-gpu-node-1.21-v20210720
