@@ -11,11 +11,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2020-09-15T18:15:46-07:00
+# This file was generated at 2021-06-08T13:46:17-07:00
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
-# * +2 for for the pods that use host-networking (AWS CNI and kube-proxy)
+# * +2 for the pods that use host-networking (AWS CNI and kube-proxy)
 #
 #   # of ENI * (# of IPv4 per ENI - 1) + 2
 #
@@ -100,12 +100,30 @@ c6gd.large 29
 c6gd.medium 8
 c6gd.metal 737
 c6gd.xlarge 58
+c6gn.12xlarge 234
+c6gn.16xlarge 737
+c6gn.2xlarge 58
+c6gn.4xlarge 234
+c6gn.8xlarge 234
+c6gn.large 29
+c6gn.medium 8
+c6gn.xlarge 58
 cc2.8xlarge 234
 cr1.8xlarge 234
 d2.2xlarge 58
 d2.4xlarge 234
 d2.8xlarge 234
 d2.xlarge 58
+d3.2xlarge 18
+d3.4xlarge 38
+d3.8xlarge 59
+d3.xlarge 10
+d3en.12xlarge 89
+d3en.2xlarge 18
+d3en.4xlarge 38
+d3en.6xlarge 58
+d3en.8xlarge 78
+d3en.xlarge 10
 f1.16xlarge 394
 f1.2xlarge 58
 f1.4xlarge 234
@@ -115,6 +133,9 @@ g3.16xlarge 737
 g3.4xlarge 234
 g3.8xlarge 234
 g3s.xlarge 58
+g4ad.16xlarge 234
+g4ad.4xlarge 29
+g4ad.8xlarge 58
 g4dn.12xlarge 234
 g4dn.16xlarge 58
 g4dn.2xlarge 29
@@ -208,6 +229,7 @@ m5dn.2xlarge 58
 m5dn.4xlarge 234
 m5dn.8xlarge 234
 m5dn.large 29
+m5dn.metal 737
 m5dn.xlarge 58
 m5n.12xlarge 234
 m5n.16xlarge 737
@@ -216,7 +238,15 @@ m5n.2xlarge 58
 m5n.4xlarge 234
 m5n.8xlarge 234
 m5n.large 29
+m5n.metal 737
 m5n.xlarge 58
+m5zn.12xlarge 737
+m5zn.2xlarge 58
+m5zn.3xlarge 234
+m5zn.6xlarge 234
+m5zn.large 29
+m5zn.metal 737
+m5zn.xlarge 58
 m6g.12xlarge 234
 m6g.16xlarge 737
 m6g.2xlarge 58
@@ -235,6 +265,7 @@ m6gd.large 29
 m6gd.medium 8
 m6gd.metal 737
 m6gd.xlarge 58
+mac1.metal 234
 p2.16xlarge 234
 p2.8xlarge 234
 p2.xlarge 58
@@ -242,6 +273,7 @@ p3.16xlarge 234
 p3.2xlarge 58
 p3.8xlarge 234
 p3dn.24xlarge 737
+p4d.24xlarge 737
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
@@ -278,6 +310,15 @@ r5ad.4xlarge 234
 r5ad.8xlarge 234
 r5ad.large 29
 r5ad.xlarge 58
+r5b.12xlarge 234
+r5b.16xlarge 737
+r5b.24xlarge 737
+r5b.2xlarge 58
+r5b.4xlarge 234
+r5b.8xlarge 234
+r5b.large 29
+r5b.metal 737
+r5b.xlarge 58
 r5d.12xlarge 234
 r5d.16xlarge 737
 r5d.24xlarge 737
@@ -294,6 +335,7 @@ r5dn.2xlarge 58
 r5dn.4xlarge 234
 r5dn.8xlarge 234
 r5dn.large 29
+r5dn.metal 737
 r5dn.xlarge 58
 r5n.12xlarge 234
 r5n.16xlarge 737
@@ -302,6 +344,7 @@ r5n.2xlarge 58
 r5n.4xlarge 234
 r5n.8xlarge 234
 r5n.large 29
+r5n.metal 737
 r5n.xlarge 58
 r6g.12xlarge 234
 r6g.16xlarge 737
@@ -350,10 +393,14 @@ t4g.micro 4
 t4g.nano 4
 t4g.small 11
 t4g.xlarge 58
+u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.metal 737
 u-24tb1.metal 737
+u-6tb1.112xlarge 737
+u-6tb1.56xlarge 737
 u-6tb1.metal 147
+u-9tb1.112xlarge 737
 u-9tb1.metal 147
 x1.16xlarge 234
 x1.32xlarge 234
@@ -363,6 +410,15 @@ x1e.32xlarge 234
 x1e.4xlarge 58
 x1e.8xlarge 58
 x1e.xlarge 29
+x2gd.12xlarge 234
+x2gd.16xlarge 737
+x2gd.2xlarge 58
+x2gd.4xlarge 234
+x2gd.8xlarge 234
+x2gd.large 29
+x2gd.medium 8
+x2gd.metal 737
+x2gd.xlarge 58
 z1d.12xlarge 737
 z1d.2xlarge 58
 z1d.3xlarge 234

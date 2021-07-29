@@ -28,7 +28,6 @@ readonly LOG_DIR="/var/log"
 readonly COLLECT_DIR="/tmp/eks-log-collector"
 readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
 readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
-readonly TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
 INSTANCE_ID=""
 INIT_TYPE=""
 PACKAGE_TYPE=""
@@ -55,6 +54,7 @@ COMMON_DIRECTORIES=(
   kernel
   system
   docker
+  containerd
   storage
   var_log
   networking
@@ -189,9 +189,20 @@ create_directories() {
   done
 }
 
-get_instance_metadata() {
-  readonly INSTANCE_ID=$(curl --max-time 3 -H "X-aws-ec2-metadata-token: $TOKEN" --silent http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
-  echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
+get_instance_id() {
+  INSTANCE_ID_FILE="/var/lib/cloud/data/instance-id"
+
+  if grep -q '^i-' "$INSTANCE_ID_FILE"; then
+    cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
+    readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
+  else
+    readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    if [ 0 -eq $? ]; then # Check if previous command was successful.
+      echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
+    else
+      warning "Unable to find EC2 Instance Id. Skipped Instance Id."
+    fi
+  fi
 }
 
 is_diskfull() {
@@ -231,7 +242,7 @@ init() {
 collect() {
   init
   is_diskfull
-  get_instance_metadata
+  get_instance_id
   get_common_logs
   get_kernel_info
   get_mounts_info
@@ -239,6 +250,7 @@ collect() {
   get_iptables_info
   get_pkglist
   get_system_services
+  get_containerd_info
   get_docker_info
   get_k8s_info
   get_ipamd_info
@@ -289,10 +301,10 @@ get_selinux_info() {
 get_iptables_info() {
   try "collect iptables information"
 
-  iptables --wait 1 --numeric --verbose --list --table mangle > "${COLLECT_DIR}"/networking/iptables-mangle.txt
-  iptables --wait 1 --numeric --verbose --list --table filter > "${COLLECT_DIR}"/networking/iptables-filter.txt
-  iptables --wait 1 --numeric --verbose --list --table nat > "${COLLECT_DIR}"/networking/iptables-nat.txt
-  iptables --wait 1 --numeric --verbose --list > "${COLLECT_DIR}"/networking/iptables.txt
+  iptables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/iptables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-mangle.txt
+  iptables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/iptables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-filter.txt
+  iptables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/iptables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-nat.txt
+  iptables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/iptables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables.txt
   iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
 
   ok
@@ -458,6 +470,9 @@ get_networking_info() {
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
   timeout 75 ip route show table all >> "${COLLECT_DIR}"/networking/iproute.txt
 
+  # configure-multicard-interfaces
+  timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
+
   ok
 }
 
@@ -523,6 +538,19 @@ get_system_services() {
   ok
 }
 
+get_containerd_info() {
+    try "Collect Containerd daemon information"
+
+    if [[ "$(pgrep -o containerd)" -ne 0 ]]; then
+        timeout 75 containerd config dump > "${COLLECT_DIR}"/containerd/containerd-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 journalctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    else
+        warning "The Containerd daemon is not running."
+    fi
+
+   ok
+}
+
 get_docker_info() {
   try "collect Docker daemon information"
 
@@ -531,6 +559,7 @@ get_docker_info() {
     timeout 75 docker ps --all --no-trunc > "${COLLECT_DIR}"/docker/docker-ps.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker ps --all --no-truc output \" "
     timeout 75 docker images > "${COLLECT_DIR}"/docker/docker-images.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker images output \" "
     timeout 75 docker version > "${COLLECT_DIR}"/docker/docker-version.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker version output \" "
+    timeout 75 curl --unix-socket /var/run/docker.sock http://./debug/pprof/goroutine\?debug\=2 > "${COLLECT_DIR}"/docker/docker-trace.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker version output \" "
   else
     warning "The Docker daemon is not running."
   fi

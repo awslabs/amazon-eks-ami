@@ -24,6 +24,9 @@ function print_help {
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+    echo "--pause-container-account The AWS account (number) to pull the pause container from"
+    echo "--pause-container-version The tag of the pause container"
+    echo "--container-runtime Specify a container runtime (default: dockerd)"
 }
 
 POSITIONAL=()
@@ -85,6 +88,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --container-runtime)
+            CONTAINER_RUNTIME=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -107,6 +115,7 @@ ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -123,6 +132,10 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
     us-gov-east-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
+    us-iso-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-725322719131}";;
+    us-isob-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-187977181151}";;
     af-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
@@ -130,6 +143,72 @@ function get_pause_container_account_for_region () {
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
+}
+
+function _get_token() {
+  local token_result=
+  local http_result=
+
+  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
+  http_result=$(echo "$token_result" | tail -n 1)
+  if [[ "$http_result" != "200" ]]
+  then
+      echo -e "Failed to get token:\n$token_result"
+      return 1
+  else
+      echo "$token_result" | head -n 1
+      return 0
+  fi
+}
+
+function get_token() {
+  local token=
+  local retries=20
+  local result=1
+
+  while [[ retries -gt 0 && $result -ne 0 ]]
+  do
+    retries=$[$retries-1]
+    token=$(_get_token)
+    result=$?
+    [[ $result != 0 ]] && sleep 5
+  done
+  [[ $result == 0 ]] && echo "$token"
+  return $result
+}
+
+function _get_meta_data() {
+  local path=$1
+  local metadata_result=
+
+  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/$path)
+  http_result=$(echo "$metadata_result" | tail -n 1)
+  if [[ "$http_result" != "200" ]]
+  then
+      echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
+      return 1
+  else
+      local lines=$(echo "$metadata_result" | wc -l)
+      echo "$metadata_result" | head -n $(( lines - 1 ))
+      return 0
+  fi
+}
+
+function get_meta_data() {
+  local metadata=
+  local path=$1
+  local retries=20
+  local result=1
+
+  while [[ retries -gt 0 && $result -ne 0 ]]
+  do
+    retries=$[$retries-1]
+    metadata=$(_get_meta_data $path)
+    result=$?
+    [[ $result != 0 ]] && TOKEN=$(get_token)
+  done
+  [[ $result == 0 ]] && echo "$metadata"
+  return $result
 }
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
@@ -161,7 +240,7 @@ get_resource_to_reserve_in_range() {
 # density so we are calculating the amount of memory to reserve for Kubernetes systems daemons by
 # considering the maximum number of pods this instance type supports.
 # Args:
-#   $1 the instance type of the worker node
+#   $1 the max number of pods per instance type (MAX_PODS) based on values from /etc/eks/eni-max-pods.txt
 # Return:
 #   memory to reserve in Mi for the kubelet
 get_memory_mebibytes_to_reserve() {
@@ -201,9 +280,9 @@ if [ -z "$CLUSTER_NAME" ]; then
 fi
 
 
-TOKEN=$(curl -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
-AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
-AWS_SERVICES_DOMAIN=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2018-09-24/meta-data/services/domain)
+TOKEN=$(get_token)
+AWS_DEFAULT_REGION=$(get_meta_data 'latest/dynamic/instance-identity/document' | jq .region -r)
+AWS_SERVICES_DOMAIN=$(get_meta_data '2018-09-24/meta-data/services/domain')
 
 MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
@@ -266,8 +345,8 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
     #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
     DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
   else
-    MAC=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/ -s | head -n 1 | sed 's/\/$//')
-    TEN_RANGE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks | grep -c '^10\..*' || true )
+    MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
+    TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
       DNS_CLUSTER_IP=172.20.0.10
@@ -280,8 +359,8 @@ fi
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
-INTERNAL_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/local-ipv4)
-INSTANCE_TYPE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
+INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
+INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
 # calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
@@ -291,10 +370,10 @@ INSTANCE_TYPE=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169
 #calculate the max number of pods per instance type
 MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
 set +o pipefail
-MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^$INSTANCE_TYPE/"' { print $2 }')
+MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
-if [ -z "$MAX_PODS" ]; then
-    echo 'No entry for $INSTANCE_TYPE in $MAX_PODS_FILE'
+if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
     exit 1
 fi
 
@@ -307,16 +386,14 @@ echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_mill
     '. += {kubeReserved: {"cpu": $cpu_millicores_to_reserve, "ephemeral-storage": "1Gi", "memory": $mebibytes_to_reserve}}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
-    if [[ -n "$MAX_PODS" ]]; then
-        echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
-    else
-        echo "No entry for $INSTANCE_TYPE in $MAX_PODS_FILE. Not setting max pods for kubelet"
-    fi
+    echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
+
+mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
@@ -326,19 +403,72 @@ Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
 fi
 
-# Replace with custom docker config contents.
-if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
-    echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
-    systemctl restart docker
+if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
+    sudo mkdir -p /etc/containerd
+    sudo mkdir -p /etc/cni/net.d
+    sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
+    sudo chown root:root /etc/systemd/system/kubelet.service
+    systemctl daemon-reload
+    systemctl enable containerd
+    systemctl start containerd
+elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
+    mkdir -p /etc/docker
+    bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
+    mv /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
+    sudo chown root:root /etc/systemd/system/iptables-restore.service
+    systemctl daemon-reload
+    systemctl enable iptables-restore
+
+    if [[ -n "$DOCKER_CONFIG_JSON" ]]; then
+        echo "$DOCKER_CONFIG_JSON" > /etc/docker/daemon.json
+    fi
+    if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
+          # Enabling the docker bridge network. We have to disable live-restore as it
+          # prevents docker from recreating the default bridge network on restart
+          echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
+    fi
+    systemctl daemon-reload
+    systemctl enable docker
+    systemctl start docker
+else
+    echo "Container runtime ${CONTAINER_RUNTIME} is not supported."
+    exit 1
 fi
 
-if [[ "$ENABLE_DOCKER_BRIDGE" = "true" ]]; then
-    # Enabling the docker bridge network. We have to disable live-restore as it
-    # prevents docker from recreating the default bridge network on restart
-    echo "$(jq '.bridge="docker0" | ."live-restore"=false' /etc/docker/daemon.json)" > /etc/docker/daemon.json
-    systemctl restart docker
-fi
 
-systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
+
+# gpu boost clock
+if  command -v nvidia-smi &>/dev/null ; then
+   echo "nvidia-smi found"
+
+   nvidia-smi -q > /tmp/nvidia-smi-check
+   if [[ "$?" == "0" ]]; then
+      sudo nvidia-smi -pm 1 # set persistence mode
+      sudo nvidia-smi --auto-boost-default=0
+
+      GPUNAME=$(nvidia-smi -L | head -n1)
+      echo $GPUNAME
+
+      # set application clock to maximum
+      if [[ $GPUNAME == *"A100"* ]]; then
+         nvidia-smi -ac 1215,1410
+      elif [[ $GPUNAME == *"V100"* ]]; then
+         nvidia-smi -ac 877,1530
+      elif [[ $GPUNAME == *"K80"* ]]; then
+         nvidia-smi -ac 2505,875
+      elif [[ $GPUNAME == *"T4"* ]]; then
+         nvidia-smi -ac 5001,1590
+      elif [[ $GPUNAME == *"M60"* ]]; then
+         nvidia-smi -ac 2505,1177
+      else
+         echo "unsupported gpu"
+      fi
+   else
+      cat /tmp/nvidia-smi-check
+   fi
+else
+    echo "nvidia-smi not found"
+fi
