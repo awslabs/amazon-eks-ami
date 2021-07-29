@@ -3,9 +3,9 @@
 @Library('OGJenkinsLib@3.18.0') _
 
 final GIT_REPOSITORY_NAME = 'amazon-eks-ami'
-final KUBERNETES_VERSION = '1.18.16'
+final KUBERNETES_VERSION = '1.19.8'
 final PACKER_IMAGE_MANIFEST = 'manifest.json'
-final OG_IMAGE_VERSION = '1.5.0'
+final OG_IMAGE_VERSION = '1.6.0'
 def config = [:]  // Pipeline configuration
 
 def containers = [
