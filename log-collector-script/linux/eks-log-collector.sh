@@ -470,6 +470,9 @@ get_networking_info() {
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
   timeout 75 ip route show table all >> "${COLLECT_DIR}"/networking/iproute.txt
 
+  # configure-multicard-interfaces
+  timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
+
   ok
 }
 
