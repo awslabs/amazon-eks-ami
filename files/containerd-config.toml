@@ -14,6 +14,9 @@ sandbox_image = "SANDBOX_IMAGE"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
 runtime_type = "io.containerd.runc.v2"
 
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemdCgroup = true
+
 [plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"
 conf_dir = "/etc/cni/net.d"
