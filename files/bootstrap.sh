@@ -430,7 +430,7 @@ elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     fi
     systemctl daemon-reload
     systemctl enable docker
-    systemctl start docker
+    systemctl restart docker
 else
     echo "Container runtime ${CONTAINER_RUNTIME} is not supported."
     exit 1
