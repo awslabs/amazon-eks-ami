@@ -132,6 +132,10 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
     us-gov-east-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
+    us-iso-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-725322719131}";;
+    us-isob-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-187977181151}";;
     af-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
