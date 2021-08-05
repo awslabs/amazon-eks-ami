@@ -411,7 +411,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo chown root:root /etc/systemd/system/kubelet.service
     systemctl daemon-reload
     systemctl enable containerd
-    systemctl start containerd
+    systemctl restart containerd
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
