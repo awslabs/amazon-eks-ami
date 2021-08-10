@@ -406,12 +406,18 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
+    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml  
     sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
     sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
+    sudo chown root:root /etc/systemd/system/sandbox-image.service
     systemctl daemon-reload
     systemctl enable containerd
-    systemctl start containerd
+    systemctl restart containerd
+    systemctl enable sandbox-image
+    systemctl start sandbox-image
+    
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"

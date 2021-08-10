@@ -58,6 +58,7 @@ COMMON_DIRECTORIES=(
   storage
   var_log
   networking
+  sandbox-image # eks
   ipamd # eks
   sysctls # eks
   kubelet # eks
@@ -258,6 +259,7 @@ collect() {
   get_networking_info
   get_cni_config
   get_docker_logs
+  get_sandboxImage_info
 }
 
 pack() {
@@ -548,6 +550,12 @@ get_containerd_info() {
         warning "The Containerd daemon is not running."
     fi
 
+   ok
+}
+
+get_sandboxImage_info() {
+    try "Collect sandbox-image daemon information"      
+      timeout 75 journalctl -u sandbox-image > "${COLLECT_DIR}"/sandbox-image/sandbox-image-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"sandbox-image info output \" "
    ok
 }
 
