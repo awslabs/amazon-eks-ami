@@ -1,5 +1,64 @@
 # Changelog
 
+## AMI Release v20210722
+
+* amazon-eks-gpu-node-1.21-v20210722
+* amazon-eks-gpu-node-1.20-v20210722
+* amazon-eks-gpu-node-1.19-v20210722
+* amazon-eks-gpu-node-1.18-v20210722
+* amazon-eks-gpu-node-1.17-v20210722
+* amazon-eks-gpu-node-1.16-v20210722
+* amazon-eks-gpu-node-1.15-v20210722
+* amazon-eks-arm64-node-1.21-v20210722
+* amazon-eks-arm64-node-1.20-v20210722
+* amazon-eks-arm64-node-1.19-v20210722
+* amazon-eks-arm64-node-1.18-v20210722
+* amazon-eks-arm64-node-1.17-v20210722
+* amazon-eks-arm64-node-1.16-v20210722
+* amazon-eks-arm64-node-1.15-v20210722
+* amazon-eks-node-1.21-v20210722
+* amazon-eks-node-1.20-v20210722
+* amazon-eks-node-1.19-v20210722
+* amazon-eks-node-1.18-v20210722
+* amazon-eks-node-1.17-v20210722
+* amazon-eks-node-1.16-v20210722
+* amazon-eks-node-1.15-v20210722
+
+Notable changes:
+* This release includes the security patch for the [kernel](https://alas.aws.amazon.com/ALAS-2021-1524.html), for CVE-2021-33909.
+
+## AMI Release v20210720
+
+* amazon-eks-gpu-node-1.21-v20210720
+* amazon-eks-gpu-node-1.20-v20210720
+* amazon-eks-gpu-node-1.19-v20210720
+* amazon-eks-gpu-node-1.18-v20210720
+* amazon-eks-gpu-node-1.17-v20210720
+* amazon-eks-gpu-node-1.16-v20210720
+* amazon-eks-gpu-node-1.15-v20210720
+* amazon-eks-arm64-node-1.21-v20210720
+* amazon-eks-arm64-node-1.20-v20210720
+* amazon-eks-arm64-node-1.19-v20210720
+* amazon-eks-arm64-node-1.18-v20210720
+* amazon-eks-arm64-node-1.17-v20210720
+* amazon-eks-arm64-node-1.16-v20210720
+* amazon-eks-arm64-node-1.15-v20210720
+* amazon-eks-node-1.21-v20210720
+* amazon-eks-node-1.20-v20210720
+* amazon-eks-node-1.19-v20210720
+* amazon-eks-node-1.18-v20210720
+* amazon-eks-node-1.17-v20210720
+* amazon-eks-node-1.16-v20210720
+* amazon-eks-node-1.15-v20210720
+
+EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov-west-1 and us-gov-east-1 are included in this release)
+* Note: The containerd has patch for CVE-2-21-32760
+
+Containerd runtime support
+The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
+
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
+
 ## AMI Release v20210716
 
 * amazon-eks-gpu-node-1.21-v20210716
@@ -30,6 +89,7 @@ EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov
 Containerd runtime support
 The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
 
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
 
 ## AMI Release v20210628
 * amazon-eks-gpu-node-1.20-v20210628

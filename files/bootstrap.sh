@@ -132,6 +132,10 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}";;
     us-gov-east-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}";;
+    us-iso-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-725322719131}";;
+    us-isob-east-1)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-187977181151}";;
     af-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
@@ -402,12 +406,18 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
+    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml  
     sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
     sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
+    sudo chown root:root /etc/systemd/system/sandbox-image.service
     systemctl daemon-reload
     systemctl enable containerd
-    systemctl start containerd
+    systemctl restart containerd
+    systemctl enable sandbox-image
+    systemctl start sandbox-image
+    
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
@@ -426,7 +436,7 @@ elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     fi
     systemctl daemon-reload
     systemctl enable docker
-    systemctl start docker
+    systemctl restart docker
 else
     echo "Container runtime ${CONTAINER_RUNTIME} is not supported."
     exit 1
