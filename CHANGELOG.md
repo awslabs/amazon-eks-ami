@@ -1,5 +1,33 @@
 # Changelog
 
+## AMI Release v20210813
+
+* amazon-eks-gpu-node-1.21-v20210813
+* amazon-eks-gpu-node-1.20-v20210813
+* amazon-eks-gpu-node-1.19-v20210813
+* amazon-eks-gpu-node-1.18-v20210813
+* amazon-eks-gpu-node-1.17-v20210813
+* amazon-eks-gpu-node-1.16-v20210813
+* amazon-eks-gpu-node-1.15-v20210813
+* amazon-eks-arm64-node-1.21-v20210813
+* amazon-eks-arm64-node-1.20-v20210813
+* amazon-eks-arm64-node-1.19-v20210813
+* amazon-eks-arm64-node-1.18-v20210813
+* amazon-eks-arm64-node-1.17-v20210813
+* amazon-eks-arm64-node-1.16-v20210813
+* amazon-eks-arm64-node-1.15-v20210813
+* amazon-eks-node-1.21-v20210813
+* amazon-eks-node-1.20-v20210813
+* amazon-eks-node-1.19-v20210813
+* amazon-eks-node-1.18-v20210813
+* amazon-eks-node-1.17-v20210813
+* amazon-eks-node-1.16-v20210813
+* amazon-eks-node-1.15-v20210813
+
+Notable changes:
+* Contains fix for sanbox-image issue with containerd in Gov-cloud and CN regions.
+* Updating to 1.18.20 and 1.19.13 kubernetes version.
+
 ## AMI Release v20210722
 
 * amazon-eks-gpu-node-1.21-v20210722
