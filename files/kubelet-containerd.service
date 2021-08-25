@@ -1,8 +1,8 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
+After=containerd.service sandbox-image.service
+Requires=containerd.service sandbox-image.service
 
 [Service]
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
