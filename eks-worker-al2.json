@@ -12,7 +12,7 @@
     "binary_bucket_region": "us-west-2",
     "kubernetes_version": null,
     "kubernetes_build_date": null,
-    "kernel_version": "",
+    "kernel_version": "5.4",
     "docker_version": "19.03.13ce-1.amzn2",
     "containerd_version": "1.4.6-2.amzn2",
     "runc_version": "1.0.0-1.amzn2",
