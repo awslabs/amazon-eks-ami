@@ -152,7 +152,7 @@ fi
 sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
 sudo mv $TEMPLATE_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
 sudo mv $TEMPLATE_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
-sudo chmod 777 /etc/eks/containerd/pull-sandbox-image.sh
+sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
 
 cat <<EOF | sudo tee -a /etc/modules-load.d/containerd.conf
 overlay
