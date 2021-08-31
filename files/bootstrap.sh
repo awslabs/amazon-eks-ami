@@ -58,6 +58,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --kubelet-log-level)
+            KUBELET_LOG_LEVEL=$2
+            shift
+            shift
+            ;;
         --enable-docker-bridge)
             ENABLE_DOCKER_BRIDGE=$2
             shift
@@ -393,7 +398,7 @@ mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat <<EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
+Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=${KUBELET_LOG_LEVEL:-2}'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
