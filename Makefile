@@ -20,7 +20,7 @@ DOCKER_PACKER = docker run -v /mnt/credentials:/root/.aws/credentials \
 
 .PHONY: all validate ami 1.17 1.16 1.15 1.14 1.13 1.12 1.11 1.10
 
-all: 1.18
+all: 1.19
 
 validate:
 	$(DOCKER_PACKER) validate /workspace/eks-worker-bionic.json
@@ -113,6 +113,16 @@ validate:
 		-var aws_region=$(AWS_REGION) \
 			-var kubernetes_version=1.18 \
 		-var binary_bucket_path=1.18.9/2020-11-02/bin/linux/amd64 \
+		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
+		-var source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-bionic.json
+
+1.19: validate
+	$(DOCKER_PACKER) build \
+		-var aws_region=$(AWS_REGION) \
+			-var kubernetes_version=1.19 \
+		-var binary_bucket_path=1.19.13/2021-09-02/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
