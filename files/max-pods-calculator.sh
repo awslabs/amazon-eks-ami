@@ -20,6 +20,7 @@ function print_help {
     echo "--cni-prefix-delegation-enabled Use this flag to indicate if CNI prefix delegation has been enabled."
     echo "--cni-max-eni specify how many ENIs should be used for prefix delegation. Defaults to using all ENIs per instance."
     echo "--show-max-allowed Use this flag to show max number of Pods allowed to run in Worker Node. Otherwise the script will show the recommended value"
+    echo "--max-pods-ceiling specify the ceiling value for max-pods."
 }
 
 POSITIONAL=()
@@ -61,6 +62,11 @@ while [[ $# -gt 0 ]]; do
         --show-max-allowed)
             SHOW_MAX_ALLOWED=true
             shift
+            shift
+        --max-pods-ceiling)
+            MAX_PODS_CEILING=$2
+            shift
+            shift
             ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
@@ -76,6 +82,7 @@ CNI_MAX_ENI="${CNI_MAX_ENI:-}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-}"
 INSTANCE_TYPE_FROM_IMDS="${INSTANCE_TYPE_FROM_IMDS:-false}"
 SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
+MAX_PODS_CEILING="${MAX_PODS_CEILING:-}"
 
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
@@ -146,19 +153,22 @@ else
     max_pods=$(calculate_max_ip_addresses_secondary_ips $enis_for_pods $INSTANCE_MAX_ENIS_IPS)
 fi
 
-# Limit the total number of pods that can be launched on any instance type based on the vCPUs on that instance type.
-MAX_POD_CEILING_FOR_LOW_CPU=110
-MAX_POD_CEILING_FOR_HIGH_CPU=250
-CPU_COUNT=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.CpuCount' )
-
 if [ "$SHOW_MAX_ALLOWED" = true ] ; then
   echo $max_pods
   exit 0
 fi
 
-if [ "$CPU_COUNT" -gt 30 ] ; then
-    echo $(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)
+if [ -n "$MAX_PODS_CEILING" ] ; then
+    echo $(min_number $MAX_PODS_CEILING $max_pods)
 else
-    echo $(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)
+    # Limit the total number of pods that can be launched on any instance type based on the vCPUs on that instance type.
+    MAX_POD_CEILING_FOR_LOW_CPU=110
+    MAX_POD_CEILING_FOR_HIGH_CPU=250
+    CPU_COUNT=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.CpuCount' )
+    if [ "$CPU_COUNT" -gt 30 ] ; then
+        echo $(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)
+    else
+        echo $(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)
+    fi
 fi
 
