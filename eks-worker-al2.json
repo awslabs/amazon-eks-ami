@@ -98,9 +98,6 @@
         "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "vpc_filter": {
-        "filters": {
-          "isDefault": "false"
-        }
       },
       "subnet_filter": {
         "filters": {
