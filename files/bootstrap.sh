@@ -412,6 +412,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
+    ln -sf /run/containerd/containerd.sock /run/dockershim.sock
     systemctl daemon-reload
     systemctl enable containerd
     systemctl restart containerd
