@@ -3,7 +3,7 @@
     "aws_region": "us-west-2",
     "ami_name": null,
     "creator": "{{env `USER`}}",
-    "encrypted": "true",
+    "encrypted": "false",
     "kms_key_id": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
