@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 # login to private docker registry before pulling
-# sudo docker login -u <login1> -p <password2> <registry1>
-# sudo docker login -u <login1> -p <password2> <registry2>
+aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 602401143452.dkr.ecr.eu-central-1.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 602401143452.dkr.ecr.us-west-2.amazonaws.com
