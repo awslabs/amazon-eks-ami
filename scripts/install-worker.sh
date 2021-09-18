@@ -320,6 +320,27 @@ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
 echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf
 echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 
+################################################################################
+### Preload docker images ######################################################
+################################################################################
+
+# start docker for image pulling
+sudo systemctl start docker
+
+# (optional) login to private docker
+bash $TEMPLATE_DIR/docker-preload-images-login
+
+# remove comments and empty lines from docker images list
+sed -i -e '/^#/d' -e '/^$/d' $TEMPLATE_DIR/docker-preload-images
+
+# preload docker images
+for line in $(cat $TEMPLATE_DIR/docker-preload-images); do
+  echo "Pulling... $line"
+  sudo docker pull $line
+done
+
+# gracefull docker shutdown
+sudo systemctl stop docker
 
 ################################################################################
 ### Cleanup ####################################################################
