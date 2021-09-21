@@ -1,4 +1,27 @@
 # Changelog
+## AMI Release v20210914
+
+* amazon-eks-gpu-node-1.21-v20210914
+* amazon-eks-gpu-node-1.20-v20210914
+* amazon-eks-gpu-node-1.19-v20210914
+* amazon-eks-gpu-node-1.18-v20210914
+* amazon-eks-gpu-node-1.17-v20210914
+* amazon-eks-gpu-node-1.16-v20210914
+* amazon-eks-arm64-node-1.21-v20210914
+* amazon-eks-arm64-node-1.20-v20210914
+* amazon-eks-arm64-node-1.19-v20210914
+* amazon-eks-arm64-node-1.18-v20210914
+* amazon-eks-arm64-node-1.17-v20210914
+* amazon-eks-arm64-node-1.16-v20210914
+* amazon-eks-node-1.21-v20210914
+* amazon-eks-node-1.20-v20210914
+* amazon-eks-node-1.19-v20210914
+* amazon-eks-node-1.18-v20210914
+* amazon-eks-node-1.17-v20210914
+* amazon-eks-node-1.16-v20210914
+
+Notable changes:
+Adding support for new ec2 instance types i.e. m6i
 
 ## AMI Release v20210830
 
