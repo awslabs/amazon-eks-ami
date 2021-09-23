@@ -10,7 +10,7 @@ ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
     --container-runtime remote \
-    --container-runtime-endpoint unix:///run/dockershim.sock \
+    --container-runtime-endpoint unix:///run/containerd/containerd.sock \
     --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
