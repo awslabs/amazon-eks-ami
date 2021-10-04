@@ -64,7 +64,8 @@ sudo yum install -y \
     nfs-utils \
     socat \
     unzip \
-    wget
+    wget \
+    ipvsadm
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
@@ -94,14 +95,8 @@ fi
 ################################################################################
 ### iptables ###################################################################
 ################################################################################
-
-# Enable forwarding via iptables
-sudo bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/systemd/system/iptables-restore.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable iptables-restore
+sudo mkdir -p /etc/eks
+sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 
 ################################################################################
 ### Docker #####################################################################
@@ -114,7 +109,21 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
     sudo groupadd -fog 1950 docker
     sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+
+    # install version lock to put a lock on dependecies
+    sudo yum install -y yum-plugin-versionlock
+
+    # install runc and lock version
+    sudo yum install -y runc-${RUNC_VERSION}
+    sudo yum versionlock runc-*
+
+    # install containerd and lock version
+    sudo yum install -y containerd-${CONTAINERD_VERSION}
+    sudo yum versionlock containerd-*
+
+    # install docker and lock version
     sudo yum install -y docker-${DOCKER_VERSION}*
+    sudo yum versionlock docker-*
     sudo usermod -aG docker $USER
 
     # Remove all options from sysconfig docker.
@@ -124,20 +133,38 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
     sudo chown root:root /etc/docker/daemon.json
 
-    sudo yum downgrade -y containerd-${CONTAINERD_VERSION}
-
-    # runc `1.0.0-rc93` resulted in a regression: https://github.com/awslabs/amazon-eks-ami/issues/648
-    # pinning it to `1.0.0-rc92`
-    sudo yum downgrade -y runc.${MACHINE} ${RUNC_VERSION}
-
-    # install versionlock plugin and lock runc, containerd and docker versions
-    sudo yum install -y yum-plugin-versionlock
-    sudo yum versionlock runc-* containerd-* docker-*
-
     # Enable docker daemon to start on boot.
     sudo systemctl daemon-reload
-    sudo systemctl enable docker
 fi
+
+###############################################################################
+### Containerd setup ##########################################################
+###############################################################################
+
+sudo mkdir -p /etc/eks/containerd
+if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
+    ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
+    echo "containerd config is already present"
+else 
+    sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+fi
+
+sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
+sudo mv $TEMPLATE_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
+sudo mv $TEMPLATE_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
+sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
+
+cat <<EOF | sudo tee -a /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+cat <<EOF | sudo tee -a /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
 
 ################################################################################
 ### Logrotate ##################################################################
@@ -251,6 +278,12 @@ if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
     sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
     sudo sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
 fi
+
+################################################################################
+### SSM Agent ##################################################################
+################################################################################
+
+sudo yum install -y amazon-ssm-agent
 
 ################################################################################
 ### AMI Metadata ###############################################################
