@@ -58,6 +58,7 @@
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
+      "iam_instance_profile": "ArtexPackerInfraRole",
       "launch_block_device_mappings": [
         {
           "encrypted": "{{user `encrypted`}}",
@@ -130,7 +131,7 @@
     },
     {
       "type": "shell",
-      "pause_before": "90s",
+      "pause_before": "30s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "mkdir -p /tmp/worker/"
