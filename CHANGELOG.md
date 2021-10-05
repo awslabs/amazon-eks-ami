@@ -47,6 +47,31 @@ Notable changes:
 * Updated version of Containerd to 1.4.6-3.amzn2
 * Following CVEs are addressed Docker (CVE-2021-41089, CVE-2021-41091, CVE-2021-41092) and containerd (CVE-2021-41103)
 
+## AMI Release v20211001
+
+* amazon-eks-gpu-node-1.21-v20211001
+* amazon-eks-gpu-node-1.20-v20211001
+* amazon-eks-gpu-node-1.19-v20211001
+* amazon-eks-gpu-node-1.18-v20211001
+* amazon-eks-gpu-node-1.17-v20211001
+* amazon-eks-gpu-node-1.16-v20211001
+* amazon-eks-arm64-node-1.21-v20211001
+* amazon-eks-arm64-node-1.20-v20211001
+* amazon-eks-arm64-node-1.19-v20211001
+* amazon-eks-arm64-node-1.18-v20211001
+* amazon-eks-arm64-node-1.17-v20211001
+* amazon-eks-arm64-node-1.16-v20211001
+* amazon-eks-node-1.21-v20211001
+* amazon-eks-node-1.20-v20211001
+* amazon-eks-node-1.19-v20211001
+* amazon-eks-node-1.18-v20211001
+* amazon-eks-node-1.17-v20211001
+* amazon-eks-node-1.16-v20211001
+
+Notable changes:
+* This release includes the patch for the CA to handle Let's Encrypt Certificate Expiry
+* Updating default [containerd socket path](https://github.com/awslabs/amazon-eks-ami/commit/9576786266df8bee08e97c1c7f2d0e2f85752092)
+
 ## AMI Release v20210914
 
 * amazon-eks-gpu-node-1.21-v20210914
