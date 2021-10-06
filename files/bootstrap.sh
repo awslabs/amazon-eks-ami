@@ -302,16 +302,32 @@ mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
+    # Wait for cluster to become active
+    while : ; do
+        CLUSTER_STATUS=$(aws eks describe-cluster \
+            --region=${AWS_DEFAULT_REGION} \
+            --name=${CLUSTER_NAME} \
+            --output=text \
+            --query 'cluster.status')
+        rc=$?
+
+        # allow any status other than CREATING, so as not to block during cluster upgrades
+        if [[ $rc -eq 0 ]] && [[ "${CLUSTER_STATUS}" != "CREATING" ]]; then
+            break;
+        fi
+
+        echo "Cluster Status ${CLUSTER_STATUS}"
+        jitter=$((1 + RANDOM % 10))
+        sleep_sec="$(( 15 + $jitter))"
+        sleep $sleep_sec
+    done
+
     # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
     for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
         rc=0
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
-
-        aws eks wait cluster-active \
-            --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME}
 
         aws eks describe-cluster \
             --region=${AWS_DEFAULT_REGION} \
