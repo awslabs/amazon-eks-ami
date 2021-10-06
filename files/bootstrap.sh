@@ -365,10 +365,10 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
     SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
     SERVICE_IPV6_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $5}')
-fi
 
-if [[ -z "${IP_FAMILY}" ]]; then
+    if [[ -z "${IP_FAMILY}" ]]; then
       IP_FAMILY=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
+    fi
 fi
 
 if [[ -z "${IP_FAMILY}" ]] || [[ "${IP_FAMILY}" == "None" ]]; then
