@@ -35,7 +35,7 @@ AMI details:
 * kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.248-189.473.amzn2 (1.18 and below)
 * dockerd: 20.10.7-3.amzn2
 * containerd: 1.4.6-3.amzn2
-* * runc: 1.0.0-2.amzn2
+* runc: 1.0.0-2.amzn2
 * cuda: 460.73.01
 * nvidia-container-runtime-hook: 1.4.0-1.amzn2
 * SSM agent: 3.0.1124.0
