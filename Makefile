@@ -91,7 +91,7 @@ validate:
 1.16: validate
 	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
-			-var kubernetes_version=1.16 \
+		-var kubernetes_version=1.16 \
 		-var binary_bucket_path=1.16.15/2020-11-02/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
@@ -101,7 +101,7 @@ validate:
 1.17: validate
 	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
-			-var kubernetes_version=1.17 \
+		-var kubernetes_version=1.17 \
 		-var binary_bucket_path=1.17.12/2020-11-02/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
@@ -111,7 +111,7 @@ validate:
 1.18: validate
 	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
-			-var kubernetes_version=1.18 \
+		-var kubernetes_version=1.18 \
 		-var binary_bucket_path=1.18.9/2020-11-02/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
@@ -121,7 +121,7 @@ validate:
 1.19: validate
 	$(DOCKER_PACKER) build \
 		-var aws_region=$(AWS_REGION) \
-			-var kubernetes_version=1.19 \
+		-var kubernetes_version=1.19 \
 		-var binary_bucket_path=1.19.13/2021-09-02/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
