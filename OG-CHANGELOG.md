@@ -1,5 +1,10 @@
 # Changelog
 
+1.5.6 - 10/19/2021
+-----------------------
+- Updated latest build date for 1.20.10 to `2021-10-12`
+- Updated K8s version to `1.20.10`
+
 1.5.5 - 07/29/2021
 -----------------------
 - Updated latest build date for 1.18.16 to `2021-05-13`

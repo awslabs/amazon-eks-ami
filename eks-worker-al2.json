@@ -16,7 +16,7 @@
     "kubernetes_build_date": null,
     "docker_version": "19.03.6ce-4.amzn2",
     "cni_plugin_version": "v0.8.6",
-    "og_image_version": "1.5.0",
+    "og_image_version": "1.7.0",
     "ami_regions": "us-west-2,us-east-1",
     "pull_cni_from_github": "true",
 
