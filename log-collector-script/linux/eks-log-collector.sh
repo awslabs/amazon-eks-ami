@@ -451,7 +451,7 @@ get_ipamd_info() {
 }
 
 get_multus_info() {
-  try "collect Multus logs"
+  try "collect Multus logs if they exist"
   cp --force --dereference --recursive /var/log/pods/kube-system_kube-multus* "${COLLECT_DIR}"/var_log/ 2>/dev/null
 
   ok
