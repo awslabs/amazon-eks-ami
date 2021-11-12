@@ -1,5 +1,52 @@
 # Changelog
 
+### AMI Release v20211109
+* amazon-eks-gpu-node-1.21-v20211109
+* amazon-eks-gpu-node-1.20-v20211109
+* amazon-eks-gpu-node-1.19-v20211109
+* amazon-eks-gpu-node-1.18-v20211109
+* amazon-eks-gpu-node-1.17-v20211109
+* amazon-eks-arm64-node-1.21-v20211109
+* amazon-eks-arm64-node-1.20-v20211109
+* amazon-eks-arm64-node-1.19-v20211109
+* amazon-eks-arm64-node-1.18-v20211109
+* amazon-eks-arm64-node-1.17-v20211109
+* amazon-eks-node-1.21-v20211109
+* amazon-eks-node-1.20-v20211109
+* amazon-eks-node-1.19-v20211109
+* amazon-eks-node-1.18-v20211109
+* amazon-eks-node-1.17-v20211109
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2020-09-02/
+* s3://amazon-eks/1.17.17/2020-09-02/
+
+AMI details:
+* kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+* Upgrade kernel version for 1.17 and 1.18 to 4.14.252-195.483.amzn2
+* Upgrade cuda version from 460.73.01 to 470.57.02
+* Upgrade kubelet version
+    * 1.19.14 -> 1.19.15
+    * 1.20.10 -> 1.20.11
+    * 1.21.4 -> 1.21.5
+* Remove cbc ciphers and use following recommended ciphers
+  * chacha20-poly1305@openssh.com
+  * aes128-ctr
+  * aes256-ctr
+  * aes128-gcm@openssh.com
+  * aes256-gcm@openssh.com
+
 ## AMI Release v20211013
 
 * amazon-eks-gpu-node-1.21-v20211013
