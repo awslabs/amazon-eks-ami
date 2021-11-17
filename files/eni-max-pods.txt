@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2021-11-03T09:55:58-07:00
+# This file was generated at 2021-11-17T11:55:40-08:00
 #
 # Mapping is calculated from AWS EC2 API using the following formula:
 # * First IP on each ENI is not used for pods
@@ -155,6 +155,14 @@ g4dn.4xlarge 29
 g4dn.8xlarge 58
 g4dn.metal 737
 g4dn.xlarge 29
+g5.12xlarge 737
+g5.16xlarge 234
+g5.24xlarge 737
+g5.2xlarge 58
+g5.48xlarge 737
+g5.4xlarge 234
+g5.8xlarge 234
+g5.xlarge 58
 h1.16xlarge 737
 h1.2xlarge 58
 h1.4xlarge 234
