@@ -8,7 +8,7 @@
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "binary_bucket_path": "",
-    "docker_version": "20.10.7-0ubuntu1~18.04.1",
+    "docker_version": "20.10.7-0ubuntu1~18.04.3",
     "creator": "{{env `USER`}}",
     "instance_type": "m5.large",
     "source_ami_id": "",
