@@ -34,7 +34,7 @@ AMI details:
 * SSM agent: 3.0.1124.0-1.amzn2
 
 Notable changes:
-Update `containerd` to `1.4.6-7.amzn2` and `docker` to `20.10.7-5.amzn2` to patch vulnerabilities in CVE-2021-41190
+Update `containerd` to `1.4.6-7.amzn2` and `docker` to `20.10.7-5.amzn2` to patch vulnerabilities in [CVE-2021-41190](https://alas.aws.amazon.com/ALAS-2021-1551.html)
 
 ### AMI Release v20211109
 * amazon-eks-gpu-node-1.21-v20211109
