@@ -27,6 +27,7 @@ if [[ $KERNEL_VERSION == "4.14" ]]; then
     sudo yum update -y kernel
 elif [[ $KERNEL_VERSION == "5.4" ]]; then
     sudo amazon-linux-extras install -y kernel-5.4
+    sudo yum install kernel-devel -y
 elif [[ $KERNEL_VERSION == "5.10" ]]; then
     sudo amazon-linux-extras install -y kernel-5.10
 else
