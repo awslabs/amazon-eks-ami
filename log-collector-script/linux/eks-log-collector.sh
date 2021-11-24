@@ -253,6 +253,7 @@ collect() {
   get_docker_info
   get_k8s_info
   get_ipamd_info
+  get_multus_info
   get_sysctls_info
   get_networking_info
   get_cni_config
@@ -445,6 +446,13 @@ get_ipamd_info() {
 
   try "collect L-IPAMD checkpoint"
   cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
+
+  ok
+}
+
+get_multus_info() {
+  try "collect Multus logs if they exist"
+  cp --force --dereference --recursive /var/log/pods/kube-system_kube-multus* "${COLLECT_DIR}"/var_log/ 2>/dev/null
 
   ok
 }

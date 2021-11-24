@@ -3,7 +3,7 @@ root = "/var/lib/containerd"
 state = "/run/containerd"
 
 [grpc]
-address = "/run/dockershim.sock"
+address = "/run/containerd/containerd.sock"
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
 default_runtime_name = "runc"

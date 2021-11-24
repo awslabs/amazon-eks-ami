@@ -93,6 +93,14 @@ else
 fi
 
 ################################################################################
+### SSH ########################################################################
+################################################################################
+
+# Disable weak ciphers
+echo -e "\nCiphers chacha20-poly1305@openssh.com,aes128-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com" | sudo tee -a /etc/ssh/sshd_config
+sudo systemctl restart sshd.service
+
+################################################################################
 ### iptables ###################################################################
 ################################################################################
 sudo mkdir -p /etc/eks
@@ -272,6 +280,8 @@ sudo mkdir -p /etc/eks
 sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
+sudo mv $TEMPLATE_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
+sudo chmod +x /etc/eks/max-pods-calculator.sh
 
 SONOBUOY_E2E_REGISTRY="${SONOBUOY_E2E_REGISTRY:-}"
 if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
