@@ -1,5 +1,38 @@
 # Changelog
 
+### AMI Release v20211206
+* amazon-eks-gpu-node-1.21-v20211206
+* amazon-eks-gpu-node-1.20-v20211206
+* amazon-eks-gpu-node-1.19-v20211206
+* amazon-eks-gpu-node-1.18-v20211206
+* amazon-eks-arm64-node-1.21-v20211206
+* amazon-eks-arm64-node-1.20-v20211206
+* amazon-eks-arm64-node-1.19-v20211206
+* amazon-eks-arm64-node-1.18-v20211206
+* amazon-eks-node-1.21-v20211206
+* amazon-eks-node-1.20-v20211206
+* amazon-eks-node-1.19-v20211206
+* amazon-eks-node-1.18-v20211206
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2020-09-02/
+
+AMI details:
+* kernel: 5.4.156-83.273.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0-1.amzn2
+
+Notable changes:
+* Adds new instanceTypes to the eni-max-pods.txt file.
+* Patch for [AL2/ALAS-2021-1722](https://alas.aws.amazon.com/AL2/ALAS-2021-1722.html).
+
 ### AMI Release v20211117
 * amazon-eks-gpu-node-1.21-v20211117
 * amazon-eks-gpu-node-1.20-v20211117
