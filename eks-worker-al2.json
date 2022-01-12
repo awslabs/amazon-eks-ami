@@ -163,7 +163,10 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/validate.sh"
+      "script": "{{template_dir}}/scripts/validate.sh",
+      "environment_vars": [
+        "KERNEL_VERSION={{user `kernel_version`}}"
+      ]
     }
   ],
   "post-processors": [
