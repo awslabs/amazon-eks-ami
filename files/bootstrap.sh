@@ -294,6 +294,7 @@ if [ -z "$CLUSTER_NAME" ]; then
 fi
 
 if [[ ! -z "${IP_FAMILY}" ]]; then
+  IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
   if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]] ; then
         echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
         exit 1
