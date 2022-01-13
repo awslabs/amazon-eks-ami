@@ -1,5 +1,39 @@
 # Changelog
 
+### AMI Release v20220112
+* amazon-eks-gpu-node-1.21-v20220112
+* amazon-eks-gpu-node-1.20-v20220112
+* amazon-eks-gpu-node-1.19-v20220112
+* amazon-eks-gpu-node-1.18-v20220112
+* amazon-eks-arm64-node-1.21-v20220112
+* amazon-eks-arm64-node-1.20-v20220112
+* amazon-eks-arm64-node-1.19-v20220112
+* amazon-eks-arm64-node-1.18-v20220112
+* amazon-eks-node-1.21-v20220112
+* amazon-eks-node-1.20-v20220112
+* amazon-eks-node-1.19-v20220112
+* amazon-eks-node-1.18-v20220112
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2020-09-02/
+
+AMI details:
+* kernel: 5.4.162-86.275.amzn2 (1.19 and above), 4.14.256-197.484.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0-1.amzn2
+
+Notable changes:
+* Updating aws-cli ( aws-cli/1.22.32 ). Latest CLI is installed using the recommended steps [here](https://docs.aws.amazon.com/cli/v1/userguide/install-linux.html#install-linux-bundled). This change is specific to this AMI release.
+* Added fix to handle failures when serviceIpv6Cidr isn't provided. Related issue: https://github.com/awslabs/amazon-eks-ami/issues/839.
+* Added fix to make ipFamily check case-insensitive
+
 ### AMI Release v20211206
 * amazon-eks-gpu-node-1.21-v20211206
 * amazon-eks-gpu-node-1.20-v20211206
