@@ -8,6 +8,7 @@ sudo systemctl start docker
 aws ecr get-login-password --region eu-central-1 | sudo docker login -u AWS --password-stdin 602401143452.dkr.ecr.eu-central-1.amazonaws.com 
 
 # kubectl get daemonset -o json --all-namespaces | jq -r '.items[].spec.template.spec.containers[].image' | sort
+sudo docker pull public.ecr.aws/eks-distro/coredns/coredns:v1.8.4-eks-1-21-7
 sudo docker pull 602401143452.dkr.ecr.eu-central-1.amazonaws.com/eks/aws-ebs-csi-driver:v1.5.0
 sudo docker pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0
 sudo docker pull k8s.gcr.io/sig-storage/livenessprobe:v2.2.0
