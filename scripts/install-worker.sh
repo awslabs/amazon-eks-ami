@@ -273,6 +273,34 @@ sudo systemctl daemon-reload
 sudo systemctl disable kubelet
 
 ################################################################################
+### Kontain ########################################################################
+###############################################################################
+echo "Pulling Kontain binary release"
+wget "https://github.com/kontainapp/km/releases/download/v0.9.4/kontain_bin.tar.gz"
+sudo mkdir /kontain_bin
+sudo tar -xvf kontain_bin.tar.gz -C /kontain_bin
+rm kontain_bin.tar.gz
+
+# Hack. Get kkm.run from s3 until we get it back in release. URL expires on 1/24/2021.
+curl -L -o kkm.run  "https://muth-scratch.s3.us-east-1.amazonaws.com/kkm.run?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEK7%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLXdlc3QtMSJIMEYCIQC%2BxTWevYZWCG6F1r8aIOt1mjMSlbflIjVsYLxbHcw6qQIhAKuI6vC0vOZLNxhqW7Vi9Ih5vqXRFxhshwxzP3k%2F9yghKoQDCMf%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEQAhoMNzgyMzQwMzc0MjUzIgxVyLf3sfi460fEI1gq2AJHLeNQhNixa1RJCrr67IO7bsonbPax8lNpoGMN%2FlAWoEmM67hzpNuQS7vqkI9aJdeMLFcCfKbgxhIJGnJWCKqR5iYoFdk9kzve5lVb0fnxef6urnbzlD3OPnlC%2FJ8rkgK9L9YH4%2FGM7VRcZxT22QuG4RQUZiQPqd9SiZpmHSXHD2%2F7FfZ4ijp6YXPtPZQ8KoB8mZoFsFriuoEWYGHY%2FvlCvVGK%2F6dPqAhHJenkM%2F94kG0d8YU8K05RIqs8Oaqx6K3%2F%2FQpHUX8eb9yBCZxjXOlckQD3n533T7E99mBsvo4kaYLV9gNNvNTe7H%2FgopTX6RpXy9H6YAn1%2BafvBk3C7rO5BZe7P%2B8vhrJJ6A4kmzNbNMHaaG9d2M1Zt4plFxbqXiqgxJQlCKK78lbN3HXlvC%2FeSrMFv56gxwyGqEq4lBQT7XVBsi5YXOUnc8WJ%2BQdkPIiHDuaVzEwLkTDDuJePBjqyAhVjjxlIuUrDAkmQcDOLdOBPoz6GP2i01LPvSoEPUiryvpo0RCOm0aHol6IUi%2Bk6n%2B75kbuUP4aPFMPuyatvo5%2B1tMsrg5XMf234bpiV94TdvX4P0FELbIVh7XHjz%2FHEynJ9u1uOJYGdgZRav%2Fx2SqEi4C1CdIkex9hajVFQZuXCDh0PnAyDyrExT3h7q1oeyoK0rlrxziVOOXXtcMTpNUxAcewSjKuyj4h1SEXd26aACSG0e8AODDpyuy1dFBECBpu1j4y7b2uNvYQV%2F05OtuZChR%2F90h6UxxiKSl70o4GtkXYo0da8PazK6kUR01pSncr2aZjRllIM2mjFjsQ5tK3nbpqCgV66qEUgCk4hnFnJYkP8w5VkULhmKFjhFVI0StjHsPYTsqQgnzWzVrot1iq2Bg%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20220117T213614Z&X-Amz-SignedHeaders=host&X-Amz-Expires=604800&X-Amz-Credential=ASIA3MJY6X3W6PUZ6A4F%2F20220117%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=22387cc8039e229e5ec165ad4ca1ffaa404b49c6a0332f41fdabfe8fbb5e91ff"
+sudo mv kkm.run /kontain_bin/kkm.run
+sudo chmod +x  /kontain_bin/kkm.run
+# Back to mainline.
+
+# Install kkm driver
+echo "build and install KKM driver"
+sudo /kontain_bin/kkm.run
+
+# Install KM Binaries
+sudo mkdir -p /opt/kontain/bin
+sudo cp /kontain_bin/km/km /opt/kontain/bin/km
+sudo cp /kontain_bin/container-runtime/krun /opt/kontain/bin/krun
+sudo cp /kontain_bin/cloud/k8s/deploy/shim/containerd-shim-krun-v2 /usr/bin/containerd-shim-krun-v2
+
+# TODO: Install containerd config. Dependent on EKS retiring dockershim in their AMI.
+
+
+################################################################################
 ### EKS ########################################################################
 ################################################################################
 
