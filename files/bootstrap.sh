@@ -11,6 +11,19 @@ trap 'err_report $LINENO' ERR
 
 IFS=$'\n\t'
 
+# Source bootstrap env file if it exists, this file can be used to expose variable for bootstrapping wihtout modifying this script.
+if [[ -f /etc/profile.d/bootstrap-env.sh ]]
+then
+  source /etc/profile.d/bootstrap-env.sh
+fi
+
+# If KUBELET_EXTRA_ARGS have been exported they will be overridden so preserve them to merge together
+if [[ -n "${KUBELET_EXTRA_ARGS:-}" ]]
+then
+  KUBELET_EXTRA_ARGS_ENV="${KUBELET_EXTRA_ARGS}"
+  KUBELET_EXTRA_ARGS=""
+fi
+
 function print_help {
     echo "usage: $0 [options] <cluster-name>"
     echo "Bootstraps an instance into an EKS cluster"
@@ -122,7 +135,7 @@ B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 SERVICE_IPV4_CIDR="${SERVICE_IPV4_CIDR:-}"
 DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-}"
-KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
+KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-} ${KUBELET_EXTRA_ARGS_ENV:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
@@ -478,7 +491,6 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     systemctl restart containerd
     systemctl enable sandbox-image
     systemctl start sandbox-image
-
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
