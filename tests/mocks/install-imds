@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+
+VERSION="v1.11.2"
+OS=$(uname | tr '[:upper:]' '[:lower:]')
+ARCH=$([[ `uname -m` = "x86_64" ]] && echo "amd64" || echo "arm64")
+
+curl -Lo "${SCRIPTPATH}/ec2-metadata-mock" https://github.com/aws/amazon-ec2-metadata-mock/releases/download/${VERSION}/ec2-metadata-mock-${OS}-${ARCH}
+chmod +x "${SCRIPTPATH}/ec2-metadata-mock"

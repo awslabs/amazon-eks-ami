@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -o pipefail
 set -o nounset
@@ -20,6 +20,7 @@ function print_help {
     echo "--cni-prefix-delegation-enabled Use this flag to indicate if CNI prefix delegation has been enabled."
     echo "--cni-max-eni specify how many ENIs should be used for prefix delegation. Defaults to using all ENIs per instance."
     echo "--show-max-allowed Use this flag to show max number of Pods allowed to run in Worker Node. Otherwise the script will show the recommended value"
+    echo "--imds-host sets the IP address or hostname port pair for accessing the EC2 Metadata Service (default: 169.254.169.254:80)"
 }
 
 POSITIONAL=()
@@ -62,6 +63,11 @@ while [[ $# -gt 0 ]]; do
             SHOW_MAX_ALLOWED=true
             shift
             ;;
+        --imds-host)
+            IMDS_HOST=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -76,14 +82,15 @@ CNI_MAX_ENI="${CNI_MAX_ENI:-}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-}"
 INSTANCE_TYPE_FROM_IMDS="${INSTANCE_TYPE_FROM_IMDS:-false}"
 SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
+IMDS_HOST="${IMDS_HOST:-'169.254.169.254:80'}"
 
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
 
 if [ "$INSTANCE_TYPE_FROM_IMDS" = true ]; then
-    TOKEN=$(curl -m 10 -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" -s "http://169.254.169.254/latest/api/token")
-    export AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r)
-    INSTANCE_TYPE=$(curl -m 10 -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/instance-type)
+    TOKEN=$(curl -m 10 -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" -s "http://${IMDS_HOST}/latest/api/token")
+    export AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_HOST}/latest/dynamic/instance-identity/document | jq .region -r)
+    INSTANCE_TYPE=$(curl -m 10 -H "X-aws-ec2-metadata-token: $TOKEN" -s http://${IMDS_HOST}/latest/meta-data/instance-type)
 elif [ -z "$INSTANCE_TYPE" ];
     # There's no reasonable default for an instanceType so force one to be provided to the script.
     then echo "You must specify an instance type to calculate max pods value."
