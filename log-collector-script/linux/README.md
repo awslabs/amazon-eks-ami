@@ -10,7 +10,7 @@ At a high level, you run this script on your Kubernetes node, and it will collec
 
 * Run this project as the root user:
 ```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh
+sudo curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-log-collector.sh
 sudo bash eks-log-collector.sh
 ```
 
