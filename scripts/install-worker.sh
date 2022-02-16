@@ -100,7 +100,7 @@ fi
 ################################################################################
 
 # Disable weak ciphers
-echo -e "\nCiphers chacha20-poly1305@openssh.com,aes128-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com" | sudo tee -a /etc/ssh/sshd_config
+echo -e "\nCiphers aes128-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com" | sudo tee -a /etc/ssh/sshd_config
 sudo systemctl restart sshd.service
 
 ################################################################################
