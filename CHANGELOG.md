@@ -155,7 +155,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
 * s3://amazon-eks/1.18.20/2021-09-02/
-* s3://amazon-eks/1.17.17/2020-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
 
 AMI details:
 * kernel: 5.4.156-83.273.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
