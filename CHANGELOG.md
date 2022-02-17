@@ -51,7 +51,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.21.5/2022-01-21/
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
-* s3://amazon-eks/1.18.20/2020-09-02/
+* s3://amazon-eks/1.18.20/2021-09-02/
 
 AMI details:
 * kernel: 5.4.172-90.336.amzn2 (1.19 and above), 4.14.256-197.484.amzn2 (1.18 and below)
@@ -84,7 +84,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.21.5/2021-11-10/
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
-* s3://amazon-eks/1.18.20/2020-09-02/
+* s3://amazon-eks/1.18.20/2021-09-02/
 
 AMI details:
 * kernel: 5.4.162-86.275.amzn2 (1.19 and above), 4.14.256-197.484.amzn2 (1.18 and below)
@@ -118,7 +118,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.21.5/2021-11-10/
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
-* s3://amazon-eks/1.18.20/2020-09-02/
+* s3://amazon-eks/1.18.20/2021-09-02/
 
 AMI details:
 * kernel: 5.4.156-83.273.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
@@ -154,7 +154,7 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.21.5/2021-11-10/
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
-* s3://amazon-eks/1.18.20/2020-09-02/
+* s3://amazon-eks/1.18.20/2021-09-02/
 * s3://amazon-eks/1.17.17/2020-09-02/
 
 AMI details:
@@ -190,8 +190,8 @@ Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.21.5/2021-11-10/
 * s3://amazon-eks/1.20.11/2021-11-10/
 * s3://amazon-eks/1.19.15/2021-11-10/
-* s3://amazon-eks/1.18.20/2020-09-02/
-* s3://amazon-eks/1.17.17/2020-09-02/
+* s3://amazon-eks/1.18.20/2021-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
 
 AMI details:
 * kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
