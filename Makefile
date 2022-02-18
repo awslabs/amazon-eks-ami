@@ -1,5 +1,5 @@
 PACKER_BINARY ?= packer
-PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry
+PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name ami_description arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
@@ -16,10 +16,14 @@ ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
+source_ami_filter_name ?= 'amzn2-ami-minimal-hvm-*'
+ami_description ?= 'EKS Kubernetes Worker AMI with AmazonLinux2 image'
 source_ami_owners ?= 141808717104
 endif
 
 ifeq ($(aws_region), us-gov-west-1)
+source_ami_filter_name ?= 'amzn2-ami-minimal-hvm-*'
+ami_description ?= 'EKS Kubernetes Worker AMI with AmazonLinux2 image'
 source_ami_owners ?= 045324592363
 endif
 
