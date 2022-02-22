@@ -68,10 +68,6 @@ sudo yum install -y \
     wget \
     yum-plugin-versionlock
 
-# Downgrade and lock ec2-utils until 1.2-47 is available: https://github.com/aws/amazon-ec2-utils/issues/22
-sudo yum downgrade -y ec2-utils-1.2-45.amzn2.noarch
-sudo yum versionlock ec2-utils-*
-
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
 
