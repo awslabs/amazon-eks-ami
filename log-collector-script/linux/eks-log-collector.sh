@@ -298,6 +298,7 @@ collect_logs_bottlerocket() {
   sudo sheltie cp /var/log/support/bottlerocket-logs.tar.gz /tmp/ekslogs
   cd ${rootfs}/tmp/
   tar -cvzf full-logs.tar.gz ${rootfs}/tmp/ekslogs
+  echo "Redirecting logs at ${rootfs}/tmp/full-logs.tar.gz"
 }
 
 get_mounts_info() {
@@ -615,7 +616,7 @@ get_docker_info() {
 parse_options "$@"
 
 if [ -d "/.bottlerocket/" ]; then
-  echo "Using Bottlerocket AMI"
+  echo "Detected Bottlerocket AMI"
   collect_logs_bottlerocket
 else 
   collect
