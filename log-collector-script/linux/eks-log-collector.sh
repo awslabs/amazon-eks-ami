@@ -83,6 +83,10 @@ IPAMD_DATA=(
   eni-configs
 )
 
+BOTTLEROCKET_UTILS=(
+  tar 
+)
+
 help() {
   echo ""
   echo "USAGE: ${PROGRAM_NAME} --help [ --ignore_introspection=true|false --ignore_metrics=true|false ]"
@@ -272,6 +276,28 @@ pack() {
 finished() {
   cleanup
   echo -e "\n\tDone... your bundled logs are located in ${LOG_DIR}/eks_${INSTANCE_ID}_${CURRENT_TIME}_${PROGRAM_VERSION}.tar.gz\n"
+}
+
+collect_logs_bottlerocket() {
+  if [ ! -d "/.bottlerocket/rootfs/tmp/ekslogs" ]; then
+     echo "Creating ekslogs directory"
+     mkdir /.bottlerocket/rootfs/tmp/ekslogs
+  fi
+
+  for utils in ${BOTTLEROCKET_UTILS[*]}; do
+    # If exit code of "command -v" not equal to 0, fail
+    if ! command -v "${utils}" >/dev/null 2>&1; then
+       echo -e "\nApplication \"${utils}\" is missing, will install \"${utils}\"."
+       sudo yum install -y "${utils}"
+    fi
+  done
+
+  rootfs=/.bottlerocket/rootfs
+  cp ${rootfs}/var/log/aws-routed-eni/* ${rootfs}/tmp/ekslogs/
+  sudo sheltie logdog
+  sudo sheltie cp /var/log/support/bottlerocket-logs.tar.gz /tmp/ekslogs
+  cd ${rootfs}/tmp/
+  tar -cvzf full-logs.tar.gz ${rootfs}/tmp/ekslogs
 }
 
 get_mounts_info() {
@@ -588,6 +614,11 @@ get_docker_info() {
 # Entrypoint
 parse_options "$@"
 
-collect
-pack
-finished
+if [ -d "/.bottlerocket/" ]; then
+  echo "Using Bottlerocket AMI"
+  collect_logs_bottlerocket
+else 
+  collect
+  pack
+  finished
+fi
