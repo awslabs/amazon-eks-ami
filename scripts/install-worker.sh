@@ -99,6 +99,8 @@ fi
 
 # Disable weak ciphers
 echo -e "\nCiphers aes128-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com" | sudo tee -a /etc/ssh/sshd_config
+# Use only secure protocols
+echo -e "\nKexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256" | sudo tee -a /etc/ssh/sshd_config
 sudo systemctl restart sshd.service
 
 ################################################################################
