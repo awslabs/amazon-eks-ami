@@ -59,8 +59,9 @@ sudo yum install -y \
     chrony \
     conntrack \
     curl \
-    jq \
     ec2-instance-connect \
+    ipvsadm \
+    jq \
     nfs-utils \
     socat \
     unzip \
@@ -68,6 +69,7 @@ sudo yum install -y \
     htop \
     vim \
     ipvsadm \
+    yum-plugin-versionlock \
     yum-cron
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
@@ -120,9 +122,6 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
     sudo groupadd -fog 1950 docker
     sudo useradd --gid $(getent group docker | cut -d: -f3) docker
-
-    # install version lock to put a lock on dependecies
-    sudo yum install -y yum-plugin-versionlock
 
     # install runc and lock version
     sudo yum install -y runc-${RUNC_VERSION}
