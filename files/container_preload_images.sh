@@ -15,6 +15,7 @@ sudo docker pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0
 sudo docker pull k8s.gcr.io/sig-storage/livenessprobe:v2.2.0
 sudo docker pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.13.3
 sudo docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.21.4
+sudo docker pull quay.io/cilium/cilium:v1.10.8
 sudo docker pull quay.io/cilium/cilium:v1.11.1
 sudo docker pull quay.io/cilium/cilium:v1.11.2
 sudo docker pull quay.io/cilium/startup-script:62bfbe88c17778aad7bef9fa57ff9e2d4a9ba0d8
