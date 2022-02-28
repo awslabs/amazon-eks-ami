@@ -32,7 +32,7 @@
     "associate_public_ip_address": "",
     "subnet_id": "",
     "remote_folder": "",
-    "launch_block_device_mappings_volume_size": "4",
+    "launch_block_device_mappings_volume_size": "10",
     "ami_users": "",
     "additional_yum_repos": "",
     "sonobuoy_e2e_registry": ""
