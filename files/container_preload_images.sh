@@ -20,3 +20,5 @@ sudo docker pull quay.io/cilium/cilium:v1.11.1
 sudo docker pull quay.io/cilium/cilium:v1.11.2
 sudo docker pull quay.io/cilium/startup-script:62bfbe88c17778aad7bef9fa57ff9e2d4a9ba0d8
 sudo docker pull quay.io/prometheus/node-exporter:v1.3.1
+
+sudo systemctl restart docker
