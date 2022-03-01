@@ -1,5 +1,37 @@
 # Changelog
 
+### AMI Release v20220226
+* amazon-eks-gpu-node-1.21-v20220226
+* amazon-eks-gpu-node-1.20-v20220226
+* amazon-eks-gpu-node-1.19-v20220226
+* amazon-eks-gpu-node-1.18-v20220226
+* amazon-eks-arm64-node-1.21-v20220226
+* amazon-eks-arm64-node-1.20-v20220226
+* amazon-eks-arm64-node-1.19-v20220226
+* amazon-eks-arm64-node-1.18-v20220226
+* amazon-eks-node-1.21-v20220226
+* amazon-eks-node-1.20-v20220226
+* amazon-eks-node-1.19-v20220226
+* amazon-eks-node-1.18-v20220226
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2022-01-21/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.176-91.338.amzn2 (1.19 and above), 4.14.262-200.489.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Upgrade `ec2-utils` version to `1.2-47`, addressing an issue with device symbolic links. More information is available [here](https://github.com/aws/amazon-ec2-utils/issues/22).
+
 ### AMI Release v20220216
 * amazon-eks-gpu-node-1.21-v20220216
 * amazon-eks-gpu-node-1.20-v20220216
