@@ -20,6 +20,7 @@ function print_help {
     echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
     echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
     echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
+    echo "--kubelet-extra-json-args Extra json configuration for kubelet. Userful for adding all kinds of extra configuration such as evictionHard or kubeReserved settings in JSON format."
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
@@ -52,6 +53,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --apiserver-endpoint)
             APISERVER_ENDPOINT=$2
+            shift
+            shift
+            ;;
+        --kubelet-extra-json-config)
+            KUBELET_EXTRA_JSON_CONFIG=$2
             shift
             shift
             ;;
@@ -498,6 +504,16 @@ else
     exit 1
 fi
 
+if [[ -n "${KUBELET_EXTRA_JSON_CONFIG}" ]]; then
+    TMP_KUBE_CONF='/tmp/kubelet-conf-temp.json'
+    KUBELET_CONFIG_EXTRA='/tmp/kubelet-conf-extra.json'
+    echo '%s' > ${KUBELET_CONFIG_EXTRA}
+
+    echo "bootstrap.sh: merging user json options into kubelet-config.json"
+    trap 'rm -f ${TMP_KUBE_CONF} ${KUBELET_CONFIG_EXTRA}' EXIT
+    jq -s '.[0] + .[1]' "${KUBELET_CONFIG}" "${KUBELET_CONFIG_EXTRA}" > "${TMP_KUBE_CONF}"
+    mv "${TMP_KUBE_CONF}" "${KUBELET_CONFIG}"
+fi
 
 systemctl enable kubelet
 systemctl start kubelet
