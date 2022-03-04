@@ -16,8 +16,10 @@ if [[ -z "$KERNEL_VERSION" ]]; then
 
     if (( ADDR[0] == 1 && ADDR[1] < 19 )); then
         KERNEL_VERSION=4.14
-    else
+    elif (( ADDR[0] == 1 && ADDR[1] < 22 )); then
         KERNEL_VERSION=5.4
+    else
+        KERNEL_VERSION=5.10
     fi
 
     echo "kernel_version is unset. Setting to $KERNEL_VERSION based on kubernetes_version $KUBERNETES_VERSION"
