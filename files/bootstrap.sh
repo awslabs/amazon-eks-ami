@@ -154,6 +154,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
+    ap-southeast-3)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
