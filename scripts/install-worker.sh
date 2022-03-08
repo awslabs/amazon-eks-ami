@@ -155,6 +155,12 @@ else
     sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
 fi
 
+if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+    # enable CredentialProviders features in kubelet-containerd service file
+    IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n   --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
+    sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet-containerd.service
+fi
+
 sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
 sudo mv $TEMPLATE_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
 sudo mv $TEMPLATE_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
@@ -254,14 +260,25 @@ sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
-sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
-sudo chown root:root /etc/systemd/system/kubelet.service
+
 # Inject CSIServiceAccountToken feature gate to kubelet config if kubernetes version starts with 1.20.
 # This is only injected for 1.20 since CSIServiceAccountToken will be moved to beta starting 1.21.
 if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
     KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $TEMPLATE_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
     echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $TEMPLATE_DIR/kubelet-config.json
 fi
+
+if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+    # enable CredentialProviders feature flags in kubelet service file
+    IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n    --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
+    sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet.service
+    # enable KubeletCredentialProviders features in kubelet configuration
+    KUBELET_CREDENTIAL_PROVIDERS_FEATURES=$(cat $TEMPLATE_DIR/kubelet-config.json | jq '.featureGates += {KubeletCredentialProviders: true}')
+    printf "%s" "$KUBELET_CREDENTIAL_PROVIDERS_FEATURES" > "$TEMPLATE_DIR/kubelet-config.json"
+fi
+
+sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
@@ -285,6 +302,26 @@ SONOBUOY_E2E_REGISTRY="${SONOBUOY_E2E_REGISTRY:-}"
 if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
     sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
     sudo sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
+fi
+
+################################################################################
+### ECR CREDENTIAL PROVIDER ####################################################
+################################################################################
+if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+    ECR_BINARY="ecr-credential-provider"
+    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+        echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
+        aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
+    else
+        echo "AWS cli missing - using wget to fetch ecr-credential-provider binaries from s3. Note: This won't work for private bucket."
+        sudo wget "$S3_URL_BASE/$ECR_BINARY"
+    fi
+    sudo chmod +x $ECR_BINARY
+    sudo mkdir -p /etc/eks/ecr-credential-provider
+    sudo mv $ECR_BINARY /etc/eks/ecr-credential-provider
+
+    # copying credential provider config file to eks folder
+    sudo mv $TEMPLATE_DIR/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
 fi
 
 ################################################################################
