@@ -28,6 +28,7 @@ readonly LOG_DIR="/var/log"
 readonly COLLECT_DIR="/tmp/eks-log-collector"
 readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
 readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
+BOTTLEROCKET_ROOTFS="/.bottlerocket/rootfs"
 INSTANCE_ID=""
 INIT_TYPE=""
 PACKAGE_TYPE=""
@@ -223,8 +224,11 @@ is_diskfull() {
 }
 
 cleanup() {
+  # bottlerocket AMI
+  if [ -d "/.bottlerocket/" ]; then
+    rm --recursive --force {BOTTLEROCKET_ROOTFS}/tmp/ekslogs > /dev/null 2>&1  
   #guard rails to avoid accidental deletion of unknown data
-  if [[ "${COLLECT_DIR}" == "/tmp/eks-log-collector" ]]; then
+  elif [[ "${COLLECT_DIR}" == "/tmp/eks-log-collector" ]]; then
     rm --recursive --force "${COLLECT_DIR}" >/dev/null 2>&1
   else
     echo "Unable to Cleanup as {COLLECT_DIR} variable is modified. Please cleanup manually!"
@@ -279,9 +283,17 @@ finished() {
 }
 
 collect_logs_bottlerocket() {
-  if [ ! -d "/.bottlerocket/rootfs/tmp/ekslogs" ]; then
+  echo "Fetching INSTANCE_ID"
+  readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+  if [ 0 -eq $? ]; then # Check if previous command was successful.
+    echo "${INSTANCE_ID}"
+  else
+    warning "Unable to find EC2 Instance Id. Skipped Instance Id."
+  fi
+  
+  if [ ! -d "${BOTTLEROCKET_ROOTFS}/tmp/ekslogs" ]; then
      echo "Creating ekslogs directory"
-     mkdir /.bottlerocket/rootfs/tmp/ekslogs
+     mkdir ${BOTTLEROCKET_ROOTFS}/tmp/ekslogs
   fi
 
   for utils in ${BOTTLEROCKET_UTILS[*]}; do
@@ -292,13 +304,10 @@ collect_logs_bottlerocket() {
     fi
   done
 
-  rootfs=/.bottlerocket/rootfs
-  cp ${rootfs}/var/log/aws-routed-eni/* ${rootfs}/tmp/ekslogs/
+  cp ${BOTTLEROCKET_ROOTFS}/var/log/aws-routed-eni/* ${BOTTLEROCKET_ROOTFS}/tmp/ekslogs/
   sudo sheltie logdog
   sudo sheltie cp /var/log/support/bottlerocket-logs.tar.gz /tmp/ekslogs
-  cd ${rootfs}/tmp/
-  tar -cvzf full-logs.tar.gz ${rootfs}/tmp/ekslogs
-  echo "Redirecting logs at ${rootfs}/tmp/full-logs.tar.gz"
+  tar -cvzf "${LOG_DIR}"/eks_"${INSTANCE_ID}"_"${CURRENT_TIME}"_"${PROGRAM_VERSION}".tar.gz "${BOTTLEROCKET_ROOTFS}"/tmp/ekslogs > /dev/null 2>&1
 }
 
 get_mounts_info() {
@@ -617,7 +626,9 @@ parse_options "$@"
 
 if [ -d "/.bottlerocket/" ]; then
   echo "Detected Bottlerocket AMI"
+  is_diskfull
   collect_logs_bottlerocket
+  finished
 else 
   collect
   pack
