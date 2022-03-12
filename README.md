@@ -30,7 +30,14 @@ A Makefile is provided to build the AMI, but it is just a small wrapper around
 invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
+**For a new version**
+
+1. You'll need to add an entry in the Makefile and change the `all` version to the version you wish to build.
+2. Part of the entry for the Makefile requires a `binary_bucket_path`. Find that for your version [here](https://s3.console.aws.amazon.com/s3/buckets/amazon-eks?region=us-west-2)
+
+
 ```bash
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 876270261134.dkr.ecr.us-west-2.amazonaws.com
 make
 ```
 
