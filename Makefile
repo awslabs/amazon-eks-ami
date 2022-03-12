@@ -13,14 +13,14 @@ SOURCE_AMI_ID ?= $(shell aws \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
 
-DOCKER_PACKER = docker run -v /mnt/credentials:/root/.aws/credentials \
-	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
+DOCKER_PACKER = docker run -v $(HOME)/.aws/credentials:/mnt/credentials/ \
+	-e AWS_SHARED_CREDENTIALS_FILE=/mnt/credentials \
 	-v `pwd`/:/workspace -w /workspace \
 	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
 
 .PHONY: all validate ami 1.17 1.16 1.15 1.14 1.13 1.12 1.11 1.10
 
-all: 1.19
+all: 1.20
 
 validate:
 	$(DOCKER_PACKER) validate /workspace/eks-worker-bionic.json
@@ -123,6 +123,17 @@ validate:
 		-var aws_region=$(AWS_REGION) \
 		-var kubernetes_version=1.19 \
 		-var binary_bucket_path=1.19.13/2021-09-02/bin/linux/amd64 \
+		-var build_tag=$(BUILD_TAG) \
+		-var encrypted=true \
+		-var source_ami_id=$(SOURCE_AMI_ID) \
+		eks-worker-bionic.json
+
+# Look for the binary bucket path here: https://s3.console.aws.amazon.com/s3/buckets/amazon-eks?region=us-west-2
+1.20: validate
+	$(DOCKER_PACKER) build \
+		-var aws_region=$(AWS_REGION) \
+		-var kubernetes_version=1.20 \
+		-var binary_bucket_path=1.20.11/2021-11-10/bin/linux/amd64 \
 		-var build_tag=$(BUILD_TAG) \
 		-var encrypted=true \
 		-var source_ami_id=$(SOURCE_AMI_ID) \
