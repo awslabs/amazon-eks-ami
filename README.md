@@ -28,11 +28,10 @@ following command in the root of this repository:
 ```bash
 make
 ```
-By default, Makefile will build Amazon EKS Worker AMI with Kubernetes binaries from these K8s versions
-1.16.15, 1.17.17, 1.18.20, 1.19.14, 1.20.10, 1.21.4
+The Makefile chooses a particular kubelet binary to use per kubernetes version which you can [view here](Makefile).
 To build an Amazon EKS Worker AMI for a particular Kubernetes version run the following command
 ```bash
-make 1.21.4 ## Build a Amazon EKS Worker AMI for k8s 1.21.4
+make 1.21 ## Build a Amazon EKS Worker AMI for k8s 1.21
 ```
 ### Building against other versions of Kubernetes binaries
 To build an Amazon EKS Worker AMI with other versions of Kubernetes that are not listed above run the following AWS Command
