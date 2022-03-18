@@ -154,6 +154,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
+    ap-southeast-3)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -294,6 +296,7 @@ if [ -z "$CLUSTER_NAME" ]; then
 fi
 
 if [[ ! -z "${IP_FAMILY}" ]]; then
+  IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
   if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]] ; then
         echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
         exit 1

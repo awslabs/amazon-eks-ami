@@ -13,7 +13,7 @@ for attempt in `seq 0 $API_RETRY_ATTEMPTS`; do
     fi
 	### pull sandbox image from ecr
 	### username will always be constant i.e; AWS
-	sudo ctr --address=/run/dockershim.sock --namespace k8s.io image pull $sandbox_image --user AWS:$ecr_password
+	sudo ctr --namespace k8s.io image pull $sandbox_image --user AWS:$ecr_password
 	rc=$?;
 	if [[ $rc -eq 0 ]]; then
 		break
