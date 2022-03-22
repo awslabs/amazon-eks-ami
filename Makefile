@@ -13,8 +13,8 @@ SOURCE_AMI_ID ?= $(shell aws \
 		Name=state,Values=available \
 	--query 'max_by(Images[], &CreationDate).ImageId')
 
-DOCKER_PACKER = docker run -v $(HOME)/.aws/credentials:/mnt/credentials/ \
-	-e AWS_SHARED_CREDENTIALS_FILE=/mnt/credentials \
+DOCKER_PACKER = docker run -v /mnt/credentials:/root/.aws/credentials \
+	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
 	-v `pwd`/:/workspace -w /workspace \
 	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
 
