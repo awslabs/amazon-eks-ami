@@ -2,12 +2,8 @@
 AWS_DEFAULT_REGION = us-west-2
 build_tag := $(or $(BUILD_TAG), $(shell date +%s))
 encrypted := true
-#PACKER_BINARY = docker run -v /mnt/credentials:/root/.aws/credentials \
-#	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
-#	-v `pwd`/:/workspace -w /workspace \
-#	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
-PACKER_BINARY = docker run -v $(HOME)/.aws/credentials:/mnt/credentials/ \
-	-e AWS_SHARED_CREDENTIALS_FILE=/mnt/credentials \
+PACKER_BINARY = docker run -v /mnt/credentials:/root/.aws/credentials \
+	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
 	-v `pwd`/:/workspace -w /workspace \
 	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
 PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry build_tag encrypted
