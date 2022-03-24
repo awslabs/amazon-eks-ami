@@ -1,11 +1,1479 @@
 # Changelog
 
-### amazon-eks-node-1.12-v20190327 | amazon-eks-node-1.11-v20190327 | amazon-eks-node-1.10-v20190327
+### AMI Release v20220309
+* amazon-eks-gpu-node-1.21-v20220309
+* amazon-eks-gpu-node-1.20-v20220309
+* amazon-eks-gpu-node-1.19-v20220309
+* amazon-eks-gpu-node-1.18-v20220309
+* amazon-eks-arm64-node-1.21-v20220309
+* amazon-eks-arm64-node-1.20-v20220309
+* amazon-eks-arm64-node-1.19-v20220309
+* amazon-eks-arm64-node-1.18-v20220309
+* amazon-eks-node-1.21-v20220309
+* amazon-eks-node-1.20-v20220309
+* amazon-eks-node-1.19-v20220309
+* amazon-eks-node-1.18-v20220309
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.181-99.354.amzn2 (1.19 and above), 4.14.268-205.500.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-8.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Update kernel version to 4.14.268-205.500.amzn2 for 1.18 and below, 5.4.181-99.354.amzn2 for 1.19 and above. For more information, see [ALAS-2022-1761](https://alas.aws.amazon.com/AL2/ALAS-2022-1761.html) and [ALASKERNEL-5.4-2022-023](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2022-023.html).
+
+### AMI Release v20220303
+* amazon-eks-gpu-node-1.21-v20220303
+* amazon-eks-gpu-node-1.20-v20220303
+* amazon-eks-gpu-node-1.19-v20220303
+* amazon-eks-gpu-node-1.18-v20220303
+* amazon-eks-arm64-node-1.21-v20220303
+* amazon-eks-arm64-node-1.20-v20220303
+* amazon-eks-arm64-node-1.19-v20220303
+* amazon-eks-arm64-node-1.18-v20220303
+* amazon-eks-node-1.21-v20220303
+* amazon-eks-node-1.20-v20220303
+* amazon-eks-node-1.19-v20220303
+* amazon-eks-node-1.18-v20220303
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.176-91.338.amzn2 (1.19 and above), 4.14.262-200.489.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-8.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Update `containerd` to `1.4.6-8.amzn2` for CVE-2022-23648.
+
+### AMI Release v20220226
+* amazon-eks-gpu-node-1.21-v20220226
+* amazon-eks-gpu-node-1.20-v20220226
+* amazon-eks-gpu-node-1.19-v20220226
+* amazon-eks-gpu-node-1.18-v20220226
+* amazon-eks-arm64-node-1.21-v20220226
+* amazon-eks-arm64-node-1.20-v20220226
+* amazon-eks-arm64-node-1.19-v20220226
+* amazon-eks-arm64-node-1.18-v20220226
+* amazon-eks-node-1.21-v20220226
+* amazon-eks-node-1.20-v20220226
+* amazon-eks-node-1.19-v20220226
+* amazon-eks-node-1.18-v20220226
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2022-01-21/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.176-91.338.amzn2 (1.19 and above), 4.14.262-200.489.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Upgrade `ec2-utils` version to `1.2-47`, addressing an issue with device symbolic links. More information is available [here](https://github.com/aws/amazon-ec2-utils/issues/22).
+
+### AMI Release v20220216
+* amazon-eks-gpu-node-1.21-v20220216
+* amazon-eks-gpu-node-1.20-v20220216
+* amazon-eks-gpu-node-1.19-v20220216
+* amazon-eks-gpu-node-1.18-v20220216
+* amazon-eks-arm64-node-1.21-v20220216
+* amazon-eks-arm64-node-1.20-v20220216
+* amazon-eks-arm64-node-1.19-v20220216
+* amazon-eks-arm64-node-1.18-v20220216
+* amazon-eks-node-1.21-v20220216
+* amazon-eks-node-1.20-v20220216
+* amazon-eks-node-1.19-v20220216
+* amazon-eks-node-1.18-v20220216
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2022-01-21/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.176-91.338.amzn2 (1.19 and above), 4.14.262-200.489.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Support for `c6a` instance types.
+
+### AMI Release v20220210
+* amazon-eks-gpu-node-1.21-v20220210
+* amazon-eks-gpu-node-1.20-v20220210
+* amazon-eks-gpu-node-1.19-v20220210
+* amazon-eks-gpu-node-1.18-v20220210
+* amazon-eks-arm64-node-1.21-v20220210
+* amazon-eks-arm64-node-1.20-v20220210
+* amazon-eks-arm64-node-1.19-v20220210
+* amazon-eks-arm64-node-1.18-v20220210
+* amazon-eks-node-1.21-v20220210
+* amazon-eks-node-1.20-v20220210
+* amazon-eks-node-1.19-v20220210
+* amazon-eks-node-1.18-v20220210
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2022-01-21/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.176-91.338.amzn2 (1.19 and above), 4.14.262-200.489.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Upgrade kernel version for Kubernetes 1.18 to `4.14.262-200.489.amzn2`, addressing several CVE's. More information available in [ALAS2-2022-1749](https://alas.aws.amazon.com/AL2/ALAS-2022-1749.html)
+- Support for `hpc6a` instance types.
+- Removes support for the `chacha20-poly1305@openssh.com` cipher, which is not FIPS-compliant.
+
+### AMI Release v20220123
+ - amazon-eks-node-1.18-v20220123
+ - amazon-eks-arm64-node-1.18-v20220123
+ - amazon-eks-gpu-node-1.18-v20220123
+ - amazon-eks-node-1.19-v20220123
+ - amazon-eks-arm64-node-1.19-v20220123
+ - amazon-eks-gpu-node-1.19-v20220123
+ - amazon-eks-node-1.20-v20220123
+ - amazon-eks-arm64-node-1.20-v20220123
+ - amazon-eks-gpu-node-1.20-v20220123
+ - amazon-eks-node-1.21-v20220123
+ - amazon-eks-arm64-node-1.21-v20220123
+ - amazon-eks-gpu-node-1.21-v20220123
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2022-01-21/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.172-90.336.amzn2 (1.19 and above), 4.14.256-197.484.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+* Upgrade kernel version for Kubernetes 1.19 and above to 5.4.172-90.336.amzn2.x86_64 for CVE-2022-0185
+* Bug fix in kubelet for 1.21 AMIs to handle compacted IPv6 addresses returned by EC2 API. New Kubelet version: `v1.21.5-eks-9017834`
+
+### AMI Release v20220112
+* amazon-eks-gpu-node-1.21-v20220112
+* amazon-eks-gpu-node-1.20-v20220112
+* amazon-eks-gpu-node-1.19-v20220112
+* amazon-eks-gpu-node-1.18-v20220112
+* amazon-eks-arm64-node-1.21-v20220112
+* amazon-eks-arm64-node-1.20-v20220112
+* amazon-eks-arm64-node-1.19-v20220112
+* amazon-eks-arm64-node-1.18-v20220112
+* amazon-eks-node-1.21-v20220112
+* amazon-eks-node-1.20-v20220112
+* amazon-eks-node-1.19-v20220112
+* amazon-eks-node-1.18-v20220112
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.162-86.275.amzn2 (1.19 and above), 4.14.256-197.484.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0-1.amzn2
+
+Notable changes:
+* Updating aws-cli ( aws-cli/1.22.32 ). Latest CLI is installed using the recommended steps [here](https://docs.aws.amazon.com/cli/v1/userguide/install-linux.html#install-linux-bundled). This change is specific to this AMI release.
+* Added fix to handle failures when serviceIpv6Cidr isn't provided. Related issue: https://github.com/awslabs/amazon-eks-ami/issues/839.
+* Added fix to make ipFamily check case-insensitive
+
+### AMI Release v20211206
+* amazon-eks-gpu-node-1.21-v20211206
+* amazon-eks-gpu-node-1.20-v20211206
+* amazon-eks-gpu-node-1.19-v20211206
+* amazon-eks-gpu-node-1.18-v20211206
+* amazon-eks-arm64-node-1.21-v20211206
+* amazon-eks-arm64-node-1.20-v20211206
+* amazon-eks-arm64-node-1.19-v20211206
+* amazon-eks-arm64-node-1.18-v20211206
+* amazon-eks-node-1.21-v20211206
+* amazon-eks-node-1.20-v20211206
+* amazon-eks-node-1.19-v20211206
+* amazon-eks-node-1.18-v20211206
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.156-83.273.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0-1.amzn2
+
+Notable changes:
+* Adds new instanceTypes to the eni-max-pods.txt file.
+* Patch for [AL2/ALAS-2021-1722](https://alas.aws.amazon.com/AL2/ALAS-2021-1722.html).
+
+### AMI Release v20211117
+* amazon-eks-gpu-node-1.21-v20211117
+* amazon-eks-gpu-node-1.20-v20211117
+* amazon-eks-gpu-node-1.19-v20211117
+* amazon-eks-gpu-node-1.18-v20211117
+* amazon-eks-gpu-node-1.17-v20211117
+* amazon-eks-arm64-node-1.21-v20211117
+* amazon-eks-arm64-node-1.20-v20211117
+* amazon-eks-arm64-node-1.19-v20211117
+* amazon-eks-arm64-node-1.18-v20211117
+* amazon-eks-arm64-node-1.17-v20211117
+* amazon-eks-node-1.21-v20211117
+* amazon-eks-node-1.20-v20211117
+* amazon-eks-node-1.19-v20211117
+* amazon-eks-node-1.18-v20211117
+* amazon-eks-node-1.17-v20211117
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
+
+AMI details:
+* kernel: 5.4.156-83.273.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
+* dockerd: 20.10.7-5.amzn2
+* containerd: 1.4.6-7.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0-1.amzn2
+
+Notable changes:
+Update `containerd` to `1.4.6-7.amzn2` and `docker` to `20.10.7-5.amzn2` to patch vulnerabilities in [CVE-2021-41190](https://alas.aws.amazon.com/ALAS-2021-1551.html)
+
+### AMI Release v20211109
+* amazon-eks-gpu-node-1.21-v20211109
+* amazon-eks-gpu-node-1.20-v20211109
+* amazon-eks-gpu-node-1.19-v20211109
+* amazon-eks-gpu-node-1.18-v20211109
+* amazon-eks-gpu-node-1.17-v20211109
+* amazon-eks-arm64-node-1.21-v20211109
+* amazon-eks-arm64-node-1.20-v20211109
+* amazon-eks-arm64-node-1.19-v20211109
+* amazon-eks-arm64-node-1.18-v20211109
+* amazon-eks-arm64-node-1.17-v20211109
+* amazon-eks-node-1.21-v20211109
+* amazon-eks-node-1.20-v20211109
+* amazon-eks-node-1.19-v20211109
+* amazon-eks-node-1.18-v20211109
+* amazon-eks-node-1.17-v20211109
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
+
+AMI details:
+* kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.252-195.483.amzn2 (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 470.57.02
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+* Upgrade kernel version for 1.17 and 1.18 to 4.14.252-195.483.amzn2
+* Upgrade cuda version from 460.73.01 to 470.57.02
+* Upgrade kubelet version
+    * 1.19.14 -> 1.19.15
+    * 1.20.10 -> 1.20.11
+    * 1.21.4 -> 1.21.5
+* Remove cbc ciphers and use following recommended ciphers
+  * chacha20-poly1305@openssh.com
+  * aes128-ctr
+  * aes256-ctr
+  * aes128-gcm@openssh.com
+  * aes256-gcm@openssh.com
+
+## AMI Release v20211013
+
+* amazon-eks-gpu-node-1.21-v20211013
+* amazon-eks-gpu-node-1.20-v20211013
+* amazon-eks-gpu-node-1.19-v20211013
+* amazon-eks-gpu-node-1.18-v20211013
+* amazon-eks-gpu-node-1.17-v20211013
+* amazon-eks-gpu-node-1.16-v20211013
+* amazon-eks-arm64-node-1.21-v20211013
+* amazon-eks-arm64-node-1.20-v20211013
+* amazon-eks-arm64-node-1.19-v20211013
+* amazon-eks-arm64-node-1.18-v20211013
+* amazon-eks-arm64-node-1.17-v20211013
+* amazon-eks-arm64-node-1.16-v20211013
+* amazon-eks-node-1.21-v20211013
+* amazon-eks-node-1.20-v20211013
+* amazon-eks-node-1.19-v20211013
+* amazon-eks-node-1.18-v20211013
+* amazon-eks-node-1.17-v20211013
+* amazon-eks-node-1.16-v20211013
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.21.4/2021-10-12/
+* s3://amazon-eks/1.20.10/2021-10-12/
+* s3://amazon-eks/1.19.14/2021-10-12/
+* s3://amazon-eks/1.18.20/2021-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
+* s3://amazon-eks/1.16.15/2021-09-02/
+
+AMI details:
+
+* kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.248-189.473.amzn2 (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+
+* A fix has been made to the GPU AMIs to ensure they work correctly with containerd as the container runtime.
+
+## AMI Release v20211008
+
+* amazon-eks-gpu-node-1.21-v20211008
+* amazon-eks-gpu-node-1.20-v20211008
+* amazon-eks-gpu-node-1.19-v20211008
+* amazon-eks-gpu-node-1.18-v20211008
+* amazon-eks-gpu-node-1.17-v20211008
+* amazon-eks-gpu-node-1.16-v20211008
+* amazon-eks-gpu-node-1.15-v20211008
+* amazon-eks-arm64-node-1.21-v20211008
+* amazon-eks-arm64-node-1.20-v20211008
+* amazon-eks-arm64-node-1.19-v20211008
+* amazon-eks-arm64-node-1.18-v20211008
+* amazon-eks-arm64-node-1.17-v20211008
+* amazon-eks-arm64-node-1.16-v20211008
+* amazon-eks-arm64-node-1.15-v20211008
+* amazon-eks-node-1.21-v20211008
+* amazon-eks-node-1.20-v20211008
+* amazon-eks-node-1.19-v20211008
+* amazon-eks-node-1.18-v20211008
+* amazon-eks-node-1.17-v20211008
+* amazon-eks-node-1.16-v20211008
+* amazon-eks-node-1.15-v20211008
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.21.4/2021-10-12/
+* s3://amazon-eks/1.20.10/2021-10-12/
+* s3://amazon-eks/1.19.14/2021-10-12/
+* s3://amazon-eks/1.18.20/2021-09-02/
+* s3://amazon-eks/1.17.17/2021-09-02/
+* s3://amazon-eks/1.16.15/2021-09-02/
+
+AMI details:
+
+* kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.248-189.473.amzn2 (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+
+* kubelet binaries have been updated for Kubernetes versions 1.19, 1.20 and 1.21, which include [a patch to fix an issue where kubelet can fail to unmount volumes](https://github.com/kubernetes/kubernetes/pull/102576)
+
+## AMI Release v20211004
+
+* amazon-eks-gpu-node-1.20-v20211004
+* amazon-eks-gpu-node-1.19-v20211004
+* amazon-eks-gpu-node-1.18-v20211004
+* amazon-eks-gpu-node-1.17-v20211004
+* amazon-eks-gpu-node-1.16-v20211004
+* amazon-eks-gpu-node-1.15-v20211004
+* amazon-eks-arm64-node-1.20-v20211004
+* amazon-eks-arm64-node-1.19-v20211004
+* amazon-eks-arm64-node-1.18-v20211004
+* amazon-eks-arm64-node-1.17-v20211004
+* amazon-eks-arm64-node-1.16-v20211004
+* amazon-eks-arm64-node-1.15-v20211004
+* amazon-eks-node-1.20-v20211004
+* amazon-eks-node-1.19-v20211004
+* amazon-eks-node-1.18-v20211004
+* amazon-eks-node-1.17-v20211004
+* amazon-eks-node-1.16-v20211004
+* amazon-eks-node-1.15-v20211004
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.21.2/2021-04-12/
+* s3://amazon-eks/1.20.7/2021-04-12/
+* s3://amazon-eks/1.19.13/2021-01-05/
+* s3://amazon-eks/1.18.20/2020-11-02/
+* s3://amazon-eks/1.17.17/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+
+AMI details:
+
+* kernel: 5.4.149-73.259.amzn2 (1.19 and above), 4.14.246-187.474.amzn2 (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 460.73.01
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+* Created AMI released on the latest commit
+
+## AMI Release v20211003
+
+* amazon-eks-gpu-node-1.20-v20211003
+* amazon-eks-gpu-node-1.19-v20211003
+* amazon-eks-gpu-node-1.18-v20211003
+* amazon-eks-gpu-node-1.17-v20211003
+* amazon-eks-gpu-node-1.16-v20211003
+* amazon-eks-gpu-node-1.15-v20211003
+* amazon-eks-arm64-node-1.20-v20211003
+* amazon-eks-arm64-node-1.19-v20211003
+* amazon-eks-arm64-node-1.18-v20211003
+* amazon-eks-arm64-node-1.17-v20211003
+* amazon-eks-arm64-node-1.16-v20211003
+* amazon-eks-arm64-node-1.15-v20211003
+* amazon-eks-node-1.20-v20211003
+* amazon-eks-node-1.19-v20211003
+* amazon-eks-node-1.18-v20211003
+* amazon-eks-node-1.17-v20211003
+* amazon-eks-node-1.16-v20211003
+* amazon-eks-node-1.15-v20211003
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.21.2/2021-04-12/
+* s3://amazon-eks/1.20.7/2021-04-12/
+* s3://amazon-eks/1.19.13/2021-01-05/
+* s3://amazon-eks/1.18.20/2020-11-02/
+* s3://amazon-eks/1.17.17/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+
+AMI details:
+
+* kernel: 5.4.144-69.257.amzn2 (1.19 and above), (1.18 and below)
+* dockerd: 20.10.7-3.amzn2
+* containerd: 1.4.6-3.amzn2
+* runc: 1.0.0-2.amzn2
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 460.73.01
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+
+* Updated version of RunC to 1.0.0-2.amzn2
+* Updated version of Docker to 20.10.7-3.amzn2
+* Updated version of Containerd to 1.4.6-3.amzn2
+* Following CVEs are addressed Docker (CVE-2021-41089, CVE-2021-41091, CVE-2021-41092) and containerd (CVE-2021-41103)
+
+## AMI Release v20211001
+
+* amazon-eks-gpu-node-1.21-v20211001
+* amazon-eks-gpu-node-1.20-v20211001
+* amazon-eks-gpu-node-1.19-v20211001
+* amazon-eks-gpu-node-1.18-v20211001
+* amazon-eks-gpu-node-1.17-v20211001
+* amazon-eks-gpu-node-1.16-v20211001
+* amazon-eks-arm64-node-1.21-v20211001
+* amazon-eks-arm64-node-1.20-v20211001
+* amazon-eks-arm64-node-1.19-v20211001
+* amazon-eks-arm64-node-1.18-v20211001
+* amazon-eks-arm64-node-1.17-v20211001
+* amazon-eks-arm64-node-1.16-v20211001
+* amazon-eks-node-1.21-v20211001
+* amazon-eks-node-1.20-v20211001
+* amazon-eks-node-1.19-v20211001
+* amazon-eks-node-1.18-v20211001
+* amazon-eks-node-1.17-v20211001
+* amazon-eks-node-1.16-v20211001
+
+Binaries used to build these AMIs are published:
+
+s3://amazon-eks/1.20.4/2021-04-12/
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+
+* kernel: 5.4.144-69.257.amzn2 (1.19 and above), (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.6
+* runc: 1.0.0.amzn2
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 460.73.01
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+* This release includes the patch for the CA to handle Let's Encrypt Certificate Expiry
+* Updating default [containerd socket path](https://github.com/awslabs/amazon-eks-ami/commit/9576786266df8bee08e97c1c7f2d0e2f85752092)
+
+## AMI Release v20210914
+
+* amazon-eks-gpu-node-1.21-v20210914
+* amazon-eks-gpu-node-1.20-v20210914
+* amazon-eks-gpu-node-1.19-v20210914
+* amazon-eks-gpu-node-1.18-v20210914
+* amazon-eks-gpu-node-1.17-v20210914
+* amazon-eks-gpu-node-1.16-v20210914
+* amazon-eks-arm64-node-1.21-v20210914
+* amazon-eks-arm64-node-1.20-v20210914
+* amazon-eks-arm64-node-1.19-v20210914
+* amazon-eks-arm64-node-1.18-v20210914
+* amazon-eks-arm64-node-1.17-v20210914
+* amazon-eks-arm64-node-1.16-v20210914
+* amazon-eks-node-1.21-v20210914
+* amazon-eks-node-1.20-v20210914
+* amazon-eks-node-1.19-v20210914
+* amazon-eks-node-1.18-v20210914
+* amazon-eks-node-1.17-v20210914
+* amazon-eks-node-1.16-v20210914
+
+Notable changes:
+Adding support for new ec2 instance types i.e. m6i
+
+## AMI Release v20210830
+
+* amazon-eks-gpu-node-1.21-v20210830
+* amazon-eks-gpu-node-1.20-v20210830
+* amazon-eks-gpu-node-1.19-v20210830
+* amazon-eks-gpu-node-1.18-v20210830
+* amazon-eks-gpu-node-1.17-v20210830
+* amazon-eks-gpu-node-1.16-v20210830
+* amazon-eks-arm64-node-1.21-v20210830
+* amazon-eks-arm64-node-1.20-v20210830
+* amazon-eks-arm64-node-1.19-v20210830
+* amazon-eks-arm64-node-1.18-v20210830
+* amazon-eks-arm64-node-1.17-v20210830
+* amazon-eks-arm64-node-1.16-v20210830
+* amazon-eks-node-1.21-v20210830
+* amazon-eks-node-1.20-v20210830
+* amazon-eks-node-1.19-v20210830
+* amazon-eks-node-1.18-v20210830
+* amazon-eks-node-1.17-v20210830
+* amazon-eks-node-1.16-v20210830
+
+Notable changes:
+
+* Upgrade kubelet version for 1.17 and 1.20
+  * 1.17.12 -> 1.17.17
+  * 1.20.4 -> 1.20.7
+
+## AMI Release v20210826
+
+* amazon-eks-gpu-node-1.21-v20210826
+* amazon-eks-gpu-node-1.20-v20210826
+* amazon-eks-gpu-node-1.19-v20210826
+* amazon-eks-gpu-node-1.18-v20210826
+* amazon-eks-gpu-node-1.17-v20210826
+* amazon-eks-gpu-node-1.16-v20210826
+* amazon-eks-gpu-node-1.15-v20210826
+* amazon-eks-arm64-node-1.21-v20210826
+* amazon-eks-arm64-node-1.20-v20210826
+* amazon-eks-arm64-node-1.19-v20210826
+* amazon-eks-arm64-node-1.18-v20210826
+* amazon-eks-arm64-node-1.17-v20210826
+* amazon-eks-arm64-node-1.16-v20210826
+* amazon-eks-arm64-node-1.15-v20210826
+* amazon-eks-node-1.21-v20210826
+* amazon-eks-node-1.20-v20210826
+* amazon-eks-node-1.19-v20210826
+* amazon-eks-node-1.18-v20210826
+* amazon-eks-node-1.17-v20210826
+* amazon-eks-node-1.16-v20210826
+* amazon-eks-node-1.15-v20210826
+
+Notable changes:
+
+* Fix to reduce permissions of `pull-sandbox-image.sh` [c78bb6b](https://github.com/awslabs/amazon-eks-ami/commit/c78bb6bac21e9323f1f9c57568ece93c1f1d507b)
+
+
+## AMI Release v20210813
+
+* amazon-eks-gpu-node-1.21-v20210813
+* amazon-eks-gpu-node-1.20-v20210813
+* amazon-eks-gpu-node-1.19-v20210813
+* amazon-eks-gpu-node-1.18-v20210813
+* amazon-eks-gpu-node-1.17-v20210813
+* amazon-eks-gpu-node-1.16-v20210813
+* amazon-eks-gpu-node-1.15-v20210813
+* amazon-eks-arm64-node-1.21-v20210813
+* amazon-eks-arm64-node-1.20-v20210813
+* amazon-eks-arm64-node-1.19-v20210813
+* amazon-eks-arm64-node-1.18-v20210813
+* amazon-eks-arm64-node-1.17-v20210813
+* amazon-eks-arm64-node-1.16-v20210813
+* amazon-eks-arm64-node-1.15-v20210813
+* amazon-eks-node-1.21-v20210813
+* amazon-eks-node-1.20-v20210813
+* amazon-eks-node-1.19-v20210813
+* amazon-eks-node-1.18-v20210813
+* amazon-eks-node-1.17-v20210813
+* amazon-eks-node-1.16-v20210813
+* amazon-eks-node-1.15-v20210813
+
+Notable changes:
+* Contains fix for sanbox-image issue with containerd in Gov-cloud and CN regions.
+* Updating to 1.18.20 and 1.19.13 kubernetes version.
+
+## AMI Release v20210722
+
+* amazon-eks-gpu-node-1.21-v20210722
+* amazon-eks-gpu-node-1.20-v20210722
+* amazon-eks-gpu-node-1.19-v20210722
+* amazon-eks-gpu-node-1.18-v20210722
+* amazon-eks-gpu-node-1.17-v20210722
+* amazon-eks-gpu-node-1.16-v20210722
+* amazon-eks-gpu-node-1.15-v20210722
+* amazon-eks-arm64-node-1.21-v20210722
+* amazon-eks-arm64-node-1.20-v20210722
+* amazon-eks-arm64-node-1.19-v20210722
+* amazon-eks-arm64-node-1.18-v20210722
+* amazon-eks-arm64-node-1.17-v20210722
+* amazon-eks-arm64-node-1.16-v20210722
+* amazon-eks-arm64-node-1.15-v20210722
+* amazon-eks-node-1.21-v20210722
+* amazon-eks-node-1.20-v20210722
+* amazon-eks-node-1.19-v20210722
+* amazon-eks-node-1.18-v20210722
+* amazon-eks-node-1.17-v20210722
+* amazon-eks-node-1.16-v20210722
+* amazon-eks-node-1.15-v20210722
+
+Notable changes:
+* This release includes the security patch for the [kernel](https://alas.aws.amazon.com/ALAS-2021-1524.html), for CVE-2021-33909.
+
+## AMI Release v20210720
+
+* amazon-eks-gpu-node-1.21-v20210720
+* amazon-eks-gpu-node-1.20-v20210720
+* amazon-eks-gpu-node-1.19-v20210720
+* amazon-eks-gpu-node-1.18-v20210720
+* amazon-eks-gpu-node-1.17-v20210720
+* amazon-eks-gpu-node-1.16-v20210720
+* amazon-eks-gpu-node-1.15-v20210720
+* amazon-eks-arm64-node-1.21-v20210720
+* amazon-eks-arm64-node-1.20-v20210720
+* amazon-eks-arm64-node-1.19-v20210720
+* amazon-eks-arm64-node-1.18-v20210720
+* amazon-eks-arm64-node-1.17-v20210720
+* amazon-eks-arm64-node-1.16-v20210720
+* amazon-eks-arm64-node-1.15-v20210720
+* amazon-eks-node-1.21-v20210720
+* amazon-eks-node-1.20-v20210720
+* amazon-eks-node-1.19-v20210720
+* amazon-eks-node-1.18-v20210720
+* amazon-eks-node-1.17-v20210720
+* amazon-eks-node-1.16-v20210720
+* amazon-eks-node-1.15-v20210720
+
+EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov-west-1 and us-gov-east-1 are included in this release)
+* Note: The containerd has patch for CVE-2-21-32760
+
+Containerd runtime support
+The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
+
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
+
+## AMI Release v20210716
+
+* amazon-eks-gpu-node-1.21-v20210716
+* amazon-eks-gpu-node-1.20-v20210716
+* amazon-eks-gpu-node-1.19-v20210716
+* amazon-eks-gpu-node-1.18-v20210716
+* amazon-eks-gpu-node-1.17-v20210716
+* amazon-eks-gpu-node-1.16-v20210716
+* amazon-eks-gpu-node-1.15-v20210716
+* amazon-eks-arm64-node-1.21-v20210716
+* amazon-eks-arm64-node-1.20-v20210716
+* amazon-eks-arm64-node-1.19-v20210716
+* amazon-eks-arm64-node-1.18-v20210716
+* amazon-eks-arm64-node-1.17-v20210716
+* amazon-eks-arm64-node-1.16-v20210716
+* amazon-eks-arm64-node-1.15-v20210716
+* amazon-eks-node-1.21-v20210716
+* amazon-eks-node-1.20-v20210716
+* amazon-eks-node-1.19-v20210716
+* amazon-eks-node-1.18-v20210716
+* amazon-eks-node-1.17-v20210716
+* amazon-eks-node-1.16-v20210716
+* amazon-eks-node-1.15-v20210716
+
+EKS AMI release for Kubernetes version 1.21 (1.21 AMIs for GPU and ARM in us-gov-west-1 and us-gov-east-1 aren't a part of this release)
+* Note: The containerd has patch for CVE-2-21-32760
+
+Containerd runtime support
+The EKS Optimized Amazon Linux 2 AMI now contains a bootstrap (https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) flag --container-runtime to optionally enable the containerd runtime. This flag is available in all supported Kubernetes versions of the AMI. This change is to get ahead of the removal of Docker as a supported runtime in Kubernetes (more details here (https://kubernetes.io/blog/2020/12/02/dockershim-faq/)). Feedback is appreciated.
+
+FIPS Kernel Panic issue on 5.4.X is fixed - https://github.com/awslabs/amazon-eks-ami/issues/632
+
+## AMI Release v20210628
+* amazon-eks-gpu-node-1.20-v20210628
+* amazon-eks-gpu-node-1.19-v20210628
+* amazon-eks-gpu-node-1.18-v20210628
+* amazon-eks-gpu-node-1.17-v20210628
+* amazon-eks-gpu-node-1.16-v20210628
+* amazon-eks-gpu-node-1.15-v20210628
+* amazon-eks-arm64-node-1.20-v20210628
+* amazon-eks-arm64-node-1.19-v20210628
+* amazon-eks-arm64-node-1.18-v20210628
+* amazon-eks-arm64-node-1.17-v20210628
+* amazon-eks-arm64-node-1.16-v20210628
+* amazon-eks-arm64-node-1.15-v20210628
+* amazon-eks-node-1.20-v20210628
+* amazon-eks-node-1.19-v20210628
+* amazon-eks-node-1.18-v20210628
+* amazon-eks-node-1.17-v20210628
+* amazon-eks-node-1.16-v20210628
+* amazon-eks-node-1.15-v20210628
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2 (1.19 and above), 4.14.232-177.418.amzn2 (1.18 and below)
+* dockerd: 19.03.13ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 460.73.01
+* SSM agent: 3.0.1295.0
+
+Notable changes:
+
+Includes the latest security patches for [systemd](https://alas.aws.amazon.com/AL2/ALAS-2021-1647.html), [python3](https://alas.aws.amazon.com/AL2/ALAS-2021-1670.html) and others.
+
+## AMI Release v20210621
+* amazon-eks-gpu-node-1.20-v20210621
+* amazon-eks-gpu-node-1.19-v20210621
+* amazon-eks-gpu-node-1.18-v20210621
+* amazon-eks-gpu-node-1.17-v20210621
+* amazon-eks-gpu-node-1.16-v20210621
+* amazon-eks-gpu-node-1.15-v20210621
+* amazon-eks-arm64-node-1.20-v20210621
+* amazon-eks-arm64-node-1.19-v20210621
+* amazon-eks-arm64-node-1.18-v20210621
+* amazon-eks-arm64-node-1.17-v20210621
+* amazon-eks-arm64-node-1.16-v20210621
+* amazon-eks-arm64-node-1.15-v20210621
+* amazon-eks-node-1.20-v20210621
+* amazon-eks-node-1.19-v20210621
+* amazon-eks-node-1.18-v20210621
+* amazon-eks-node-1.17-v20210621
+* amazon-eks-node-1.16-v20210621
+* amazon-eks-node-1.15-v20210621
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0
+* SSM agent: 3.0.1295.0
+
+Notable changes:
+* The SSM Agent will now be automatically installed
+
+## AMI Release v20210526
+* amazon-eks-gpu-node-1.20-v20210526
+* amazon-eks-gpu-node-1.19-v20210526
+* amazon-eks-gpu-node-1.18-v20210526
+* amazon-eks-gpu-node-1.17-v20210526
+* amazon-eks-gpu-node-1.16-v20210526
+* amazon-eks-gpu-node-1.15-v20210526
+* amazon-eks-arm64-node-1.20-v20210526
+* amazon-eks-arm64-node-1.19-v20210526
+* amazon-eks-arm64-node-1.18-v20210526
+* amazon-eks-arm64-node-1.17-v20210526
+* amazon-eks-arm64-node-1.16-v20210526
+* amazon-eks-arm64-node-1.15-v20210526
+* amazon-eks-node-1.20-v20210526
+* amazon-eks-node-1.19-v20210526
+* amazon-eks-node-1.18-v20210526
+* amazon-eks-node-1.17-v20210526
+* amazon-eks-node-1.16-v20210526
+* amazon-eks-node-1.15-v20210526
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.117-58.216.amzn2.x86_64 (1.19 and above), 4.14.232-176.381.amzn2.x86_64 (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0
+
+
+Notable changes:
+* [CVE-2021-25215](https://access.redhat.com/security/cve/CVE-2021-25215) patch
+* kenel patch for following CVEs: [CVE-2021-31829](https://access.redhat.com/security/cve/CVE-2021-31829), [CVE-2021-23133](https://access.redhat.com/security/cve/CVE-2021-23133), [CVE-2020-29374](https://access.redhat.com/security/cve/CVE-2020-29374)
+
+## AMI Release v20210519
+* amazon-eks-gpu-node-1.20-v20210519
+* amazon-eks-gpu-node-1.19-v20210519
+* amazon-eks-gpu-node-1.18-v20210519
+* amazon-eks-gpu-node-1.17-v20210519
+* amazon-eks-gpu-node-1.16-v20210519
+* amazon-eks-gpu-node-1.15-v20210519
+* amazon-eks-arm64-node-1.20-v20210519
+* amazon-eks-arm64-node-1.19-v20210519
+* amazon-eks-arm64-node-1.18-v20210519
+* amazon-eks-arm64-node-1.17-v20210519
+* amazon-eks-arm64-node-1.16-v20210519
+* amazon-eks-arm64-node-1.15-v20210519
+* amazon-eks-node-1.20-v20210519
+* amazon-eks-node-1.19-v20210519
+* amazon-eks-node-1.18-v20210519
+* amazon-eks-node-1.17-v20210519
+* amazon-eks-node-1.16-v20210519
+* amazon-eks-node-1.15-v20210519
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+AMI details:
+* kernel: 5.4.110-54.189.amzn2.x86_64 (1.19 and above), 4.14.231-173.361.amzn2.x86_64 (1.18 and below)
+* dockerd: 19.03.13-ce
+* containerd: 1.4.1
+* runc: 1.0.0-rc93
+* cuda: 460.73.01
+* nvidia-container-runtime-hook: 1.4.0
+
+
+Notable changes:
+* `runc` version upgrade to `rc93` for GPU AMIs
+* [fix](https://github.com/opencontainers/runc/pull/2871) for [#2530](https://github.com/opencontainers/runc/issues/2530) backported to `rc93` for GPU AMIs
+* [`runc` CVE 2021-30465](https://github.com/opencontainers/runc/security/advisories/GHSA-c3xm-pvg7-gh7r) patch backported to `rc93` for GPU AMIs
+
+## AMI Release v20210518
+
+* amazon-eks-gpu-node-1.19-v20210518
+* amazon-eks-gpu-node-1.18-v20210518
+* amazon-eks-gpu-node-1.17-v20210518
+* amazon-eks-gpu-node-1.16-v20210518
+* amazon-eks-gpu-node-1.15-v20210518
+* amazon-eks-arm64-node-1.19-v20210518
+* amazon-eks-arm64-node-1.18-v20210518
+* amazon-eks-arm64-node-1.17-v20210518
+* amazon-eks-arm64-node-1.16-v20210518
+* amazon-eks-arm64-node-1.15-v20210518
+* amazon-eks-node-1.19-v20210518
+* amazon-eks-node-1.18-v20210518
+* amazon-eks-node-1.17-v20210518
+* amazon-eks-node-1.16-v20210518
+* amazon-eks-node-1.15-v20210518
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+* `runc` version upgrade to `rc93`
+* [fix](https://github.com/opencontainers/runc/pull/2871) for [#2530](https://github.com/opencontainers/runc/issues/2530) backported to `rc93`
+* [`runc` CVE 2021-30465](https://github.com/opencontainers/runc/security/advisories/GHSA-c3xm-pvg7-gh7r) patch backported to `rc93`
+
+## AMI Release v20210512
+
+* amazon-eks-gpu-node-1.19-v20210512
+* amazon-eks-gpu-node-1.18-v20210512
+* amazon-eks-gpu-node-1.17-v20210512
+* amazon-eks-gpu-node-1.16-v20210512
+* amazon-eks-gpu-node-1.15-v20210512
+* amazon-eks-arm64-node-1.19-v20210512
+* amazon-eks-arm64-node-1.18-v20210512
+* amazon-eks-arm64-node-1.17-v20210512
+* amazon-eks-arm64-node-1.16-v20210512
+* amazon-eks-arm64-node-1.15-v20210512
+* amazon-eks-node-1.19-v20210512
+* amazon-eks-node-1.18-v20210512
+* amazon-eks-node-1.17-v20210512
+* amazon-eks-node-1.16-v20210512
+* amazon-eks-node-1.15-v20210512
+
+Binaries used to build these AMIs are published:
+
+* s3://amazon-eks/1.20.4/2021-04-12/
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+* Release 1.20 AMIs
+
+## AMI Release v20210501
+
+* amazon-eks-gpu-node-1.19-v20210501
+* amazon-eks-gpu-node-1.18-v20210501
+* amazon-eks-gpu-node-1.17-v20210501
+* amazon-eks-gpu-node-1.16-v20210501
+* amazon-eks-gpu-node-1.15-v20210501
+* amazon-eks-arm64-node-1.19-v20210501
+* amazon-eks-arm64-node-1.18-v20210501
+* amazon-eks-arm64-node-1.17-v20210501
+* amazon-eks-arm64-node-1.16-v20210501
+* amazon-eks-arm64-node-1.15-v20210501
+* amazon-eks-node-1.19-v20210501
+* amazon-eks-node-1.18-v20210501
+* amazon-eks-node-1.17-v20210501
+* amazon-eks-node-1.16-v20210501
+* amazon-eks-node-1.15-v20210501
+
+Binaries used to build these AMIs are published:
+
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+
+* Patches for Linux kernel 4.14, used by AMIs with Kubernetes v1.18 and below (CVE ALAS2-2021-1627)
+* Patches for Linux kernel 5.4, used by AMIs with Kubernetes v1.19 to fix a race condition with Conntrack.
+
+
+
+### AMI Release v20210414
+
+* amazon-eks-gpu-node-1.19-v20210414
+* amazon-eks-gpu-node-1.18-v20210414
+* amazon-eks-gpu-node-1.17-v20210414
+* amazon-eks-gpu-node-1.16-v20210414
+* amazon-eks-gpu-node-1.15-v20210414
+* amazon-eks-arm64-node-1.19-v20210414
+* amazon-eks-arm64-node-1.18-v20210414
+* amazon-eks-arm64-node-1.17-v20210414
+* amazon-eks-arm64-node-1.16-v20210414
+* amazon-eks-arm64-node-1.15-v20210414
+* amazon-eks-node-1.19-v20210414
+* amazon-eks-node-1.18-v20210414
+* amazon-eks-node-1.17-v20210414
+* amazon-eks-node-1.16-v20210414
+* amazon-eks-node-1.15-v20210414
+
+Binaries used to build these AMIs are published:
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+A regression was introduced for 1.19 AMI in the last release as a result of runc version update to `1.0.0-rc93` causing nodes to flap between `Ready` and `NotReady`, more details [#648](https://github.com/awslabs/amazon-eks-ami/issues/648). We are reverting the runc version back to 1.0.0-rc92.
+
+
+### AMI Release v20210329
+
+* amazon-eks-gpu-node-1.19-v20210329
+* amazon-eks-gpu-node-1.18-v20210329
+* amazon-eks-gpu-node-1.17-v20210329
+* amazon-eks-gpu-node-1.16-v20210329
+* amazon-eks-gpu-node-1.15-v20210329
+* amazon-eks-arm64-node-1.19-v20210329
+* amazon-eks-arm64-node-1.18-v20210329
+* amazon-eks-arm64-node-1.17-v20210329
+* amazon-eks-arm64-node-1.16-v20210329
+* amazon-eks-arm64-node-1.15-v20210329
+* amazon-eks-node-1.19-v20210329
+* amazon-eks-node-1.18-v20210329
+* amazon-eks-node-1.17-v20210329
+* amazon-eks-node-1.16-v20210329
+* amazon-eks-node-1.15-v20210329
+
+Binaries used to build these AMIs are published:
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+A regression was introduced to the 4.14 Amazon Linux Kernel where I/O could slow significantly after running some workloads for a long period of time (observations point to between 4 hours and several days). This release contains the Kernel patch which fixes the above issue.
+
+
+
+
+### AMI Release v20210322
+
+* amazon-eks-gpu-node-1.19-v20210322
+* amazon-eks-gpu-node-1.18-v20210322
+* amazon-eks-gpu-node-1.17-v20210322
+* amazon-eks-gpu-node-1.16-v20210322
+* amazon-eks-gpu-node-1.15-v20210322
+* amazon-eks-arm64-node-1.19-v20210322
+* amazon-eks-arm64-node-1.18-v20210322
+* amazon-eks-arm64-node-1.17-v20210322
+* amazon-eks-arm64-node-1.16-v20210322
+* amazon-eks-arm64-node-1.15-v20210322
+* amazon-eks-node-1.19-v20210322
+* amazon-eks-node-1.18-v20210322
+* amazon-eks-node-1.17-v20210322
+* amazon-eks-node-1.16-v20210322
+* amazon-eks-node-1.15-v20210322
+
+Binaries used to build these AMIs are published :
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+- Updates Nvidia drivers to version `460.32.03`
+- patch for CVE-2021-27363, CVE-2021-27364, CVE-2021-27365
+- set kubelet log verbosity to 2
+
+### AMI Release v20210310
+* amazon-eks-gpu-node-1.19-v20210310
+* amazon-eks-gpu-node-1.18-v20210310
+* amazon-eks-gpu-node-1.17-v20210310
+* amazon-eks-gpu-node-1.16-v20210310
+* amazon-eks-gpu-node-1.15-v20210310
+* amazon-eks-arm64-node-1.19-v20210310
+* amazon-eks-arm64-node-1.18-v20210310
+* amazon-eks-arm64-node-1.17-v20210310
+* amazon-eks-arm64-node-1.16-v20210310
+* amazon-eks-arm64-node-1.15-v20210310
+* amazon-eks-node-1.19-v20210310
+* amazon-eks-node-1.18-v20210309
+* amazon-eks-node-1.17-v20210309
+* amazon-eks-node-1.16-v20210309
+* amazon-eks-node-1.15-v20210309
+
+Binaries used to build these AMIs are published :
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+- Updates Nvidia drivers to version `460.27.04`
+- GPU AMIs no longer uses `daemon.json` defined in https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
+
+### AMI Release v20210302
+
+**GPU AMIs in this release are not compatible with any eksctl version after [eksctl 0.34.0](https://github.com/weaveworks/eksctl/releases/tag/0.34.0)**
+
+* amazon-eks-gpu-node-1.19-v20210302
+* amazon-eks-gpu-node-1.18-v20210302
+* amazon-eks-gpu-node-1.17-v20210302
+* amazon-eks-gpu-node-1.16-v20210302
+* amazon-eks-gpu-node-1.15-v20210302
+* amazon-eks-arm64-node-1.19-v20210302
+* amazon-eks-arm64-node-1.18-v20210302
+* amazon-eks-arm64-node-1.17-v20210302
+* amazon-eks-arm64-node-1.16-v20210302
+* amazon-eks-arm64-node-1.15-v20210302
+* amazon-eks-node-1.19-v20210302
+* amazon-eks-node-1.18-v20210302
+* amazon-eks-node-1.17-v20210302
+* amazon-eks-node-1.16-v20210302
+* amazon-eks-node-1.15-v20210302
+
+Binaries used to build these AMIs are published:
+- s3://amazon-eks/1.19.6/2021-01-05/
+- s3://amazon-eks/1.18.9/2020-11-02/
+- s3://amazon-eks/1.17.12/2020-11-02/
+- s3://amazon-eks/1.16.15/2020-11-02/
+- s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+- files/bootstrap.sh: ensure /etc/docker exists before writing to it (#611)
+- GPU AMIs now use docker `daemon.json` defined in https://github.com/awslabs/amazon-eks-ami/blob/master/files/docker-daemon.json
+- Patch for CVE-2021-3177
+- check that nvidia-smi is configured correctly before updating GPU clocks (#613)
+- Fix Makefile indentation for 1.19 (#616)
+- Increase fs.inotify.max_user_instances to 8192 from the default of 128 (#614)
+- use dynamic lookup of docker gid (#622)
+- bump docker version to 19.03.13ce-1 (#624) 
+
+### AMI Release v20210208
+* amazon-eks-gpu-node-1.19-v20210208
+* amazon-eks-gpu-node-1.18-v20210208
+* amazon-eks-gpu-node-1.17-v20210208
+* amazon-eks-gpu-node-1.16-v20210208
+* amazon-eks-gpu-node-1.15-v20210208
+* amazon-eks-arm64-node-1.19-v20210208
+* amazon-eks-arm64-node-1.18-v20210208
+* amazon-eks-arm64-node-1.17-v20210208
+* amazon-eks-arm64-node-1.16-v20210208
+* amazon-eks-arm64-node-1.15-v20210208
+* amazon-eks-node-1.19-v20210208
+* amazon-eks-node-1.18-v20210208
+* amazon-eks-node-1.17-v20210208
+* amazon-eks-node-1.16-v20210208
+* amazon-eks-node-1.15-v20210208
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.19.6/2021-01-05/
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Kubernetes versions 1.19+ will now use the 5.4 Linux kernel
+* Patch for [ALAS-2021-1588](https://alas.aws.amazon.com/AL2/ALAS-2021-1588.html)
+
+### AMI Release v20210125
+* amazon-eks-gpu-node-1.18-v20210125
+* amazon-eks-gpu-node-1.17-v20210125
+* amazon-eks-gpu-node-1.16-v20210125
+* amazon-eks-gpu-node-1.15-v20210125
+* amazon-eks-arm64-node-1.18-v20210125
+* amazon-eks-arm64-node-1.17-v20210125
+* amazon-eks-arm64-node-1.16-v20210125
+* amazon-eks-arm64-node-1.15-v20210125
+* amazon-eks-node-1.18-v20210125
+* amazon-eks-node-1.17-v20210125
+* amazon-eks-node-1.16-v20210125
+* amazon-eks-node-1.15-v20210125
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* ARM AMIs built with m6g.large instance type (#601) 
+* Add Support for c6gn instance type (#597)
+* Patch for CVE-2021-3156 (https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-3156)
+
+### AMI Release v20210112
+* amazon-eks-gpu-node-1.18-v20210112
+* amazon-eks-gpu-node-1.17-v20210112
+* amazon-eks-gpu-node-1.16-v20210112
+* amazon-eks-gpu-node-1.15-v20210112
+* amazon-eks-arm64-node-1.18-v20210112
+* amazon-eks-arm64-node-1.17-v20210112
+* amazon-eks-arm64-node-1.16-v20210112
+* amazon-eks-arm64-node-1.15-v20210112
+* amazon-eks-node-1.18-v20210112
+* amazon-eks-node-1.17-v20210112
+* amazon-eks-node-1.16-v20210112
+* amazon-eks-node-1.15-v20210112
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Update ulimit for memlock to unlimited
+* Update ulimit for max_user_watches and max_file_count
+* Fix position of sonobuoy e2e registry config check (#590)
+* Update Makefile to support sonobuoy e2e registry config override (#588)
+* fix syntax error in install script (#582) introduced by #522
+* Feature flag the cleanup of the image (#522)
+* Add iptables rule count to log collector
+* GPU Boost clock setup for performance improvement (#573)
+* add support for sonobuoy e2e registry overrides (#585) for MVP
+* ensure kubelet.service.d directory exists (#519)
+* (bootstrap): document pause container parameters (#556)
+* add SIGKILL to RestartForceExitStatus (#554)
+* fix containerd_version typo in Makefile (#584)
+* Update systemd to always restart kubelet to support dynamic kubelet configuration (#578)
+* Add missing instance types (#580)
+
+### AMI Release v20201211
+* amazon-eks-gpu-node-1.18-v20201211
+* amazon-eks-gpu-node-1.17-v20201211
+* amazon-eks-gpu-node-1.16-v20201211
+* amazon-eks-gpu-node-1.15-v20201211
+* amazon-eks-arm64-node-1.18-v20201211
+* amazon-eks-arm64-node-1.17-v20201211
+* amazon-eks-arm64-node-1.16-v20201211
+* amazon-eks-arm64-node-1.15-v20201211
+* amazon-eks-node-1.18-v20201211
+* amazon-eks-node-1.17-v20201211
+* amazon-eks-node-1.16-v20201211
+* amazon-eks-node-1.15-v20201211
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Bug fix for the issue with rngd on EKS worker ami that's built with AL2 source ami.
+* Bug fix for grub issue introduced by new nvidia driver
+* Patch for CVE-2020-1971 (https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-1971)
+
+### AMI Release v20201126
+* amazon-eks-gpu-node-1.18-v20201126
+* amazon-eks-gpu-node-1.17-v20201126
+* amazon-eks-gpu-node-1.16-v20201126
+* amazon-eks-gpu-node-1.15-v20201126
+* amazon-eks-arm64-node-1.18-v20201126
+* amazon-eks-arm64-node-1.17-v20201126
+* amazon-eks-arm64-node-1.16-v20201126
+* amazon-eks-arm64-node-1.15-v20201126
+* amazon-eks-node-1.18-v20201126
+* amazon-eks-node-1.17-v20201126
+* amazon-eks-node-1.16-v20201126
+* amazon-eks-node-1.15-v20201126
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+
+* Containerd patch for CVE-2020-15257 (containerd-1.4.1-2)
+
+
+### AMI Release v20201117
+* amazon-eks-gpu-node-1.18-v20201117
+* amazon-eks-gpu-node-1.17-v20201117
+* amazon-eks-gpu-node-1.16-v20201117
+* amazon-eks-gpu-node-1.15-v20201117
+* amazon-eks-arm64-node-1.18-v20201117
+* amazon-eks-arm64-node-1.17-v20201117
+* amazon-eks-arm64-node-1.16-v20201117
+* amazon-eks-arm64-node-1.15-v20201117
+* amazon-eks-node-1.18-v20201117
+* amazon-eks-node-1.17-v20201117
+* amazon-eks-node-1.16-v20201117
+* amazon-eks-node-1.15-v20201117
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Bug fix [#526](https://github.com/awslabs/amazon-eks-ami/pull/526)
+* GPU AMIs - Nvidia driver version update to 450.51.06, cuda version update to 11.0
+* Updated kernel version to 4.14.203 and fix for soft lockup issue
+* Downgraded containerd version to 1.3.2 to fix pods getting stuck in the Terminating state
+
+
+### AMI Release v20201112
+* amazon-eks-gpu-node-1.18-v20201112
+* amazon-eks-gpu-node-1.17-v20201112
+* amazon-eks-gpu-node-1.16-v20201112
+* amazon-eks-gpu-node-1.15-v20201112
+* amazon-eks-arm64-node-1.18-v20201112
+* amazon-eks-arm64-node-1.17-v20201112
+* amazon-eks-arm64-node-1.16-v20201112
+* amazon-eks-arm64-node-1.15-v20201112
+* amazon-eks-node-1.18-v20201112
+* amazon-eks-node-1.17-v20201112
+* amazon-eks-node-1.16-v20201112
+* amazon-eks-node-1.15-v20201112
+
+Binaries used to build these AMIs are published :
+* s3://amazon-eks/1.18.9/2020-11-02/
+* s3://amazon-eks/1.17.12/2020-11-02/
+* s3://amazon-eks/1.16.15/2020-11-02/
+* s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes :
+* Bug fix [#526](https://github.com/awslabs/amazon-eks-ami/pull/526)
+* GPU AMIs - Nvidia driver version update to 450.51.06, cuda version update to 11.0
+* Updated kernel version to 4.14.203 and fix for [soft lockup issue](https://github.com/awslabs/amazon-eks-ami/issues/454)
+
+
+Note: Previous release information can be found from [release note](https://github.com/awslabs/amazon-eks-ami/releases)
+
+
+### AMI Release v20190927
+* amazon-eks-node-1.14-v20190927
+* amazon-eks-gpu-node-1.14-v20190927
+* amazon-eks-node-1.13-v20190927
+* amazon-eks-gpu-node-1.13-v20190927
+* amazon-eks-node-1.12-v20190927
+* amazon-eks-gpu-node-1.12-v20190927
+* amazon-eks-node-1.11-v20190927
+* amazon-eks-gpu-node-1.11-v20190927
+
+Changes:
+* 0f11f6c Add G4DN instance family to node group template
+* ade31b0 Add support for g4 instance family
+* d9147f1 sync nodegroup template to latest available
+
+### AMI Release v20190906
+* amazon-eks-node-1.14-v20190906
+* amazon-eks-gpu-node-1.14-v20190906
+* amazon-eks-node-1.13-v20190906
+* amazon-eks-gpu-node-1.13-v20190906
+* amazon-eks-node-1.12-v20190906
+* amazon-eks-gpu-node-1.12-v20190906
+* amazon-eks-node-1.11-v20190906
+* amazon-eks-gpu-node-1.11-v20190906
+
+Changes:
+* c1ae2f3 Adding new directory and file for 1.14 and above by removing --allow-privileged=true flag (#327)
+* 5335ea8 add support for me-south-1 region (#322)
+* c4e03c1 Update list of instance types (#320)
+* 389f4ba update S3_URL_BASE environment variable in install-worker.sh
+
+Kubernetes Changes:
+* Kubelet patches with [HTTP2-cve](https://nvd.nist.gov/vuln/detail/CVE-2019-9512)
+* Kubelet patched with fix for https://github.com/kubernetes/kubernetes/issues/78164
+
+### AMI Release v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+* amazon-eks-node-1.13-v20190814
+* amazon-eks-gpu-node-1.13-v20190814
+#### Changes
+* 0468404 change the amiName pattern to use minor version (#307)
+* 19ff806 2107 allow private ssh when building (#303)
+* 2b9b501 add support for ap-east-1 region (#305)
+* ccae017 Fix t3a.small limit
+* f409acd Add new m5 and r5 instances
+* 8bbf269 Add c5.12xlarge and c5.24xlarge instances
+* 1f83c10 refactor packer variables
+* 41f4dd9 Install ec2-instance-connect
+* a40bd46 Added CHANGELOG for v20190701
+
+
+
+### amazon-eks-node-1.13-v20190701 | amazon-eks-node-1.12-v20190701 | amazon-eks-node-1.11-v20190701 | amazon-eks-node-1.10-v20190701 | amazon-eks-gpu-node-1.13-v20190701 | amazon-eks-gpu-node-1.12-v20190701 | amazon-eks-gpu-node-1.11-v20190701 | amazon-eks-gpu-node-1.10-v20190701
+
+Note: The AMI no longer contains kubectl. If you rely on kubectl being present, you can download it from the S3 bucket `s3://amazon-eks/`
+
+* ca61cc2 remove kubectl dependency (#295)
+* 400dd58 Update eks-log-collector.sh URL on readme
+* e4fe057 Moving log collector script to Amazon eks ami repo (#243)
+* e8b50ba add changelog for 20190614
+
+### amazon-eks-node-1.13-v20190614 | amazon-eks-node-1.12-v20190614 | amazon-eks-node-1.11-v20190614 | amazon-eks-node-1.10-v20190614 | amazon-eks-gpu-node-1.13-v20190614 | amazon-eks-gpu-node-1.12-v20190614 | amazon-eks-gpu-node-1.11-v20190614 | amazon-eks-gpu-node-1.10-v20190614
+
+Security Note: These AMIs contain OS(AmazonLinux2) patched for [CVE-2019-11477, CVE-2019-11478, CVE-2019-11479](https://aws.amazon.com/security/security-bulletins/AWS-2019-005/)
+
+Note: This release also publishes first set of worker AMIs for EKS 1.13 launch
+
+* b1726c1 Fix issue with 1.10 build
+* f2525cb Change clocksource only if using xen
+* 16bd031 files/kubelet: specify "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+* 88ca2ac Retry if AWS API returns None (#274)
+* 6f3354a Add a docker daemon restart after custom daemon.json
+* 92e33a8 Making tsc the clock source (#272)
+* eccfa3a Use kubernetes minor version to choose kubelet config
+* 32d2ac4 Update nodegroup values
+* 5b99e15 Add new instance types
+* b061339 Restrict kubelet to only use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 for tls cipher suites
+* fe39deb add build spec for amazon's internal build process
+* b5a78b9 add options to configure packer/aws binary
+* ac67f2a Allow custom config for docker daemon
+* ca5559a Add ARM support
+* 2caf69b Updated bug-report.md and question.md instructions to currently existing release info location - /etc/eks/release (#242)
+
+### amazon-eks-node-1.12-v20190329 | amazon-eks-node-1.11-v20190329 | amazon-eks-node-1.10-v20190329
 
 Security Note: These AMIs contain builds of kubectl & CNI patched for [CVE-2019-1002101](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/) and [CVE-2019-9946](https://aws.amazon.com/security/security-bulletins/AWS-2019-003/)
 
 Note: This release publishes first set of worker AMIs for EKS 1.12 launch
 
+* 77ae68a Correct version numbers in Changelog
+* 3e09987 Bump CNI plugin default value
+* fb0c393 Update eni-max-pods.txt (#231)
 * a809997 Update README with new worker AMIs published on 2019-03-27
 * a038aae Added 1.12 build in Makefile (#208)
 * 38eb8a8 Fixed search for 10.x CIDR range
