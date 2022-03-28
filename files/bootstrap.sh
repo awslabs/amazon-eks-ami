@@ -434,7 +434,7 @@ if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
     # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
     # the PrefixDelegation based alternative and is likely to be in-use by more customers.
     # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
-    MAX_PODS=$(./max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve
