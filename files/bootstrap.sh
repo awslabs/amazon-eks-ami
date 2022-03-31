@@ -29,6 +29,7 @@ function print_help {
     echo "--container-runtime Specify a container runtime (default: dockerd)"
     echo "--ip-family Specify ip family of the cluster"
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
+    echo "--local-outpost Supports worker nodes to continue to communicate and connect to the cluster even when the Outpost is disconnected from the AWS Region. (default: false)"
 }
 
 POSITIONAL=()
@@ -105,6 +106,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --local-outpost)
+            LOCAL_OUTPOST=$2
+            shift
+            shift
+            ;; 
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -130,6 +136,7 @@ PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
+LOCAL_OUTPOST="${LOCAL_OUTPOST:-false}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -385,6 +392,24 @@ echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
+
+### To support worker nodes to continue to communicate and connect to the cluster even when the Outpost 
+### is disconnected from the AWS Region, the following specific setup are required:
+###    - append entries to /etc/hosts with the mapping of API server domain name and control plane 
+###      host IP addresses. So that the domain name can be resolved to IP addresses locally.
+###    - use aws-iam-authenticator as bootstrap auth used in kubelet bootstrap kubeconfig to download 
+###      TLS client X.509 cert from API server and genereate kubelet kubeconfig file. So that the worker 
+###      node can be authentiacated through X.509 certificate which works for both connected and disconnected state.
+if [[ "$LOCAL_OUTPOST" = "true" ]]; then
+    ### append entries to /etc/hosts file
+    DOMAIN_NAME=$(echo $APISERVER_ENDPOINT | awk -F/ '{print $3}' | awk -F: '{print $1}')
+    getent hosts $DOMAIN_NAME | shuf >> /etc/hosts
+
+    ### bootstrap kubeconfig
+    mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
+    KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
+fi
+
 ### kubelet.service configuration
 
 if [[ "${IP_FAMILY}" == "ipv6" ]]; then
