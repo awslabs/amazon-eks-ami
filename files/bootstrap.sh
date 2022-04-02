@@ -385,7 +385,7 @@ MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | se
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
   if [[ "${IP_FAMILY}" == "ipv6" ]]; then
     if [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
-      echo "Service Ipv6 Cidr must be provided when ip-family is specified as IPV6"
+      echo "Either --service-ipv6-cidr or --cluster-dns-ip must be provided when --ip-family is set to ipv6"
       exit 1
     fi
     DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
