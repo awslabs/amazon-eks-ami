@@ -154,6 +154,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
+    ap-southeast-3)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -428,8 +430,11 @@ set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-    exit 1
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
+    # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
+    # the PrefixDelegation based alternative and is likely to be in-use by more customers.
+    # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve
@@ -461,7 +466,7 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
-    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml  
+    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
     sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
     sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
     sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
@@ -473,7 +478,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     systemctl restart containerd
     systemctl enable sandbox-image
     systemctl start sandbox-image
-    
+
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
