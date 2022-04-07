@@ -23,47 +23,54 @@ finished() {
 try "get all Kubernetes Objects"
 kubectl get all --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-all-${CURRENT_TIME}.log
 ok
-try "describe DaemonSet aws-node"
-kubectl describe daemonset aws-node -n kube-system > ${COLLECT_DIR}/describe-aws-node-${CURRENT_TIME}.log
+try "get DaemonSet aws-node"
+kubectl get daemonset aws-node -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-aws-node-${CURRENT_TIME}.yaml
 ok
-try "describe Deployment coredns"
-kubectl describe deployment coredns -n kube-system > ${COLLECT_DIR}/describe-coredns-${CURRENT_TIME}.log
+try "get Deployment coredns"
+kubectl get deployment coredns -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-coredns-${CURRENT_TIME}.yaml
 ok
 try "get all nodes"
-kubectl get nodes > ${COLLECT_DIR}/kubectl-get-nodes-${CURRENT_TIME}.log
+kubectl get nodes -o wide > ${COLLECT_DIR}/kubectl-get-nodes-${CURRENT_TIME}.log
 ok
 try "get all validatingwebhookconfigurations"
-kubectl get validatingwebhookconfigurations > ${COLLECT_DIR}/validatingwebhooks-${CURRENT_TIME}.log
+kubectl get validatingwebhookconfigurations > ${COLLECT_DIR}/kubectl-get-validatingwebhooks-${CURRENT_TIME}.log
 ok
 try "get all mutatingwebhookconfigurations"
-kubectl get mutatingwebhookconfigurations > ${COLLECT_DIR}/mutatingwebhooks-${CURRENT_TIME}.log
+kubectl get mutatingwebhookconfigurations > ${COLLECT_DIR}/kubectl-get-mutatingwebhooks-${CURRENT_TIME}.log
 ok
 try "get all apiservices"
-kubectl get apiservices > ${COLLECT_DIR}/apiservices-${CURRENT_TIME}.log
+kubectl get apiservices > ${COLLECT_DIR}/kubectl-get-apiservices-${CURRENT_TIME}.log
 ok
 try "get all PersistentVolumes"
-kubectl get persistentvolumes -o yaml > ${COLLECT_DIR}/get-pv-${CURRENT_TIME}.yml
+kubectl get persistentvolumes -o wide > ${COLLECT_DIR}/kubectl-get-pv-${CURRENT_TIME}.log
 ok
 try "get all PersistentVolumeClaims"
-kubectl get persistentvolumeclaims --all-namespaces -o yaml > ${COLLECT_DIR}/get-pvs-all-namespaces-${CURRENT_TIME}.yml
+kubectl get persistentvolumeclaims --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-pvc-all-namespaces-${CURRENT_TIME}.log
 ok
 try "get all StorageClasses"
-kubectl get storageclass -o yaml > ${COLLECT_DIR}/get-sc-${CURRENT_TIME}.yml
+kubectl get storageclass -o wide > ${COLLECT_DIR}/kubectl-get-sc-${CURRENT_TIME}.log
 ok
 try "get all serviceaccount"
-kubectl get serviceaccount --all-namespaces -o yaml > ${COLLECT_DIR}/get-serviceaccount-${CURRENT_TIME}.yml
+kubectl get serviceaccount --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-serviceaccount-${CURRENT_TIME}.log
 ok
 try "get ConfigMap aws-auth"
-kubectl get configmap aws-auth -n kube-system -o yaml > ${COLLECT_DIR}/aws-auth-configmap-${CURRENT_TIME}.yml
+kubectl get configmap aws-auth -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-aws-auth-configmap-${CURRENT_TIME}.yaml
 ok
 try "get ConfigMap coredns"
-kubectl get configmap coredns -n kube-system -o yaml > ${COLLECT_DIR}/coredns-configmap-${CURRENT_TIME}.yml
+kubectl get configmap coredns -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-coredns-configmap-${CURRENT_TIME}.yaml
+ok
+try "get ConfigMap kube-proxy"
+kubectl get configmap kube-proxy -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-kube-proxy-configmap-${CURRENT_TIME}.yaml
+kubectl get configmap kube-proxy-config -n kube-system -o yaml > ${COLLECT_DIR}/kubectl-get-kube-proxy-config-configmap-${CURRENT_TIME}.yaml
 ok
 try "get all NetworkPolicies"
-kubectl get networkpolicies --all-namespaces -o yaml > ${COLLECT_DIR}/netpol-all-namespaces-${CURRENT_TIME}.yml
+kubectl get networkpolicies --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-netpol-all-namespaces-${CURRENT_TIME}.log
 ok
 try "get all Endpoints"
-kubectl get endpoints --all-namespaces -o yaml > ${COLLECT_DIR}/get-endpoints-${CURRENT_TIME}.yml
+kubectl get endpoints --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-endpoints-${CURRENT_TIME}.log
+ok
+try "get Clusterrole"
+kubectl get clusterrole > ${COLLECT_DIR}/kubectl-get-endpoints-${CURRENT_TIME}.log
 ok
 pack
 finished
