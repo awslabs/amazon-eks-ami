@@ -2,6 +2,11 @@
 
 <span style="font-family: calibri, Garamond, 'Comic Sans MS' ;">This project was created to collect Amazon EKS log files and OS logs for troubleshooting Amazon EKS customer support cases.</span>
 
+# Table of contents
+1. [`kubectl-collector.sh` Usage (For Cluster level config)](#kubectl-collectorsh-usage-for-cluster-level-config)
+2. [`eks-log-collector.sh` Usage (For node specific logs)](#eks-log-collectorsh-usage-for-node-specific-logs)
+3. [`eks-log-collector.sh` Usage (For node specific logs) using SSM agent](#collect-eks-logs-using-ssm-agent)
+
 ### `kubectl-collector.sh` Usage (For Cluster level config)
 At a high level, you run this script on machine with kubectl installed, and script will collect basic (get, describe) information from Kubernetes API Server that will assist in providing visibility of Kuberbetes Cluster objects. AWS support and service team engineers can use this information once provided via a customer support case.
 
@@ -110,7 +115,7 @@ Trying to archive gathered information...
 ```
 
 
-### <span style="font-family: times, serif; font-size:16pt; font-style:italic;">Collect EKS logs using SSM agent 
+### Collect EKS logs using SSM agent 
 #### <span style="font-family: times, serif; font-size:16pt; font-style:italic;">To run EKS log collector script on Worker Node(s) and upload the bundle(tar) to a S3 Bucket using SSM agent, please follow below steps
 
 ##### *Prerequisites*:
