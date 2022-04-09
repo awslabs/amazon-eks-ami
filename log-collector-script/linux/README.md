@@ -3,48 +3,11 @@
 <span style="font-family: calibri, Garamond, 'Comic Sans MS' ;">This project was created to collect Amazon EKS log files and OS logs for troubleshooting Amazon EKS customer support cases.</span>
 
 # Table of contents
-1. [`kubectl-collector.sh` Usage (For Cluster level config)](#kubectl-collectorsh-usage-for-cluster-level-config)
-2. [`eks-log-collector.sh` Usage (For node specific logs)](#eks-log-collectorsh-usage-for-node-specific-logs)
-3. [`eks-log-collector.sh` Usage (For node specific logs) using SSM agent](#collect-eks-logs-using-ssm-agent)
+1. [`eks-log-collector.sh` Usage (For node specific logs)](#eks-log-collectorsh-usage-for-node-specific-logs)
+2. [`eks-log-collector.sh` Usage (For node specific logs) using SSM agent](#collect-eks-logs-using-ssm-agent)
+3. [`kubectl-collector.sh` Usage (For Cluster level config)](#kubectl-collectorsh-usage-for-cluster-level-config)
 
-### `kubectl-collector.sh` Usage (For Cluster level config)
-At a high level, you run this script on machine with kubectl installed, and script will collect basic (get, describe) information from Kubernetes API Server that will assist in providing visibility of Kuberbetes Cluster objects. AWS support and service team engineers can use this information once provided via a customer support case.
-
-```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/kubectl-collector.sh
-sudo bash kubectl-collector.sh
-```
-
-Post execution, confirm if that tarball file (it can be .tgz or .tar.gz) was successfully created in the same directory as script execution.
-
-#### Example output in normal mode
-
-   ```
-   $ bash kubectl-collector.sh
-   Trying to get all Kubernetes Objects...
-   Trying to get DaemonSet aws-node...
-   Trying to get Deployment coredns...
-   Trying to get all nodes...
-   Trying to get all validatingwebhookconfigurations...
-   Trying to get all mutatingwebhookconfigurations...
-   Trying to get all apiservices...
-   Trying to get all PersistentVolumes...
-   Trying to get all PersistentVolumeClaims...
-   Trying to get all StorageClasses...
-   Trying to get all serviceaccount...
-   Trying to get ConfigMap aws-auth...
-   Trying to get ConfigMap coredns...
-   Trying to get ConfigMap kube-proxy...
-   Trying to get all NetworkPolicies... No resources found
-
-   Trying to get all Endpoints...
-   Trying to get Clusterrole...
-   Trying to archive gathered information...
-
-      Done... your kubectl command logs are located in
-
-      /Users/<usernmae>/eks_kubectl_commands_2022-04-07_0959-EDT.tar.gz
-   ```
+--- 
 
 ### `eks-log-collector.sh` Usage (For node specific logs)
 
@@ -150,3 +113,208 @@ aws ssm get-command-invocation --command-id "<SSM command ID>" --instance-id "<E
 
 4. Once the above command is executed successfully, the logs should be present in the S3 bucket specified in the previous step. 
 
+### `kubectl-collector.sh` Usage (For Cluster level config)
+At a high level, you run this script on machine with kubectl installed, and script will collect basic (get, describe) information from Kubernetes API Server that will assist in providing visibility of Kuberbetes Cluster objects. AWS support and service team engineers can use this information once provided via a customer support case.
+
+```
+curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/kubectl-collector.sh
+sudo bash kubectl-collector.sh
+```
+
+Post execution, confirm if that tarball file (it can be .tgz or .tar.gz) was successfully created in the same directory as script execution.
+
+#### Example output in normal mode
+
+   ```
+   $ bash kubectl-collector.sh
+   Trying... kubectl get configmap aws-auth -n kube-system -o yaml
+   Trying... kubectl get daemonset aws-node -n kube-system -o yaml
+   Trying... kubectl get daemonset kube-proxy -n kube-system -o yaml
+   Trying... kubectl get configmap kube-proxy -n kube-system -o yaml
+   Trying... kubectl get configmap kube-proxy-config -n kube-system -o yaml
+   Trying... kubectl get deployment coredns -n kube-system -o yaml
+   Trying... kubectl get configmap coredns -n kube-system -o yaml
+   Trying... kubectl get bindings --all-namespaces -o wide
+   Error from server (NotFound): Unable to list "/v1, Resource=bindings": the server could not find the requested resource
+
+   Trying... kubectl get componentstatuses --all-namespaces -o wide
+   Warning: v1 ComponentStatus is deprecated in v1.19+
+
+   Trying... kubectl get configmaps --all-namespaces -o wide
+
+   Trying... kubectl get endpoints --all-namespaces -o wide
+
+   Trying... kubectl get events --all-namespaces -o wide
+
+   Trying... kubectl get limitranges --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get nodes --all-namespaces -o wide
+
+   Trying... kubectl get persistentvolumeclaims --all-namespaces -o wide
+
+   Trying... kubectl get persistentvolumes --all-namespaces -o wide
+
+   Trying... kubectl get pods --all-namespaces -o wide
+
+   Trying... kubectl get podtemplates --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get replicationcontrollers --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get resourcequotas --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get secrets --all-namespaces -o wide
+
+   Trying... kubectl get serviceaccounts --all-namespaces -o wide
+
+   Trying... kubectl get services --all-namespaces -o wide
+
+   Trying... kubectl get challenges --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get orders --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get mutatingwebhookconfigurations --all-namespaces -o wide
+
+   Trying... kubectl get validatingwebhookconfigurations --all-namespaces -o wide
+
+   Trying... kubectl get customresourcedefinitions --all-namespaces -o wide
+
+   Trying... kubectl get apiservices --all-namespaces -o wide
+
+   Trying... kubectl get gatewayroutes --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get meshes --all-namespaces -o wide
+
+   Trying... kubectl get virtualgateways --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get virtualnodes --all-namespaces -o wide
+
+   Trying... kubectl get virtualrouters --all-namespaces -o wide
+
+   Trying... kubectl get virtualservices --all-namespaces -o wide
+
+   Trying... kubectl get controllerrevisions --all-namespaces -o wide
+
+   Trying... kubectl get daemonsets --all-namespaces -o wide
+
+   Trying... kubectl get deployments --all-namespaces -o wide
+
+   Trying... kubectl get replicasets --all-namespaces -o wide
+
+   Trying... kubectl get statefulsets --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get tokenreviews --all-namespaces -o wide
+   Error from server (MethodNotAllowed): the server does not allow this method on the requested resource
+
+   Trying... kubectl get localsubjectaccessreviews --all-namespaces -o wide
+   Error from server (NotFound): Unable to list "authorization.k8s.io/v1, Resource=localsubjectaccessreviews": the server could not find the requested resource
+
+   Trying... kubectl get selfsubjectaccessreviews --all-namespaces -o wide
+   Error from server (MethodNotAllowed): the server does not allow this method on the requested resource
+
+   Trying... kubectl get selfsubjectrulesreviews --all-namespaces -o wide
+   Error from server (MethodNotAllowed): the server does not allow this method on the requested resource
+
+   Trying... kubectl get subjectaccessreviews --all-namespaces -o wide
+   Error from server (MethodNotAllowed): the server does not allow this method on the requested resource
+
+   Trying... kubectl get horizontalpodautoscalers --all-namespaces -o wide
+
+   Trying... kubectl get cronjobs --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get jobs --all-namespaces -o wide
+
+   Trying... kubectl get certificaterequests --all-namespaces -o wide
+
+   Trying... kubectl get certificates --all-namespaces -o wide
+
+   Trying... kubectl get clusterissuers --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get issuers --all-namespaces -o wide
+
+   Trying... kubectl get certificatesigningrequests --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get leases --all-namespaces -o wide
+
+   Trying... kubectl get eniconfigs --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get endpointslices --all-namespaces -o wide
+
+   Trying... kubectl get ingressclassparams --all-namespaces -o wide
+
+   Trying... kubectl get targetgroupbindings --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get events --all-namespaces -o wide
+
+   Trying... kubectl get ingresses --all-namespaces -o wide
+
+   Trying... kubectl get flowschemas --all-namespaces -o wide
+
+   Trying... kubectl get prioritylevelconfigurations --all-namespaces -o wide
+
+   Trying... kubectl get alertmanagers --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get prometheuses --all-namespaces -o wide
+
+   Trying... kubectl get servicemonitors --all-namespaces -o wide
+
+   Trying... kubectl get ingressclasses --all-namespaces -o wide
+
+   Trying... kubectl get ingresses --all-namespaces -o wide
+
+   Trying... kubectl get networkpolicies --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get runtimeclasses --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get poddisruptionbudgets --all-namespaces -o wide
+
+   Trying... kubectl get podsecuritypolicies --all-namespaces -o wide
+   Warning: policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+
+
+   Trying... kubectl get clusterrolebindings --all-namespaces -o wide
+
+   Trying... kubectl get clusterroles --all-namespaces -o wide
+
+   Trying... kubectl get rolebindings --all-namespaces -o wide
+
+   Trying... kubectl get roles --all-namespaces -o wide
+
+   Trying... kubectl get priorityclasses --all-namespaces -o wide
+
+   Trying... kubectl get csidrivers --all-namespaces -o wide
+
+   Trying... kubectl get csinodes --all-namespaces -o wide
+
+   Trying... kubectl get csistoragecapacities --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get storageclasses --all-namespaces -o wide
+
+   Trying... kubectl get volumeattachments --all-namespaces -o wide
+   No resources found
+
+   Trying... kubectl get securitygrouppolicies --all-namespaces -o wide
+   No resources found
+
+   Trying... archive gathered information
+
+      Done... your kubectl command logs are located in
+
+      $(pwd)/eks_kubectl_commands_2022-04-09_1238-EDT.tar.gz
+   ```
