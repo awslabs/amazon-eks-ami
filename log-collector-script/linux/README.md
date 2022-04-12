@@ -118,7 +118,9 @@ At a high level, you run this script on machine with kubectl installed, and scri
 
 ```
 curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/kubectl-collector.sh
-sudo bash kubectl-collector.sh
+sudo bash kubectl-collector.sh 
+#OR (In case above command fails, execute below command by removing#)
+#source kubectl-collector.sh
 ```
 
 Post execution, confirm if that tarball file (it can be .tgz or .tar.gz) was successfully created in the same directory as script execution.
