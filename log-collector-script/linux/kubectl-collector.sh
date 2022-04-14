@@ -12,6 +12,11 @@ try() {
   echo -ne "Trying... $action "
 }
 
+warning() {
+  local reason=$*
+  echo -e "\n\n\tWarning: $reason "
+}
+
 ok() {
   echo
 }
@@ -37,7 +42,7 @@ kubectl_get_specific_resource() {
 
 kubectl_get() {
   object=$1
-  try "kubectl get ${object} --all-namespaces -o wide \n"
+  try "kubectl get ${object} --all-namespaces -o wide"
   kubectl get ${object} --all-namespaces -o wide > ${COLLECT_DIR}/kubectl-get-${object}-${CURRENT_TIME}.log
   ok
 }
@@ -50,7 +55,7 @@ list_get_yaml=(
   'configmap,kube-proxy,kube-system'
   'configmap,kube-proxy-config,kube-system'
   'deployment,coredns,kube-system'
-  'configmap,coredns,kube-system'
+  'configmap,corednskube-system'
 )
 
 # get object for a specific resource in a namespace. Example: kubectl get configmap aws-auth -n kube-system -o yaml
@@ -67,6 +72,8 @@ do
 
       # kubectl_get_specific_resource will get yaml of specific resource. Example: kubectl get daemonset aws-node -n kube-system -o yaml
       kubectl_get_specific_resource $object_type $resource_name $namespace_name
+  else
+    warning "Unable to parse ${each_get_yaml}. Skipped kubectl get YAML configuration for ${each_get_yaml}."
   fi
 done
 
