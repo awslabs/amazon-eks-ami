@@ -55,7 +55,7 @@ list_get_yaml=(
   'configmap,kube-proxy,kube-system'
   'configmap,kube-proxy-config,kube-system'
   'deployment,coredns,kube-system'
-  'configmap,corednskube-system'
+  'configmap,coredns,kube-system'
 )
 
 # get object for a specific resource in a namespace. Example: kubectl get configmap aws-auth -n kube-system -o yaml
