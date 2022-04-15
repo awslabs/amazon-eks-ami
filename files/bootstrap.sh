@@ -301,6 +301,11 @@ if [[ ! -z "${IP_FAMILY}" ]]; then
         echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
         exit 1
   fi
+
+  if [[ "${IP_FAMILY}" == "ipv6" ]] && [[ ! -z "${B64_CLUSTER_CA}" ]] && [[ ! -z "${APISERVER_ENDPOINT}" ]] && [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
+        echo "Service Ipv6 Cidr must be provided when ip-family is specified as IPV6"
+        exit 1
+  fi
 fi
 
 if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
@@ -382,17 +387,13 @@ sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
+if [[ "${IP_FAMILY}" == "ipv6" ]]; then
+      DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
+fi
+
 MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
 
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
-  if [[ "${IP_FAMILY}" == "ipv6" ]]; then
-    if [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
-      echo "Either --service-ipv6-cidr or --cluster-dns-ip must be provided when --ip-family is set to ipv6"
-      exit 1
-    fi
-    DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
-  fi
-
   if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
     #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
     DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
