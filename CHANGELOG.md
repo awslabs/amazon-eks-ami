@@ -1068,6 +1068,37 @@ Binaries used to build these AMIs are published:
 Notable changes:
 * Release 1.20 AMIs
 
+## AMI Release v20210504
+
+* amazon-eks-gpu-node-1.19-v20210504
+* amazon-eks-gpu-node-1.18-v20210504
+* amazon-eks-gpu-node-1.17-v20210504
+* amazon-eks-gpu-node-1.16-v20210504
+* amazon-eks-gpu-node-1.15-v20210504
+* amazon-eks-arm64-node-1.19-v20210504
+* amazon-eks-arm64-node-1.18-v20210504
+* amazon-eks-arm64-node-1.17-v20210504
+* amazon-eks-arm64-node-1.16-v20210504
+* amazon-eks-arm64-node-1.15-v20210504
+* amazon-eks-node-1.19-v20210504
+* amazon-eks-node-1.18-v20210504
+* amazon-eks-node-1.17-v20210504
+* amazon-eks-node-1.16-v20210504
+* amazon-eks-node-1.15-v20210504
+
+Binaries used to build these AMIs are published:
+
+s3://amazon-eks/1.19.6/2021-01-05/
+s3://amazon-eks/1.18.9/2020-11-02/
+s3://amazon-eks/1.17.12/2020-11-02/
+s3://amazon-eks/1.16.15/2020-11-02/
+s3://amazon-eks/1.15.12/2020-11-02/
+
+Notable changes:
+
+* Update Kernel (1.19: 5.4.110-54.189.amzn2.x86_64, 1.18 and below: 4.14.231-173.361.amzn2.x86_64) to address a vulnerability. More information available in [ALAS-2021-1634](https://alas.aws.amazon.com/AL2/ALAS-2021-1634.html)
+* Update Nvidia and Cuda drivers to v460.73.01
+
 ## AMI Release v20210501
 
 * amazon-eks-gpu-node-1.19-v20210501
