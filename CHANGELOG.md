@@ -1,5 +1,42 @@
 # Changelog
 
+### AMI Release v20220406
+* amazon-eks-gpu-node-1.22-v20220406
+* amazon-eks-gpu-node-1.21-v20220406
+* amazon-eks-gpu-node-1.20-v20220406
+* amazon-eks-gpu-node-1.19-v20220406
+* amazon-eks-gpu-node-1.18-v20220406
+* amazon-eks-arm64-node-1.22-v20220406
+* amazon-eks-arm64-node-1.21-v20220406
+* amazon-eks-arm64-node-1.20-v20220406
+* amazon-eks-arm64-node-1.19-v20220406
+* amazon-eks-arm64-node-1.18-v20220406
+* amazon-eks-node-1.22-v20220406
+* amazon-eks-node-1.21-v20220406
+* amazon-eks-node-1.20-v20220406
+* amazon-eks-node-1.19-v20220406
+* amazon-eks-node-1.18-v20220406
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.22.6/2022-03-09/
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+* s3://amazon-eks/1.18.20/2021-09-02/
+
+AMI details:
+* kernel: 5.4.181-99.354.amzn2 (1.19 and above), 4.14.268-205.500.amzn2 (1.18 and below)
+* dockerd: 20.10.13-2.amzn2
+* containerd: 1.4.13-2.amzn2.0.1
+* runc: 1.0.3-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.0.1124.0
+
+Notable changes:
+- Patches for [CVE-2022-24769](https://nvd.nist.gov/vuln/detail/CVE-2022-24769) have been included.
+- The bootstrap script will auto-discover maxPods values when instanceType is missing in eni-max-pods.txt
+
 ### AMI Release v20220317
 * amazon-eks-gpu-node-1.22-v20220317
 * amazon-eks-gpu-node-1.21-v20220317
