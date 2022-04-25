@@ -332,7 +332,7 @@ PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### fix DNS resolution in 18.04
 
-ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+rm etc/resolv.conf && ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 ### kubelet kubeconfig
 
