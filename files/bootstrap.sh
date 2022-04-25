@@ -506,8 +506,6 @@ fi
 
 
 systemctl enable kubelet
-systemctl enable kubelet-monitor
-systemctl enable kube-container-runtime-monitor
 systemctl start kubelet
 
 # gpu boost clock
