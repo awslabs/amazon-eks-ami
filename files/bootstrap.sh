@@ -29,6 +29,7 @@ function print_help {
     echo "--container-runtime Specify a container runtime (default: dockerd)"
     echo "--ip-family Specify ip family of the cluster"
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
+    echo "--kubelet-enabled [EXPERIMENTAL] enable the kubelet at the end of bootstrapping (default: true). May be removed in the future."
 }
 
 POSITIONAL=()
@@ -105,6 +106,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --kubelet-enabled)
+            KUBELET_ENABLED=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -130,6 +136,7 @@ PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
+KUBELET_ENABLED="${KUBELET_ENABLED:-true}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -503,9 +510,10 @@ else
     exit 1
 fi
 
-
-systemctl enable kubelet
-systemctl start kubelet
+if [[ "$KUBELET_ENABLED" = "true" ]]; then
+    systemctl enable kubelet
+    systemctl start kubelet
+fi
 
 # gpu boost clock
 if  command -v nvidia-smi &>/dev/null ; then
