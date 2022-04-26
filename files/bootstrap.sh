@@ -330,10 +330,6 @@ PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_
 PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
-### fix DNS resolution in 18.04
-
-rm etc/resolv.conf && ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
-
 ### kubelet kubeconfig
 
 CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
