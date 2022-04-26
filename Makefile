@@ -53,10 +53,6 @@ k8s: validate
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-.PHONY: 1.18
-1.18:
-	$(MAKE) k8s kubernetes_version=1.18.20 kubernetes_build_date=2021-09-02 pull_cni_from_github=true
-
 .PHONY: 1.19
 1.19:
 	$(MAKE) k8s kubernetes_version=1.19.15 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
