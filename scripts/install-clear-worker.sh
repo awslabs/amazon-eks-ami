@@ -45,6 +45,16 @@ else
     exit 1
 fi
 
+ARCH=$(uname -m)
+if [ "$MACHINE" == "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$MACHINE" == "aarch64" ]; then
+    ARCH="arm64"
+else
+    echo "Unknown machine architecture '$MACHINE'" >&2
+    exit 1
+fi
+
 ################################################################################
 ### Packages ###################################################################
 ################################################################################
@@ -136,13 +146,18 @@ for dependency in ${RPM_DEPENDENCIES[*]} ; do
     rpm -ivh --nodeps /tmp/"$RPM_FILENAME"
 done
 
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
+
 ################################################################################
 ### Time #######################################################################
 ################################################################################
 
 # Make sure Amazon Time Sync Service starts on boot.
 systemctl enable chronyd
+systemctl start chronyd
 
+# Touch chronyd config file
 touch /etc/chrony.conf
 
 # Make sure that chronyd syncs RTC clock to the kernel.
@@ -223,6 +238,8 @@ EOF
 
 # kubelet uses journald which has built-in rotation and capped size.
 # See man 5 journald.conf
+
+mkdir -p /etc/logrotate.d/
 mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
 mv $TEMPLATE_DIR/logrotate.conf /etc/logrotate.conf
 chown root:root /etc/logrotate.d/kube-proxy
@@ -254,6 +271,7 @@ BINARIES=(
     kubelet
     aws-iam-authenticator
 )
+
 for binary in ${BINARIES[*]} ; do
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
@@ -290,6 +308,7 @@ else
     fi
     sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
 fi
+
 tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
 rm "${CNI_PLUGIN_FILENAME}.tgz"
 
@@ -322,6 +341,7 @@ mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 sudo systemctl daemon-reload
+
 # Disable the kubelet until the proper dropins have been configured
 sudo systemctl disable kubelet
 
@@ -356,6 +376,7 @@ if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
         echo "AWS cli missing - using wget to fetch ecr-credential-provider binaries from s3. Note: This won't work for private bucket."
         wget "$S3_URL_BASE/$ECR_BINARY"
     fi
+
     chmod +x $ECR_BINARY
     mkdir -p /etc/eks/ecr-credential-provider
     mv $ECR_BINARY /etc/eks/ecr-credential-provider
@@ -370,12 +391,14 @@ fi
 ################################################################################
 
 BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
+
 cat <<EOF > /tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
 ARCH="$(uname -m)"
 EOF
+
 mv /tmp/release /etc/eks/release
 chown -R root:root /etc/eks
 
@@ -402,6 +425,8 @@ echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 ################################################################################
 ### Cleanup ####################################################################
 ################################################################################
+
+systemctl enable kubelet
 
 CLEANUP_IMAGE="${CLEANUP_IMAGE:-true}"
 if [[ "$CLEANUP_IMAGE" == "true" ]]; then
