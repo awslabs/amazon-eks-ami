@@ -1,5 +1,38 @@
 # Changelog
 
+### AMI Release v20220429
+* amazon-eks-gpu-node-1.22-v20220429
+* amazon-eks-gpu-node-1.21-v20220429
+* amazon-eks-gpu-node-1.20-v20220429
+* amazon-eks-gpu-node-1.19-v20220429
+* amazon-eks-arm64-node-1.22-v20220429
+* amazon-eks-arm64-node-1.21-v20220429
+* amazon-eks-arm64-node-1.20-v20220429
+* amazon-eks-arm64-node-1.19-v20220429
+* amazon-eks-node-1.22-v20220429
+* amazon-eks-node-1.21-v20220429
+* amazon-eks-node-1.20-v20220429
+* amazon-eks-node-1.19-v20220429
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.22.6/2022-03-09/
+* s3://amazon-eks/1.21.5/2021-11-10/
+* s3://amazon-eks/1.20.11/2021-11-10/
+* s3://amazon-eks/1.19.15/2021-11-10/
+
+AMI details:
+* kernel: 5.4.188-104.359.amzn2
+* dockerd: 20.10.13-2.amzn2
+* containerd: 1.4.13-2.amzn2.0.1
+* runc: 1.0.3-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1188.0-1.amzn2
+
+Notable changes:
+* Added c7g support
+* [When replaying user-data in testing will bail user-data when strict due to moving files](https://github.com/awslabs/amazon-eks-ami/pull/893/files)
+
 ### AMI Release v20220421
 * amazon-eks-gpu-node-1.22-v20220421
 * amazon-eks-gpu-node-1.21-v20220421
