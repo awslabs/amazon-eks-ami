@@ -467,9 +467,9 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
     sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
-    sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
-    sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
-    sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
+    sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
     ln -sf /run/containerd/containerd.sock /run/dockershim.sock
@@ -482,7 +482,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-    mv /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
+    cp -v /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
     sudo chown root:root /etc/systemd/system/iptables-restore.service
     systemctl daemon-reload
     systemctl enable iptables-restore
