@@ -34,4 +34,6 @@ else
     exit 1
 fi
 
+# --count=1 here means "only leave 1 kernel version installed"
+sudo package-cleanup --oldkernels --count=1 -y
 sudo reboot
