@@ -66,7 +66,11 @@ sudo yum install -y \
     socat \
     unzip \
     wget \
-    yum-plugin-versionlock
+    yum-plugin-versionlock \
+    yum-utils
+
+# Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
+sudo package-cleanup --oldkernels --count=1 -y
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
@@ -111,7 +115,7 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ### Docker #####################################################################
 ################################################################################
 
-sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+sudo yum install -y device-mapper-persistent-data lvm2
 
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
