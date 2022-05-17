@@ -466,13 +466,17 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
+    mkdir -p /etc/systemd/system/containerd.service.d
+    cat <<EOF > /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
+[Service]
+ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
+EOF
     sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
     sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
     sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
     sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
-    ln -sf /run/containerd/containerd.sock /run/dockershim.sock
     systemctl daemon-reload
     systemctl enable containerd
     systemctl restart containerd
