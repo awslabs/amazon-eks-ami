@@ -1,5 +1,22 @@
 # Changelog
 
+### [Recalled] AMI Release v20220513
+* amazon-eks-gpu-node-1.22-v20220513
+* amazon-eks-gpu-node-1.21-v20220513
+* amazon-eks-gpu-node-1.20-v20220513
+* amazon-eks-gpu-node-1.19-v20220513
+* amazon-eks-arm64-node-1.22-v20220513
+* amazon-eks-arm64-node-1.21-v20220513
+* amazon-eks-arm64-node-1.20-v20220513
+* amazon-eks-arm64-node-1.19-v20220513
+* amazon-eks-node-1.22-v20220513
+* amazon-eks-node-1.21-v20220513
+* amazon-eks-node-1.20-v20220513
+* amazon-eks-node-1.19-v20220513
+
+Notice:
+* EKS-Optimized AMI SSM parameters contained an incorrect reference to the release version of the AMIs in this release.
+
 ### AMI Release v20220429
 * amazon-eks-gpu-node-1.22-v20220429
 * amazon-eks-gpu-node-1.21-v20220429
