@@ -175,6 +175,14 @@ overlay
 br_netfilter
 EOF
 
+cat <<EOF | sudo tee -a /etc/modules-load.d/ipvs.conf
+ip_vs_nq
+ip_vs_dh
+ip_vs_sh
+ip_vs_sed
+ip_vs_lc
+EOF
+
 cat <<EOF | sudo tee -a /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
