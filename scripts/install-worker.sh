@@ -63,6 +63,7 @@ sudo yum install -y \
     ipvsadm \
     jq \
     nfs-utils \
+    iscsi-initiator-utils \
     socat \
     unzip \
     wget \
