@@ -23,6 +23,7 @@ function print_help {
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+    echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
     echo "--pause-container-account The AWS account (number) to pull the pause container from"
     echo "--pause-container-version The tag of the pause container"
@@ -72,6 +73,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --docker-config-json)
             DOCKER_CONFIG_JSON=$2
+            shift
+            shift
+            ;;
+        --containerd-config-file)
+            CONTAINERD_CONFIG_FILE=$2
             shift
             shift
             ;;
@@ -126,6 +132,7 @@ KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
+CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
@@ -471,6 +478,9 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
 [Service]
 ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
 EOF
+    if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
+        sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
+    fi
     sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
     sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
     sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
