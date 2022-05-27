@@ -320,7 +320,7 @@ get_common_logs() {
   for entry in ${COMMON_LOGS[*]}; do
     if [[ -e "/var/log/${entry}" ]]; then
         if [[ "${entry}" == "messages" ]]; then
-          tail -c 10M /var/log/messages > "${COLLECT_DIR}"/var_log/messages
+          cat /var/log/messages > "${COLLECT_DIR}"/var_log/messages
           continue
         fi
         if [[ "${entry}" == "containers" ]]; then
