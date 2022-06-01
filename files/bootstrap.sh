@@ -24,6 +24,7 @@ function print_help {
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+    echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
     echo "--pause-container-account The AWS account (number) to pull the pause container from"
     echo "--pause-container-version The tag of the pause container"
@@ -81,6 +82,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --containerd-config-file)
+            CONTAINERD_CONFIG_FILE=$2
+            shift
+            shift
+            ;;
         --pause-container-account)
             PAUSE_CONTAINER_ACCOUNT=$2
             shift
@@ -132,6 +138,7 @@ KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
+CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
@@ -160,6 +167,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
+    ap-southeast-3)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -434,8 +443,11 @@ set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-    exit 1
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
+    # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
+    # the PrefixDelegation based alternative and is likely to be in-use by more customers.
+    # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve
@@ -467,23 +479,30 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
-    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml  
-    sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
-    sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
-    sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
+    mkdir -p /etc/systemd/system/containerd.service.d
+    cat <<EOF > /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
+[Service]
+ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
+EOF
+    if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
+        sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
+    fi
+    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
+    sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
-    ln -sf /run/containerd/containerd.sock /run/dockershim.sock
     systemctl daemon-reload
     systemctl enable containerd
     systemctl restart containerd
     systemctl enable sandbox-image
     systemctl start sandbox-image
-    
+
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-    mv /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
+    cp -v /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
     sudo chown root:root /etc/systemd/system/iptables-restore.service
     systemctl daemon-reload
     systemctl enable iptables-restore

@@ -11,21 +11,26 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2022-02-15T18:47:49Z
+# This file was generated at 2022-05-09T10:14:37-07:00
 #
 # The regions queried were:
+# - af-south-1
+# - ap-east-1
 # - ap-northeast-1
 # - ap-northeast-2
 # - ap-northeast-3
 # - ap-south-1
 # - ap-southeast-1
 # - ap-southeast-2
+# - ap-southeast-3
 # - ca-central-1
 # - eu-central-1
 # - eu-north-1
+# - eu-south-1
 # - eu-west-1
 # - eu-west-2
 # - eu-west-3
+# - me-south-1
 # - sa-east-1
 # - us-east-1
 # - us-east-2
@@ -110,6 +115,7 @@ c6a.48xlarge 737
 c6a.4xlarge 234
 c6a.8xlarge 234
 c6a.large 29
+c6a.metal 737
 c6a.xlarge 58
 c6g.12xlarge 234
 c6g.16xlarge 737
@@ -147,6 +153,15 @@ c6i.8xlarge 234
 c6i.large 29
 c6i.metal 737
 c6i.xlarge 58
+c7g.12xlarge 234
+c7g.16xlarge 737
+c7g.2xlarge 58
+c7g.4xlarge 234
+c7g.8xlarge 234
+c7g.large 29
+c7g.medium 8
+c7g.metal 737
+c7g.xlarge 58
 cc2.8xlarge 234
 cr1.8xlarge 234
 d2.2xlarge 58
@@ -224,6 +239,13 @@ i3en.6xlarge 234
 i3en.large 29
 i3en.metal 737
 i3en.xlarge 58
+i4i.16xlarge 737
+i4i.2xlarge 58
+i4i.32xlarge 737
+i4i.4xlarge 234
+i4i.8xlarge 234
+i4i.large 29
+i4i.xlarge 58
 im4gn.16xlarge 737
 im4gn.2xlarge 58
 im4gn.4xlarge 234
@@ -325,6 +347,7 @@ m6a.48xlarge 737
 m6a.4xlarge 234
 m6a.8xlarge 234
 m6a.large 29
+m6a.metal 737
 m6a.xlarge 58
 m6g.12xlarge 234
 m6g.16xlarge 737
@@ -522,6 +545,18 @@ x2gd.large 29
 x2gd.medium 8
 x2gd.metal 737
 x2gd.xlarge 58
+x2idn.16xlarge 737
+x2idn.24xlarge 737
+x2idn.32xlarge 737
+x2idn.metal 737
+x2iedn.16xlarge 737
+x2iedn.24xlarge 737
+x2iedn.2xlarge 58
+x2iedn.32xlarge 737
+x2iedn.4xlarge 234
+x2iedn.8xlarge 234
+x2iedn.metal 737
+x2iedn.xlarge 58
 x2iezn.12xlarge 737
 x2iezn.2xlarge 58
 x2iezn.4xlarge 234
