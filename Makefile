@@ -29,7 +29,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.19 1.20 1.21 1.22
+all: 1.19 1.20 1.21 1.22 1.23
 
 .PHONY: validate
 validate:
@@ -57,3 +57,7 @@ k8s: validate
 .PHONY: 1.22
 1.22:
 	$(MAKE) k8s kubernetes_version=1.22.6 kubernetes_build_date=2022-03-09 pull_cni_from_github=true
+
+.PHONY: 1.23
+1.23:
+	$(MAKE) k8s kubernetes_version=1.23.6 kubernetes_build_date=2022-06-01 pull_cni_from_github=true
