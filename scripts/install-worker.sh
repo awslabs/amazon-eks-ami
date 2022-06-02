@@ -159,7 +159,7 @@ else
     sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
 fi
 
-if [[ ! $KUBERNETES_VERSION =~ "1.19"* || ! $KUBERNETES_VERSION =~ "1.20"* || ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     # enable CredentialProviders features in kubelet-containerd service file
     IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n   --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
     sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet-containerd.service
@@ -272,7 +272,7 @@ if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
     echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $TEMPLATE_DIR/kubelet-config.json
 fi
 
-if [[ ! $KUBERNETES_VERSION =~ "1.19"* || ! $KUBERNETES_VERSION =~ "1.20"* || ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     # enable CredentialProviders feature flags in kubelet service file
     IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n    --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
     sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet.service
@@ -311,7 +311,7 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-if [[ ! $KUBERNETES_VERSION =~ "1.19"* || ! $KUBERNETES_VERSION =~ "1.20"* || ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     ECR_BINARY="ecr-credential-provider"
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
