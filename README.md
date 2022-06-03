@@ -91,6 +91,104 @@ Provisioner](https://www.packer.io/docs/provisioners/shell.html) runs the
 necessary configuration tasks.  Then, Packer creates an AMI from the instance
 and terminates the instance after the AMI is created.
 
+### Container Image Caching
+
+Optionally, some container images can be cached during the AMI build process in order to reduce the latency of the node getting to a `Ready` state when launched. 
+
+To turn on container image caching:
+
+```
+cache_container_images=true make 1.23
+```
+
+When container image caching is enabled, the following images are cached:
+ - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-eksbuild.<BUILD_VERSION>
+ - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-minimal-eksbuild.<BUILD_VERSION>
+ - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/pause:3.5
+ - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni-init:<default and latest>
+ - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni:<default and latest>
+
+The account ID can be different depending on the region and partition you are building the AMI in. See [here](https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html) for more details.
+
+Since the VPC CNI is not versioned with K8s itself, the latest version of the VPC CNI and the default version, based on the response from the EKS DescribeAddonVersions at the time of the AMI build, will be cached. 
+
+The images listed above are also tagged with each region in the partition the AMI is built in, since images are often built in one region and copied to others within the same partition. Images that are available to pull from an ECR FIPS endpoint are also tagged as such (i.e. `602401143452.dkr.ecr-fips.us-east-1.amazonaws.com/eks/pause:3.5`).
+
+When listing images on a node, you'll notice a long list of images. However, most of these images are simply tagged in different ways with no storage overhead. Images cached in the AMI total around 1.0 GiB. In general, a node with no images cached using the VPC CNI will use around 500 MiB of images when in a `Ready` state with no other pods running on the node.
+
+### IAM Permissions
+
+To build the EKS Optimized AMI, you will need the following permissions:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachVolume",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CopyImage",
+                "ec2:CreateImage",
+                "ec2:CreateKeypair",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateSnapshot",
+                "ec2:CreateTags",
+                "ec2:CreateVolume",
+                "ec2:DeleteKeyPair",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DeleteSnapshot",
+                "ec2:DeleteVolume",
+                "ec2:DeregisterImage",
+                "ec2:DescribeImageAttribute",
+                "ec2:DescribeImages",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeRegions",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSnapshots",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags",
+                "ec2:DescribeVolumes",
+                "ec2:DetachVolume",
+                "ec2:GetPasswordData",
+                "ec2:ModifyImageAttribute",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:ModifySnapshotAttribute",
+                "ec2:RegisterImage",
+                "ec2:RunInstances",
+                "ec2:StopInstances",
+                "ec2:TerminateInstances",
+                "eks:DescribeAddonVersions",
+                "ecr:GetAuthorizationToken"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer"
+            ],
+            "Resource": "arn:aws:ecr:us-west-2:602401143452:repository/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": "arn:aws:s3:::amazon-eks/*"
+        }
+    ]
+}
+```
+
+You will need to use the region you are building the AMI in to specify the ECR repository resource in the second IAM statement. You may also need to change the account if you are building the AMI in a different partition or special region. You can see a mapping of regions to account ID [here](https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html).
+If you're using a custom s3 bucket to vend different K8s binaries, you will need to change the resource in the third IAM statement above to reference your custom bucket.
+For more information about the permissions required by Packer with different configurations, see the [docs](https://www.packer.io/plugins/builders/amazon#iam-task-or-instance-role).
+
 ## Using the AMI
 
 If you are just getting started with Amazon EKS, we recommend that you follow
