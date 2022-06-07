@@ -70,7 +70,11 @@ sudo yum install -y \
     vim \
     ipvsadm \
     yum-plugin-versionlock \
-    yum-cron
+    yum-cron \
+    yum-utils
+
+# Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
+sudo package-cleanup --oldkernels --count=1 -y
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
@@ -115,12 +119,12 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ### Docker #####################################################################
 ################################################################################
 
-sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+sudo yum install -y device-mapper-persistent-data lvm2
 
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo amazon-linux-extras enable docker
-    sudo groupadd -fog 1950 docker
+    sudo groupadd -og 1950 docker
     sudo useradd --gid $(getent group docker | cut -d: -f3) docker
 
     # install runc and lock version
@@ -159,7 +163,7 @@ else
     sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
 fi
 
-if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     # enable CredentialProviders features in kubelet-containerd service file
     IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n   --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
     sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet-containerd.service
@@ -272,7 +276,7 @@ if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
     echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $TEMPLATE_DIR/kubelet-config.json
 fi
 
-if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     # enable CredentialProviders feature flags in kubelet service file
     IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n    --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
     sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet.service
@@ -311,7 +315,7 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-if [[ $KUBERNETES_VERSION == "1.22"* ]]; then
+if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     ECR_BINARY="ecr-credential-provider"
     if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
         echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
