@@ -1,18 +1,18 @@
 # Changelog
 
-### AMI Release 20220526
-* amazon-eks-gpu-node-1.22-20220526
-* amazon-eks-gpu-node-1.21-20220526
-* amazon-eks-gpu-node-1.20-20220526
-* amazon-eks-gpu-node-1.19-20220526
-* amazon-eks-arm64-node-1.22-20220526
-* amazon-eks-arm64-node-1.21-20220526
-* amazon-eks-arm64-node-1.20-20220526
-* amazon-eks-arm64-node-1.19-20220526
-* amazon-eks-node-1.22-20220526
-* amazon-eks-node-1.21-20220526
-* amazon-eks-node-1.20-20220526
-* amazon-eks-node-1.19-20220526
+### AMI Release v20220526
+* amazon-eks-gpu-node-1.22-v20220526
+* amazon-eks-gpu-node-1.21-v20220526
+* amazon-eks-gpu-node-1.20-v20220526
+* amazon-eks-gpu-node-1.19-v20220526
+* amazon-eks-arm64-node-1.22-v20220526
+* amazon-eks-arm64-node-1.21-v20220526
+* amazon-eks-arm64-node-1.20-v20220526
+* amazon-eks-arm64-node-1.19-v20220526
+* amazon-eks-node-1.22-v20220526
+* amazon-eks-node-1.21-v20220526
+* amazon-eks-node-1.20-v20220526
+* amazon-eks-node-1.19-v20220526
 
 Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.22.6/2022-03-09/
@@ -32,19 +32,19 @@ AMI details:
 Notable changes:
 Linux kernel upgraded to 5.4.190-107.353.
 
-### AMI Release 20220523
-* amazon-eks-gpu-node-1.22-20220523
-* amazon-eks-gpu-node-1.21-20220523
-* amazon-eks-gpu-node-1.20-20220523
-* amazon-eks-gpu-node-1.19-20220523
-* amazon-eks-arm64-node-1.22-20220523
-* amazon-eks-arm64-node-1.21-20220523
-* amazon-eks-arm64-node-1.20-20220523
-* amazon-eks-arm64-node-1.19-20220523
-* amazon-eks-node-1.22-20220523
-* amazon-eks-node-1.21-20220523
-* amazon-eks-node-1.20-20220523
-* amazon-eks-node-1.19-20220523
+### AMI Release v20220523
+* amazon-eks-gpu-node-1.22-v20220523
+* amazon-eks-gpu-node-1.21-v20220523
+* amazon-eks-gpu-node-1.20-v20220523
+* amazon-eks-gpu-node-1.19-v20220523
+* amazon-eks-arm64-node-1.22-v20220523
+* amazon-eks-arm64-node-1.21-v20220523
+* amazon-eks-arm64-node-1.20-v20220523
+* amazon-eks-arm64-node-1.19-v20220523
+* amazon-eks-node-1.22-v20220523
+* amazon-eks-node-1.21-v20220523
+* amazon-eks-node-1.20-v20220523
+* amazon-eks-node-1.19-v20220523
 
 Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.22.6/2022-03-09/
