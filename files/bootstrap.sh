@@ -30,6 +30,7 @@ function print_help {
     echo "--container-runtime Specify a container runtime (default: dockerd)"
     echo "--ip-family Specify ip family of the cluster"
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
+    echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"    
 }
 
 POSITIONAL=()
@@ -111,6 +112,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --enable-local-outpost)
+            ENABLE_LOCAL_OUTPOST=$2
+            shift
+            shift
+            ;; 
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -137,6 +143,7 @@ PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
+ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -360,7 +367,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
             --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, serviceIpv4Cidr: kubernetesNetworkConfig.serviceIpv4Cidr, serviceIpv6Cidr: kubernetesNetworkConfig.serviceIpv6Cidr, clusterIpFamily: kubernetesNetworkConfig.ipFamily}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, serviceIpv4Cidr: kubernetesNetworkConfig.serviceIpv4Cidr, serviceIpv6Cidr: kubernetesNetworkConfig.serviceIpv6Cidr, clusterIpFamily: kubernetesNetworkConfig.ipFamily, outpostArn: outpostConfig.outpostArns[0], id: id}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
         if [[ $rc -eq 0 ]]; then
             break
         fi
@@ -373,11 +380,20 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
-    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
-    SERVICE_IPV6_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $5}')
+    CLUSTER_ID=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
+    OUTPOST_ARN=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $5}')
+    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $6}')
+    SERVICE_IPV6_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $7}')
 
     if [[ -z "${IP_FAMILY}" ]]; then
       IP_FAMILY=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
+    fi
+
+    # Automatically detect local cluster in outpost
+    if [[ -z "${OUTPOST_ARN}" ]] || [[ "${OUTPOST_ARN}" == "None" ]]; then
+        IS_LOCAL_OUTPOST_DETECTED=false
+    else
+        IS_LOCAL_OUTPOST_DETECTED=true
     fi
 fi
 
@@ -389,9 +405,43 @@ fi
 
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
-sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
+
+if [[ -z "$ENABLE_LOCAL_OUTPOST" ]]; then
+    # Only when "--enable-local-outpost" option is not set explicity on calling bootstrap.sh, it will be assigned with 
+    #    - the result of auto-detectection through describe-cluster
+    #    - or "false" when describe-cluster is bypassed.
+    #  This also means if "--enable-local-outpost" option is set explicity, it will override auto-detection result
+    ENABLE_LOCAL_OUTPOST="${IS_LOCAL_OUTPOST_DETECTED:-false}"    
+fi
+
+### To support worker nodes to continue to communicate and connect to local cluster even when the Outpost 
+### is disconnected from the parent AWS Region, the following specific setup are required:
+###    - append entries to /etc/hosts with the mappings of control plane host IP address and API server 
+###      domain name. So that the domain name can be resolved to IP addresses locally.
+###    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client 
+###      X.509 certificate and generate kubelet kubeconfig file which uses the cleint cert. So that the 
+###      worker node can be authentiacated through X.509 certificate which works for both connected and 
+####     disconnected state.
+if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
+    ### append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
+    DOMAIN_NAME=$(echo "$APISERVER_ENDPOINT" | awk -F/ '{print $3}' | awk -F: '{print $1}')
+    getent hosts "$DOMAIN_NAME" | shuf >> /etc/hosts
+
+    ### kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
+    ###   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
+    ###   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
+    CLUSTER_ID="${CLUSTER_ID:-$CLUSTER_NAME}" 
+    sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
+
+    ### use aws-iam-authenticator as bootstrap auth and download X.509 cert used in kubelet kubeconfig
+    mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
+    KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
+else
+    sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
+fi
+
 ### kubelet.service configuration
 
 if [[ "${IP_FAMILY}" == "ipv6" ]]; then
