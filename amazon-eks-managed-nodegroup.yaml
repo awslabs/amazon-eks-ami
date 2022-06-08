@@ -1,0 +1,317 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create EKS Managed Nodes with option to disable Source/Destination Check on Workers
+
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: EKS Cluster
+        Parameters:
+          - ClusterName
+          - ClusterControlPlaneSecurityGroup
+      - Label:
+          default: Worker Node Configuration
+        Parameters:
+          - KeyName
+          - NodeAutoScalingGroupDesiredCapacity
+          - NodeAutoScalingGroupMaxSize
+          - NodeAutoScalingGroupMinSize
+          - NodeGroupName
+          - NodeInstanceType
+          - NodeVolumeSize
+      - Label: 
+          default: Network Configuration
+        Parameters:
+           - Subnets
+           - VpcId
+
+Parameters:
+  ClusterControlPlaneSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup::Id"
+    Description: The security group of the cluster control plane.
+
+  ClusterName:
+    Type: String
+    Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
+
+  KeyName:
+    Type: "AWS::EC2::KeyPair::KeyName"
+    Description: The EC2 Key Pair to allow SSH access to the instances
+
+  NodeAutoScalingGroupDesiredCapacity:
+    Type: Number
+    Default: 2
+    Description: Desired capacity of Node Group ASG.
+
+  NodeAutoScalingGroupMaxSize:
+    Type: Number
+    Default: 3
+    Description: Maximum size of Node Group ASG. Set to at least 1 greater than NodeAutoScalingGroupDesiredCapacity.
+
+  NodeAutoScalingGroupMinSize:
+    Type: Number
+    Default: 1
+    Description: Minimum size of Node Group ASG.
+
+  NodeGroupName:
+    Type: String
+    Description: Unique identifier for the Node Group.
+
+  NodeInstanceType:
+    Type: String
+    Default: t3.medium
+    Description: EC2 instance type for the node instances
+
+  NodeVolumeSize:
+    Type: Number
+    Default: 30
+    Description: Node volume size
+
+  Subnets:
+    Type: "List<AWS::EC2::Subnet::Id>"
+    Description: The subnets where workers can be created.
+
+  VpcId:
+    Type: "AWS::EC2::VPC::Id"
+    Description: The VPC of the worker instances
+
+  DisableSourceDestinationCheck:
+    Type: String
+    Default: "false"
+    AllowedValues:
+      - "false"
+      - "true"  
+
+Conditions:
+  SourceDestinationCheck:
+    "Fn::Equals":
+      - !Ref DisableSourceDestinationCheck
+      - "true"   
+
+Mappings:
+  ServicePrincipalPartitionMap:
+    aws:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-cn:
+      EC2: ec2.amazonaws.com.cn
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+    aws-us-gov:
+      EC2: ec2.amazonaws.com
+      EKS: eks.amazonaws.com
+      EKSFargatePods: eks-fargate-pods.amazonaws.com
+
+Resources:
+  NodeSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for all nodes in the cluster
+      Tags:
+        - Key: !Sub kubernetes.io/cluster/${ClusterName}
+          Value: owned
+      VpcId: !Ref VpcId
+
+  NodeSecurityGroupIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow node to communicate with each other
+      FromPort: 0
+      GroupId: !Ref NodeSecurityGroup
+      IpProtocol: "-1"
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      ToPort: 65535
+
+  ClusterControlPlaneSecurityGroupIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow pods to communicate with the cluster API Server
+      FromPort: 443
+      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref NodeSecurityGroup
+      ToPort: 443
+
+  ControlPlaneEgressToNodeSecurityGroup:
+    Type: "AWS::EC2::SecurityGroupEgress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow the cluster control plane to communicate with worker Kubelet and pods
+      DestinationSecurityGroupId: !Ref NodeSecurityGroup
+      FromPort: 1025
+      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      IpProtocol: tcp
+      ToPort: 65535
+
+  ControlPlaneEgressToNodeSecurityGroupOn443:
+    Type: "AWS::EC2::SecurityGroupEgress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
+      DestinationSecurityGroupId: !Ref NodeSecurityGroup
+      FromPort: 443
+      GroupId: !Ref ClusterControlPlaneSecurityGroup
+      IpProtocol: tcp
+      ToPort: 443
+
+  NodeSecurityGroupFromControlPlaneIngress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
+      FromPort: 1025
+      GroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+      ToPort: 65535
+
+  NodeSecurityGroupFromControlPlaneOn443Ingress:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    DependsOn: NodeSecurityGroup
+    Properties:
+      Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
+      FromPort: 443
+      GroupId: !Ref NodeSecurityGroup
+      IpProtocol: tcp
+      SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+      ToPort: 443
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        BlockDeviceMappings:
+        - DeviceName: "/dev/xvda"
+          Ebs:
+          #  Iops: 3000
+          #  Throughput: 125
+          #  Encrypted: true
+            VolumeSize: !Ref NodeVolumeSize
+            VolumeType: gp3
+        MetadataOptions:
+          HttpPutResponseHopLimit: 2
+          HttpTokens: optional
+        SecurityGroupIds:
+        - !Ref NodeSecurityGroup
+        KeyName: !Ref KeyName   
+        TagSpecifications:
+        - ResourceType: instance
+          Tags:
+          - Key: Name
+            Value: !Sub ${ClusterName}-${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-name
+            Value: !Sub ${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-type
+            Value: managed
+        - ResourceType: volume
+          Tags:
+          - Key: Name
+            Value: !Sub ${ClusterName}-${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-name
+            Value: !Sub ${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-type
+            Value: managed
+        - ResourceType: network-interface
+          Tags:
+          - Key: Name
+            Value: !Sub ${ClusterName}-${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-name
+            Value: !Sub ${NodeGroupName}
+          - Key: alpha.eksctl.io/nodegroup-type
+            Value: managed
+        UserData: !If
+          - SourceDestinationCheck
+          - "TUlNRS1WZXJzaW9uOiAxLjANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOyBib3VuZGFyeT0iLy8iDQoNCi0tLy8NCkNvbnRlbnQtVHlwZTogdGV4dC94LXNoZWxsc2NyaXB0OyBjaGFyc2V0PSJ1cy1hc2NpaSINCiMhL2Jpbi9iYXNoDQoNCkVDMl9JTlNUQU5DRV9JRD0iYGN1cmwgLXMgaHR0cDovLzE2OS4yNTQuMTY5LjI1NC9sYXRlc3QvbWV0YS1kYXRhL2luc3RhbmNlLWlkYCINClJFR0lPTj1gY3VybCAtcyBodHRwOi8vMTY5LjI1NC4xNjkuMjU0L2xhdGVzdC9keW5hbWljL2luc3RhbmNlLWlkZW50aXR5L2RvY3VtZW50IHwganEgLnJlZ2lvbiAtcmANCmF3cyBlYzIgbW9kaWZ5LWluc3RhbmNlLWF0dHJpYnV0ZSAtLW5vLXNvdXJjZS1kZXN0LWNoZWNrIC0taW5zdGFuY2UtaWQgJEVDMl9JTlNUQU5DRV9JRCAtLXJlZ2lvbiAkUkVHSU9ODQotLS8vLS0="
+          - !Ref "AWS::NoValue"
+      LaunchTemplateName:
+        Fn::Sub: "${AWS::StackName}"
+#---------------------------------------------------------------
+#Base64 (MIME) decoded value from UserData above - for reference
+#MIME-Version: 1.0
+#Content-Type: multipart/mixed; boundary="//"
+#
+#--//
+#Content-Type: text/x-shellscript; charset="us-ascii"
+##!/bin/bash
+
+#EC2_INSTANCE_ID="`curl -s http://169.254.169.254/latest/meta-data/instance-id`"
+#REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r`
+#aws ec2 modify-instance-attribute --no-source-dest-check --instance-id $EC2_INSTANCE_ID --region $REGION
+#--//--
+#---------------------------------------------------------------
+  ManagedNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      AmiType: AL2_x86_64        
+      ClusterName: !Ref ClusterName
+      InstanceTypes:
+      - !Ref NodeInstanceType
+      Labels:
+        alpha.eksctl.io/cluster-name: !Ref ClusterName
+        alpha.eksctl.io/nodegroup-name: !Ref NodeGroupName
+      LaunchTemplate:
+        Id:
+          Ref: LaunchTemplate
+      NodeRole:
+        Fn::GetAtt:
+        - NodeInstanceRole
+        - Arn
+      NodegroupName: !Ref NodeGroupName
+      ScalingConfig:
+        DesiredSize: !Ref NodeAutoScalingGroupDesiredCapacity
+        MaxSize: !Ref NodeAutoScalingGroupMaxSize
+        MinSize: !Ref NodeAutoScalingGroupMinSize
+      Subnets: !Ref Subnets
+      Tags:
+        alpha.eksctl.io/nodegroup-name: !Ref NodeGroupName
+        alpha.eksctl.io/nodegroup-type: managed
+  NodeInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - Fn::FindInMap:
+              - ServicePrincipalPartitionMap
+              - Ref: AWS::Partition
+              - EC2
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy
+      - Fn::Sub: arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Path: "/"
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: "${AWS::StackName}/NodeInstanceRole"
+  RolePolicies:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: "ModifyEC2attribute"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "ec2:ModifyInstanceAttribute"
+            Resource: "arn:aws:ec2:*:*:instance/*"
+      Roles:
+        - Ref: "NodeInstanceRole"
+
+Outputs:
+  NodeInstanceRole:
+    Description: The node instance role
+    Value: !GetAtt NodeInstanceRole.Arn
+
+  NodeSecurityGroup:
+    Description: The security group for the node group
+    Value: !Ref NodeSecurityGroup
