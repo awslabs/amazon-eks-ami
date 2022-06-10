@@ -14,7 +14,7 @@
     "kubernetes_build_date": null,
     "kernel_version": "",
     "docker_version": "20.10.13-2.amzn2",
-    "containerd_version": "1.4.13-2.amzn2.0.1",
+    "containerd_version": "1.4.13-3.amzn2",
     "runc_version": "1.0.3-2.amzn2",
     "cni_plugin_version": "v0.8.6",
     "pull_cni_from_github": "true",
