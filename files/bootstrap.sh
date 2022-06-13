@@ -30,7 +30,8 @@ function print_help {
     echo "--container-runtime Specify a container runtime (default: dockerd)"
     echo "--ip-family Specify ip family of the cluster"
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
-    echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"    
+    echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
+    echo "--cluster-id Specify the id of EKS cluster"
 }
 
 POSITIONAL=()
@@ -116,7 +117,12 @@ while [[ $# -gt 0 ]]; do
             ENABLE_LOCAL_OUTPOST=$2
             shift
             shift
-            ;; 
+            ;;
+         --cluster-id)
+	        CLUSTER_ID=$2
+	        shift
+	        shift
+	        ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -144,6 +150,7 @@ CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
+CLUSTER_ID="${CLUSTER_ID:-}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -380,7 +387,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
     APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
-    CLUSTER_ID=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
+    CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
     OUTPOST_ARN=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $5}')
     SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $6}')
     SERVICE_IPV6_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $7}')
@@ -395,6 +402,11 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     else
         IS_LOCAL_OUTPOST_DETECTED=true
     fi
+    
+    # If the cluster id is returned from describe cluster, let us use it no matter whether cluster id is passed from option
+	if [[ ! -z "${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}" ]] && [[ "${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}" != "None" ]]; then
+	    CLUSTER_ID=${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}
+	fi
 fi
 
 if [[ -z "${IP_FAMILY}" ]] || [[ "${IP_FAMILY}" == "None" ]]; then
@@ -432,12 +444,16 @@ if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
     ### kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
     ###   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
     ###   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
-    CLUSTER_ID="${CLUSTER_ID:-$CLUSTER_NAME}" 
-    sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
+    if [[ -z "${CLUSTER_ID}" ]]; then
+	    echo "Cluster ID is required when local outpost support is enabled"
+	    exit 1
+	else
+	    sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
 
-    ### use aws-iam-authenticator as bootstrap auth and download X.509 cert used in kubelet kubeconfig
-    mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
-    KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
+        ### use aws-iam-authenticator as bootstrap auth and download X.509 cert used in kubelet kubeconfig
+        mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
+        KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
+    fi
 else
     sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
 fi
