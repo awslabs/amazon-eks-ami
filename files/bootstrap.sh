@@ -119,10 +119,10 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
          --cluster-id)
-	        CLUSTER_ID=$2
-	        shift
-	        shift
-	        ;;
+            CLUSTER_ID=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -445,10 +445,10 @@ if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
     ###   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
     ###   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
     if [[ -z "${CLUSTER_ID}" ]]; then
-	    echo "Cluster ID is required when local outpost support is enabled"
-	    exit 1
-	else
-	    sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
+        echo "Cluster ID is required when local outpost support is enabled"
+        exit 1
+    else
+        sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
 
         ### use aws-iam-authenticator as bootstrap auth and download X.509 cert used in kubelet kubeconfig
         mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
