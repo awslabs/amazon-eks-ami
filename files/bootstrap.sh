@@ -23,10 +23,13 @@ function print_help {
     echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
     echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
     echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+    echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
     echo "--pause-container-account The AWS account (number) to pull the pause container from"
     echo "--pause-container-version The tag of the pause container"
     echo "--container-runtime Specify a container runtime (default: dockerd)"
+    echo "--ip-family Specify ip family of the cluster"
+    echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
 }
 
 POSITIONAL=()
@@ -73,6 +76,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --containerd-config-file)
+            CONTAINERD_CONFIG_FILE=$2
+            shift
+            shift
+            ;;
         --pause-container-account)
             PAUSE_CONTAINER_ACCOUNT=$2
             shift
@@ -90,6 +98,16 @@ while [[ $# -gt 0 ]]; do
             ;;
         --container-runtime)
             CONTAINER_RUNTIME=$2
+            shift
+            shift
+            ;;
+        --ip-family)
+            IP_FAMILY=$2
+            shift
+            shift
+            ;;
+        --service-ipv6-cidr)
+            SERVICE_IPV6_CIDR=$2
             shift
             shift
             ;;
@@ -114,8 +132,11 @@ KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
+CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
+IP_FAMILY="${IP_FAMILY:-}"
+SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -140,6 +161,8 @@ function get_pause_container_account_for_region () {
         echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}";;
     eu-south-1)
         echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}";;
+    ap-southeast-3)
+        echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}";;
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
@@ -279,6 +302,26 @@ if [ -z "$CLUSTER_NAME" ]; then
     exit  1
 fi
 
+if [[ ! -z "${IP_FAMILY}" ]]; then
+  IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
+  if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]] ; then
+        echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
+        exit 1
+  fi
+
+  if [[ "${IP_FAMILY}" == "ipv6" ]] && [[ ! -z "${B64_CLUSTER_CA}" ]] && [[ ! -z "${APISERVER_ENDPOINT}" ]] && [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
+        echo "Service Ipv6 Cidr must be provided when ip-family is specified as IPV6"
+        exit 1
+  fi
+fi
+
+if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
+     if [[ "${IP_FAMILY}" == "ipv4" ]]; then
+            echo "ip-family should be ipv6 when service-ipv6-cidr is specified"
+            exit 1
+      fi
+      IP_FAMILY="ipv6"
+fi
 
 TOKEN=$(get_token)
 AWS_DEFAULT_REGION=$(get_meta_data 'latest/dynamic/instance-identity/document' | jq .region -r)
@@ -317,7 +360,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
             --region=${AWS_DEFAULT_REGION} \
             --name=${CLUSTER_NAME} \
             --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, kubernetesNetworkConfig: kubernetesNetworkConfig.serviceIpv4Cidr}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, serviceIpv4Cidr: kubernetesNetworkConfig.serviceIpv4Cidr, serviceIpv6Cidr: kubernetesNetworkConfig.serviceIpv6Cidr, clusterIpFamily: kubernetesNetworkConfig.ipFamily}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
         if [[ $rc -eq 0 ]]; then
             break
         fi
@@ -329,8 +372,19 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
         sleep $sleep_sec
     done
     B64_CLUSTER_CA=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $1}')
-    APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
-    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
+    APISERVER_ENDPOINT=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $3}')
+    SERVICE_IPV4_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $4}')
+    SERVICE_IPV6_CIDR=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $5}')
+
+    if [[ -z "${IP_FAMILY}" ]]; then
+      IP_FAMILY=$(cat $DESCRIBE_CLUSTER_RESULT | awk '{print $2}')
+    fi
+fi
+
+if [[ -z "${IP_FAMILY}" ]] || [[ "${IP_FAMILY}" == "None" ]]; then
+       ### this can happen when the ifFamily field is not found in describeCluster response
+       ### or B64_CLUSTER_CA and APISERVER_ENDPOINT are defined but IPFamily isn't
+       IP_FAMILY="ipv4"
 fi
 
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
@@ -340,12 +394,17 @@ sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 ### kubelet.service configuration
 
+if [[ "${IP_FAMILY}" == "ipv6" ]]; then
+      DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
+fi
+
+MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
+
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
   if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
     #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
     DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
   else
-    MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
     TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
     DNS_CLUSTER_IP=10.100.0.10
     if [[ "$TEN_RANGE" != "0" ]]; then
@@ -359,7 +418,12 @@ fi
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
-INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
+if [[ "${IP_FAMILY}" == "ipv4" ]]; then
+     INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
+else
+     INTERNAL_IP_URI=latest/meta-data/network/interfaces/macs/$MAC/ipv6s
+     INTERNAL_IP=$(get_meta_data $INTERNAL_IP_URI)
+fi
 INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
@@ -373,8 +437,11 @@ set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE"
-    exit 1
+    echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
+    # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
+    # the PrefixDelegation based alternative and is likely to be in-use by more customers.
+    # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve
@@ -406,10 +473,18 @@ fi
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
-    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml  
-    sudo mv /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
-    sudo mv /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
-    sudo mv /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
+    mkdir -p /etc/systemd/system/containerd.service.d
+    cat <<EOF > /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
+[Service]
+ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
+EOF
+    if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
+        sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
+    fi
+    sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
+    sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/kubelet.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
     systemctl daemon-reload
@@ -417,11 +492,11 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     systemctl restart containerd
     systemctl enable sandbox-image
     systemctl start sandbox-image
-    
+
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
     bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
-    mv /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
+    cp -v /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
     sudo chown root:root /etc/systemd/system/iptables-restore.service
     systemctl daemon-reload
     systemctl enable iptables-restore

@@ -19,6 +19,7 @@ function print_help {
     echo "--cni-custom-networking-enabled Use this flag to indicate if CNI custom networking mode has been enabled."
     echo "--cni-prefix-delegation-enabled Use this flag to indicate if CNI prefix delegation has been enabled."
     echo "--cni-max-eni specify how many ENIs should be used for prefix delegation. Defaults to using all ENIs per instance."
+    echo "--show-max-allowed Use this flag to show max number of Pods allowed to run in Worker Node. Otherwise the script will show the recommended value"
 }
 
 POSITIONAL=()
@@ -57,6 +58,10 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --show-max-allowed)
+            SHOW_MAX_ALLOWED=true
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -70,6 +75,7 @@ CNI_PREFIX_DELEGATION_ENABLED="${CNI_PREFIX_DELEGATION_ENABLED:-false}"
 CNI_MAX_ENI="${CNI_MAX_ENI:-}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-}"
 INSTANCE_TYPE_FROM_IMDS="${INSTANCE_TYPE_FROM_IMDS:-false}"
+SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
 
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
@@ -113,7 +119,7 @@ if [[ "$CNI_MAJOR_VERSION" -gt 1 ]] || ([[ "$CNI_MAJOR_VERSION" = 1 ]] && [[ "$C
     PREFIX_DELEGATION_SUPPORTED=true
 fi
 
-DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type $INSTANCE_TYPE --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus'})
+DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type $INSTANCE_TYPE --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus'} --output json)
 
 HYPERVISOR_TYPE=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.Hypervisor' )
 IS_NITRO=false
@@ -144,8 +150,15 @@ fi
 MAX_POD_CEILING_FOR_LOW_CPU=110
 MAX_POD_CEILING_FOR_HIGH_CPU=250
 CPU_COUNT=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.CpuCount' )
+
+if [ "$SHOW_MAX_ALLOWED" = true ] ; then
+  echo $max_pods
+  exit 0
+fi
+
 if [ "$CPU_COUNT" -gt 30 ] ; then
     echo $(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)
 else
     echo $(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)
 fi
+
