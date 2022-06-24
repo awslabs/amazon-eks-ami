@@ -1,5 +1,41 @@
 # Changelog
 
+### AMI Release v20220620
+* amazon-eks-gpu-node-1.22-v20220620
+* amazon-eks-gpu-node-1.21-v20220620
+* amazon-eks-gpu-node-1.20-v20220620
+* amazon-eks-gpu-node-1.19-v20220620
+* amazon-eks-arm64-node-1.22-v20220620
+* amazon-eks-arm64-node-1.21-v20220620
+* amazon-eks-arm64-node-1.20-v20220620
+* amazon-eks-arm64-node-1.19-v20220620
+* amazon-eks-node-1.22-v20220620
+* amazon-eks-node-1.21-v20220620
+* amazon-eks-node-1.20-v20220620
+* amazon-eks-node-1.19-v20220620
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.22.9/2022-03-09/
+* s3://amazon-eks/1.21.12/2022-05-20/
+* s3://amazon-eks/1.20.15/2022-06-20/
+* s3://amazon-eks/1.19.15/2021-11-10/
+
+AMI details:
+* kernel: 5.4.196-108.356.amzn2
+* dockerd: 20.10.13-2.amzn2
+* containerd: 1.4.13-3.amzn2
+* runc: 1.0.3-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1188.0
+
+Notable changes:
+* Update kubelet binaries for 1.20
+* Support packer's ami_regions feature
+* Increase /var/log/messages limit to 100M     
+* Support local cluster in Outposts
+* Adding c6id, m6id, r6id to eni-max-pods.txt
+
 ### AMI Release v20220610
 * amazon-eks-gpu-node-1.22-v20220610
 * amazon-eks-gpu-node-1.21-v20220610
