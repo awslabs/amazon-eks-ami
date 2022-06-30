@@ -17,7 +17,7 @@
 Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.22.9/2022-03-09/
 * s3://amazon-eks/1.21.12/2022-05-20/
-* s3://amazon-eks/1.20.15/2021-11-10/
+* s3://amazon-eks/1.20.15/2022-06-20/
 * s3://amazon-eks/1.19.15/2021-11-10/
 
 AMI details:
