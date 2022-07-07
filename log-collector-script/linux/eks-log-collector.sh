@@ -559,11 +559,25 @@ get_containerd_info() {
         warning "The Containerd daemon is not running."
     fi
 
-   ok
+    ok
+
+    try "Collect Containerd running information"
+    if ! command -v ctr >/dev/null 2>&1; then
+        warning "ctr not installed"
+    else
+        timeout 75 ctr version > "${COLLECT_DIR}"/containerd/containerd-version.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr namespaces list > "${COLLECT_DIR}"/containerd/containerd-namespaces.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io images list > "${COLLECT_DIR}"/containerd/containerd-images.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io containers list > "${COLLECT_DIR}"/containerd/containerd-containers.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io tasks list > "${COLLECT_DIR}"/containerd/containerd-tasks.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io plugins list > "${COLLECT_DIR}"/containerd/containerd-plugins.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    fi
+
+    ok
 }
 
 get_sandboxImage_info() {
-    try "Collect sandbox-image daemon information"      
+    try "Collect sandbox-image daemon information"
       timeout 75 journalctl -u sandbox-image > "${COLLECT_DIR}"/sandbox-image/sandbox-image-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"sandbox-image info output \" "
    ok
 }
