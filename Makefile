@@ -1,3 +1,6 @@
+# commands:
+P := packer
+
 #Fluence Edited Variables
 AWS_DEFAULT_REGION = us-west-2
 build_tag := $(or $(BUILD_TAG), $(shell date +%s))
@@ -40,11 +43,9 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all 1.18 1.19 1.20 1.21 1.22
-all: 1.19 1.20
+all: 1.19-build 1.20-build
 
-.PHONY: validate
-validate:
-	$(PACKER_BINARY) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) /workspace/eks-worker-al2.json
+all-validate: 1.19-validate 1.20-validate
 
 .PHONY: k8s
 k8s: validate
@@ -53,18 +54,36 @@ k8s: validate
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-.PHONY: 1.19
-1.19:
-	$(MAKE) k8s kubernetes_version=1.19.15 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
+.PHONY: 1.19-validate
+1.19-validate:
+	$(MAKE) ci-validate kubernetes_version=1.19.15 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
 
-.PHONY: 1.20
-1.20:
-	$(MAKE) k8s kubernetes_version=1.20.11 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
+.PHONY: 1.19-build
+1.19-build:
+	$(MAKE) ci-build kubernetes_version=1.19.15 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
+
+.PHONY: 1.20-validate
+1.20-validate:
+	$(MAKE) ci-validate kubernetes_version=1.20.11 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
+
+.PHONY: 1.20-build
+1.20-build:
+	$(MAKE) ci-build kubernetes_version=1.20.11 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
 
 .PHONY: 1.21
 1.21:
-	$(MAKE) k8s kubernetes_version=1.21.5 kubernetes_build_date=2022-01-21 pull_cni_from_github=true
+	$(MAKE) ci-build kubernetes_version=1.21.5 kubernetes_build_date=2022-01-21 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22:
-	$(MAKE) k8s kubernetes_version=1.22.6 kubernetes_build_date=2022-03-09 pull_cni_from_github=true
+	$(MAKE) ci-build kubernetes_version=1.22.6 kubernetes_build_date=2022-03-09 pull_cni_from_github=true
+
+# Circle CI pipeline
+.PHONY: ci-valiedate
+ci-validate:
+	$(P) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
+
+.PHONY: ci-build
+ci-build:
+	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
+	$(P) build $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
