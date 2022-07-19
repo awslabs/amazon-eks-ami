@@ -125,13 +125,18 @@
       "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "mkdir -p /tmp/worker/"
+        "mkdir -p /tmp/worker/log-collector-script/"
       ]
     },
     {
       "type": "file",
       "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/log-collector-script/linux/",
+      "destination": "/tmp/worker/log-collector-script/"
     },
     {
       "type": "shell",
