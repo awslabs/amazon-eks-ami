@@ -39,6 +39,72 @@ To send us a pull request, please:
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+### Testing Changes
+
+When submitting PRs, we want to verify that there are no regressions in the AMI with the new changes. EKS runs various tests before publishing new Amazon EKS optimized Amazon Linux AMIs, which will ensure the highest level of confidence that there are no regressions in officially published AMIs. To maintain the health of this repo, we need to do some basic validation prior to merging PRs. Eventually, we hope to automate this process. Until then, here are the basic steps that we should take before merging PRs.
+
+**Test #1: Verify that building AMIs still works**
+
+If your change is relevant to a specific Kubernetes version, build all AMIs that apply. Otherwise, just choose the latest available Kubernetes version.
+
+```
+# Configure AWS credentials
+make 1.22
+```
+
+**Test #2: Create a nodegroup with new AMI and confirm it joins a cluster**
+
+Once the AMI is built, we need to verify that it can join a cluster. You can use `eksctl`, or your method of choice, to create a cluster and add nodes to it using the AMI you built. Below is an example config file.
+
+`cluster.yaml`
+
+```
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: basic-cluster
+  region: us-west-2
+  version: '1.22'
+
+nodeGroups:
+  - name: ng
+    instanceType: m5.large
+    ami: [INSERT_AMI_ID]
+    overrideBootstrapCommand: |
+      #!/bin/bash
+      /etc/eks/bootstrap.sh basic-cluster
+```
+
+Then run:
+
+```
+eksctl create cluster -f cluster.yaml
+```
+
+`eksctl` will verify that the nodes join the cluster before completing.
+
+**Test #3: Verify that the nodes are Kubernetes conformant**
+
+You can use [sonobuoy](https://sonobuoy.io/) to run conformance tests on the cluster you've create in *Test #2*. You should only include nodes with the custom AMI built in *Test #1*. You must install `sonobuoy` locally before running.
+
+```
+sonobuoy run --wait
+```
+
+By default, `sonobuoy` will run `e2e` and `systemd-logs`. This step may take multiple hours to run.
+
+**Test #4: [Optional] Test your specific PR changes**
+
+If your PR has changes that require additional, custom validation, provide the appropriate steps to verify that the changes don't cause regressions and behave as expected. Document the steps taken in the CR.
+
+**Clean Up**
+
+Delete the cluster:
+
+```
+eksctl delete cluster -f cluster.yaml
+```
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws-samples/amazon-eks-ami/labels/help%20wanted) issues is a great place to start. 

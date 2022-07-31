@@ -9,6 +9,7 @@ dependencies:
     dirs:
       - src: files/
       - src: scripts/
+      - src: log-collector-script/
     files:
       - src: Makefile
       - src: eks-worker-al2.json

@@ -145,7 +145,7 @@ ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
-PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.1-eksbuild.1}"
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.5}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
@@ -402,7 +402,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
     else
         IS_LOCAL_OUTPOST_DETECTED=true
     fi
-    
+
     # If the cluster id is returned from describe cluster, let us use it no matter whether cluster id is passed from option
     if [[ ! -z "${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}" ]] && [[ "${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}" != "None" ]]; then
         CLUSTER_ID=${CLUSTER_ID_IN_DESCRIBE_CLUSTER_RESULT}
@@ -421,20 +421,20 @@ sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
 
 if [[ -z "$ENABLE_LOCAL_OUTPOST" ]]; then
-    # Only when "--enable-local-outpost" option is not set explicity on calling bootstrap.sh, it will be assigned with 
+    # Only when "--enable-local-outpost" option is not set explicity on calling bootstrap.sh, it will be assigned with
     #    - the result of auto-detectection through describe-cluster
     #    - or "false" when describe-cluster is bypassed.
     #  This also means if "--enable-local-outpost" option is set explicity, it will override auto-detection result
-    ENABLE_LOCAL_OUTPOST="${IS_LOCAL_OUTPOST_DETECTED:-false}"    
+    ENABLE_LOCAL_OUTPOST="${IS_LOCAL_OUTPOST_DETECTED:-false}"
 fi
 
-### To support worker nodes to continue to communicate and connect to local cluster even when the Outpost 
+### To support worker nodes to continue to communicate and connect to local cluster even when the Outpost
 ### is disconnected from the parent AWS Region, the following specific setup are required:
-###    - append entries to /etc/hosts with the mappings of control plane host IP address and API server 
+###    - append entries to /etc/hosts with the mappings of control plane host IP address and API server
 ###      domain name. So that the domain name can be resolved to IP addresses locally.
-###    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client 
-###      X.509 certificate and generate kubelet kubeconfig file which uses the cleint cert. So that the 
-###      worker node can be authentiacated through X.509 certificate which works for both connected and 
+###    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client
+###      X.509 certificate and generate kubelet kubeconfig file which uses the cleint cert. So that the
+###      worker node can be authentiacated through X.509 certificate which works for both connected and
 ####     disconnected state.
 if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
     ### append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
@@ -547,6 +547,7 @@ EOF
     if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
         sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
     fi
+    echo "$(jq '.cgroupDriver="systemd"' $KUBELET_CONFIG)" > $KUBELET_CONFIG
     sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
     sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
     sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
