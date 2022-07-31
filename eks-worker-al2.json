@@ -35,7 +35,8 @@
     "launch_block_device_mappings_volume_size": "10",
     "ami_users": "",
     "additional_yum_repos": "",
-    "sonobuoy_e2e_registry": ""
+    "sonobuoy_e2e_registry": "",
+    "ami_regions": ""
   },
   "builders": [
     {
@@ -77,6 +78,7 @@
           "delete_on_termination": true
         }
       ],
+      "ami_regions": "{{user `ami_regions`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
@@ -134,13 +136,18 @@
       "pause_before": "30s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "mkdir -p /tmp/worker/"
+        "mkdir -p /tmp/worker/log-collector-script/"
       ]
     },
     {
       "type": "file",
       "source": "{{template_dir}}/files/",
       "destination": "/tmp/worker/"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/log-collector-script/linux/",
+      "destination": "/tmp/worker/log-collector-script/"
     },
     {
       "type": "shell",
