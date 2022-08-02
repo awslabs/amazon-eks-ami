@@ -21,13 +21,71 @@ when building this AMI.
 
 ## Building the AMI
 
-A Makefile is provided to build the AMI, but it is just a small wrapper around
+A Makefile is provided to build the Amazon EKS Worker AMI, but it is just a small wrapper around
 invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
 ```bash
 make
 ```
+The Makefile chooses a particular kubelet binary to use per kubernetes version which you can [view here](Makefile).
+To build an Amazon EKS Worker AMI for a particular Kubernetes version run the following command
+```bash
+make 1.21 ## Build a Amazon EKS Worker AMI for k8s 1.21
+```
+### Building against other versions of Kubernetes binaries
+To build an Amazon EKS Worker AMI with other versions of Kubernetes that are not listed above run the following AWS Command
+Line Interface (AWS CLI) commands to obtain values for KUBERNETES_VERSION, KUBERNETES_BUILD_DATE, PLATFORM, ARCH from S3
+```bash
+#List of all avalable Kuberenets Versions:
+aws s3 ls s3://amazon-eks 
+KUBERNETES_VERSION=1.17.9 # Chose a version and set the variable
+
+#List of all builds for the specified Kubernetes Version:
+aws s3 ls s3://amazon-eks/$KUBERNETES_VERSION/
+KUBERNETES_BUILD_DATE=2020-08-04 # Chose a date and set the variable
+
+#List of all platforms available for the selected Kubernetes Version and build date
+aws s3 ls s3://amazon-eks/$KUBERNETES_VERSION/2020-08-04/bin/
+PLATFORM=linux # Chose a platform and set the variable
+
+#List of all architectures for the selected Kubernetes Version, build date and platform
+aws s3 ls s3://amazon-eks/$KUBERNETES_VERSION/2020-08-04/bin/linux/
+ARCH=amd64 #Chose an architecture and set the variable
+```
+Run the following command to build an Amazon EKS Worker AMI based on the chosen parameters in the previous step
+```bash
+make k8s \
+  kubernetes_version=$KUBERNETES_VERSION \
+  kubernetes_build_date=$KUBERNETES_BUILD_DATE \
+  arch=$ARCH
+```
+
+### Providing your own Kubernetes Binaries
+
+By default, binaries are downloaded from the Amazon EKS public Amazon Simple Storage Service (Amazon S3)
+bucket amazon-eks in us-west-2. You can instead choose to provide your own version of Kubernetes binaries to be used. To use your own binaries
+
+1. Copy the binaries to your own S3 bucket using the AWS CLI. Here is an example that uses Kubelet binary
+```bash
+ aws s3 cp kubelet s3://my-custom-bucket/kubernetes_version/kubernetes_build_date/bin/linux/arch/kubelet
+```
+**Note**: Replace my-custom-bucket, amazon-eks, kubernetes_version, kubernetes_build_date, and arch with your values.
+
+**Important**: You must provide all the binaries listed in the default amazon-eks bucket for a specific kubernetes_version, kubernetes_build_date, and arch combination. These binaries must be accessible through AWS Identity and Access Management (IAM) credentials configured in the Install and configure HashiCorp Packer section.
+
+2. Run the following command to start the build process to use your own Kubernetes binaries
+```bash
+make k8s \
+  binary_bucket_name=my-custom-bucket \
+  binary_bucket_region=eu-west-1 \
+  kubernetes_version=1.14.9 \
+  kubernetes_build_date=2020-01-22
+```
+**Note**: Confirm that the binary_bucket_name, binary_bucket_region, kubernetes_version, and kubernetes_build_date parameters match the path to your binaries in Amazon S3.
+
+
+
 
 The Makefile runs Packer with the `eks-worker-al2.json` build specification
 template and the [amazon-ebs](https://www.packer.io/docs/builders/amazon-ebs.html)
