@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.6.3"
+readonly PROGRAM_VERSION="0.7.0"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -554,7 +554,7 @@ get_system_services() {
   timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
   timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
-  timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/procpidstat.txt 2>&1
+  timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
 
   ok
 }
