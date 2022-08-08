@@ -210,7 +210,7 @@ is_diskfull() {
 
   # 1.5GB in KB
   threshold=1500000
-  result=$(df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
+  result=$(timeout 75 df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
 
   # If "result" is less than or equal to "threshold", fail.
   if [[ "${result}" -le "${threshold}" ]]; then
@@ -278,7 +278,7 @@ get_mounts_info() {
   try "collect mount points and volume information"
   mount > "${COLLECT_DIR}"/storage/mounts.txt
   echo >> "${COLLECT_DIR}"/storage/mounts.txt
-  df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
+  timeout 75 df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
   lsblk > "${COLLECT_DIR}"/storage/lsblk.txt
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
