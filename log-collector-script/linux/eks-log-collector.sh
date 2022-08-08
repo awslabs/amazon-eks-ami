@@ -591,23 +591,23 @@ get_cpu_throttled_processes() {
   readonly THROTTLE_LOG="${COLLECT_DIR}"/system/cpu_throttling.txt
   command find /sys/fs/cgroup -iname "cpu.stat" -print0 | while IFS= read -r -d '' cs
   do
-        # look for a non-zero nr_throttled value
-        if grep -q "nr_throttled [1-9]" "${cs}"; then
-                pids=${cs/cpu.stat/cgroup.procs}
-                lines=$(wc -l < "${pids}")
-                # ignore if no PIDs are listed
-                if [ "${lines}" -eq "0" ] ; then
-                        continue
-                fi
+    # look for a non-zero nr_throttled value
+    if grep -q "nr_throttled [1-9]" "${cs}"; then
+      pids=${cs/cpu.stat/cgroup.procs}
+      lines=$(wc -l < "${pids}")
+      # ignore if no PIDs are listed
+      if [ "${lines}" -eq "0" ] ; then
+        continue
+      fi
 
-                echo "$cs" >> "${THROTTLE_LOG}"
-                cat "${cs}" >> "${THROTTLE_LOG}"
-                while IFS= read -r pid
-                do
-                        command ps ax | grep "^${pid}" >> "${THROTTLE_LOG}"
-                done < "${pids}"
-                echo "" >>  "${THROTTLE_LOG}"
-        fi
+      echo "$cs" >> "${THROTTLE_LOG}"
+      cat "${cs}" >> "${THROTTLE_LOG}"
+      while IFS= read -r pid
+      do
+        command ps ax | grep "^${pid}" >> "${THROTTLE_LOG}"
+        done < "${pids}"
+        echo "" >>  "${THROTTLE_LOG}"
+      fi
   done
   if [ ! -e "${THROTTLE_LOG}" ]; then
     echo "No CPU Throttling Found" >>  "${THROTTLE_LOG}"
