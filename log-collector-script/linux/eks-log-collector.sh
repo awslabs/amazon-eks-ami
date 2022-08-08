@@ -544,6 +544,7 @@ get_system_services() {
 
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
   timeout 75 ps fauxwww > "${COLLECT_DIR}"/system/ps.txt 2>&1
+  timeout 75 ps -eTF > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
 
   ok
