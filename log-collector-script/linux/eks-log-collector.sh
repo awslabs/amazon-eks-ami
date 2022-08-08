@@ -279,6 +279,7 @@ get_mounts_info() {
   mount > "${COLLECT_DIR}"/storage/mounts.txt
   echo >> "${COLLECT_DIR}"/storage/mounts.txt
   timeout 75 df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
+  timeout 75 df --inodes >> "${COLLECT_DIR}"/storage/inodes.txt
   lsblk > "${COLLECT_DIR}"/storage/lsblk.txt
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
