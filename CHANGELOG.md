@@ -1,5 +1,41 @@
 # Changelog
 
+### AMI Release v20220802
+* amazon-eks-gpu-node-1.23-v20220802
+* amazon-eks-gpu-node-1.22-v20220802
+* amazon-eks-gpu-node-1.21-v20220802
+* amazon-eks-gpu-node-1.20-v20220802
+* amazon-eks-gpu-node-1.19-v20220802
+* amazon-eks-arm64-node-1.23-v20220802
+* amazon-eks-arm64-node-1.22-v20220802
+* amazon-eks-arm64-node-1.21-v20220802
+* amazon-eks-arm64-node-1.20-v20220802
+* amazon-eks-arm64-node-1.19-v20220802
+* amazon-eks-node-1.23-v20220802
+* amazon-eks-node-1.22-v20220802
+* amazon-eks-node-1.21-v20220802
+* amazon-eks-node-1.20-v20220802
+* amazon-eks-node-1.19-v20220802
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.23.7/2022-06-29/
+* s3://amazon-eks/1.22.9/2022-03-09/
+* s3://amazon-eks/1.21.12/2022-05-20/
+* s3://amazon-eks/1.20.15/2022-06-20/
+* s3://amazon-eks/1.19.15/2021-11-10/
+
+AMI details:
+* kernel: 5.4.204-113.362.amzn2
+* dockerd: 20.10.13-2.amzn2
+* containerd: 1.4.13-3.amzn2
+* runc: 1.0.3-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1575.0-1.amzn2
+
+Notable changes:
+* Release 1.23 AMIs publicly
+
 ### AMI Release v20220725
 * amazon-eks-gpu-node-1.22-v20220725
 * amazon-eks-gpu-node-1.21-v20220725
