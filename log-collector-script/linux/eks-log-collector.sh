@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.6.2"
+readonly PROGRAM_VERSION="0.7.0"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -260,6 +260,7 @@ collect() {
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
+  get_io_throttled_processes
 }
 
 pack() {
@@ -552,6 +553,8 @@ get_system_services() {
   timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1
   timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
+  timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
+  timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
 
   ok
 }
@@ -605,7 +608,6 @@ get_docker_info() {
   ok
 }
 
-
 get_cpu_throttled_processes() {
   try "Collect CPU Throttled Process Information"
   readonly THROTTLE_LOG="${COLLECT_DIR}"/system/cpu_throttling.txt
@@ -632,6 +634,16 @@ get_cpu_throttled_processes() {
   if [ ! -e "${THROTTLE_LOG}" ]; then
     echo "No CPU Throttling Found" >>  "${THROTTLE_LOG}"
   fi
+  ok
+}
+
+get_io_throttled_processes() {
+  try "Collect IO Throttled Process Information"
+  readonly IO_THROTTLE_LOG="${COLLECT_DIR}"/system/io_throttling.txt
+  command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
+  # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
+  # I/O delays.
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r  | grep -v 0$ >> ${IO_THROTTLE_LOG}
   ok
 }
 
