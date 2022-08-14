@@ -52,12 +52,12 @@ k8s: validate
 
 .PHONY: 1.21
 1.21:
-	$(MAKE) k8s kubernetes_version=1.21.12 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22:
-	$(MAKE) k8s kubernetes_version=1.22.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.12 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23:
-	$(MAKE) k8s kubernetes_version=1.23.7 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
