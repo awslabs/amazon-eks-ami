@@ -1,5 +1,43 @@
 # Changelog
 
+### AMI Release v20220811
+* amazon-eks-gpu-node-1.23-v20220811
+* amazon-eks-gpu-node-1.22-v20220811
+* amazon-eks-gpu-node-1.21-v20220811
+* amazon-eks-gpu-node-1.20-v20220811
+* amazon-eks-gpu-node-1.19-v20220811
+* amazon-eks-arm64-node-1.23-v20220811
+* amazon-eks-arm64-node-1.22-v20220811
+* amazon-eks-arm64-node-1.21-v20220811
+* amazon-eks-arm64-node-1.20-v20220811
+* amazon-eks-arm64-node-1.19-v20220811
+* amazon-eks-node-1.23-v20220811
+* amazon-eks-node-1.22-v20220811
+* amazon-eks-node-1.21-v20220811
+* amazon-eks-node-1.20-v20220811
+* amazon-eks-node-1.19-v20220811
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.23.9/2022-07-27/
+* s3://amazon-eks/1.22.12/2022-07-27/
+* s3://amazon-eks/1.21.14/2022-07-27/
+* s3://amazon-eks/1.20.15/2022-07-27/
+* s3://amazon-eks/1.19.15/2021-11-10/
+
+AMI details:
+* kernel: 5.4.204-113.362.amzn2
+* dockerd: 20.10.13-2.amzn2
+* containerd: 1.4.13-3.amzn2
+* runc: 1.0.3-2.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1575.0-1.amzn2
+
+Notable changes:
+- Kubelet binaries updated, including a backport of [#109676](https://github.com/kubernetes/kubernetes/pull/109676).
+- When using `containerd` as the container runtime, `systemd` will now be used as the cgroup driver. For more information, see [the Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/).
+- Updated `aws-neuron-dkms` to `2.3.26` to address [a security issue](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/neuron-driver.html#ndriver-2-3-26-0). This is a recommended upgrade for all users of the GPU AMI.
+
 ### AMI Release v20220802
 * amazon-eks-gpu-node-1.23-v20220802
 * amazon-eks-gpu-node-1.22-v20220802
