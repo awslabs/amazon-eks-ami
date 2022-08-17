@@ -13,7 +13,6 @@ dependencies:
     files:
       - src: Makefile
       - src: eks-worker-al2.json
-      - src: amazon-eks-nodegroup.yaml
 archive:
   name: amazon-eks-ami.tar.gz
   type: tgz
