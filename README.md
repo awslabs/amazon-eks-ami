@@ -83,9 +83,6 @@ make k8s \
 ```
 **Note**: Confirm that the binary_bucket_name, binary_bucket_region, kubernetes_version, and kubernetes_build_date parameters match the path to your binaries in Amazon S3.
 
-
-
-
 The Makefile runs Packer with the `eks-worker-al2.json` build specification
 template and the [amazon-ebs](https://www.packer.io/docs/builders/amazon-ebs.html)
 builder. An instance is launched and the Packer [Shell
@@ -108,6 +105,58 @@ in the Amazon EKS User Guide.
 By default, the `amazon-eks-ami` uses a [source_ami_filter](https://github.com/awslabs/amazon-eks-ami/blob/e3f1b910f83ad1f27e68312e50474ea6059f052d/eks-worker-al2.json#L46) that selects the latest [hvm](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) AL2 AMI for the given architecture as the base AMI. For more information on what kernel versions are running on published Amazon EKS optimized Linux AMIs, see [the public documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html).
 
 When building an AMI, you can set the `kernel_version` to `4.14` or `5.4` to customize the kernel version. The [upgrade_kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/master/scripts/upgrade_kernel.sh#L26) contains the logic for updating and upgrading the kernel. For Kubernetes versions 1.18 and below, it uses the `4.14` kernel if not set, and it will install the latest patches. For Kubernetes version 1.19 and above, it uses the `5.4` kernel if not set.
+
+## Customizing Kubelet Config
+
+In some cases, customers may want to customize the [kubelet configuration](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration) on their nodes, and there are two mechanisms to do that with the EKS Optimized AMI.
+
+**Set the "--kubelet-extra-args" flag when invoking bootstrap.sh**
+
+`bootstrap.sh`, the script that bootstraps nodes when using the EKS Optimized AMI, supports a flag called `--kubelet-extra-args` that allows you to pass in additional `kubelet` configuration. If you invoke the bootstrap script yourself (self-managed nodegroups or EKS managed nodegroups with custom AMIs), you can use that to customize your configuration. For example, you can use something like the following in your userdata:
+
+```
+/etc/eks/bootstrap.sh my-cluster --kubelet-extra-args '--registry-qps=20 --registry-burst=40'
+```
+
+In this case, it will set `registryPullQPS` to 20 and `registryBurst` to 40 in `kubelet`. Some of the flags, like the ones above, are marked as deprecated and you're encouraged to set them in the `kubelet` config file (described below), but they continue to work as of 1.23.
+
+**Update the kubelet config file**
+
+You can update the `kubelet` config file directly with new configuration. On EKS Optimized AMIs, the file is stored at `/etc/kubernetes/kubelet/kubelet-config.json`. It must be valid JSON. You can use a utility like `jq` (or your tool of choice) to edit the config in your user data:
+
+```
+echo "$(jq ".registryPullQPS=20 | .registryBurst=40" /etc/kubernetes/kubelet/kubelet-config.json)" > /etc/kubernetes/kubelet/kubelet-config.json
+```
+
+There are a couple of important caveats here:
+
+1. If you update the `kubelet` config file after `kubelet` has already started (i.e. `bootstrap.sh` already ran), you'll need to restart `kubelet` to pick up the latest configuration.
+2. [bootstrap.sh](https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) does modify a few fields, like `kubeReserved` and `evictionHard`, so you'd need to modify the config after the bootstrap script is run and restart `kubelet` to overwrite those properties.
+
+**View active kubelet config**
+
+When `kubelet` starts up, it logs all possible flags, including unset flags. The unset flags get logged with default values. *These logs do not necessarily reflect the actual active configuration.* This has caused confusion in the past when customers have configured the `kubelet` config file with one value and notice the default value is logged. Here is an example of the referenced log:
+
+```
+Aug 16 21:53:49 ip-192-168-92-220.us-east-2.compute.internal kubelet[3935]: I0816 21:53:49.202824    3935 flags.go:59] FLAG: --registry-burst="10"
+Aug 16 21:53:49 ip-192-168-92-220.us-east-2.compute.internal kubelet[3935]: I0816 21:53:49.202829    3935 flags.go:59] FLAG: --registry-qps="5"
+```
+
+To view the actual `kubelet` config on your node, you can use the Kubernetes API to confirm that your configuration has applied.
+
+```
+$ kubectl proxy
+$ curl -sSL "http://localhost:8001/api/v1/nodes/ip-192-168-92-220.us-east-2.compute.internal/proxy/configz" | jq
+
+{
+  "kubeletconfig": {
+    ...
+    "registryPullQPS": 20,
+    "registryBurst": 40,
+    ...
+  }
+}
+```
 
 ## Security
 
