@@ -157,7 +157,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
-IMDS_HOST="${IMDS_HOST:-'169.254.169.254:80'}"
+IMDS_HOST="${IMDS_HOST:-169.254.169.254:80}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
