@@ -365,20 +365,21 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
         if [[ $attempt -gt 0 ]]; then
             echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
         fi
-
         aws eks wait cluster-active \
             --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME}
-
-        aws eks describe-cluster \
-            --region=${AWS_DEFAULT_REGION} \
-            --name=${CLUSTER_NAME} \
-            --output=text \
-            --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, serviceIpv4Cidr: kubernetesNetworkConfig.serviceIpv4Cidr, serviceIpv6Cidr: kubernetesNetworkConfig.serviceIpv6Cidr, clusterIpFamily: kubernetesNetworkConfig.ipFamily, outpostArn: outpostConfig.outpostArns[0], id: id}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            --name=${CLUSTER_NAME} || rc=$?        
         if [[ $rc -eq 0 ]]; then
-            break
+            aws eks describe-cluster \
+                --region=${AWS_DEFAULT_REGION} \
+                --name=${CLUSTER_NAME} \
+                --output=text \
+                --query 'cluster.{certificateAuthorityData: certificateAuthority.data, endpoint: endpoint, serviceIpv4Cidr: kubernetesNetworkConfig.serviceIpv4Cidr, serviceIpv6Cidr: kubernetesNetworkConfig.serviceIpv6Cidr, clusterIpFamily: kubernetesNetworkConfig.ipFamily, outpostArn: outpostConfig.outpostArns[0], id: id}' > $DESCRIBE_CLUSTER_RESULT || rc=$?
+            if [[ $rc -eq 0 ]]; then
+                break
+            fi        
         fi
         if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
+            echo >&2 "Failed to describe cluster after $API_RETRY_ATTEMPTS attempts!"
             exit $rc
         fi
         jitter=$((1 + RANDOM % 10))
