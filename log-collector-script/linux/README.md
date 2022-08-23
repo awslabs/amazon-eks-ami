@@ -89,9 +89,10 @@ Trying to archive gathered information...
 
 #### *To invoke SSM agent to run EKS log collector script and push bundle to S3 from Worker Node(s):*
 
-1. Create the SSM document named "EKSLogCollector" using the following command: <br/>
+1. Create the SSM document named "EKSLogCollector" using the following commands: <br/>
 ```
-aws ssm create-document --name "EKSLogCollector" --document-type "Command" --content https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-ssm-content.json
+curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-ssm-content.json
+aws ssm create-document --name "EKSLogCollector" --document-type "Command" --content file://eks-ssm-content.json
 ```
 2. To execute the bash script in the SSM document and to collect the logs from worker, run the following command: <br/>
 ```
