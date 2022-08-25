@@ -16,7 +16,18 @@ docker build -t eks-optimized-ami -f Dockerfile ../
 docker run -it eks-optimized-ami /etc/eks/bootstrap.sh --b64-cluster-ca dGVzdA== --apiserver-endpoint http://my-api-endpoint test
 ```
 
-The `test-bootstrap.sh` script wraps a build and runs the bootstrap script with different parameters, expecting varying exit codes. 
+The `test-harness.sh` script wraps a build and runs test script in the `cases` dir. Tests scripts within the `cases` dir are invoked by the `test-harness.sh` script and have access to the `run` function. The `run` function accepts a temporary directory as an argument in order to mount as a volume in the container so that test scripts can check files within the `/etc/kubernetes/` directory after a bootstrap run. The remaining arguments to the `run` function are a path to a script within the AL2 EKS Optimized AMI Docker Container. 
+
+Here's an example `run` call:
+
+```
+run ${TEMP_DIR} /etc/eks/bootstrap.sh \
+    --b64-cluster-ca dGVzdA== \
+    --apiserver-endpoint http://my-api-endpoint \
+    --ip-family ipv4 \
+    --dns-cluster-ip 192.168.0.1 \
+    test-cluster-name
+```
 
 ## ECR Public
 

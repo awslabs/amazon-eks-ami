@@ -32,7 +32,7 @@ function print_help {
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
     echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
     echo "--cluster-id Specify the id of EKS cluster"
-    echo "--imds-host sets the IP address or hostname port pair for accessing the EC2 Metadata Service (default: 169.254.169.254:80)"
+    echo "--imds-endpoint sets the IP address or hostname port pair for accessing the EC2 Metadata Service (default: 169.254.169.254:80)"
 }
 
 POSITIONAL=()
@@ -124,8 +124,8 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-        --imds-host)
-            IMDS_host=$2
+        --imds-endpoint)
+            IMDS_ENDPOINT=$2
             shift
             shift
             ;;
@@ -157,7 +157,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
-IMDS_HOST="${IMDS_HOST:-169.254.169.254:80}"
+IMDS_ENDPOINT="${IMDS_ENDPOINT:-169.254.169.254:80}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -193,7 +193,7 @@ function _get_token() {
   local token_result=
   local http_result=
 
-  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://${IMDS_HOST}/latest/api/token")
+  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://${IMDS_ENDPOINT}/latest/api/token")
   http_result=$(echo "$token_result" | tail -n 1)
   if [[ "$http_result" != "200" ]]
   then
@@ -225,11 +225,11 @@ function _get_meta_data() {
   local path=$1
   local metadata_result=
 
-  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_HOST}/$path)
+  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_ENDPOINT}/$path)
   http_result=$(echo "$metadata_result" | tail -n 1)
   if [[ "$http_result" != "200" ]]
   then
-      echo -e "Failed to get metadata:\n$metadata_result\nhttp://${IMDS_HOST}/$path\n$TOKEN"
+      echo -e "Failed to get metadata:\n$metadata_result\nhttp://${IMDS_ENDPOINT}/$path\n$TOKEN"
       return 1
   else
       local lines=$(echo "$metadata_result" | wc -l)
@@ -516,7 +516,7 @@ if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
     # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
     # the PrefixDelegation based alternative and is likely to be in-use by more customers.
     # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
-    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --imds-endpoint=${IMDS_ENDPOINT} --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve
