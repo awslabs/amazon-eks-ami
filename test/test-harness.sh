@@ -37,8 +37,7 @@ function run(){
     local temp_dir=$1
     shift
     cp -f ${SCRIPTPATH}/../files/kubelet-config.json ${temp_dir}/kubelet-config.json
-    docker run -v ${SCRIPTPATH}/../files/bootstrap.sh:/etc/eks/bootstrap.sh \
-        -v ${SCRIPTPATH}/../files/max-pods-calculator.sh:/etc/eks/max-pods-calculator.sh \
+    docker run -v ${SCRIPTPATH}/../files/:/etc/eks/ \
         -v ${temp_dir}/kubelet-config.json:/etc/kubernetes/kubelet/kubelet-config.json \
         -i --rm eks-optimized-ami $@
 }
