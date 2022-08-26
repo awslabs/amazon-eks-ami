@@ -59,8 +59,9 @@ for case in "${test_cases[@]}"; do
         echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅ "
     else
         echo "❌ ❌ $(basename ${case}) Tests Failed! ❌ ❌"
+        overall_status=1
     fi
     echo "================================================================================================================="
 done
 
-exit $status
+exit $overall_status
