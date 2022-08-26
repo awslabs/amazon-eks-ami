@@ -40,7 +40,7 @@ function run(){
     docker run -v ${SCRIPTPATH}/../files/bootstrap.sh:/etc/eks/bootstrap.sh \
         -v ${SCRIPTPATH}/../files/max-pods-calculator.sh:/etc/eks/max-pods-calculator.sh \
         -v ${temp_dir}/kubelet-config.json:/etc/kubernetes/kubelet/kubelet-config.json \
-        -it --rm eks-optimized-ami $@
+        -i --rm eks-optimized-ami $@
 }
 export -f run
 
