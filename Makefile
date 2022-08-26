@@ -31,10 +31,6 @@ T_RESET := \e[0m
 .PHONY: all
 all: 1.19 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
-.PHONY: test
-test: ## run the test-harness
-	test/test-harness.sh
-
 .PHONY: validate
 validate: ## Validate packer config
 	$(PACKER_BINARY) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json

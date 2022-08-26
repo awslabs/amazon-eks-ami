@@ -39,7 +39,7 @@ function run(){
     cp -f ${SCRIPTPATH}/../files/kubelet-config.json ${temp_dir}/kubelet-config.json
     docker run -v ${SCRIPTPATH}/../files/:/etc/eks/ \
         -v ${temp_dir}/kubelet-config.json:/etc/kubernetes/kubelet/kubelet-config.json \
-        -i --rm eks-optimized-ami $@
+        -it --rm eks-optimized-ami $@
 }
 export -f run
 
