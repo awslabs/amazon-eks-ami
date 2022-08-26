@@ -32,7 +32,6 @@ function print_help {
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
     echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
     echo "--cluster-id Specify the id of EKS cluster"
-    echo "--imds-endpoint sets the IP address or hostname port pair for accessing the EC2 Metadata Service (default: 169.254.169.254:80)"
 }
 
 POSITIONAL=()
@@ -121,11 +120,6 @@ while [[ $# -gt 0 ]]; do
             ;;
          --cluster-id)
             CLUSTER_ID=$2
-            shift
-            shift
-            ;;
-        --imds-endpoint)
-            IMDS_ENDPOINT=$2
             shift
             shift
             ;;
@@ -516,7 +510,7 @@ if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
     # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
     # the PrefixDelegation based alternative and is likely to be in-use by more customers.
     # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
-    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --imds-endpoint=${IMDS_ENDPOINT} --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
+    MAX_PODS=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --show-max-allowed)
 fi
 
 # calculates the amount of each resource to reserve

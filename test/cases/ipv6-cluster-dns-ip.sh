@@ -4,11 +4,12 @@ set -euo pipefail
 echo "-> Should return ipv6 DNS Cluster IP when given dns-cluster-ip"
 exit_code=0
 TEMP_DIR=$(mktemp -d)
+expected_cluster_dns="fe80::2a"
 run ${TEMP_DIR} /etc/eks/bootstrap.sh \
     --b64-cluster-ca dGVzdA== \
     --apiserver-endpoint http://my-api-endpoint \
     --ip-family ipv6 \
-    --dns-cluster-ip fe80::2a \
+    --dns-cluster-ip "${expected_cluster_dns}" \
     test || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
@@ -16,8 +17,8 @@ if [[ ${exit_code} -ne 0 ]]; then
     exit 1
 fi
 
-cluster_dns=$(jq -r '.clusterDNS[0]' < ${TEMP_DIR}/kubelet-config.json)
-if [[ ${cluster_dns} != 'fe80::2a' ]]; then
-    echo "❌ Test Failed: expected clusterDNS IP 'fe80::2a' but got '${cluster_dns}'"
+actual_cluster_dns=$(jq -r '.clusterDNS[0]' < ${TEMP_DIR}/kubelet-config.json)
+if [[ ${actual_cluster_dns} != "${expected_cluster_dns}" ]]; then
+    echo "❌ Test Failed: expected clusterDNS IP '${expected_cluster_dns}' but got '${actual_cluster_dns}'"
     exit 1
 fi

@@ -16,8 +16,9 @@ if [[ ${exit_code} -ne 0 ]]; then
     exit 1
 fi
 
-cluster_dns=$(jq -r '.clusterDNS[0]' < ${TEMP_DIR}/kubelet-config.json)
-if [[ ${cluster_dns} != 'fe80::1a' ]]; then
-    echo "❌ Test Failed: expected clusterDNS IP 'fe80::1' but got '${cluster_dns}'"
+expected_cluster_dns="fe80::1a"
+actual_cluster_dns=$(jq -r '.clusterDNS[0]' < ${TEMP_DIR}/kubelet-config.json)
+if [[ ${actual_cluster_dns} != "${expected_cluster_dns}" ]]; then
+    echo "❌ Test Failed: expected clusterDNS IP '${expected_cluster_dns}' but got '${actual_cluster_dns}'"
     exit 1
 fi

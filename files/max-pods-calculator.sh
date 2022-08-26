@@ -20,7 +20,6 @@ function print_help {
     echo "--cni-prefix-delegation-enabled Use this flag to indicate if CNI prefix delegation has been enabled."
     echo "--cni-max-eni specify how many ENIs should be used for prefix delegation. Defaults to using all ENIs per instance."
     echo "--show-max-allowed Use this flag to show max number of Pods allowed to run in Worker Node. Otherwise the script will show the recommended value"
-    echo "--imds-endpoint sets the IP address or hostname port pair for accessing the EC2 Metadata Service (default: 169.254.169.254:80)"
 }
 
 POSITIONAL=()
@@ -61,11 +60,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --show-max-allowed)
             SHOW_MAX_ALLOWED=true
-            shift
-            ;;
-        --imds-endpoint)
-            IMDS_ENDPOINT=$2
-            shift
             shift
             ;;
         *)    # unknown option
