@@ -4,6 +4,8 @@ set -euo pipefail
 # The only use of kubelet directly is to get the Kubernetes version,
 # so we'll set a default here to avoid test failures, and you can
 # override by setting the KUBELET_VERSION environment variable.
-some_kubelet_version="Kubernetes v1.20.15-eks-ba74326"
-KUBELET_VERSION="${KUBELET_VERSION:-$some_kubelet_version}"
-echo "$KUBELET_VERSION"
+if [ $# == 1 ] && [ $1 == "--version" ]; then
+	echo "Kubernetes ${KUBELET_VERSION:-v1.23.9-eks-ba74326}"
+else
+	echo "mocking kubelet with params $@"
+fi

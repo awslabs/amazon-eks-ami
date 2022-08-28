@@ -518,12 +518,18 @@ KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
-     INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
+    INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
 else
-     INTERNAL_IP_URI=latest/meta-data/network/interfaces/macs/$MAC/ipv6s
-     INTERNAL_IP=$(get_meta_data $INTERNAL_IP_URI)
+    INTERNAL_IP_URI=latest/meta-data/network/interfaces/macs/$MAC/ipv6s
+    INTERNAL_IP=$(get_meta_data $INTERNAL_IP_URI)
 fi
 INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
+
+if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.22.0"; then
+    # for K8s versions that suport API Priority & Fairness, increase our API server QPS
+    echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
+fi
+
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
 # calls calculate the CPU and memory resources to reserve for kubeReserved based on the instance type of the worker node.
