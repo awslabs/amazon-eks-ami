@@ -38,7 +38,7 @@ validate:
 .PHONY: k8s
 k8s: validate
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(PACKER_BINARY) build $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
+	$(PACKER_BINARY) build -timestamp-ui $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
@@ -48,12 +48,16 @@ k8s: validate
 
 .PHONY: 1.20
 1.20:
-	$(MAKE) k8s kubernetes_version=1.20.15 kubernetes_build_date=2022-06-20 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.20.15 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
 
 .PHONY: 1.21
 1.21:
-	$(MAKE) k8s kubernetes_version=1.21.12 kubernetes_build_date=2022-05-20 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22:
-	$(MAKE) k8s kubernetes_version=1.22.9 kubernetes_build_date=2022-06-03 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.12 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+
+.PHONY: 1.23
+1.23:
+	$(MAKE) k8s kubernetes_version=1.23.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true

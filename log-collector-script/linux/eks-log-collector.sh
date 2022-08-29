@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.6.2"
+readonly PROGRAM_VERSION="0.7.0"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -210,7 +210,7 @@ is_diskfull() {
 
   # 1.5GB in KB
   threshold=1500000
-  result=$(df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
+  result=$(timeout 75 df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
 
   # If "result" is less than or equal to "threshold", fail.
   if [[ "${result}" -le "${threshold}" ]]; then
@@ -259,6 +259,8 @@ collect() {
   get_cni_config
   get_docker_logs
   get_sandboxImage_info
+  get_cpu_throttled_processes
+  get_io_throttled_processes
 }
 
 pack() {
@@ -278,7 +280,8 @@ get_mounts_info() {
   try "collect mount points and volume information"
   mount > "${COLLECT_DIR}"/storage/mounts.txt
   echo >> "${COLLECT_DIR}"/storage/mounts.txt
-  df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
+  timeout 75 df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
+  timeout 75 df --inodes >> "${COLLECT_DIR}"/storage/inodes.txt
   lsblk > "${COLLECT_DIR}"/storage/lsblk.txt
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
@@ -328,6 +331,8 @@ get_common_logs() {
           cp --force --dereference --recursive /var/log/containers/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           cp --force --dereference --recursive /var/log/containers/coredns-* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           cp --force --dereference --recursive /var/log/containers/kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/ebs-csi* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/containers/efs-csi* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           continue
         fi
         if [[ "${entry}" == "pods" ]]; then
@@ -335,6 +340,8 @@ get_common_logs() {
           cp --force --dereference --recursive /var/log/pods/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           cp --force --dereference --recursive /var/log/pods/kube-system_coredns* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           cp --force --dereference --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_ebs-csi-* "${COLLECT_DIR}"/var_log/ 2>/dev/null
+          cp --force --dereference --recursive /var/log/pods/kube-system_efs-csi-* "${COLLECT_DIR}"/var_log/ 2>/dev/null
           continue
         fi
       cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/ 2>/dev/null
@@ -543,8 +550,11 @@ get_system_services() {
   esac
 
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
-  timeout 75 ps fauxwww > "${COLLECT_DIR}"/system/ps.txt 2>&1
+  timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1
+  timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
+  timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
+  timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
 
   ok
 }
@@ -559,17 +569,31 @@ get_containerd_info() {
         warning "The Containerd daemon is not running."
     fi
 
-   ok
+    ok
+
+    try "Collect Containerd running information"
+    if ! command -v ctr >/dev/null 2>&1; then
+        warning "ctr not installed"
+    else
+        timeout 75 ctr version > "${COLLECT_DIR}"/containerd/containerd-version.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr namespaces list > "${COLLECT_DIR}"/containerd/containerd-namespaces.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io images list > "${COLLECT_DIR}"/containerd/containerd-images.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io containers list > "${COLLECT_DIR}"/containerd/containerd-containers.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io tasks list > "${COLLECT_DIR}"/containerd/containerd-tasks.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+        timeout 75 ctr --namespace k8s.io plugins list > "${COLLECT_DIR}"/containerd/containerd-plugins.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    fi
+
+    ok
 }
 
 get_sandboxImage_info() {
-    try "Collect sandbox-image daemon information"      
+    try "Collect sandbox-image daemon information"
       timeout 75 journalctl -u sandbox-image > "${COLLECT_DIR}"/sandbox-image/sandbox-image-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"sandbox-image info output \" "
    ok
 }
 
 get_docker_info() {
-  try "collect Docker daemon information"
+  try "Collect Docker daemon information"
 
   if [[ "$(pgrep -o dockerd)" -ne 0 ]]; then
     timeout 75 docker info > "${COLLECT_DIR}"/docker/docker-info.txt 2>&1 || echo -e "\tTimed out, ignoring \"docker info output \" "
@@ -581,6 +605,45 @@ get_docker_info() {
     warning "The Docker daemon is not running."
   fi
 
+  ok
+}
+
+get_cpu_throttled_processes() {
+  try "Collect CPU Throttled Process Information"
+  readonly THROTTLE_LOG="${COLLECT_DIR}"/system/cpu_throttling.txt
+  command find /sys/fs/cgroup -iname "cpu.stat" -print0 | while IFS= read -r -d '' cs
+  do
+    # look for a non-zero nr_throttled value
+    if grep -q "nr_throttled [1-9]" "${cs}"; then
+      pids=${cs/cpu.stat/cgroup.procs}
+      lines=$(wc -l < "${pids}")
+      # ignore if no PIDs are listed
+      if [ "${lines}" -eq "0" ] ; then
+        continue
+      fi
+
+      echo "$cs" >> "${THROTTLE_LOG}"
+      cat "${cs}" >> "${THROTTLE_LOG}"
+      while IFS= read -r pid
+      do
+        command ps ax | grep "^${pid}" >> "${THROTTLE_LOG}"
+        done < "${pids}"
+        echo "" >>  "${THROTTLE_LOG}"
+      fi
+  done
+  if [ ! -e "${THROTTLE_LOG}" ]; then
+    echo "No CPU Throttling Found" >>  "${THROTTLE_LOG}"
+  fi
+  ok
+}
+
+get_io_throttled_processes() {
+  try "Collect IO Throttled Process Information"
+  readonly IO_THROTTLE_LOG="${COLLECT_DIR}"/system/io_throttling.txt
+  command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
+  # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
+  # I/O delays.
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r  | grep -v 0$ >> ${IO_THROTTLE_LOG}
   ok
 }
 
