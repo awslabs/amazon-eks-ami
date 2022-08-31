@@ -123,6 +123,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+         --pause-container-endpoint-type)
+            PAUSE_CONTAINER_ENDPOINT_TYPE=$2
+            shift
+            shift
+            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -151,6 +156,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
+PAUSE_CONTAINER_ENDPOINT_TYPE="${PAUSE_CONTAINER_ENDPOINT_TYPE:-"ecr"}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -348,7 +354,7 @@ if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
 fi
 
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.$PAUSE_CONTAINER_ENDPOINT_TYPE.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
