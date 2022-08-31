@@ -93,6 +93,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --pause-container-endpoint-type)
+            PAUSE_CONTAINER_ENDPOINT_TYPE=$2
+            shift
+            shift
+            ;;
         --dns-cluster-ip)
             DNS_CLUSTER_IP=$2
             shift
@@ -123,11 +128,6 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
-         --pause-container-endpoint-type)
-            PAUSE_CONTAINER_ENDPOINT_TYPE=$2
-            shift
-            shift
-            ;;
         *)    # unknown option
             POSITIONAL+=("$1") # save it in an array for later
             shift # past argument
@@ -151,12 +151,12 @@ API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.5}"
+PAUSE_CONTAINER_ENDPOINT_TYPE="${PAUSE_CONTAINER_ENDPOINT_TYPE:-"ecr"}"
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
-PAUSE_CONTAINER_ENDPOINT_TYPE="${PAUSE_CONTAINER_ENDPOINT_TYPE:-"ecr"}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
