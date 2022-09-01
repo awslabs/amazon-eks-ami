@@ -32,6 +32,79 @@ validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set PULL_CNI_FROM_GITHUB
 
 ################################################################################
+### EC2 IMDS v2 Helper Functions ###############################################
+################################################################################
+
+function _get_token() {
+  local token_result=
+  local http_result=
+
+  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
+  http_result=$(echo "$token_result" | tail -n 1)
+  if [[ "$http_result" != "200" ]]
+  then
+      echo -e "Failed to get token:\n$token_result"
+      return 1
+  else
+      echo "$token_result" | head -n 1
+      return 0
+  fi
+}
+
+function get_token() {
+  local token=
+  local retries=20
+  local result=1
+
+  while [[ retries -gt 0 && $result -ne 0 ]]
+  do
+    retries=$[$retries-1]
+    token=$(_get_token)
+    result=$?
+    [[ $result != 0 ]] && sleep 5
+  done
+  [[ $result == 0 ]] && echo "$token"
+  return $result
+}
+
+function _get_meta_data() {
+  local path=$1
+  local metadata_result=
+
+  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/$path)
+  http_result=$(echo "$metadata_result" | tail -n 1)
+  if [[ "$http_result" != "200" ]]
+  then
+      echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
+      return 1
+  else
+      local lines=$(echo "$metadata_result" | wc -l)
+      echo "$metadata_result" | head -n $(( lines - 1 ))
+      return 0
+  fi
+}
+
+function get_meta_data() {
+  local metadata=
+  local path=$1
+  local retries=20
+  local result=1
+
+  while [[ retries -gt 0 && $result -ne 0 ]]
+  do
+    retries=$[$retries-1]
+    metadata=$(_get_meta_data $path)
+    result=$?
+    [[ $result != 0 ]] && TOKEN=$(get_token)
+  done
+  [[ $result == 0 ]] && echo "$metadata"
+  return $result
+}
+
+# Retrieve initial IMDSv2 token which should be valid for the duration of the install script
+TOKEN=$(get_token)
+
+################################################################################
 ### Machine Architecture #######################################################
 ################################################################################
 
@@ -215,12 +288,17 @@ fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
+AWS_CLI_OK="false"
+if [[ $(aws s3 ls --region $BINARY_BUCKET_REGION $S3_PATH) ]]; then
+    AWS_CLI_OK="true"
+fi
+
 BINARIES=(
     kubelet
     aws-iam-authenticator
 )
 for binary in ${BINARIES[*]} ; do
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    if [[ "${AWS_CLI_OK}" == "true" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
@@ -244,7 +322,7 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
     sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
     rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
 else
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    if [[ "${AWS_CLI_OK}" == "true" ]]; then
         echo "AWS cli present - using it to copy binaries from s3."
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
@@ -313,7 +391,7 @@ fi
 ################################################################################
 if [[ ! $KUBERNETES_VERSION =~ "1.19"* && ! $KUBERNETES_VERSION =~ "1.20"* && ! $KUBERNETES_VERSION =~ "1.21"* ]]; then
     ECR_BINARY="ecr-credential-provider"
-    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+    if [[ "${AWS_CLI_OK}" == "true" ]]; then
         echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
         aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
     else
@@ -338,7 +416,7 @@ sudo yum install -y amazon-ssm-agent
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
+BASE_AMI_ID=$(get_meta_data 'latest/meta-data/ami-id')
 cat <<EOF > /tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"

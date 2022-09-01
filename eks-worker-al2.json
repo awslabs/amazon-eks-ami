@@ -2,6 +2,7 @@
   "variables": {
     "aws_region": "us-west-2",
     "ami_name": null,
+    "aws_iam_instance_profile": "",
     "creator": "{{env `USER`}}",
     "encrypted": "false",
     "kms_key_id": "",
@@ -42,6 +43,12 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "iam_instance_profile": "{{user `aws_iam_instance_profile`}}",
+      "metadata_options": {
+        "http_endpoint": "enabled",
+        "http_tokens": "required",
+        "http_put_response_hop_limit": 1
+      },
       "ami_users": "{{user `ami_users`}}",
       "snapshot_users": "{{user `ami_users`}}",
       "source_ami_filter": {
