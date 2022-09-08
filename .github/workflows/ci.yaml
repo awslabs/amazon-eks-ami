@@ -7,8 +7,8 @@ on:
   pull_request:
     types:
       - opened
-      - edited
       - reopened
+      - synchronize
 jobs:
   test:
     runs-on: ubuntu-latest
