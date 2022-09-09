@@ -7,7 +7,7 @@ EKS-optimized AMI.
 
 ## Setup
 
-You must have [Packer](https://www.packer.io/) installed on your local system.
+You must have [Packer](https://www.packer.io/) version 1.8.0 or later installed on your local system.
 For more information, see [Installing Packer](https://www.packer.io/docs/install/index.html)
 in the Packer documentation. You must also have AWS account credentials
 configured so that Packer can make calls to AWS API operations on your behalf.
