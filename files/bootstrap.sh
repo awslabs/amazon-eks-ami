@@ -151,6 +151,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
+IMDS_ENDPOINT="${IMDS_ENDPOINT:-169.254.169.254:80}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -186,7 +187,7 @@ function _get_token() {
   local token_result=
   local http_result=
 
-  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://169.254.169.254/latest/api/token")
+  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://${IMDS_ENDPOINT}/latest/api/token")
   http_result=$(echo "$token_result" | tail -n 1)
   if [[ "$http_result" != "200" ]]
   then
@@ -218,11 +219,11 @@ function _get_meta_data() {
   local path=$1
   local metadata_result=
 
-  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/$path)
+  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_ENDPOINT}/$path)
   http_result=$(echo "$metadata_result" | tail -n 1)
   if [[ "$http_result" != "200" ]]
   then
-      echo -e "Failed to get metadata:\n$metadata_result\nhttp://169.254.169.254/$path\n$TOKEN"
+      echo -e "Failed to get metadata:\n$metadata_result\nhttp://${IMDS_ENDPOINT}/$path\n$TOKEN"
       return 1
   else
       local lines=$(echo "$metadata_result" | wc -l)
@@ -322,11 +323,6 @@ if [[ ! -z "${IP_FAMILY}" ]]; then
         echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
         exit 1
   fi
-
-  if [[ "${IP_FAMILY}" == "ipv6" ]] && [[ ! -z "${B64_CLUSTER_CA}" ]] && [[ ! -z "${APISERVER_ENDPOINT}" ]] && [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
-        echo "Service Ipv6 Cidr must be provided when ip-family is specified as IPV6"
-        exit 1
-  fi
 fi
 
 if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
@@ -339,7 +335,7 @@ fi
 
 TOKEN=$(get_token)
 AWS_DEFAULT_REGION=$(get_meta_data 'latest/dynamic/instance-identity/document' | jq .region -r)
-AWS_SERVICES_DOMAIN=$(get_meta_data '2018-09-24/meta-data/services/domain')
+AWS_SERVICES_DOMAIN=$(get_meta_data 'latest/meta-data/services/domain')
 
 MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
@@ -410,7 +406,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
 fi
 
 if [[ -z "${IP_FAMILY}" ]] || [[ "${IP_FAMILY}" == "None" ]]; then
-       ### this can happen when the ifFamily field is not found in describeCluster response
+       ### this can happen when the ipFamily field is not found in describeCluster response
        ### or B64_CLUSTER_CA and APISERVER_ENDPOINT are defined but IPFamily isn't
        IP_FAMILY="ipv4"
 fi
@@ -460,21 +456,28 @@ fi
 
 ### kubelet.service configuration
 
-if [[ "${IP_FAMILY}" == "ipv6" ]]; then
-      DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
-fi
-
 MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
 
+
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
-  if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]] ; then
-    #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
-    DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
-  else
-    TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
-    DNS_CLUSTER_IP=10.100.0.10
-    if [[ "$TEN_RANGE" != "0" ]]; then
-      DNS_CLUSTER_IP=172.20.0.10
+  if [[ "${IP_FAMILY}" == "ipv6" ]]; then
+    if [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
+      echo "One of --service-ipv6-cidr or --dns-cluster-ip must be provided when ip-family is specified as ipv6"
+      exit 1
+    fi
+    DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
+  fi
+
+  if [[ "${IP_FAMILY}" == "ipv4" ]]; then
+    if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
+        #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+        DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
+    else
+        TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
+        DNS_CLUSTER_IP=10.100.0.10
+        if [[ "$TEN_RANGE" != "0" ]]; then
+            DNS_CLUSTER_IP=172.20.0.10
+        fi
     fi
   fi
 else

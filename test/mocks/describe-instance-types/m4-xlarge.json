@@ -1,0 +1,6 @@
+{
+    "Hypervisor": "xen",
+    "EniCount": 4,
+    "PodsPerEniCount": 15,
+    "CpuCount": 4
+}
