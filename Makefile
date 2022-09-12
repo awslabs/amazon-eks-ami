@@ -29,7 +29,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.19 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
+all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
 .PHONY: test
 test: ## run the test-harness
@@ -40,15 +40,11 @@ validate: ## Validate packer config
 	$(PACKER_BINARY) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
 
 .PHONY: k8s
-k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI 
+k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
 	$(PACKER_BINARY) build -timestamp-ui $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
-
-.PHONY: 1.19
-1.19: ## Build EKS Optimized AL2 AMI - K8s 1.19
-	$(MAKE) k8s kubernetes_version=1.19.15 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
 
 .PHONY: 1.20
 1.20: ## Build EKS Optimized AL2 AMI - K8s 1.20
