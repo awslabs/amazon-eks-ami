@@ -565,7 +565,6 @@ EOF
 
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
     mkdir -p /etc/docker
-    bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
     cp -v /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
     sudo chown root:root /etc/systemd/system/iptables-restore.service
     systemctl daemon-reload
