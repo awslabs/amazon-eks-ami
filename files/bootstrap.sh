@@ -343,8 +343,14 @@ if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
     exit 1
 fi
 
+AWS_ECR_SUBDOMAIN="ecr"
+# If FIPS is enabled on the machine, use the FIPS endpoint for AWS ECR.
+if grep "fips=1" /etc/default/grub; then
+    AWS_ECR_SUBDOMAIN="ecr-fips"
+fi
+
 PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.$AWS_ECR_SUBDOMAIN.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
