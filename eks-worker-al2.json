@@ -18,6 +18,7 @@
     "runc_version": "1.1.3-1.amzn2",
     "cni_plugin_version": "v0.8.6",
     "pull_cni_from_github": "true",
+    "enable_fips_mode": "false",
     "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
@@ -118,6 +119,7 @@
       "expect_disconnect": true,
       "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
       "environment_vars": [
+        "ENABLE_FIPS_MODE={{user `enable_fips_mode`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
