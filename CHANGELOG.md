@@ -1,5 +1,45 @@
 # Changelog
 
+### AMI Release v20220914
+* amazon-eks-gpu-node-1.23-v20220914
+* amazon-eks-gpu-node-1.22-v20220914
+* amazon-eks-gpu-node-1.21-v20220914
+* amazon-eks-gpu-node-1.20-v20220914
+* amazon-eks-arm64-node-1.23-v20220914
+* amazon-eks-arm64-node-1.22-v20220914
+* amazon-eks-arm64-node-1.21-v20220914
+* amazon-eks-arm64-node-1.20-v20220914
+* amazon-eks-node-1.23-v20220914
+* amazon-eks-node-1.22-v20220914
+* amazon-eks-node-1.21-v20220914
+* amazon-eks-node-1.20-v20220914
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.23.9-20220914`
+* `1.22.12-20220914`
+* `1.21.14-20220914`
+* `1.20.15-20220914`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.23.9/2022-07-27/
+* s3://amazon-eks/1.22.12/2022-07-27/
+* s3://amazon-eks/1.21.14/2022-07-27/
+* s3://amazon-eks/1.20.15/2022-07-27/
+
+AMI details:
+* kernel: 5.4.209-116.367.amzn2
+* dockerd: 20.10.17-1.amzn2
+* containerd: 1.6.6-1.amzn2
+* runc: 1.1.3-1.amzn2
+* cuda: 470.57.02-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- The AWS CLI has been updated to (`1.25.72`)[https://github.com/aws/aws-cli/blob/1.25.72/CHANGELOG.rst#L8] to support local EKS clusters on Outposts.
+- This release fixes an issue with DNS cluster IP and IPv6. More info in #931.
+- Kernel version updated to `5.4.209-116.367.amzn2` as a part of latest CVE patch (ALASKERNEL-5.4-2022-035)[https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2022-035.html]
+
 ### AMI Release v20220824
 * amazon-eks-gpu-node-1.23-v20220824
 * amazon-eks-gpu-node-1.22-v20220824
