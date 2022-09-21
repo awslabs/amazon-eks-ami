@@ -135,18 +135,46 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 CLUSTER_NAME="$1"
 set -u
 
+KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
+echo "Using kubelet version $KUBELET_VERSION"
+
+function is_greater_than_or_equal_to_version() {
+    local actual_version="$1"
+    local compared_version="$2"
+
+    [ $actual_version = "`echo -e \"$actual_version\n$compared_version\" | sort -V | tail -n1`" ]
+}
+
+# As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
+# and no longer support docker as a container runtime.
+IS_124_OR_GREATER=false
+DEFAULT_CONTAINER_RUNTIME=dockerd
+if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.24.0"; then
+    IS_124_OR_GREATER=true
+    DEFAULT_CONTAINER_RUNTIME=containerd
+fi
+
+# Set container runtime related variables
+DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
+ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-$DEFAULT_CONTAINER_RUNTIME}"
+
+echo "Using $CONTAINER_RUNTIME as the container runtime"
+
+if $IS_124_OR_GREATER && [ $CONTAINER_RUNTIME != "containerd" ]; then
+    echo "ERROR: containerd is the only supported container runtime as of Kubernetes version 1.24"
+    exit 1
+fi
+
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
 SERVICE_IPV4_CIDR="${SERVICE_IPV4_CIDR:-}"
 DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
-ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
-DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
 PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.5}"
-CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-dockerd}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
@@ -542,6 +570,14 @@ EOF
 fi
 
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
+    if $ENABLE_DOCKER_BRIDGE; then
+        echo "WARNING: Flag --enable-docker-bridge was set but will be ignored as it's not relevant to containerd"
+    fi
+
+    if [ ! -z "$DOCKER_CONFIG_JSON" ]; then
+        echo "WARNING: Flag --docker-config-json was set but will be ignored as it's not relevant to containerd"
+    fi
+
     sudo mkdir -p /etc/containerd
     sudo mkdir -p /etc/cni/net.d
     mkdir -p /etc/systemd/system/containerd.service.d
