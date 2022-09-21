@@ -62,23 +62,6 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
 	$(MAKE) k8s kubernetes_version=1.23.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
 
-# FIPS-mode enabled versions of EKS Optimized AL2 AMIs
-.PHONY: 1.20-fips
-1.20-fips: ## Build EKS Optimized AL2 AMI - K8s 1.20
-	$(MAKE) k8s kubernetes_version=1.20.15 kubernetes_build_date=2022-07-27 pull_cni_from_github=true enable_fips_mode=true
-
-.PHONY: 1.21-fips
-1.21-fips: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-07-27 pull_cni_from_github=true enable_fips_mode=true
-
-.PHONY: 1.22-fips
-1.22-fips: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.12 kubernetes_build_date=2022-07-27 pull_cni_from_github=true enable_fips_mode=true
-
-.PHONY: 1.23-fips
-1.23-fips: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true enable_fips_mode=true
-
 .PHONY: help
 help: ## Display help
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make \033[36m<target>\033[0m\n"} /^[\.a-zA-Z_0-9\-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
