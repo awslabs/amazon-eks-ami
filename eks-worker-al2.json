@@ -119,7 +119,6 @@
       "expect_disconnect": true,
       "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
       "environment_vars": [
-        "ENABLE_FIPS_MODE={{user `enable_fips_mode`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
@@ -162,6 +161,14 @@
         "CLEANUP_IMAGE={{user `cleanup_image`}}",
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/enable_fips.sh",
+      "environment_vars": [
+        "ENABLE_FIPS_MODE={{user `enable_fips_mode`}}",
+      ],
     },
     {
       "type": "shell",
