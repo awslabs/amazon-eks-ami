@@ -11,7 +11,7 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2022-08-15T23:21:13Z
+# This file was generated at 2022-09-21T13:34:09-07:00
 #
 # The regions queried were:
 # - ap-northeast-1
@@ -554,6 +554,8 @@ t4g.micro 4
 t4g.nano 4
 t4g.small 11
 t4g.xlarge 58
+trn1.2xlarge 58
+trn1.32xlarge 247
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.metal 737
