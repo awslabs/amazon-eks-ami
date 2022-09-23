@@ -33,5 +33,3 @@ else
     echo "$KERNEL_VERSION is not a valid kernel version"
     exit 1
 fi
-
-sudo reboot
