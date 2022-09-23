@@ -125,6 +125,14 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/enable_fips.sh",
+      "environment_vars": [
+        "ENABLE_FIPS_MODE={{user `enable_fips_mode`}}",
+      ]
+    },
+    {
+      "type": "shell",
       "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
@@ -161,14 +169,6 @@
         "CLEANUP_IMAGE={{user `cleanup_image`}}",
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}"
       ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/enable_fips.sh",
-      "environment_vars": [
-        "ENABLE_FIPS_MODE={{user `enable_fips_mode`}}",
-      ],
     },
     {
       "type": "shell",
