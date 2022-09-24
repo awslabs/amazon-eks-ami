@@ -36,12 +36,15 @@ overall_status=0
 function run(){
     local temp_dir=$1
     shift
+    # This variable is used to override the default value in the kubelet mock
+    KUBELET_VERSION="${KUBELET_VERSION:-}"
     cp -f ${SCRIPTPATH}/../files/kubelet-config.json ${temp_dir}/kubelet-config.json
     docker run -v ${SCRIPTPATH}/../files/:/etc/eks/ \
         -v ${temp_dir}/kubelet-config.json:/etc/kubernetes/kubelet/kubelet-config.json \
         --attach STDOUT \
         --attach STDERR \
         --rm \
+        -e KUBELET_VERSION="$KUBELET_VERSION" \
         eks-optimized-ami $@
 }
 export -f run
