@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.0"
+readonly PROGRAM_VERSION="0.7.2"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -286,7 +286,8 @@ get_mounts_info() {
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
   vgs > "${COLLECT_DIR}"/storage/vgs.txt
-
+  mount -t xfs | awk '{print $1}' | xargs -I{} -- sh -c "xfs_info {}; xfs_db -r -c 'freesp -s' {}" > "${COLLECT_DIR}"/storage/xfs.txt
+  mount | grep ^overlay | sed 's/.*upperdir=//' | sed 's/,.*//' | xargs -n 1 timeout 75 du -sh  | grep -v ^0 > "${COLLECT_DIR}"/storage/pod_local_storage.txt
   ok
 }
 
@@ -491,6 +492,20 @@ get_networking_info() {
   # configure-multicard-interfaces
   timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
 
+  # test some network connectivity
+  timeout 75 ping -A -c 10 amazon.com > "${COLLECT_DIR}"/networking/ping_amazon.com.txt
+  timeout 75 ping -A -c 10 public.ecr.aws > "${COLLECT_DIR}"/networking/ping_public.ecr.aws.txt
+
+  if [[ -e "${COLLECT_DIR}"/kubelet/kubeconfig.yaml ]]; then
+    API_SERVER=$(grep server: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*server: //')
+    CA_CRT=$(grep certificate-authority: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*certificate-authority: //')
+    for i in $(seq 5); do
+      echo -e "curling ${API_SERVER} ($i of 5) $(date --utc +%FT%T.%3N%Z)\n\n"  >> ${COLLECT_DIR}"/networking/curl_api_server.txt"
+      timeout 75 curl -v --cacert "${CA_CRT}" "${API_SERVER}"/livez?verbose >> ${COLLECT_DIR}"/networking/curl_api_server.txt" 2>&1
+    done
+  fi
+
+  cp /etc/resolv.conf "${COLLECT_DIR}"/networking/resolv.conf
   ok
 }
 

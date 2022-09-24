@@ -1,0 +1,17 @@
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: make test

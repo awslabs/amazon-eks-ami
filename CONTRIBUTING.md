@@ -43,7 +43,15 @@ GitHub provides additional document on [forking a repository](https://help.githu
 
 When submitting PRs, we want to verify that there are no regressions in the AMI with the new changes. EKS runs various tests before publishing new Amazon EKS optimized Amazon Linux AMIs, which will ensure the highest level of confidence that there are no regressions in officially published AMIs. To maintain the health of this repo, we need to do some basic validation prior to merging PRs. Eventually, we hope to automate this process. Until then, here are the basic steps that we should take before merging PRs.
 
-**Test #1: Verify that building AMIs still works**
+**Test #1: Verify that the unit tests pass**
+
+Please add a test case for your changes, if possible. See the [unit test README](test/README.md) for more information. These tests will be run automatically for every pull request.
+
+```
+make test
+```
+
+**Test #2: Verify that building AMIs still works**
 
 If your change is relevant to a specific Kubernetes version, build all AMIs that apply. Otherwise, just choose the latest available Kubernetes version.
 
@@ -52,7 +60,7 @@ If your change is relevant to a specific Kubernetes version, build all AMIs that
 make 1.22
 ```
 
-**Test #2: Create a nodegroup with new AMI and confirm it joins a cluster**
+**Test #3: Create a nodegroup with new AMI and confirm it joins a cluster**
 
 Once the AMI is built, we need to verify that it can join a cluster. You can use `eksctl`, or your method of choice, to create a cluster and add nodes to it using the AMI you built. Below is an example config file.
 
@@ -84,7 +92,7 @@ eksctl create cluster -f cluster.yaml
 
 `eksctl` will verify that the nodes join the cluster before completing.
 
-**Test #3: Verify that the nodes are Kubernetes conformant**
+**Test #4: Verify that the nodes are Kubernetes conformant**
 
 You can use [sonobuoy](https://sonobuoy.io/) to run conformance tests on the cluster you've create in *Test #2*. You should only include nodes with the custom AMI built in *Test #1*. You must install `sonobuoy` locally before running.
 
@@ -94,7 +102,7 @@ sonobuoy run --wait
 
 By default, `sonobuoy` will run `e2e` and `systemd-logs`. This step may take multiple hours to run.
 
-**Test #4: [Optional] Test your specific PR changes**
+**Test #5: [Optional] Test your specific PR changes**
 
 If your PR has changes that require additional, custom validation, provide the appropriate steps to verify that the changes don't cause regressions and behave as expected. Document the steps taken in the CR.
 
