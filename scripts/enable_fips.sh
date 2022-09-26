@@ -11,5 +11,3 @@ if [[ "$ENABLE_FIPS_MODE" == "true" ]]; then
   # rebuild grub
   sudo grub2-mkconfig -o /etc/grub2.cfg
 fi
-
-sudo reboot

@@ -133,6 +133,10 @@
     },
     {
       "type": "shell",
+      "inline": ["sudo reboot"]
+    },
+    {
+      "type": "shell",
       "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
