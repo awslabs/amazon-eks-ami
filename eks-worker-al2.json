@@ -116,7 +116,6 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "expect_disconnect": true,
       "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
@@ -133,11 +132,12 @@
     },
     {
       "type": "shell",
-      "inline": ["sudo reboot"]
+      "inline": ["sudo reboot"],
+      "expect_disconnect": true,
+      "pause_after": "90s"
     },
     {
       "type": "shell",
-      "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "mkdir -p /tmp/worker/log-collector-script/"
