@@ -24,7 +24,6 @@
     "arch": null,
     "instance_type": null,
     "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
-    "cleanup_image": "true",
     "ssh_interface": "",
     "ssh_username": "ec2-user",
     "temporary_security_group_source_cidrs": "",
@@ -157,9 +156,13 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "CLEANUP_IMAGE={{user `cleanup_image`}}",
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/cleanup.sh"
     },
     {
       "type": "shell",

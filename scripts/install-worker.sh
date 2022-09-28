@@ -373,37 +373,4 @@ echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 sudo mkdir -p /etc/eks/log-collector-script/
 sudo cp $TEMPLATE_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
 
-################################################################################
-### Cleanup ####################################################################
-################################################################################
-
-CLEANUP_IMAGE="${CLEANUP_IMAGE:-true}"
-if [[ "$CLEANUP_IMAGE" == "true" ]]; then
-    # Clean up yum caches to reduce the image size
-    sudo yum clean all
-    sudo rm -rf \
-        $TEMPLATE_DIR  \
-        /var/cache/yum
-
-    # Clean up files to reduce confusion during debug
-    sudo rm -rf \
-        /etc/hostname \
-        /etc/machine-id \
-        /etc/resolv.conf \
-        /etc/ssh/ssh_host* \
-        /home/ec2-user/.ssh/authorized_keys \
-        /root/.ssh/authorized_keys \
-        /var/lib/cloud/data \
-        /var/lib/cloud/instance \
-        /var/lib/cloud/instances \
-        /var/lib/cloud/sem \
-        /var/lib/dhclient/* \
-        /var/lib/dhcp/dhclient.* \
-        /var/lib/yum/history \
-        /var/log/cloud-init-output.log \
-        /var/log/cloud-init.log \
-        /var/log/secure \
-        /var/log/wtmp
-fi
-
 sudo touch /etc/machine-id
