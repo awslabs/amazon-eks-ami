@@ -37,7 +37,7 @@ AMI details:
 * SSM agent: 3.1.1732.0-1.amzn2
 
 Notable Changes:
-Phase 1 of support for Trn1 instances
+* Phase 1 of support for Trn1 instances
 
 ### AMI Release v20220914
 * amazon-eks-gpu-node-1.23-v20220914
