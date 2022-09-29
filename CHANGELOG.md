@@ -1,7 +1,6 @@
 # Changelog
 
 ### AMI Release v20220926
-Available ap-northeast-2 09/29/2022. Not yet available other regions.
 * amazon-eks-gpu-node-1.23-v20220926
 * amazon-eks-gpu-node-1.22-v20220926
 * amazon-eks-gpu-node-1.21-v20220926
