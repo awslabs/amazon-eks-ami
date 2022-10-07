@@ -2,5 +2,6 @@
 *.swp
 .idea
 *version-info.json
+*manifest.json
 .DS_Store
 
