@@ -372,5 +372,3 @@ echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 ################################################################################
 sudo mkdir -p /etc/eks/log-collector-script/
 sudo cp $TEMPLATE_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
-
-sudo touch /etc/machine-id

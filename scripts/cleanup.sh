@@ -26,3 +26,5 @@ sudo rm -rf \
     /var/log/cloud-init.log \
     /var/log/secure \
     /var/log/wtmp
+
+sudo touch /etc/machine-id
