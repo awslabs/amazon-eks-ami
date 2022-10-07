@@ -74,6 +74,10 @@
           "delete_on_termination": true
         }
       ],
+      "aws_polling": {
+        "delay_seconds": 30,
+        "max_attempts": 90
+      },
       "ami_regions": "{{user `ami_regions`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
