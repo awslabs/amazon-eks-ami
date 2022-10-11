@@ -75,6 +75,9 @@ sudo package-cleanup --oldkernels --count=1 -y
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
 
+# Add IMDS helper
+sudo mv $TEMPLATE_DIR/imds /usr/bin/imds
+
 ################################################################################
 ### Time #######################################################################
 ################################################################################
