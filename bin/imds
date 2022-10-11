@@ -36,14 +36,26 @@ if [ "$TOKEN_FILE" = "" ]
 then
   # default ttl is 15 minutes
   IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
-  TOKEN_EXPIRATION=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
-  TOKEN_FILE="$TOKEN_DIR/$TOKEN_EXPIRATION"
-  TOKEN=$(curl --silent --show-error --retry 5 --retry-delay 1 -X PUT "http://$IMDS_ENDPOINT/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS")
-  echo "$TOKEN" > $TOKEN_FILE
+  TOKEN_FILE=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
+  curl \
+    --silent \
+    --show-error \
+    --retry 5 \
+    --retry-delay 1 \
+    -o $TOKEN_DIR/$TOKEN_FILE \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS" \
+    -X PUT \
+    "http://$IMDS_ENDPOINT/latest/api/token"
   log "🔑 Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
 else
-  TOKEN=$(cat $TOKEN_DIR/$TOKEN_FILE)
-  log "ℹ️ Using cached IMDS token that expires in $(($(basename $TOKEN_FILE) - $CURRENT_TIME)) seconds."
+  log "ℹ️ Using cached IMDS token that expires in $(($TOKEN_FILE - $CURRENT_TIME)) seconds."
 fi
 
-curl --silent --show-error --retry 5 --retry-delay 1 --write-out '\n' -H "X-aws-ec2-metadata-token: $TOKEN" "http://$IMDS_ENDPOINT/$API_PATH"
+curl \
+  --silent \
+  --show-error \
+  --retry 5 \
+  --retry-delay 1 \
+  --write-out '\n' \
+  -H "X-aws-ec2-metadata-token: $(cat $TOKEN_DIR/$TOKEN_FILE)" \
+  "http://$IMDS_ENDPOINT/$API_PATH"

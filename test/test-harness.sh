@@ -54,7 +54,7 @@ for case in "${test_cases[@]}"; do
     echo "-> Executing Test Case: $(basename ${case})"
     run ${case} || status=1
     if [[ ${status} -eq 0 ]]; then
-        echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅ "
+        echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅"
     else
         echo "❌ ❌ $(basename ${case}) Tests Failed! ❌ ❌"
         overall_status=1
@@ -62,4 +62,9 @@ for case in "${test_cases[@]}"; do
     echo "================================================================================================================="
 done
 
+if [[ ${overall_status} -eq 0 ]]; then
+    echo "✅ ✅ All Tests Passed! ✅ ✅"
+else
+    echo "❌ ❌ Some Tests Failed! ❌ ❌"
+fi
 exit $overall_status
