@@ -1,6 +1,6 @@
 {
   "variables": {
-    "aws_region": "us-west-2",
+    "aws_region": "us-east-1",
     "ami_name": null,
     "creator": "{{env `USER`}}",
     "encrypted": "false",

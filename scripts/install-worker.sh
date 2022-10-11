@@ -117,11 +117,11 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 
 sudo yum install -y device-mapper-persistent-data lvm2
 
-INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
-if [[ "$INSTALL_DOCKER" == "true" ]]; then
-    sudo amazon-linux-extras enable docker
-    sudo groupadd -og 1950 docker
-    sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+INSTALL_CONTAINERD="${INSTALL_CONTAINERD:-true}"
+if [[ "$INSTALL_CONTAINERD" == "true" ]]; then
+#    sudo amazon-linux-extras enable docker
+#    sudo groupadd -og 1950 docker
+#    sudo useradd --gid $(getent group docker | cut -d: -f3) docker
 
     # install runc and lock version
     sudo yum install -y runc-${RUNC_VERSION}
@@ -132,18 +132,18 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
     sudo yum versionlock containerd-*
 
     # install docker and lock version
-    sudo yum install -y docker-${DOCKER_VERSION}*
-    sudo yum versionlock docker-*
-    sudo usermod -aG docker $USER
+#    sudo yum install -y docker-${DOCKER_VERSION}*
+#    sudo yum versionlock docker-*
+#    sudo usermod -aG docker $USER
 
     # Remove all options from sysconfig docker.
-    sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
+#    sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 
-    sudo mkdir -p /etc/docker
-    sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
-    sudo chown root:root /etc/docker/daemon.json
+#    sudo mkdir -p /etc/docker
+#    sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+#    sudo chown root:root /etc/docker/daemon.json
 
-    # Enable docker daemon to start on boot.
+    # Enable docker|CRI daemon to start on boot.
     sudo systemctl daemon-reload
 fi
 

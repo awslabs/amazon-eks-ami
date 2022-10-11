@@ -1,15 +1,16 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service iptables-restore.service
-Requires=docker.service
+After=containerd.service iptables-restore.service
+Requires=containerd.service
+Conflicts=docker.service
 
 [Service]
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet --cloud-provider aws \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
-    --container-runtime docker \
+    --container-runtime containerd \
     --network-plugin cni $KUBELET_ARGS $KUBELET_EXTRA_ARGS
 
 Restart=always

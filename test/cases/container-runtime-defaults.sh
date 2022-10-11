@@ -9,7 +9,7 @@ KUBELET_VERSION="v1.20.15-eks-ba74326"
 run ${TEMP_DIR} /etc/eks/bootstrap.sh \
     --b64-cluster-ca dGVzdA== \
     --apiserver-endpoint http://my-api-endpoint \
-    --container-runtime dockerd \
+    --container-runtime containerd \
     test || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then

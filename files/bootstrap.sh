@@ -27,7 +27,7 @@ function print_help {
     echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
     echo "--pause-container-account The AWS account (number) to pull the pause container from"
     echo "--pause-container-version The tag of the pause container"
-    echo "--container-runtime Specify a container runtime (default: dockerd)"
+    echo "--container-runtime Specify a container runtime (default: containerd)"
     echo "--ip-family Specify ip family of the cluster"
     echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
     echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
@@ -148,7 +148,7 @@ function is_greater_than_or_equal_to_version() {
 # As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
 # and no longer support docker as a container runtime.
 IS_124_OR_GREATER=false
-DEFAULT_CONTAINER_RUNTIME=dockerd
+DEFAULT_CONTAINER_RUNTIME=containerd
 if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.24.0"; then
     IS_124_OR_GREATER=true
     DEFAULT_CONTAINER_RUNTIME=containerd
