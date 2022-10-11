@@ -4,17 +4,28 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+IMDS_DEBUG="${IMDS_DEBUG:-false}"
+function log() {
+  if [ "$IMDS_DEBUG" = "true" ]
+  then
+    echo >&2 "$1"
+  fi
+}
+
 if [ "$#" -ne 1 ]
 then
-  echo "usage: $0 API_PATH"
+  log "usage: imds API_PATH"
   exit 1
 fi
 
-API_PATH="$1"
+# leading slashes will be removed
+API_PATH="${1#/}"
 
 CURRENT_TIME=$(date '+%s')
 
 IMDS_ENDPOINT=${IMDS_ENDPOINT:-169.254.169.254}
+
+log "ℹ️ Talking to IMDS at $IMDS_ENDPOINT"
 
 TOKEN_DIR=/tmp/imds-tokens
 mkdir -p $TOKEN_DIR
@@ -29,10 +40,10 @@ then
   TOKEN_FILE="$TOKEN_DIR/$TOKEN_EXPIRATION"
   TOKEN=$(curl --silent --retry 5 --retry-delay 1 -X PUT "http://$IMDS_ENDPOINT/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS")
   echo "$TOKEN" > $TOKEN_FILE
-  echo >&2 "❗ Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
+  log "🔑 Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
 else
   TOKEN=$(cat $TOKEN_DIR/$TOKEN_FILE)
-  echo >&2 "ℹ️ Using cached IMDS token that expires in $(($(basename $TOKEN_FILE) - $CURRENT_TIME)) seconds."
+  log "ℹ️ Using cached IMDS token that expires in $(($(basename $TOKEN_FILE) - $CURRENT_TIME)) seconds."
 fi
 
 curl --silent --retry 5 --retry-delay 1 -H "X-aws-ec2-metadata-token: $TOKEN" "http://$IMDS_ENDPOINT/$API_PATH"

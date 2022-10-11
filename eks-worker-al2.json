@@ -126,6 +126,11 @@
       ]
     },
     {
+      "type": "file",
+      "source": "{{template_dir}}/bin/",
+      "destination": "/usr/bin/"
+    },
+    {
       "type": "shell",
       "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
