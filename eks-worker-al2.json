@@ -127,9 +127,16 @@
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/bin/",
-      "destination": "/usr/bin/"
+      "source": "{{template_dir}}/bin",
+      "destination": "/tmp/bin"
     },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo chmod -R a+x /tmp/bin/",
+        "sudo mv /tmp/bin/* /usr/bin/"
+      ]
+    },    
     {
       "type": "shell",
       "pause_before": "90s",
