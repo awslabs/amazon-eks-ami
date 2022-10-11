@@ -1,0 +1,38 @@
+#!/bin/sh
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ "$#" -ne 1 ]
+then
+  echo "usage: $0 API_PATH"
+  exit 1
+fi
+
+API_PATH="$1"
+
+CURRENT_TIME=$(date '+%s')
+
+IMDS_ENDPOINT=${IMDS_ENDPOINT:-169.254.169.254}
+
+TOKEN_DIR=/tmp/imds-tokens
+mkdir -p $TOKEN_DIR
+
+TOKEN_FILE=$(ls $TOKEN_DIR | awk '$0 > '$CURRENT_TIME | sort -n -r | head -n 1)
+
+if [ "$TOKEN_FILE" = "" ]
+then
+  # default ttl is 15 minutes
+  IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
+  TOKEN_EXPIRATION=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
+  TOKEN_FILE="$TOKEN_DIR/$TOKEN_EXPIRATION"
+  TOKEN=$(curl --silent -X PUT "http://$IMDS_ENDPOINT/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS")
+  echo "$TOKEN" > $TOKEN_FILE
+  echo >&2 "❗ Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
+else
+  TOKEN=$(cat $TOKEN_DIR/$TOKEN_FILE)
+  echo >&2 "ℹ️ Using cached token that expires in $(($(basename $TOKEN_FILE) - $CURRENT_TIME)) seconds."
+fi
+
+curl --silent -H "X-aws-ec2-metadata-token: $TOKEN" "http://$IMDS_ENDPOINT/$API_PATH"
