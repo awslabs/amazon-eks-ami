@@ -3,8 +3,7 @@ set -euo pipefail
 
 echo "-> Should calc max-pods successfully for m5.8xlarge VPC CNI 1.11.2"
 exit_code=0
-TEMP_DIR=$(mktemp -d)
-out=$(run ${TEMP_DIR} /etc/eks/max-pods-calculator.sh \
+out=$(/etc/eks/max-pods-calculator.sh \
     --instance-type m5.8xlarge \
     --cni-version 1.11.2 || exit_code=$?)
 echo $out

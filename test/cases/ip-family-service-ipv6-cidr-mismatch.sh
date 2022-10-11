@@ -3,8 +3,7 @@ set -euo pipefail
 
 echo "-> Should fail validation - ip-family mismatch"
 exit_code=0
-TEMP_DIR=$(mktemp -d)
-run ${TEMP_DIR} /etc/eks/bootstrap.sh \
+/etc/eks/bootstrap.sh \
     --b64-cluster-ca dGVzdA== \
     --apiserver-endpoint http://my-api-endpoint \
     --ip-family ipv4 \
