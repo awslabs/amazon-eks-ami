@@ -76,15 +76,13 @@ CNI_MAX_ENI="${CNI_MAX_ENI:-}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-}"
 INSTANCE_TYPE_FROM_IMDS="${INSTANCE_TYPE_FROM_IMDS:-false}"
 SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
-IMDS_ENDPOINT="${IMDS_ENDPOINT:-169.254.169.254:80}"
 
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
 
 if [ "$INSTANCE_TYPE_FROM_IMDS" = true ]; then
-    TOKEN=$(curl -m 10 -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" -s "http://${IMDS_ENDPOINT}/latest/api/token")
-    export AWS_DEFAULT_REGION=$(curl -s --retry 5 -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_ENDPOINT}/latest/dynamic/instance-identity/document | jq .region -r)
-    INSTANCE_TYPE=$(curl -m 10 -H "X-aws-ec2-metadata-token: $TOKEN" -s http://${IMDS_ENDPOINT}/latest/meta-data/instance-type)
+    export AWS_DEFAULT_REGION=$(imds /latest/dynamic/instance-identity/document | jq .region -r)
+    INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
 elif [ -z "$INSTANCE_TYPE" ];
     # There's no reasonable default for an instanceType so force one to be provided to the script.
     then echo "You must specify an instance type to calculate max pods value."

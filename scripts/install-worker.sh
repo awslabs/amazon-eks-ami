@@ -341,7 +341,7 @@ sudo yum install -y amazon-ssm-agent
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$(curl -s  http://169.254.169.254/latest/meta-data/ami-id)
+BASE_AMI_ID=$(imds /latest/meta-data/ami-id)
 cat <<EOF > /tmp/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
