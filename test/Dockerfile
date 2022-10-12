@@ -8,6 +8,6 @@ COPY files/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 COPY files/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 COPY test/entrypoint.sh /entrypoint.sh
 COPY files /etc/eks
-COPY bin/* /usr/bin/
+COPY files/bin/* /usr/bin/
 COPY test/mocks/ /sbin/
 ENTRYPOINT ["/entrypoint.sh"]
