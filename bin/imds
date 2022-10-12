@@ -14,7 +14,7 @@ function log() {
 
 if [ "$#" -ne 1 ]
 then
-  log "usage: imds API_PATH"
+  echo >&2 "usage: imds API_PATH"
   exit 1
 fi
 
