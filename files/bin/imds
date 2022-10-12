@@ -40,7 +40,7 @@ then
   curl \
     --silent \
     --show-error \
-    --retry 5 \
+    --retry 10 \
     --retry-delay 1 \
     -o $TOKEN_DIR/$TOKEN_FILE \
     -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS" \
@@ -54,7 +54,7 @@ fi
 curl \
   --silent \
   --show-error \
-  --retry 5 \
+  --retry 10 \
   --retry-delay 1 \
   --write-out '\n' \
   -H "X-aws-ec2-metadata-token: $(cat $TOKEN_DIR/$TOKEN_FILE)" \
