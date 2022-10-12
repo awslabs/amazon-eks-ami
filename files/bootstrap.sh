@@ -179,7 +179,6 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
-IMDS_ENDPOINT="${IMDS_ENDPOINT:-169.254.169.254:80}"
 
 function get_pause_container_account_for_region () {
     local region="$1"
@@ -211,72 +210,6 @@ function get_pause_container_account_for_region () {
     *)
         echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}";;
     esac
-}
-
-function _get_token() {
-  local token_result=
-  local http_result=
-
-  token_result=$(curl -s -w "\n%{http_code}" -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 600" "http://${IMDS_ENDPOINT}/latest/api/token")
-  http_result=$(echo "$token_result" | tail -n 1)
-  if [[ "$http_result" != "200" ]]
-  then
-      echo -e "Failed to get token:\n$token_result"
-      return 1
-  else
-      echo "$token_result" | head -n 1
-      return 0
-  fi
-}
-
-function get_token() {
-  local token=
-  local retries=20
-  local result=1
-
-  while [[ retries -gt 0 && $result -ne 0 ]]
-  do
-    retries=$[$retries-1]
-    token=$(_get_token)
-    result=$?
-    [[ $result != 0 ]] && sleep 5
-  done
-  [[ $result == 0 ]] && echo "$token"
-  return $result
-}
-
-function _get_meta_data() {
-  local path=$1
-  local metadata_result=
-
-  metadata_result=$(curl -s -w "\n%{http_code}" -H "X-aws-ec2-metadata-token: $TOKEN" http://${IMDS_ENDPOINT}/$path)
-  http_result=$(echo "$metadata_result" | tail -n 1)
-  if [[ "$http_result" != "200" ]]
-  then
-      echo -e "Failed to get metadata:\n$metadata_result\nhttp://${IMDS_ENDPOINT}/$path\n$TOKEN"
-      return 1
-  else
-      local lines=$(echo "$metadata_result" | wc -l)
-      echo "$metadata_result" | head -n $(( lines - 1 ))
-      return 0
-  fi
-}
-
-function get_meta_data() {
-  local metadata=
-  local path=$1
-  local retries=20
-  local result=1
-
-  while [[ retries -gt 0 && $result -ne 0 ]]
-  do
-    retries=$[$retries-1]
-    metadata=$(_get_meta_data $path)
-    result=$?
-    [[ $result != 0 ]] && TOKEN=$(get_token)
-  done
-  [[ $result == 0 ]] && echo "$metadata"
-  return $result
 }
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
@@ -363,9 +296,8 @@ if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
       IP_FAMILY="ipv6"
 fi
 
-TOKEN=$(get_token)
-AWS_DEFAULT_REGION=$(get_meta_data 'latest/dynamic/instance-identity/document' | jq .region -r)
-AWS_SERVICES_DOMAIN=$(get_meta_data 'latest/meta-data/services/domain')
+AWS_DEFAULT_REGION=$(imds 'latest/dynamic/instance-identity/document' | jq .region -r)
+AWS_SERVICES_DOMAIN=$(imds 'latest/meta-data/services/domain')
 
 MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
@@ -486,7 +418,7 @@ fi
 
 ### kubelet.service configuration
 
-MAC=$(get_meta_data 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
+MAC=$(imds 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
 
 
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
@@ -503,7 +435,7 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
         #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
         DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
     else
-        TEN_RANGE=$(get_meta_data "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
+        TEN_RANGE=$(imds "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true )
         DNS_CLUSTER_IP=10.100.0.10
         if [[ "$TEN_RANGE" != "0" ]]; then
             DNS_CLUSTER_IP=172.20.0.10
@@ -518,12 +450,12 @@ KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
-    INTERNAL_IP=$(get_meta_data 'latest/meta-data/local-ipv4')
+    INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
 else
     INTERNAL_IP_URI=latest/meta-data/network/interfaces/macs/$MAC/ipv6s
-    INTERNAL_IP=$(get_meta_data $INTERNAL_IP_URI)
+    INTERNAL_IP=$(imds $INTERNAL_IP_URI)
 fi
-INSTANCE_TYPE=$(get_meta_data 'latest/meta-data/instance-type')
+INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 
 if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.22.0"; then
     # for K8s versions that suport API Priority & Fairness, increase our API server QPS

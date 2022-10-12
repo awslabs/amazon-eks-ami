@@ -34,20 +34,13 @@ docker build -t eks-optimized-ami -f "${SCRIPTPATH}/Dockerfile" "${SCRIPTPATH}/.
 overall_status=0
 
 function run(){
-    local temp_dir=$1
-    shift
-    # This variable is used to override the default value in the kubelet mock
-    KUBELET_VERSION="${KUBELET_VERSION:-}"
-    cp -f ${SCRIPTPATH}/../files/kubelet-config.json ${temp_dir}/kubelet-config.json
     docker run -v ${SCRIPTPATH}/../files/:/etc/eks/ \
-        -v ${temp_dir}/kubelet-config.json:/etc/kubernetes/kubelet/kubelet-config.json \
+        -v "$(realpath $1):/test.sh" \
         --attach STDOUT \
         --attach STDERR \
         --rm \
-        -e KUBELET_VERSION="$KUBELET_VERSION" \
-        eks-optimized-ami $@
+        eks-optimized-ami
 }
-export -f run
 
 if [[ ! -z ${TEST_CASE_SCRIPT} ]]; then
     test_cases=${TEST_CASE_SCRIPT}
@@ -59,9 +52,9 @@ for case in "${test_cases[@]}"; do
     status=0
     echo "================================================================================================================="
     echo "-> Executing Test Case: $(basename ${case})"
-    ${case} || status=1
+    run ${case} || status=1
     if [[ ${status} -eq 0 ]]; then
-        echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅ "
+        echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅"
     else
         echo "❌ ❌ $(basename ${case}) Tests Failed! ❌ ❌"
         overall_status=1
@@ -69,4 +62,9 @@ for case in "${test_cases[@]}"; do
     echo "================================================================================================================="
 done
 
+if [[ ${overall_status} -eq 0 ]]; then
+    echo "✅ ✅ All Tests Passed! ✅ ✅"
+else
+    echo "❌ ❌ Some Tests Failed! ❌ ❌"
+fi
 exit $overall_status

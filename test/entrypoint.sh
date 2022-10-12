@@ -7,4 +7,4 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 sleep 1
 
 ## execute any other params
-$@
+/test.sh
