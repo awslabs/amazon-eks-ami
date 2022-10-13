@@ -2,7 +2,6 @@
 set -euo pipefail
 
 exit_code=0
-TEMP_DIR=$(mktemp -d)
 
 echo "--> Should allow dockerd as container runtime when below k8s version 1.24"
 # This variable is used to override the default value in the kubelet mock
