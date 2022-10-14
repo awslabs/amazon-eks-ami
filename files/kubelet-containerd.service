@@ -5,6 +5,7 @@ After=containerd.service sandbox-image.service
 Requires=containerd.service sandbox-image.service
 
 [Service]
+Slice=runtime.slice
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet --cloud-provider $KUBELET_CLOUD_PROVIDER \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
@@ -17,6 +18,8 @@ Restart=on-failure
 RestartForceExitStatus=SIGPIPE
 RestartSec=5
 KillMode=process
+CPUAccounting=true
+MemoryAccounting=true
 
 [Install]
 WantedBy=multi-user.target
