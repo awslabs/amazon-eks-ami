@@ -241,6 +241,13 @@ for binary in ${BINARIES[*]} ; do
     sudo mv $binary /usr/bin/
 done
 
+#Updating the client-auth api version in cases where older iam-auth version is being used
+iam_auth_version=$(sudo /usr/bin/aws-iam-authenticator version | jq -r .Version)
+if [[ "$(printf '%s\n' $iam_auth_version "v0.5.8" | sort -V | tail -n 1)" = "v0.5.8" ]]; then
+    echo "AWS IAM authenticator version is lower than 0.5.8 so we should not update api version of kubeconfig"
+    sudo sed -i s,"client.authentication.k8s.io/v1beta1","client.authentication.k8s.io/v1alpha1", $TEMPLATE_DIR/kubelet-kubeconfig
+fi
+
 # Since CNI 0.7.0, all releases are done in the plugins repo.
 CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
 
