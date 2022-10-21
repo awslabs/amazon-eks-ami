@@ -50,7 +50,7 @@ PLATFORM=linux # Chose a platform and set the variable
 
 #List of all architectures for the selected Kubernetes Version, build date and platform
 aws s3 ls s3://amazon-eks/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/
-ARCH=amd64 #Chose an architecture and set the variable
+ARCH=x86_64 #Chose an architecture and set the variable
 ```
 Run the following command to build an Amazon EKS Worker AMI based on the chosen parameters in the previous step
 ```bash
