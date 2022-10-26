@@ -31,8 +31,12 @@ T_RESET := \e[0m
 .PHONY: all
 all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
+.PHONY: shellcheck
+shellcheck: ## check the testcase formatting
+	for file in $$(find test/cases -type f); do shellcheck --format=gcc "$$file"; done;
+
 .PHONY: test
-test: ## run the test-harness
+test: shellcheck ## run the test-harness
 	test/test-harness.sh
 
 .PHONY: validate
