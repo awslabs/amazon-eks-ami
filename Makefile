@@ -4,6 +4,8 @@ PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
 
+MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 aws_region ?= $(AWS_DEFAULT_REGION)
 binary_bucket_region ?= $(AWS_DEFAULT_REGION)
 arch ?= x86_64
@@ -30,6 +32,10 @@ T_RESET := \e[0m
 
 .PHONY: all
 all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
+
+.PHONY: fmt
+fmt: ## Format the source files
+	shfmt --list $(MAKEFILE_DIR)
 
 .PHONY: test
 test: ## run the test-harness
