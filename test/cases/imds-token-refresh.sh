@@ -18,7 +18,7 @@ then
     exit 1
 elif [[ $(ls $TOKEN_DIR | wc -l) -ne 1 ]]
 then
-    echo "❌ Test Failed: expected one token to be present after first IMDS call but got '${ls $TOKEN_DIR}'"
+    echo "❌ Test Failed: expected one token to be present after first IMDS call but got '$(ls $TOKEN_DIR)'"
     exit 1
 fi
 
