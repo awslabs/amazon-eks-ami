@@ -35,7 +35,17 @@ all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
 .PHONY: fmt
 fmt: ## Format the source files
-	shfmt --list $(MAKEFILE_DIR)
+	# ensure that these flags are equivalent to the rules in the .editorconfig
+	shfmt \
+	  --list \
+	  --write \
+	  --language-dialect auto \
+	  --indent 2 \
+	  --binary-next-line \
+	  --case-indent \
+	  --space-redirects \
+	  --keep-padding \
+	  $(MAKEFILE_DIR)
 
 .PHONY: test
 test: ## run the test-harness

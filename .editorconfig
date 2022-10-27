@@ -1,3 +1,6 @@
+# ensure that these rules are equivalent to the flags to shfmt in the Makefile.
+# we can't use this file with shfmt directly because there's no way to express
+# shebang matching on files without the `sh` extension.
 [*.sh]
 indent_style       = space
 indent_size        = 2
