@@ -62,7 +62,6 @@ sudo yum update -y
 # Install necessary packages
 sudo yum install -y \
     aws-cfn-bootstrap \
-    awscli \
     chrony \
     conntrack \
     curl \
@@ -117,6 +116,27 @@ sudo systemctl restart sshd.service
 ################################################################################
 sudo mkdir -p /etc/eks
 sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
+
+################################################################################
+### awscli #####################################################
+################################################################################
+
+if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+    # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+    echo "Installing awscli v2 bundle"
+    AWSCLI_DIR=$(mktemp -d)
+    curl \
+      --silent \
+      --show-error \
+      --retry 10 \
+      --retry-delay 1 \
+      -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
+    unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
+    sudo "${AWSCLI_DIR}/aws/install"
+else
+    echo "Installing awscli package"
+    sudo yum install -y awscli
+fi
 
 ################################################################################
 ### Docker #####################################################################
