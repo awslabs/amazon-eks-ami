@@ -1,5 +1,48 @@
 # Changelog
 
+### AMI Release v20221027
+* amazon-eks-gpu-node-1.23-v20221027
+* amazon-eks-gpu-node-1.22-v20221027
+* amazon-eks-gpu-node-1.21-v20221027
+* amazon-eks-gpu-node-1.20-v20221027
+* amazon-eks-arm64-node-1.23-v20221027
+* amazon-eks-arm64-node-1.22-v20221027
+* amazon-eks-arm64-node-1.21-v20221027
+* amazon-eks-arm64-node-1.20-v20221027
+* amazon-eks-node-1.23-v20221027
+* amazon-eks-node-1.22-v20221027
+* amazon-eks-node-1.21-v20221027
+* amazon-eks-node-1.20-v20221027
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.23.9-20221027`
+* `1.22.12-20221027`
+* `1.21.14-20221027`
+* `1.20.15-20221027`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.23.9/2022-07-27/
+* s3://amazon-eks/1.22.12/2022-07-27/
+* s3://amazon-eks/1.21.14/2022-07-27/
+* s3://amazon-eks/1.20.15/2022-07-27/
+
+AMI details:
+* kernel: 5.4.217-126.408.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: 1.1.3-1.amzn2.0.2
+* cuda: 470.141.03-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+* cuda is updated to 470.141.03-1.
+* Linux kernel is updated to 5.4.217-126.408.amzn2.
+* runc version is updated to 1.1.3-1.amzn2.0.2 to include [ALAS2DOCKER-2022-020](https://alas.aws.amazon.com/AL2/ALASDOCKER-2022-020.html). [#1055](https://github.com/awslabs/amazon-eks-ami/pull/1055)
+* docker version are update to 20.10.17-1.amzn2.0.1, and containerd version are updated to 1.6.6-1.amzn2.0.2 to include [ALASDOCKER-2022-021](https://alas.aws.amazon.com/AL2/ALASDOCKER-2022-021.html). [#1056](https://github.com/awslabs/amazon-eks-ami/pull/1056)
+* Increase the kube-api-server QPS from 5/10 to 10/20. [#1030](https://github.com/awslabs/amazon-eks-ami/pull/1030)
+* Release AMI in me-central-1 with version 1.21, 1.22, 1.23. 1.20 will not be supported since it will be deprecated soon.
+
 ### AMI Release v20220926
 * amazon-eks-gpu-node-1.23-v20220926
 * amazon-eks-gpu-node-1.22-v20220926
