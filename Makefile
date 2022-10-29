@@ -35,7 +35,6 @@ all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
---write \
 --language-dialect auto \
 --indent 2 \
 --binary-next-line \
@@ -45,11 +44,14 @@ SHFMT_FLAGS := --list \
 
 .PHONY: fmt
 fmt: ## Format the source files
-	shfmt $(SHFMT_FLAGS) $(MAKEFILE_DIR)
+	shfmt $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
 
 .PHONY: lint
 lint: ## Check the source files for syntax and format issues
 	shfmt  $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
+	for FILE in $$(find $(MAKEFILE_DIR) -type f -name '*.sh'); do
+	  shellcheck --format gcc --severity error "$$FILE"
+	done
 
 .PHONY: test
 test: ## run the test-harness
