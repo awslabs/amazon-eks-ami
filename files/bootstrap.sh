@@ -450,7 +450,7 @@ else
 fi
 INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 
-if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.22.0"; then
+if vercmp "$KUBELET_VERSION" gteq "1.22.0"; then
     # for K8s versions that suport API Priority & Fairness, increase our API server QPS
     echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
 fi
