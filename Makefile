@@ -33,19 +33,23 @@ T_RESET := \e[0m
 .PHONY: all
 all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
+# ensure that these flags are equivalent to the rules in the .editorconfig
+SHFMT_FLAGS := --list \
+--write \
+--language-dialect auto \
+--indent 2 \
+--binary-next-line \
+--case-indent \
+--space-redirects \
+--keep-padding
+
 .PHONY: fmt
 fmt: ## Format the source files
-	# ensure that these flags are equivalent to the rules in the .editorconfig
-	shfmt \
-	  --list \
-	  --write \
-	  --language-dialect auto \
-	  --indent 2 \
-	  --binary-next-line \
-	  --case-indent \
-	  --space-redirects \
-	  --keep-padding \
-	  $(MAKEFILE_DIR)
+	shfmt $(SHFMT_FLAGS) $(MAKEFILE_DIR)
+
+.PHONY: lint
+lint: ## Check the source files for syntax and format issues
+	shfmt  $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
 
 .PHONY: test
 test: ## run the test-harness
