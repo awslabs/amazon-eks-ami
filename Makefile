@@ -49,9 +49,7 @@ fmt: ## Format the source files
 .PHONY: lint
 lint: ## Check the source files for syntax and format issues
 	shfmt  $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
-	for FILE in $$(find $(MAKEFILE_DIR) -type f -name '*.sh'); do
-	  shellcheck --format gcc --severity error "$$FILE"
-	done
+	for FILE in $$(find $(MAKEFILE_DIR) -type f -name '*.sh'); do shellcheck --format gcc --severity error "$$FILE"; done
 
 .PHONY: test
 test: ## run the test-harness
