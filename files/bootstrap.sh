@@ -265,7 +265,7 @@ get_cpu_millicores_to_reserve() {
   local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
-  for i in ${!cpu_percentage_reserved_for_ranges[@]}; do
+  for i in "${!cpu_percentage_reserved_for_ranges[@]}"; do
     local start_range=${cpu_ranges[$i]}
     local end_range=${cpu_ranges[(($i+1))]}
     local percentage_to_reserve_for_range=${cpu_percentage_reserved_for_ranges[$i]}
