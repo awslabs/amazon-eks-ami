@@ -44,7 +44,6 @@ fmt: ## Format the source files
 	  --binary-next-line \
 	  --case-indent \
 	  --space-redirects \
-	  --keep-padding \
 	  $(MAKEFILE_DIR)
 
 .PHONY: test
