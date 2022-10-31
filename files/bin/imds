@@ -6,14 +6,12 @@ set -o nounset
 
 IMDS_DEBUG="${IMDS_DEBUG:-false}"
 function log() {
-  if [ "$IMDS_DEBUG" = "true" ]
-  then
+  if [ "$IMDS_DEBUG" = "true" ]; then
     echo >&2 "$1"
   fi
 }
 
-if [ "$#" -ne 1 ]
-then
+if [ "$#" -ne 1 ]; then
   echo >&2 "usage: imds API_PATH"
   exit 1
 fi
@@ -32,8 +30,7 @@ mkdir -p $TOKEN_DIR
 
 TOKEN_FILE=$(ls $TOKEN_DIR | awk '$0 > '$CURRENT_TIME | sort -n -r | head -n 1)
 
-if [ "$TOKEN_FILE" = "" ]
-then
+if [ "$TOKEN_FILE" = "" ]; then
   # default ttl is 15 minutes
   IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
   TOKEN_FILE=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
