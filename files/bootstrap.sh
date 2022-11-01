@@ -142,7 +142,7 @@ function is_greater_than_or_equal_to_version() {
   local actual_version="$1"
   local compared_version="$2"
 
-  [ $actual_version = "$(echo -e \"$actual_version\n$compared_version\" | sort -V | tail -n1)" ]
+  [ $actual_version = "$(echo -e "$actual_version\n$compared_version" | sort -V | tail -n1)" ]
 }
 
 # As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
