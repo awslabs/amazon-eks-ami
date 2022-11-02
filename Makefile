@@ -55,8 +55,6 @@ PACKER_VAR_FLAGS := -var-file=version-variables.json $(foreach packerVar,$(PACKE
 
 .PHONY: validate
 validate: ## Validate packer config
-	echo $(AVAILABLE_PACKER_VARIABLES)
-	echo $(PACKER_VAR_FLAGS)
 	$(PACKER_BINARY) validate $(PACKER_VAR_FLAGS) eks-worker-al2.json
 
 .PHONY: k8s
