@@ -46,10 +46,16 @@ SHFMT_FLAGS := --list \
 fmt: ## Format the source files
 	shfmt $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
 
+SHELLCHECK_COMMAND := $(shell which shellcheck)
+ifeq (, $(SHELLCHECK_COMMAND))
+SHELLCHECK_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) koalaman/shellcheck:stable
+endif
+SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
+
 .PHONY: lint
 lint: ## Check the source files for syntax and format issues
 	shfmt  $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
-	for FILE in $$(find $(MAKEFILE_DIR) -type f -name '*.sh'); do shellcheck --format gcc --severity error "$$FILE"; done
+	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
 
 .PHONY: test
 test: ## run the test-harness
