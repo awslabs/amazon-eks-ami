@@ -25,6 +25,8 @@ sudo rm -rf \
   /var/log/cloud-init-output.log \
   /var/log/cloud-init.log \
   /var/log/secure \
-  /var/log/wtmp
+  /var/log/wtmp \
+  /var/log/messages \
+  /tmp/imds-tokens
 
 sudo touch /etc/machine-id
