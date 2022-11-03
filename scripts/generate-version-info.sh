@@ -5,8 +5,7 @@
 set -o errexit
 set -o pipefail
 
-if [ "$#" -ne 1 ]
-then
+if [ "$#" -ne 1 ]; then
   echo "usage: $0 OUTPUT_FILE"
   exit 1
 fi
