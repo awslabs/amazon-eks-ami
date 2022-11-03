@@ -593,8 +593,11 @@ get_containerd_info() {
   try "Collect Containerd daemon information"
 
   if [[ "$(pgrep -o containerd)" -ne 0 ]]; then
+    # force containerd to dump goroutines
+    timeout 75 killall -sUSR1 containerd
     timeout 75 containerd config dump > "${COLLECT_DIR}"/containerd/containerd-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
     timeout 75 journalctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    timeout 75 cp -f /tmp/containerd.*.stacks.log "${COLLECT_DIR}"/containerd/
   else
     warning "The Containerd daemon is not running."
   fi
