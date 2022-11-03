@@ -1,5 +1,5 @@
 {
-  "_comment": "All template variables are enumerated here; but those related to software versions have their values defined in version-variables.json",
+  "_comment": "All template variables are enumerated here; but some have their values defined in eks-worker-al2-variables.json so they can be shared across templates",
   "variables": {
     "additional_yum_repos": "",
     "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
