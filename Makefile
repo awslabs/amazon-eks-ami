@@ -33,18 +33,22 @@ T_RESET := \e[0m
 .PHONY: all
 all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
 
+# ensure that these flags are equivalent to the rules in the .editorconfig
+SHFMT_FLAGS := --list \
+--language-dialect auto \
+--indent 2 \
+--binary-next-line \
+--case-indent \
+--space-redirects
+
+SHFMT_COMMAND := $(shell which shfmt)
+ifeq (, $(SHFMT_COMMAND))
+SHFMT_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) mvdan/shfmt
+endif
+
 .PHONY: fmt
 fmt: ## Format the source files
-	# ensure that these flags are equivalent to the rules in the .editorconfig
-	shfmt \
-	  --list \
-	  --write \
-	  --language-dialect auto \
-	  --indent 2 \
-	  --binary-next-line \
-	  --case-indent \
-	  --space-redirects \
-	  $(MAKEFILE_DIR)
+	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
 
 .PHONY: test
 test: ## run the test-harness
