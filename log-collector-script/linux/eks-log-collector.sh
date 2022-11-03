@@ -195,12 +195,26 @@ get_instance_id() {
     cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
     readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
   else
-    readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    readonly INSTANCE_ID=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
     if [ 0 -eq $? ]; then # Check if previous command was successful.
       echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
     else
       warning "Unable to find EC2 Instance Id. Skipped Instance Id."
     fi
+  fi
+}
+
+get_region() {
+  if REGION=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
+    echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
+  else
+    warning "Unable to find EC2 Region, skipping."
+  fi
+
+  if AZ=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone); then
+    echo "${AZ}" > "${COLLECT_DIR}"/system/availability-zone.txt
+  else
+    warning "Unable to find EC2 AZ, skipping."
   fi
 }
 
@@ -242,6 +256,7 @@ collect() {
   init
   is_diskfull
   get_instance_id
+  get_region
   get_common_logs
   get_kernel_info
   get_mounts_info
