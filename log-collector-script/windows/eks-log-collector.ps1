@@ -52,11 +52,13 @@ Function create_working_dir{
         New-Item -type directory -path $info_system -Force >$null
         New-Item -type directory -path $info_system\eks -Force >$null
         New-Item -type directory -path $info_system\docker -Force >$null
+        New-Item -type directory -path $info_system\containerd -Force >$null
         New-Item -type directory -path $info_system\firewall -Force >$null
         New-Item -type directory -path $info_system\kubelet -Force >$null
         New-Item -type directory -path $info_system\kube-proxy -Force >$null
         New-Item -type directory -path $info_system\cni -Force >$null
         New-Item -type directory -path $info_system\docker_log -Force >$null
+        New-Item -type directory -path $info_system\containerd_log -Force >$null
         New-Item -type directory -path $info_system\network -Force >$null
         New-Item -type directory -path $info_system\network\hns -Force >$null
         Write-Host "OK" -ForegroundColor "green"
@@ -66,6 +68,38 @@ Function create_working_dir{
         Write-Host "Please ensure you have enough permissions to create directories"
         Write-Error "Failed to create temporary directory"
         Break
+    }
+}
+
+Function check_service_installed_and_running {
+    <#
+    .SYNOPSIS
+    This method checks if the specified service is installed and in running state.
+    #>
+    [CmdletBinding()]
+    Param (
+      [Parameter(Mandatory=$true)]
+      [ValidateNotNullOrEmpty()]
+      [string]$ServiceName
+    )
+
+    Write-Host ("Checking status of service: {0}" -f $ServiceName)
+    try {
+        if (-not (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue)) {
+            Write-Host ("Service {0} not found" -f $ServiceName)
+            return 0
+        }
+
+        if ((Get-Service -Name $ServiceName).Status -eq "Running") {
+            Write-Host ("Service {0} is running." -f $ServiceName)
+            return 1
+        }
+        Write-Host ("Service {0} is not running." -f $ServiceName)
+        return 0
+    }
+    catch {
+        Write-Error "Unable to check if service is installed and running"
+        break
     }
 }
 
@@ -181,18 +215,39 @@ Function get_system_services{
     }
 }
 
-Function get_docker_info{
-    try {
-        Write-Host "Collecting Docker daemon information"
-        docker info > $info_system\docker\docker-info.txt 2>&1
-        docker ps --all --no-trunc > $info_system\docker\docker-ps.txt 2>&1
-        docker images > $info_system\docker\docker-images.txt 2>&1
-        docker version > $info_system\docker\docker-version.txt 2>&1
-        Write-Host "OK" -foregroundcolor "green"
+Function get_containerd_info{
+    Write-Host "Collecting Containerd information"
+    if (check_service_installed_and_running "containerd") {
+        try {
+            ctr version > $info_system\containerd\containerd-version.txt 2>&1
+            ctr namespaces list > $info_system\containerd\containerd-namespaces.txt 2>&1
+            ctr --namespace k8s.io images list > $info_system\containerd\containerd-images.txt 2>&1
+            ctr --namespace k8s.io containers list > $info_system\containerd\containerd-containers.txt 2>&1
+            ctr --namespace k8s.io tasks list > $info_system\containerd\containerd-tasks.txt 2>&1
+            ctr --namespace k8s.io plugins list > $info_system\containerd\containerd-plugins.txt 2>&1
+            Write-Host "OK" -foregroundcolor "green"
+        }
+        catch{
+            Write-Error "Unable to collect Containerd information"
+            Break
+        }
     }
-    catch{
-        Write-Error "Unable to collect Docker daemon information"
-        Break
+}
+
+Function get_docker_info{
+    Write-Host "Collecting Docker daemon information"
+    if (check_service_installed_and_running "docker") {
+        try {
+            docker info > $info_system\docker\docker-info.txt 2>&1
+            docker ps --all --no-trunc > $info_system\docker\docker-ps.txt 2>&1
+            docker images > $info_system\docker\docker-images.txt 2>&1
+            docker version > $info_system\docker\docker-version.txt 2>&1
+            Write-Host "OK" -foregroundcolor "green"
+        }
+        catch {
+            Write-Error "Unable to collect Docker daemon information"
+            Break
+        }
     }
 }
 
@@ -243,14 +298,30 @@ Function get_k8s_info{
 }
 
 Function get_docker_logs{
-    try {
-        Write-Host "Collecting Docker daemon logs"
-        Get-EventLog -LogName Application -Source Docker | Sort-Object Time | Export-CSV $info_system/docker_log/docker-daemon.csv
-        Write-Host "OK" -foregroundcolor "green"
+    Write-Host "Collecting Docker daemon logs"
+    if (check_service_installed_and_running "docker") {
+        try {
+            Get-EventLog -LogName Application -Source Docker | Sort-Object Time | Export-CSV $info_system/docker_log/docker-daemon.csv
+            Write-Host "OK" -foregroundcolor "green"
+        }
+        catch {
+            Write-Error "Unable to collect Docker daemon logs"
+            Break
+        }
     }
-    catch {
-        Write-Error "Unable to collect Docker daemon logs"
-        Break
+}
+
+Function get_containerd_logs{
+    Write-Host "Collecting containerd logs"
+    if (check_service_installed_and_running "containerd") {
+        try {
+            copy C:\ProgramData\containerd\root\panic.log $info_system\containerd_log\
+            Write-Host "OK" -foregroundcolor "green"
+        }
+        catch {
+            Write-Error "Unable to collect containerd logs"
+            Break
+        }
     }
 }
 
@@ -312,8 +383,10 @@ Function collect{
     get_softwarelist
     get_system_services
     get_docker_info
+    get_containerd_info
     get_k8s_info
     get_docker_logs
+    get_containerd_logs
     get_eks_logs
     get_network_info
 
