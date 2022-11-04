@@ -1,5 +1,4 @@
 PACKER_BINARY ?= packer
-PACKER_VARIABLE_FILE ?= eks-worker-al2-variables.json
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable eks-worker-al2.json | grep 'template-variable' | awk -F ',' '{print $$4}')
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
@@ -52,7 +51,9 @@ test: ## run the test-harness
 
 # include only variables which have a defined value
 PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
-PACKER_VAR_FLAGS := -var-file $(PACKER_VARIABLE_FILE) $(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
+PACKER_VAR_FLAGS := -var-file eks-worker-al2-variables.json \
+$(if $(PACKER_VARIABLE_FILE),--var-file=$(PACKER_VARIABLE_FILE),) \
+$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
 .PHONY: validate
 validate: ## Validate packer config
