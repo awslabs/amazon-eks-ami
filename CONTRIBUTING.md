@@ -115,6 +115,21 @@ Delete the cluster:
 eksctl delete cluster -f cluster.yaml
 ```
 
+## Troubleshooting
+
+**Tests fail with `realpath: command not found`**
+
+When running `make test`, you may see a message like below:
+
+```
+test/test-harness.sh: line 41: realpath: command not found
+/entrypoint.sh: line 13: /test.sh: No such file or directory
+```
+
+The issue is discussed in [this StackExchange post](https://unix.stackexchange.com/questions/101080/realpath-command-not-found).
+
+On OSX, running `brew install coreutils` resolves the issue.
+
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws-samples/amazon-eks-ami/labels/help%20wanted) issues is a great place to start. 
 

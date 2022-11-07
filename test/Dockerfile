@@ -1,6 +1,9 @@
 FROM public.ecr.aws/aws-ec2/amazon-ec2-metadata-mock:v1.11.2 as aemm
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 RUN yum install -y jq
+RUN yum install -y wget
+RUN wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+RUN chmod a+x /usr/local/bin/yq
 
 ENV IMDS_ENDPOINT=127.0.0.1:1338
 COPY --from=aemm /ec2-metadata-mock /sbin/ec2-metadata-mock
