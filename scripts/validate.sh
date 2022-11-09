@@ -38,10 +38,9 @@ validate_file_nonexists '/var/log/wtmp'
 actual_kernel=$(uname -r)
 echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION"
 
-if [[ $actual_kernel == $KERNEL_VERSION* ]]
-then
-    echo "Kernel matches expected version"
+if [[ $actual_kernel == $KERNEL_VERSION* ]]; then
+  echo "Kernel matches expected version"
 else
-    echo "Kernel does not match expected version."
-    exit 1
+  echo "Kernel does not match expected version."
+  exit 1
 fi
