@@ -138,18 +138,11 @@ set -u
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 echo "Using kubelet version $KUBELET_VERSION"
 
-function is_greater_than_or_equal_to_version() {
-  local actual_version="$1"
-  local compared_version="$2"
-
-  [ $actual_version = "$(echo -e "$actual_version\n$compared_version" | sort -V | tail -n1)" ]
-}
-
 # As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
 # and no longer support docker as a container runtime.
 IS_124_OR_GREATER=false
 DEFAULT_CONTAINER_RUNTIME=dockerd
-if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.24.0"; then
+if vercmp "$KUBELET_VERSION" gteq "1.24.0"; then
   IS_124_OR_GREATER=true
   DEFAULT_CONTAINER_RUNTIME=containerd
 fi
@@ -467,7 +460,7 @@ else
 fi
 INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 
-if is_greater_than_or_equal_to_version $KUBELET_VERSION "1.22.0"; then
+if vercmp "$KUBELET_VERSION" gteq "1.22.0"; then
   # for K8s versions that suport API Priority & Fairness, increase our API server QPS
   echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
 fi
