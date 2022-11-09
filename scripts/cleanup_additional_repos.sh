@@ -9,7 +9,6 @@ if [ -z "${ADDITIONAL_YUM_REPOS}" ]; then
   exit 0
 fi
 
-
 AWK_CMD='
 BEGIN {RS=";";FS=","}
 {
