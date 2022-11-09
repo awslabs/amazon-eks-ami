@@ -9,20 +9,20 @@ echo "--> Should compare strictly less-than"
 EXIT_CODE=0
 vercmp "1.0.0" lt "2.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" lt "1.0.1" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" lt "1.1.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 # should fail
 EXIT_CODE=0
@@ -34,8 +34,8 @@ fi
 EXIT_CODE=0
 vercmp "1.0.1" lt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.1.0" lt "1.0.0" || EXIT_CODE=$?
@@ -46,8 +46,8 @@ fi
 EXIT_CODE=0
 vercmp "2.0.0" lt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 
 echo "--> Should compare less-than-or-equal-to"
@@ -55,39 +55,39 @@ echo "--> Should compare less-than-or-equal-to"
 EXIT_CODE=0
 vercmp "1.0.0" lteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" lteq "1.0.1" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" lteq "2.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 # should fail
 EXIT_CODE=0
 vercmp "1.0.1" lteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.1.0" lteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "2.0.0" lteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 
 echo "--> Should compare strictly equal-to"
@@ -95,21 +95,21 @@ echo "--> Should compare strictly equal-to"
 EXIT_CODE=0
 vercmp "1.0.0" eq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 # should fail
 EXIT_CODE=0
 vercmp "1.0.1" eq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" eq "1.0.1" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 
 echo "--> Should compare greater-than-or-equal-to"
@@ -117,39 +117,39 @@ echo "--> Should compare greater-than-or-equal-to"
 EXIT_CODE=0
 vercmp "1.0.0" gteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.1" gteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "2.0.0" gteq "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 # should fail
 EXIT_CODE=0
 vercmp "1.0.0" gteq "1.0.1" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" gteq "1.1.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" gteq "2.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 
 echo "--> Should compare strictly greater-than"
@@ -157,43 +157,43 @@ echo "--> Should compare strictly greater-than"
 EXIT_CODE=0
 vercmp "2.0.0" gt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.1" gt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.1.0" gt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-    echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 # should fail
 EXIT_CODE=0
 vercmp "1.0.0" gt "1.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" gt "1.0.1" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" gt "1.1.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
 EXIT_CODE=0
 vercmp "1.0.0" gt "2.0.0" || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then
-    echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
-    exit 1
+  echo "❌ Test Failed: expected a non-zero exit code but got '${EXIT_CODE}'"
+  exit 1
 fi
