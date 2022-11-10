@@ -38,8 +38,7 @@ docker build -t eks-optimized-ami -f "${SCRIPTPATH}/Dockerfile" "${SCRIPTPATH}/.
 overall_status=0
 
 function run() {
-  docker run -v ${SCRIPTPATH}/../files/:/etc/eks/ \
-    -v "$(realpath $1):/test.sh" \
+  docker run -v "$(realpath $1):/test.sh" \
     --attach STDOUT \
     --attach STDERR \
     --rm \
