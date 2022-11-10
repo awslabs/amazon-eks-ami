@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.2"
+readonly PROGRAM_VERSION="0.7.3"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -195,12 +195,26 @@ get_instance_id() {
     cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
     readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
   else
-    readonly INSTANCE_ID=$(curl --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    readonly INSTANCE_ID=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
     if [ 0 -eq $? ]; then # Check if previous command was successful.
       echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
     else
       warning "Unable to find EC2 Instance Id. Skipped Instance Id."
     fi
+  fi
+}
+
+get_region() {
+  if REGION=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
+    echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
+  else
+    warning "Unable to find EC2 Region, skipping."
+  fi
+
+  if AZ=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone); then
+    echo "${AZ}" > "${COLLECT_DIR}"/system/availability-zone.txt
+  else
+    warning "Unable to find EC2 AZ, skipping."
   fi
 }
 
@@ -242,6 +256,7 @@ collect() {
   init
   is_diskfull
   get_instance_id
+  get_region
   get_common_logs
   get_kernel_info
   get_mounts_info
@@ -578,8 +593,11 @@ get_containerd_info() {
   try "Collect Containerd daemon information"
 
   if [[ "$(pgrep -o containerd)" -ne 0 ]]; then
+    # force containerd to dump goroutines
+    timeout 75 killall -sUSR1 containerd
     timeout 75 containerd config dump > "${COLLECT_DIR}"/containerd/containerd-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
     timeout 75 journalctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    timeout 75 cp -f /tmp/containerd.*.stacks.log "${COLLECT_DIR}"/containerd/
   else
     warning "The Containerd daemon is not running."
   fi
