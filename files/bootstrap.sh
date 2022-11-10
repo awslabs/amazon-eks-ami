@@ -146,9 +146,6 @@ if vercmp "$KUBELET_VERSION" gteq "1.24.0"; then
   IS_124_OR_GREATER=true
   DEFAULT_CONTAINER_RUNTIME=containerd
 elif vercmp "$KUBELET_VERSION" gteq "1.22.0"; then
-  # Ensure that these exist for testing purposes
-  mkdir -p /etc/eks/ecr-credential-provider
-  touch /etc/eks/ecr-credential-provider/ecr-credential-provider-config
   # These APIs are only available in alpha pre-1.24.
   # This can be removed when version 1.23 is no longer supported.
   sed -i s,kubelet.config.k8s.io/v1beta1,kubelet.config.k8s.io/v1alpha1,g /etc/eks/ecr-credential-provider/ecr-credential-provider-config

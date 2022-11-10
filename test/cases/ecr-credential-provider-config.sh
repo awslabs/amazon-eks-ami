@@ -4,14 +4,20 @@ set -euo pipefail
 exit_code=0
 TEMP_DIR=$(mktemp -d)
 
-# Setup test cases
-mkdir -p /etc/eks/ecr-credential-provider
 export CRED_PROVIDER_FILE="/etc/eks/ecr-credential-provider/ecr-credential-provider-config"
+export CRED_PROVIDER_RESET_FILE="./cred-provider-config"
+
+# Store the original version of the config
+cp $CRED_PROVIDER_FILE $CRED_PROVIDER_RESET_FILE
+# Reset the file that may have changed
+function reset_scenario {
+  echo "Resetting test scenario"
+  cp $CRED_PROVIDER_RESET_FILE $CRED_PROVIDER_FILE
+}
 
 echo "--> Should default to credentialprovider.kubelet.k8s.io/v1alpha1 and kubelet.config.k8s.io/v1alpha1 when below k8s version 1.24"
+reset_scenario
 
-# Ensure the credential provider config is present and fresh
-cp /etc/eks/ecr-credential-provider-config $CRED_PROVIDER_FILE
 # This variable is used to override the default value in the kubelet mock
 export KUBELET_VERSION=v1.22.15-eks-ba74326
 /etc/eks/bootstrap.sh \
@@ -39,9 +45,8 @@ if [[ "$expected_kubelet_config_api" != "$actual" ]]; then
 fi
 
 echo "--> Should default to credentialprovider.kubelet.k8s.io/v1beta1 and kubelet.config.k8s.io/v1beta1 when at or above k8s version 1.24"
+reset_scenario
 
-# Ensure the credential provider config is present and fresh
-cp /etc/eks/ecr-credential-provider-config $CRED_PROVIDER_FILE
 export KUBELET_VERSION=v1.24.15-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
