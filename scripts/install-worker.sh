@@ -408,6 +408,8 @@ sudo mkdir -p /etc/eks/log-collector-script/
 sudo cp $TEMPLATE_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
 
 ################################################################################
-### cloud-init config ##########################################################
+### Remove Yum Update from cloud-init config ###################################
 ################################################################################
-sudo mv $TEMPLATE_DIR/cloud.cfg /etc/cloud/cloud.cfg
+sudo sed -i \
+  's/ - package-update-upgrade-install/# Removed so that nodes do not have version skew based on when the node was started.\n# - package-update-upgrade-install/' \
+  /etc/cloud/cloud.cfg
