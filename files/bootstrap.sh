@@ -588,7 +588,8 @@ if command -v nvidia-smi &> /dev/null; then
     GPUNAME=$(nvidia-smi -L | head -n1)
     echo $GPUNAME
 
-    # set application clock to maximum
+    # set gpu application clocks to their respective maximum values:
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/optimize_gpu.html
     if [[ $GPUNAME == *"A100-SXM-40GB"* ]]; then
       nvidia-smi -ac 1215,1410
     elif [[ $GPUNAME == *"A100-SXM-80GB"* ]]; then
