@@ -540,6 +540,8 @@ EOF
   sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
   sudo chown root:root /etc/systemd/system/kubelet.service
   sudo chown root:root /etc/systemd/system/sandbox-image.service
+  # Validate containerd config
+  sudo containerd config dump > /dev/null
   systemctl daemon-reload
   systemctl enable containerd
   systemctl restart containerd
