@@ -585,6 +585,7 @@ if command -v nvidia-smi &> /dev/null; then
     sudo nvidia-smi -pm 1 # set persistence mode
     sudo nvidia-smi --auto-boost-default=0
 
+    # set application clock speeds for all gpus, based on the max clock speeds of the first device found
     MAX_CLOCKS_XML_NO_BREAKS=$(nvidia-smi -q --xml-format | sed -n '/<max_clocks>/, /<\/max_clocks>/p')
     MAX_MEMORY_CLOCK_MHZ=$(echo $MAX_CLOCKS_XML_NO_BREAKS | sed -e 's/.*<mem_clock>\([0-9]*\) MHz<\/mem_clock>.*/\1/' )
     MAX_GRAPHICS_CLOCK_MHZ=$(echo $MAX_CLOCKS_XML_NO_BREAKS | sed -e 's/.*<graphics_clock>\([0-9]*\) MHz<\/graphics_clock>.*/\1/' )
