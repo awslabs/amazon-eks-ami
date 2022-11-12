@@ -585,22 +585,14 @@ if command -v nvidia-smi &> /dev/null; then
     sudo nvidia-smi -pm 1 # set persistence mode
     sudo nvidia-smi --auto-boost-default=0
 
-    GPUNAME=$(nvidia-smi -L | head -n1)
-    echo $GPUNAME
-
-    # set application clock to maximum
-    if [[ $GPUNAME == *"A100"* ]]; then
-      nvidia-smi -ac 1215,1410
-    elif [[ $GPUNAME == *"V100"* ]]; then
-      nvidia-smi -ac 877,1530
-    elif [[ $GPUNAME == *"K80"* ]]; then
-      nvidia-smi -ac 2505,875
-    elif [[ $GPUNAME == *"T4"* ]]; then
-      nvidia-smi -ac 5001,1590
-    elif [[ $GPUNAME == *"M60"* ]]; then
-      nvidia-smi -ac 2505,1177
+    MAX_CLOCKS_XML_NO_BREAKS=$(nvidia-smi -q --xml-format | sed -n '/<max_clocks>/, /<\/max_clocks>/p')
+    MAX_MEMORY_CLOCK_MHZ=$(echo $MAX_CLOCKS_XML_NO_BREAKS | sed -e 's/.*<mem_clock>\([0-9]*\) MHz<\/mem_clock>.*/\1/' )
+    MAX_GRAPHICS_CLOCK_MHZ=$(echo $MAX_CLOCKS_XML_NO_BREAKS | sed -e 's/.*<graphics_clock>\([0-9]*\) MHz<\/graphics_clock>.*/\1/' )
+    NUMBER_RE='^[0-9]+$'
+    if [[ $MAX_MEMORY_CLOCK_MHZ =~ $NUMBER_RE ]] && [[ $MAX_GRAPHICS_CLOCK_MHZ =~ $NUMBER_RE ]]; then
+      nvidia-smi -ac "${MAX_MEMORY_CLOCK_MHZ},${MAX_GRAPHICS_CLOCK_MHZ}"
     else
-      echo "unsupported gpu"
+      echo "failed to parse max clock speeds from nvidia-smi, unable to set gpu clocks"
     fi
   else
     cat /tmp/nvidia-smi-check
