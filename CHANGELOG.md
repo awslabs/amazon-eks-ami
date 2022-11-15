@@ -1,5 +1,52 @@
 # Changelog
 
+### AMI Release v20221112
+* amazon-eks-gpu-node-1.24-v20221112
+* amazon-eks-gpu-node-1.23-v20221112
+* amazon-eks-gpu-node-1.22-v20221112
+* amazon-eks-gpu-node-1.21-v20221112
+* amazon-eks-gpu-node-1.20-v20221112
+* amazon-eks-arm64-node-1.24-v20221112
+* amazon-eks-arm64-node-1.23-v20221112
+* amazon-eks-arm64-node-1.22-v20221112
+* amazon-eks-arm64-node-1.21-v20221112
+* amazon-eks-arm64-node-1.20-v20221112
+* amazon-eks-node-1.24-v20221112
+* amazon-eks-node-1.23-v20221112
+* amazon-eks-node-1.22-v20221112
+* amazon-eks-node-1.21-v20221112
+* amazon-eks-node-1.20-v20221112
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.24.7-20221112`
+* `1.23.13-20221112`
+* `1.22.15-20221112`
+* `1.21.14-20221112`
+* `1.20.15-20221112`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.24.7/2022-10-31/
+* s3://amazon-eks/1.23.13/2022-10-31/
+* s3://amazon-eks/1.22.15/2022-10-31/
+* s3://amazon-eks/1.21.14/2022-10-31/
+* s3://amazon-eks/1.20.15/2022-10-31/
+
+AMI details:
+* kernel: 5.4.219-126.411.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: runc-1.1.4-1.amzn2
+* cuda: 470.141.03-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+* Upgrades `runc` to version `1.1.4`
+* Updates [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) to version `0.5.10` and updates `kubelet` versions to `1.22.15`, `1.23.13` and `1.24.7`
+* [Updates `client.authentication.k8s.io` to `v1beta1`](https://github.com/awslabs/amazon-eks-ami/commit/ce1c11f9db5bf5a730e978e74e13174d4b9f73a3)
+* [Updates credential provider API to beta for Kubernetes versions `1.24+`](https://github.com/awslabs/amazon-eks-ami/commit/a521047d1b097b9c3dbb562ca9bdab5a641f347f)
+* [Installs awscli v2 bundle when possible](https://github.com/awslabs/amazon-eks-ami/commit/794ed5f10842b436e10c9bc89ee41491a6494ade)
+
 ### AMI Release v20221104
 * amazon-eks-gpu-node-1.24-v20221104
 * amazon-eks-gpu-node-1.23-v20221104
