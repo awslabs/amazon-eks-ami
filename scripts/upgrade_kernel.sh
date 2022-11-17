@@ -16,6 +16,8 @@ elif [[ $KERNEL_VERSION == "5.4" ]]; then
   sudo amazon-linux-extras install -y kernel-5.4
 elif [[ $KERNEL_VERSION == "5.10" ]]; then
   sudo amazon-linux-extras install -y kernel-5.10
+elif [[ $KERNEL_VERSION == "5.15" ]]; then
+  sudo amazon-linux-extras install -y kernel-5.15
 else
   echo "$KERNEL_VERSION is not a valid kernel version"
   exit 1
