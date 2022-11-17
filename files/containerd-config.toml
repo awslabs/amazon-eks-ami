@@ -11,6 +11,9 @@ default_runtime_name = "runc"
 [plugins."io.containerd.grpc.v1.cri"]
 sandbox_image = "SANDBOX_IMAGE"
 
+[plugins."io.containerd.grpc.v1.cri".registry]
+config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
+
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
 runtime_type = "io.containerd.runc.v2"
 
