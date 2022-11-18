@@ -4,6 +4,7 @@ set -o pipefail
 set -o nounset
 set -o errexit
 IFS=$'\n\t'
+export AWS_DEFAULT_OUTPUT="json"
 
 TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
 
@@ -30,6 +31,8 @@ validate_env_set CNI_PLUGIN_VERSION
 validate_env_set KUBERNETES_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set PULL_CNI_FROM_GITHUB
+validate_env_set PAUSE_CONTAINER_VERSION
+validate_env_set CACHE_CONTAINER_IMAGES
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -138,45 +141,17 @@ else
   sudo yum install -y awscli
 fi
 
-################################################################################
-### Docker #####################################################################
-################################################################################
-
-sudo yum install -y device-mapper-persistent-data lvm2
-
-INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
-if [[ "$INSTALL_DOCKER" == "true" ]]; then
-  sudo amazon-linux-extras enable docker
-  sudo groupadd -og 1950 docker
-  sudo useradd --gid $(getent group docker | cut -d: -f3) docker
-
-  # install runc and lock version
-  sudo yum install -y runc-${RUNC_VERSION}
-  sudo yum versionlock runc-*
-
-  # install containerd and lock version
-  sudo yum install -y containerd-${CONTAINERD_VERSION}
-  sudo yum versionlock containerd-*
-
-  # install docker and lock version
-  sudo yum install -y docker-${DOCKER_VERSION}*
-  sudo yum versionlock docker-*
-  sudo usermod -aG docker $USER
-
-  # Remove all options from sysconfig docker.
-  sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
-
-  sudo mkdir -p /etc/docker
-  sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
-  sudo chown root:root /etc/docker/daemon.json
-
-  # Enable docker daemon to start on boot.
-  sudo systemctl daemon-reload
-fi
-
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
+
+# install runc and lock version
+sudo yum install -y runc-${RUNC_VERSION}
+sudo yum versionlock runc-*
+
+# install containerd and lock version
+sudo yum install -y containerd-${CONTAINERD_VERSION}
+sudo yum versionlock containerd-*
 
 sudo mkdir -p /etc/eks/containerd
 if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
@@ -195,7 +170,15 @@ fi
 sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
 sudo mv $TEMPLATE_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
 sudo mv $TEMPLATE_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
+sudo mv $TEMPLATE_DIR/pull-image.sh /etc/eks/containerd/pull-image.sh
 sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
+sudo chmod +x /etc/eks/containerd/pull-image.sh
+
+sudo mkdir -p /etc/systemd/system/containerd.service.d
+cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
+[Service]
+ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
+EOF
 
 cat << EOF | sudo tee -a /etc/modules-load.d/containerd.conf
 overlay
@@ -207,6 +190,34 @@ net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
 EOF
+
+################################################################################
+### Docker #####################################################################
+################################################################################
+
+sudo yum install -y device-mapper-persistent-data lvm2
+
+INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
+if [[ "$INSTALL_DOCKER" == "true" ]]; then
+  sudo amazon-linux-extras enable docker
+  sudo groupadd -og 1950 docker
+  sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+
+  # install docker and lock version
+  sudo yum install -y docker-${DOCKER_VERSION}*
+  sudo yum versionlock docker-*
+  sudo usermod -aG docker $USER
+
+  # Remove all options from sysconfig docker.
+  sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
+
+  sudo mkdir -p /etc/docker
+  sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+  sudo chown root:root /etc/docker/daemon.json
+
+  # Enable docker daemon to start on boot.
+  sudo systemctl daemon-reload
+fi
 
 ################################################################################
 ### Logrotate ##################################################################
@@ -331,6 +342,8 @@ sudo systemctl disable kubelet
 ################################################################################
 
 sudo mkdir -p /etc/eks
+sudo mv $TEMPLATE_DIR/get-ecr-uri.sh /etc/eks/get-ecr-uri.sh
+sudo chmod +x /etc/eks/get-ecr-uri.sh
 sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
@@ -361,6 +374,92 @@ if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
 
   # copying credential provider config file to eks folder
   sudo mv $TEMPLATE_DIR/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+fi
+
+################################################################################
+### Cache Images ###############################################################
+################################################################################
+if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+  AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
+  ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
+
+  PAUSE_CONTAINER="${ECR_URI}/eks/pause:${PAUSE_CONTAINER_VERSION}"
+  cat /etc/eks/containerd/containerd-config.toml | sed s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g | sudo tee /etc/eks/containerd/containerd-cached-pause-config.toml
+  sudo cp -v /etc/eks/containerd/containerd-cached-pause-config.toml /etc/containerd/config.toml
+  sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+  sudo chown root:root /etc/systemd/system/sandbox-image.service
+  sudo systemctl daemon-reload
+  sudo systemctl start containerd
+  sudo systemctl enable containerd sandbox-image
+
+  K8S_MINOR_VERSION=$(echo "${KUBERNETES_VERSION}" | cut -d'.' -f1-2)
+  KUBE_PROXY_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version=${K8S_MINOR_VERSION})
+
+  DEFAULT_KUBE_PROXY_FULL_VERSION=$(echo "${KUBE_PROXY_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
+  DEFAULT_KUBE_PROXY_VERSION=$(echo "${DEFAULT_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f1)
+  DEFAULT_KUBE_PROXY_PLATFORM_VERSION=$(echo "${DEFAULT_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f2)
+
+  LATEST_KUBE_PROXY_FULL_VERSION=$(echo "${KUBE_PROXY_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] .addonVersion' | sort -V | tail -n1)
+  LATEST_KUBE_PROXY_VERSION=$(echo "${LATEST_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f1)
+  LATEST_KUBE_PROXY_PLATFORM_VERSION=$(echo "${LATEST_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f2)
+
+  KUBE_PROXY_IMGS=(
+    ## Default kube-proxy images
+    "${ECR_URI}/eks/kube-proxy:${DEFAULT_KUBE_PROXY_VERSION}-${DEFAULT_KUBE_PROXY_PLATFORM_VERSION}"
+    "${ECR_URI}/eks/kube-proxy:${DEFAULT_KUBE_PROXY_VERSION}-minimal-${DEFAULT_KUBE_PROXY_PLATFORM_VERSION}"
+
+    ## Latest kube-proxy images
+    "${ECR_URI}/eks/kube-proxy:${LATEST_KUBE_PROXY_VERSION}-${LATEST_KUBE_PROXY_PLATFORM_VERSION}"
+    "${ECR_URI}/eks/kube-proxy:${LATEST_KUBE_PROXY_VERSION}-minimal-${LATEST_KUBE_PROXY_PLATFORM_VERSION}"
+  )
+
+  #### Cache VPC CNI images starting with the addon default version and the latest version
+  VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${K8S_MINOR_VERSION})
+  DEFAULT_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
+  LATEST_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] .addonVersion' | sort -V | tail -n1)
+  CNI_IMG="${ECR_URI}/amazon-k8s-cni"
+  CNI_INIT_IMG="${CNI_IMG}-init"
+  CNI_IMGS=(
+    ## Default VPC CNI Images
+    "${CNI_IMG}:${DEFAULT_VPC_CNI_VERSION}"
+    "${CNI_INIT_IMG}:${DEFAULT_VPC_CNI_VERSION}"
+
+    ## Latest VPC CNI Images
+    "${CNI_IMG}:${LATEST_VPC_CNI_VERSION}"
+    "${CNI_INIT_IMG}:${LATEST_VPC_CNI_VERSION}"
+  )
+
+  CACHED_IMGS=(
+    "${PAUSE_CONTAINER}"
+    ${KUBE_PROXY_IMGS[@]}
+    ${CNI_IMGS[@]}
+  )
+
+  for img in "${CACHED_IMGS[@]}"; do
+    ## only kube-proxy-minimal is vended for K8s 1.24+
+    if [[ "${img}" == *"kube-proxy:"* ]] && [[ "${img}" != *"-minimal-"* ]] && vercmp "${K8S_MINOR_VERSION}" gteq "1.24"; then
+      continue
+    fi
+    /etc/eks/containerd/pull-image.sh "${img}"
+  done
+
+  #### Tag the pulled down image for all other regions in the partition
+  for region in $(aws ec2 describe-regions --all-regions | jq -r '.Regions[] .RegionName'); do
+    for img in "${CACHED_IMGS[@]}"; do
+      regional_img="${img/$BINARY_BUCKET_REGION/$region}"
+      sudo ctr -n k8s.io image tag "${img}" "${regional_img}" || :
+      ## Tag ECR fips endpoint for supported regions
+      if [[ "${region}" =~ (us-east-1|us-east-2|us-west-1|us-west-2|us-gov-east-1|us-gov-east-2) ]]; then
+        regional_fips_img="${regional_img/.ecr./.ecr-fips.}"
+        sudo ctr -n k8s.io image tag "${img}" "${regional_fips_img}" || :
+        sudo ctr -n k8s.io image tag "${img}" "${regional_fips_img/-eksbuild.1/}" || :
+      fi
+      ## Cache the non-addon VPC CNI images since "v*.*.*-eksbuild.1" is equivalent to leaving off the eksbuild suffix
+      if [[ "${img}" == *"-cni"*"-eksbuild.1" ]]; then
+        sudo ctr -n k8s.io image tag "${img}" "${regional_img/-eksbuild.1/}" || :
+      fi
+    done
+  done
 fi
 
 ################################################################################
