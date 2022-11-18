@@ -501,7 +501,14 @@ echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf
 echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 
 ################################################################################
-### adding log-collector-script ###############################################
+### adding log-collector-script ################################################
 ################################################################################
 sudo mkdir -p /etc/eks/log-collector-script/
 sudo cp $TEMPLATE_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
+
+################################################################################
+### Remove Yum Update from cloud-init config ###################################
+################################################################################
+sudo sed -i \
+  's/ - package-update-upgrade-install/# Removed so that nodes do not have version skew based on when the node was started.\n# - package-update-upgrade-install/' \
+  /etc/cloud/cloud.cfg
