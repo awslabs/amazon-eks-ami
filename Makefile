@@ -31,7 +31,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
+all: 1.20 1.21 1.22 1.23 1.24 ## Build all versions of EKS Optimized AL2 AMI
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
