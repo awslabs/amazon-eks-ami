@@ -9,6 +9,7 @@ This guide will provide more detailed usage information on this repo.
 1. [Customizing kubelet config](#customizing-kubelet-config)
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
+
 ---
 
 ## Building against other versions of Kubernetes binaries
@@ -38,6 +39,8 @@ make k8s \
   kubernetes_build_date=$KUBERNETES_BUILD_DATE \
   arch=$ARCH
 ```
+
+---
 
 ## Providing your own Kubernetes Binaries
 
@@ -70,6 +73,8 @@ Provisioner](https://www.packer.io/docs/provisioners/shell.html) runs the
 necessary configuration tasks.  Then, Packer creates an AMI from the instance
 and terminates the instance after the AMI is created.
 
+---
+
 ## Container Image Caching
 
 Optionally, some container images can be cached during the AMI build process in order to reduce the latency of the node getting to a `Ready` state when launched. 
@@ -94,6 +99,8 @@ Since the VPC CNI is not versioned with K8s itself, the latest version of the VP
 The images listed above are also tagged with each region in the partition the AMI is built in, since images are often built in one region and copied to others within the same partition. Images that are available to pull from an ECR FIPS endpoint are also tagged as such (i.e. `602401143452.dkr.ecr-fips.us-east-1.amazonaws.com/eks/pause:3.5`).
 
 When listing images on a node, you'll notice a long list of images. However, most of these images are simply tagged in different ways with no storage overhead. Images cached in the AMI total around 1.0 GiB. In general, a node with no images cached using the VPC CNI will use around 500 MiB of images when in a `Ready` state with no other pods running on the node.
+
+---
 
 ## IAM Permissions
 
@@ -168,6 +175,8 @@ You will need to use the region you are building the AMI in to specify the ECR r
 If you're using a custom s3 bucket to vend different K8s binaries, you will need to change the resource in the third IAM statement above to reference your custom bucket.
 For more information about the permissions required by Packer with different configurations, see the [docs](https://www.packer.io/plugins/builders/amazon#iam-task-or-instance-role).
 
+---
+
 ## Customizing Kubelet Config
 
 In some cases, customers may want to customize the [kubelet configuration](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration) on their nodes, and there are two mechanisms to do that with the EKS Optimized AMI.
@@ -220,11 +229,15 @@ $ curl -sSL "http://localhost:8001/api/v1/nodes/ip-192-168-92-220.us-east-2.comp
 }
 ```
 
+---
+
 ## AL2 and Linux Kernel Information
 
 By default, the `amazon-eks-ami` uses a [source_ami_filter](https://github.com/awslabs/amazon-eks-ami/blob/e3f1b910f83ad1f27e68312e50474ea6059f052d/eks-worker-al2.json#L46) that selects the latest [hvm](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) AL2 AMI for the given architecture as the base AMI. For more information on what kernel versions are running on published Amazon EKS optimized Linux AMIs, see [the public documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html).
 
 When building an AMI, you can set the `kernel_version` to `4.14` or `5.4` to customize the kernel version. The [upgrade_kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/master/scripts/upgrade_kernel.sh#L26) contains the logic for updating and upgrading the kernel. For Kubernetes versions 1.18 and below, it uses the `4.14` kernel if not set, and it will install the latest patches. For Kubernetes version 1.19 and above, it uses the `5.4` kernel if not set.
+
+---
 
 ## Updating known instance types
 
