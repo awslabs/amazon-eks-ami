@@ -2,13 +2,13 @@
 
 This guide will provide more detailed usage information on this repo.
 
-1. (Building against other versions of Kubernetes binaries)[#building-against-other-versions-of-kubernetes-binaries]
-1. (Providing your own Kubernetes binaries)[#providing-your-own-kubernetes-binaries]
-1. (Container image caching)[container-image-caching]
-1. (IAM permissions)[iam-permissions]
-1. (Customizing kubelet config)[customizing-kubelet-config]
-1. (AL2 / Linux kernel information)[al2-linux-kernel-information]
-1. (Updating known instance types)[updating-known-instance-types]
+1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
+1. [Providing your own Kubernetes binaries](#providing-your-own-kubernetes-binaries)
+1. [Container image caching](container-image-caching)
+1. [IAM permissions](iam-permissions)
+1. [Customizing kubelet config](customizing-kubelet-config)
+1. [AL2 / Linux kernel information](al2-linux-kernel-information)
+1. [Updating known instance types](updating-known-instance-types)
 ---
 
 ### Building against other versions of Kubernetes binaries
