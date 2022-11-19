@@ -7,7 +7,7 @@ This guide will provide more detailed usage information on this repo.
 1. [Container image caching](#container-image-caching)
 1. [IAM permissions](#iam-permissions)
 1. [Customizing kubelet config](#customizing-kubelet-config)
-1. [AL2 / Linux kernel information](#al2-/-linux-kernel-information)
+1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
 ---
 
@@ -220,7 +220,7 @@ $ curl -sSL "http://localhost:8001/api/v1/nodes/ip-192-168-92-220.us-east-2.comp
 }
 ```
 
-## AL2 / Linux Kernel Information
+## AL2 and Linux Kernel Information
 
 By default, the `amazon-eks-ami` uses a [source_ami_filter](https://github.com/awslabs/amazon-eks-ami/blob/e3f1b910f83ad1f27e68312e50474ea6059f052d/eks-worker-al2.json#L46) that selects the latest [hvm](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) AL2 AMI for the given architecture as the base AMI. For more information on what kernel versions are running on published Amazon EKS optimized Linux AMIs, see [the public documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html).
 
