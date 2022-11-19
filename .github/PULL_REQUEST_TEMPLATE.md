@@ -11,4 +11,4 @@ By submitting this pull request, I confirm that you can use, modify, copy, and r
 
 <!-- Include information regarding the testing that was completed with this changes. Where applicable, include details steps to replicate. -->
 
-*[See this guide for recommended testing for PRs.][doc/CONTRIBUTING.md#testing-changes) Some tests may not apply. Completing tests and providing additional validation steps are not required, but it is recommended and may reduce review time and time to merge.*
+*[See this guide for recommended testing for PRs.](doc/CONTRIBUTING.md#testing-changes) Some tests may not apply. Completing tests and providing additional validation steps are not required, but it is recommended and may reduce review time and time to merge.*
