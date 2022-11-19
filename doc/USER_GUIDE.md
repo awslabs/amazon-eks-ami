@@ -7,11 +7,11 @@ This guide will provide more detailed usage information on this repo.
 1. [Container image caching](#container-image-caching)
 1. [IAM permissions](#iam-permissions)
 1. [Customizing kubelet config](#customizing-kubelet-config)
-1. [AL2 / Linux kernel information](#al2-linux-kernel-information)
+1. [AL2 / Linux kernel information](#al2-/-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
 ---
 
-### Building against other versions of Kubernetes binaries
+## Building against other versions of Kubernetes binaries
 To build an Amazon EKS Worker AMI with other versions of Kubernetes that are not listed above run the following AWS Command
 Line Interface (AWS CLI) commands to obtain values for KUBERNETES_VERSION, KUBERNETES_BUILD_DATE, PLATFORM, ARCH from S3
 ```bash
