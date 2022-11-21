@@ -1,5 +1,5 @@
 PACKER_BINARY ?= packer
-PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable eks-worker-al2.json | grep 'template-variable' | awk -F ',' '{print $$4}')
+AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable eks-worker-al2.json | grep 'template-variable' | awk -F ',' '{print $$4}')
 
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
@@ -65,14 +65,20 @@ lint: ## Check the source files for syntax and format issues
 test: ## run the test-harness
 	test/test-harness.sh
 
+# include only variables which have a defined value
+PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
+PACKER_VAR_FLAGS := -var-file eks-worker-al2-variables.json \
+$(if $(PACKER_VARIABLE_FILE),--var-file=$(PACKER_VARIABLE_FILE),) \
+$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
+
 .PHONY: validate
 validate: ## Validate packer config
-	$(PACKER_BINARY) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
+	$(PACKER_BINARY) validate $(PACKER_VAR_FLAGS) eks-worker-al2.json
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(PACKER_BINARY) build -timestamp-ui -color=false $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
+	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) eks-worker-al2.json
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 

@@ -32,6 +32,18 @@ To build an Amazon EKS Worker AMI for a particular Kubernetes version run the fo
 ```bash
 make 1.23 ## Build a Amazon EKS Worker AMI for k8s 1.23
 ```
+
+### AMI template variables
+
+Default values for most variables are defined in [a default variable file](eks-worker-al2-variables.json).
+
+Users have the following options for specifying their own values:
+
+1. Provide a variable file with the `PACKER_VARIABLE_FILE` argument to `make`. Values in this file will override values in the default variable file. Your variable file does not need to include all possible variables, as it will be merged with the default variable file.
+2. Pass a key-value pair for any template variable to `make`. These values will override any values specified using the first method.
+
+**Note** that some variables (such as `arch` and `kubernetes_version`) do not have a sensible, static default, and are satisfied by the Makefile. Such variables do not appear in the default variable file, and must be overridden (if necessary) by the second method described above.
+
 ### Building against other versions of Kubernetes binaries
 To build an Amazon EKS Worker AMI with other versions of Kubernetes that are not listed above run the following AWS Command
 Line Interface (AWS CLI) commands to obtain values for KUBERNETES_VERSION, KUBERNETES_BUILD_DATE, PLATFORM, ARCH from S3
