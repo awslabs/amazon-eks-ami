@@ -5,8 +5,7 @@
 set -o errexit
 set -o pipefail
 
-if [ "$#" -ne 1 ]
-then
+if [ "$#" -ne 1 ]; then
   echo "usage: $0 OUTPUT_FILE"
   exit 1
 fi
@@ -18,3 +17,4 @@ sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' 
 
 # binaries
 echo $(jq ".binaries.kubelet = \"$(kubelet --version | awk '{print $2}')\"" $OUTPUT_FILE) > $OUTPUT_FILE
+echo $(jq ".binaries.awscli = \"$(aws --version | awk '{print $1}' | cut -d '/' -f 2)\"" $OUTPUT_FILE) > $OUTPUT_FILE

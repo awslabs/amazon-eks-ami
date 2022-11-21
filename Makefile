@@ -1,5 +1,6 @@
 PACKER_BINARY ?= packer
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable eks-worker-al2.json | grep 'template-variable' | awk -F ',' '{print $$4}')
+
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
 
@@ -30,20 +31,35 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.20 1.21 1.22 1.23 ## Build all versions of EKS Optimized AL2 AMI
+all: 1.20 1.21 1.22 1.23 1.24 ## Build all versions of EKS Optimized AL2 AMI
+
+# ensure that these flags are equivalent to the rules in the .editorconfig
+SHFMT_FLAGS := --list \
+--language-dialect auto \
+--indent 2 \
+--binary-next-line \
+--case-indent \
+--space-redirects
+
+SHFMT_COMMAND := $(shell which shfmt)
+ifeq (, $(SHFMT_COMMAND))
+SHFMT_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) mvdan/shfmt
+endif
 
 .PHONY: fmt
 fmt: ## Format the source files
-	# ensure that these flags are equivalent to the rules in the .editorconfig
-	shfmt \
-	  --list \
-	  --write \
-	  --language-dialect auto \
-	  --indent 2 \
-	  --binary-next-line \
-	  --case-indent \
-	  --space-redirects \
-	  $(MAKEFILE_DIR)
+	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
+
+SHELLCHECK_COMMAND := $(shell which shellcheck)
+ifeq (, $(SHELLCHECK_COMMAND))
+SHELLCHECK_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) koalaman/shellcheck:stable
+endif
+SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
+
+.PHONY: lint
+lint: ## Check the source files for syntax and format issues
+	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
+	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
 
 .PHONY: test
 test: ## run the test-harness
@@ -68,19 +84,23 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.20
 1.20: ## Build EKS Optimized AL2 AMI - K8s 1.20
-	$(MAKE) k8s kubernetes_version=1.20.15 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.20.15 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
 .PHONY: 1.21
 1.21: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.12 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.15 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.9 kubernetes_build_date=2022-07-27 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.13 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+
+.PHONY: 1.24
+1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
+	$(MAKE) k8s kubernetes_version=1.24.7 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
 .PHONY: help
 help: ## Display help
