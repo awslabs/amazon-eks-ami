@@ -13,7 +13,7 @@ This guide will provide more detailed usage information on this repo.
 
 ---
 
-### AMI template variables
+## AMI template variables
 
 Default values for most variables are defined in [a default variable file](eks-worker-al2-variables.json).
 
