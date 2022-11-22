@@ -166,7 +166,6 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
-        "KUBE_PROXY_VERSION_SUFFIX={{user `kube_proxy_version_suffix`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
       ]
     },
