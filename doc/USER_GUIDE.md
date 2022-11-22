@@ -2,6 +2,7 @@
 
 This guide will provide more detailed usage information on this repo.
 
+1. [AMI template variables](#ami-template-variables)
 1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
 1. [Providing your own Kubernetes binaries](#providing-your-own-kubernetes-binaries)
 1. [Container image caching](#container-image-caching)
@@ -9,6 +10,19 @@ This guide will provide more detailed usage information on this repo.
 1. [Customizing kubelet config](#customizing-kubelet-config)
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
+
+---
+
+### AMI template variables
+
+Default values for most variables are defined in [a default variable file](eks-worker-al2-variables.json).
+
+Users have the following options for specifying their own values:
+
+1. Provide a variable file with the `PACKER_VARIABLE_FILE` argument to `make`. Values in this file will override values in the default variable file. Your variable file does not need to include all possible variables, as it will be merged with the default variable file.
+2. Pass a key-value pair for any template variable to `make`. These values will override any values that were specified with the first method.
+
+**Note** that some variables (such as `arch` and `kubernetes_version`) do not have a sensible, static default, and are satisfied by the Makefile. Such variables do not appear in the default variable file, and must be overridden (if necessary) by the second method described above.
 
 ---
 
