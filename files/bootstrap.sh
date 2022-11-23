@@ -355,7 +355,7 @@ fi
 ###    - append entries to /etc/hosts with the mappings of control plane host IP address and API server
 ###      domain name. So that the domain name can be resolved to IP addresses locally.
 ###    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client
-###      X.509 certificate and generate kubelet kubeconfig file which uses the cleint cert. So that the
+###      X.509 certificate and generate kubelet kubeconfig file which uses the client cert. So that the
 ###      worker node can be authentiacated through X.509 certificate which works for both connected and
 ####     disconnected state.
 if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
