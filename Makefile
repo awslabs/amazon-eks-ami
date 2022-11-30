@@ -43,9 +43,9 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all 1.18 1.19 1.20 1.21 1.22
-all: 1.19-build 1.20-build
+all: 1.21
 
-all-validate: 1.19-validate 1.20-validate
+all-validate: 1.21
 
 .PHONY: k8s
 k8s: validate
@@ -72,7 +72,7 @@ k8s: validate
 
 .PHONY: 1.21
 1.21:
-	$(MAKE) ci-build kubernetes_version=1.21.5 kubernetes_build_date=2022-01-21 pull_cni_from_github=true
+	$(MAKE) ci-build kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22:
