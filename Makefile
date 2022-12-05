@@ -6,8 +6,6 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-aws_region ?= $(AWS_DEFAULT_REGION)
-binary_bucket_region ?= $(AWS_DEFAULT_REGION)
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= m6g.large
