@@ -26,7 +26,8 @@ param(
 
 # Common options
 $basedir="C:\log-collector"
-$instanceid = Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/instance-id
+$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "5"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+$instanceId = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/meta-data/instance-id
 $curtime = Get-Date -Format FileDateTimeUniversal
 $outfilename = "eks_" + $instanceid + "_" + $curtime + ".zip"
 $infodir="$basedir\collect"
