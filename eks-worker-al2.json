@@ -121,16 +121,6 @@
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "expect_disconnect": true,
-      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
-      "environment_vars": [
-        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "KERNEL_VERSION={{user `kernel_version`}}"
-      ]
-    },
-    {
-      "type": "shell",
       "pause_before": "90s",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
@@ -146,6 +136,23 @@
       "type": "file",
       "source": "{{template_dir}}/log-collector-script/linux/",
       "destination": "/tmp/worker/log-collector-script/"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo chmod -R a+x /tmp/worker/bin/",
+        "sudo mv /tmp/worker/bin/* /usr/bin/"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
+      "environment_vars": [
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "KERNEL_VERSION={{user `kernel_version`}}"
+      ]
     },
     {
       "type": "shell",
