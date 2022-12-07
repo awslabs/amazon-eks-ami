@@ -255,8 +255,8 @@ When building an AMI, you can set `kernel_version` to customize the kernel versi
 - `5.10`
 
 If `kernel_version` is not set:
-- For Kubernetes versions less than or equal to 1.23, `5.4` is used.
-- For Kubernetes versions greater than or equal to 1.24, `5.10` is used.
+- For Kubernetes 1.23 and below, `5.4` is used.
+- For Kubernetes 1.24 and above, `5.10` is used.
 
 The [upgrade_kernel.sh script](../scripts/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
 
