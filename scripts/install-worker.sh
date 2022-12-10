@@ -403,7 +403,16 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
   LATEST_KUBE_PROXY_VERSION=$(echo "${LATEST_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f1)
   LATEST_KUBE_PROXY_PLATFORM_VERSION=$(echo "${LATEST_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f2)
 
-  KUBE_PROXY_IMGS=(
+  #### Cache VPC CNI images starting with the addon default version and the latest version
+  VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${K8S_MINOR_VERSION})
+  DEFAULT_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
+  LATEST_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] .addonVersion' | sort -V | tail -n1)
+  CNI_IMG="${ECR_URI}/amazon-k8s-cni"
+  CNI_INIT_IMG="${CNI_IMG}-init"
+
+  CACHE_IMGS=(
+    "${PAUSE_CONTAINER}"
+
     ## Default kube-proxy images
     "${ECR_URI}/eks/kube-proxy:${DEFAULT_KUBE_PROXY_VERSION}-${DEFAULT_KUBE_PROXY_PLATFORM_VERSION}"
     "${ECR_URI}/eks/kube-proxy:${DEFAULT_KUBE_PROXY_VERSION}-minimal-${DEFAULT_KUBE_PROXY_PLATFORM_VERSION}"
@@ -411,15 +420,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
     ## Latest kube-proxy images
     "${ECR_URI}/eks/kube-proxy:${LATEST_KUBE_PROXY_VERSION}-${LATEST_KUBE_PROXY_PLATFORM_VERSION}"
     "${ECR_URI}/eks/kube-proxy:${LATEST_KUBE_PROXY_VERSION}-minimal-${LATEST_KUBE_PROXY_PLATFORM_VERSION}"
-  )
 
-  #### Cache VPC CNI images starting with the addon default version and the latest version
-  VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${K8S_MINOR_VERSION})
-  DEFAULT_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
-  LATEST_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] .addonVersion' | sort -V | tail -n1)
-  CNI_IMG="${ECR_URI}/amazon-k8s-cni"
-  CNI_INIT_IMG="${CNI_IMG}-init"
-  CNI_IMGS=(
     ## Default VPC CNI Images
     "${CNI_IMG}:${DEFAULT_VPC_CNI_VERSION}"
     "${CNI_INIT_IMG}:${DEFAULT_VPC_CNI_VERSION}"
@@ -428,24 +429,33 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
     "${CNI_IMG}:${LATEST_VPC_CNI_VERSION}"
     "${CNI_INIT_IMG}:${LATEST_VPC_CNI_VERSION}"
   )
+  PULLED_IMGS=()
 
-  CACHED_IMGS=(
-    "${PAUSE_CONTAINER}"
-    ${KUBE_PROXY_IMGS[@]}
-    ${CNI_IMGS[@]}
-  )
-
-  for img in "${CACHED_IMGS[@]}"; do
+  for img in "${CACHE_IMGS[@]}"; do
     ## only kube-proxy-minimal is vended for K8s 1.24+
     if [[ "${img}" == *"kube-proxy:"* ]] && [[ "${img}" != *"-minimal-"* ]] && vercmp "${K8S_MINOR_VERSION}" gteq "1.24"; then
       continue
     fi
-    /etc/eks/containerd/pull-image.sh "${img}"
+    ## Since eksbuild.x version may not match the image tag, we need to decrement the eksbuild version until we find the latest image tag within the app semver
+    eksbuild_version="1"
+    if [[ ${img} == *'eksbuild.'* ]]; then
+      eksbuild_version=$(echo "${img}" | grep -o 'eksbuild\.[0-9]\+' | cut -d'.' -f2)
+    fi
+    ## iterate through decrementing the build version each time
+    for build_version in $(seq "${eksbuild_version}" -1 1); do
+      img=$(echo "${img}" | sed -E "s/eksbuild.[0-9]+/eksbuild.${build_version}/")
+      if /etc/eks/containerd/pull-image.sh "${img}"; then
+        PULLED_IMGS+=("${img}")
+        break
+      elif [[ "${build_version}" -eq 1 ]]; then
+        exit 1
+      fi
+    done
   done
 
   #### Tag the pulled down image for all other regions in the partition
   for region in $(aws ec2 describe-regions --all-regions | jq -r '.Regions[] .RegionName'); do
-    for img in "${CACHED_IMGS[@]}"; do
+    for img in "${PULLED_IMGS[@]}"; do
       regional_img="${img/$BINARY_BUCKET_REGION/$region}"
       sudo ctr -n k8s.io image tag "${img}" "${regional_img}" || :
       ## Tag ECR fips endpoint for supported regions
