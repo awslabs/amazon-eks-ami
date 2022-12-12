@@ -132,6 +132,8 @@ Notable changes:
 * Update docker and containerd for [ALASDOCKER-2022-021](https://alas.aws.amazon.com/AL2/ALASDOCKER-2022-021.html) [#1056](https://github.com/awslabs/amazon-eks-ami/pull/1056) 
 * runc version is updated to 1.1.3-1.amzn2.0.2 to include ALAS2DOCKER-2022-020 [#1055](https://github.com/awslabs/amazon-eks-ami/pull/1055)
 * Release AMI in me-central-1 with version 1.21, 1.22, 1.23. 1.20 is not supported in this region since it will be deprecated soon.
+* Fixes an issue with Docker daemon configuration on the GPU AMI (#351).
+  * **Note** that if you have a workaround in place for this issue, you'll likely need to revert it.
 
 ### [Recalled] AMI Release v20221027
 * amazon-eks-gpu-node-1.23-v20221027
