@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPTPATH="$(
+  cd "$(dirname "$0")"
+  pwd -P
+)"
+
+if [[ $1 == "ec2" ]]; then
+
+  if [[ $2 == "describe-instance-types" ]]; then
+    instance_type=$(echo "${@}" | grep -o '[a-z]\+[0-9]\+[a-z]*\.[0-9a-z]\+' | tr '.' '-')
+    if [[ -f "${SCRIPTPATH}/describe-instance-types/${instance_type}.json" ]]; then
+      cat "${SCRIPTPATH}/describe-instance-types/${instance_type}.json"
+      exit 0
+    fi
+    echo "instance type not found"
+    exit 1
+  fi
+fi

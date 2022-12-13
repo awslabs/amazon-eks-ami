@@ -31,10 +31,11 @@ To send us a pull request, please:
 
 1. Fork the repository.
 2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request interface.
-6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
+3. Ensure your changes match our style guide (`make fmt`).
+4. Ensure local tests pass (`make test`).
+5. Commit to your fork using clear commit messages.
+6. Send us a pull request, answering any default questions in the pull request interface.
+7. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
 
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
@@ -43,7 +44,15 @@ GitHub provides additional document on [forking a repository](https://help.githu
 
 When submitting PRs, we want to verify that there are no regressions in the AMI with the new changes. EKS runs various tests before publishing new Amazon EKS optimized Amazon Linux AMIs, which will ensure the highest level of confidence that there are no regressions in officially published AMIs. To maintain the health of this repo, we need to do some basic validation prior to merging PRs. Eventually, we hope to automate this process. Until then, here are the basic steps that we should take before merging PRs.
 
-**Test #1: Verify that building AMIs still works**
+**Test #1: Verify that the unit tests pass**
+
+Please add a test case for your changes, if possible. See the [unit test README](test/README.md) for more information. These tests will be run automatically for every pull request.
+
+```
+make test
+```
+
+**Test #2: Verify that building AMIs still works**
 
 If your change is relevant to a specific Kubernetes version, build all AMIs that apply. Otherwise, just choose the latest available Kubernetes version.
 
@@ -52,7 +61,7 @@ If your change is relevant to a specific Kubernetes version, build all AMIs that
 make 1.22
 ```
 
-**Test #2: Create a nodegroup with new AMI and confirm it joins a cluster**
+**Test #3: Create a nodegroup with new AMI and confirm it joins a cluster**
 
 Once the AMI is built, we need to verify that it can join a cluster. You can use `eksctl`, or your method of choice, to create a cluster and add nodes to it using the AMI you built. Below is an example config file.
 
@@ -84,7 +93,7 @@ eksctl create cluster -f cluster.yaml
 
 `eksctl` will verify that the nodes join the cluster before completing.
 
-**Test #3: Verify that the nodes are Kubernetes conformant**
+**Test #4: Verify that the nodes are Kubernetes conformant**
 
 You can use [sonobuoy](https://sonobuoy.io/) to run conformance tests on the cluster you've create in *Test #2*. You should only include nodes with the custom AMI built in *Test #1*. You must install `sonobuoy` locally before running.
 
@@ -94,7 +103,7 @@ sonobuoy run --wait
 
 By default, `sonobuoy` will run `e2e` and `systemd-logs`. This step may take multiple hours to run.
 
-**Test #4: [Optional] Test your specific PR changes**
+**Test #5: [Optional] Test your specific PR changes**
 
 If your PR has changes that require additional, custom validation, provide the appropriate steps to verify that the changes don't cause regressions and behave as expected. Document the steps taken in the CR.
 
@@ -105,6 +114,21 @@ Delete the cluster:
 ```
 eksctl delete cluster -f cluster.yaml
 ```
+
+## Troubleshooting
+
+**Tests fail with `realpath: command not found`**
+
+When running `make test`, you may see a message like below:
+
+```
+test/test-harness.sh: line 41: realpath: command not found
+/entrypoint.sh: line 13: /test.sh: No such file or directory
+```
+
+The issue is discussed in [this StackExchange post](https://unix.stackexchange.com/questions/101080/realpath-command-not-found).
+
+On OSX, running `brew install coreutils` resolves the issue.
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws-samples/amazon-eks-ami/labels/help%20wanted) issues is a great place to start. 
