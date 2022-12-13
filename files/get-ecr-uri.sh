@@ -45,6 +45,15 @@ else
     me-central-1)
       acct="759879836304"
       ;;
+    eu-south-2)
+      acct="455263428931"
+      ;;
+    eu-central-2)
+      acct="900612956339"
+      ;;
+    ap-south-2)
+      acct="900889452093"
+      ;;
     *)
       acct="602401143452"
       ;;
