@@ -1,5 +1,64 @@
 # Changelog
 
+### AMI Release v20221222
+* amazon-eks-gpu-node-1.24-v20221222
+* amazon-eks-gpu-node-1.23-v20221222
+* amazon-eks-gpu-node-1.22-v20221222
+* amazon-eks-gpu-node-1.21-v20221222
+* amazon-eks-gpu-node-1.20-v20221222
+* amazon-eks-arm64-node-1.24-v20221222
+* amazon-eks-arm64-node-1.23-v20221222
+* amazon-eks-arm64-node-1.22-v20221222
+* amazon-eks-arm64-node-1.21-v20221222
+* amazon-eks-arm64-node-1.20-v20221222
+* amazon-eks-node-1.24-v20221222
+* amazon-eks-node-1.23-v20221222
+* amazon-eks-node-1.22-v20221222
+* amazon-eks-node-1.21-v20221222
+* amazon-eks-node-1.20-v20221222
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.24.7-20221222`
+* `1.23.13-20221222`
+* `1.22.15-20221222`
+* `1.21.14-20221222`
+* `1.20.15-20221222`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.24.7/2022-10-31/
+* s3://amazon-eks/1.23.13/2022-10-31/
+* s3://amazon-eks/1.22.15/2022-10-31/
+* s3://amazon-eks/1.21.14/2022-10-31/
+* s3://amazon-eks/1.20.15/2022-10-31/
+
+AMI details:
+* kernel: 5.4.226-129.415.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: 1.1.4-1.amzn2
+* cuda: 11.4.0-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Kernel updated to `5.4.226-129.415.amzn2` for:
+  - [ALASKERNEL-5.4-2022-040](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2022-040.html)
+  - [ALASKERNEL-5.4-2022-039](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2022-039.html)
+- NVIDIA driver updated to `470.161.03-1` to address security issues. More information is available in [NVIDIA security bulletin #5415](https://nvidia.custhelp.com/app/answers/detail/a_id/5415).
+- Cache pause, vpc-cni, and kube-proxy images during build ([#938](https://github.com/awslabs/amazon-eks-ami/pull/938))
+  - *Note* that this has only been enabled for 1.24 AMIs at this time.
+- Disable yum updates in cloud-init ([#1074](https://github.com/awslabs/amazon-eks-ami/pull/1074))
+- Skip sandbox image pull if already present ([#1090](https://github.com/awslabs/amazon-eks-ami/pull/1090))
+- Move variable defaults to `--var-file` ([#1079](https://github.com/awslabs/amazon-eks-ami/pull/1079))
+
+Minor changes:
+- Add ECR accounts for `eu-south-2`, `eu-central-2`, `ap-south-2` ([#1125](https://github.com/awslabs/amazon-eks-ami/pull/1125))
+- Handle indentation when parsing `sandbox_image` from `containerd` config ([#1119](https://github.com/awslabs/amazon-eks-ami/pull/1119))
+- Lookup instanceId using IMDSv2 in Windows log collector script ([#1116](https://github.com/awslabs/amazon-eks-ami/pull/1116))
+- Remove `aws_region` and `binary_bucket_region` overrides from Makefile ([#1115](https://github.com/awslabs/amazon-eks-ami/pull/1115))
+- Sym-link awscli to /bin ([#1102](https://github.com/awslabs/amazon-eks-ami/pull/1102))
+- Configure containerd registry certificates by default ([#1049](https://github.com/awslabs/amazon-eks-ami/pull/1049))
+
 ### AMI Release v20221112
 * amazon-eks-gpu-node-1.24-v20221112
 * amazon-eks-gpu-node-1.23-v20221112
