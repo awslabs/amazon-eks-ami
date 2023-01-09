@@ -178,51 +178,6 @@ SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
 
-function get_pause_container_account_for_region() {
-  local region="$1"
-  case "${region}" in
-    ap-east-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-800184023465}"
-      ;;
-    me-south-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-558608220178}"
-      ;;
-    cn-north-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-918309763551}"
-      ;;
-    cn-northwest-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-961992271922}"
-      ;;
-    us-gov-west-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-013241004608}"
-      ;;
-    us-gov-east-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-151742754352}"
-      ;;
-    us-iso-east-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-725322719131}"
-      ;;
-    us-isob-east-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-187977181151}"
-      ;;
-    af-south-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-877085696533}"
-      ;;
-    eu-south-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-590381155156}"
-      ;;
-    ap-southeast-3)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-296578399912}"
-      ;;
-    me-central-1)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-759879836304}"
-      ;;
-    *)
-      echo "${PAUSE_CONTAINER_ACCOUNT:-602401143452}"
-      ;;
-  esac
-}
-
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
 # of the resource to reserve. Note that we return zero if the start of the resource range is
@@ -314,8 +269,8 @@ if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
   exit 1
 fi
 
-PAUSE_CONTAINER_ACCOUNT=$(get_pause_container_account_for_region "${AWS_DEFAULT_REGION}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$PAUSE_CONTAINER_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.$AWS_SERVICES_DOMAIN/eks/pause}
+ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
@@ -400,7 +355,7 @@ fi
 ###    - append entries to /etc/hosts with the mappings of control plane host IP address and API server
 ###      domain name. So that the domain name can be resolved to IP addresses locally.
 ###    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client
-###      X.509 certificate and generate kubelet kubeconfig file which uses the cleint cert. So that the
+###      X.509 certificate and generate kubelet kubeconfig file which uses the client cert. So that the
 ###      worker node can be authentiacated through X.509 certificate which works for both connected and
 ####     disconnected state.
 if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
@@ -525,29 +480,26 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
 
   sudo mkdir -p /etc/containerd
   sudo mkdir -p /etc/cni/net.d
-  mkdir -p /etc/systemd/system/containerd.service.d
-  cat << EOF > /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
-[Service]
-ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
-EOF
   if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
     sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
   fi
   echo "$(jq '.cgroupDriver="systemd"' $KUBELET_CONFIG)" > $KUBELET_CONFIG
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
-  sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
-  sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+
+  # Check if the containerd config file is the same as the one used in the image build.
+  # If different, then restart containerd w/ proper config
+  if ! cmp -s /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml; then
+    sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    sudo chown root:root /etc/systemd/system/sandbox-image.service
+    systemctl daemon-reload
+    systemctl enable containerd sandbox-image
+    systemctl restart sandbox-image containerd
+  fi
   sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
   sudo chown root:root /etc/systemd/system/kubelet.service
-  sudo chown root:root /etc/systemd/system/sandbox-image.service
   # Validate containerd config
   sudo containerd config dump > /dev/null
-  systemctl daemon-reload
-  systemctl enable containerd
-  systemctl restart containerd
-  systemctl enable sandbox-image
-  systemctl start sandbox-image
-
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   mkdir -p /etc/docker
   bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
