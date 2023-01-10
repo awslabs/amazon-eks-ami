@@ -1,5 +1,54 @@
 # Changelog
 
+### AMI Release v20230105
+* amazon-eks-gpu-node-1.24-v20230105
+* amazon-eks-gpu-node-1.23-v20230105
+* amazon-eks-gpu-node-1.22-v20230105
+* amazon-eks-gpu-node-1.21-v20230105
+* amazon-eks-gpu-node-1.20-v20230105
+* amazon-eks-arm64-node-1.24-v20230105
+* amazon-eks-arm64-node-1.23-v20230105
+* amazon-eks-arm64-node-1.22-v20230105
+* amazon-eks-arm64-node-1.21-v20230105
+* amazon-eks-arm64-node-1.20-v20230105
+* amazon-eks-node-1.24-v20230105
+* amazon-eks-node-1.23-v20230105
+* amazon-eks-node-1.22-v20230105
+* amazon-eks-node-1.21-v20230105
+* amazon-eks-node-1.20-v20230105
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.24.7-20230105`
+* `1.23.13-20230105`
+* `1.22.15-20230105`
+* `1.21.14-20230105`
+* `1.20.15-20230105`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.24.7/2022-10-31/
+* s3://amazon-eks/1.23.13/2022-10-31/
+* s3://amazon-eks/1.22.15/2022-10-31/
+* s3://amazon-eks/1.21.14/2022-10-31/
+* s3://amazon-eks/1.20.15/2022-10-31/
+
+AMI details:
+* kernel: 5.4.226-129.415.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: 1.1.4-1.amzn2
+* cuda: 11.4.0-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- This will be the last release for 1.20 AMI's.
+- Decrease `launch_block_device_mappings_volume_size` to 4 ([#1143](https://github.com/awslabs/amazon-eks-ami/pull/1143)).
+  - This fixes an issue with 4GiB launch block devices. More information is available in [#1142](https://github.com/awslabs/amazon-eks-ami/issues/1142).
+- Container image caching has been disabled while we work to optimize the disk usage of this feature. This feature was only enabled for 1.24 AMI's in the previous release, [v20221222](https://github.com/awslabs/amazon-eks-ami/releases/tag/v20221222).
+
+Minor changes:
+- Update AWS CLI to `2.9.12`
+
 ### AMI Release v20221222
 * amazon-eks-gpu-node-1.24-v20221222
 * amazon-eks-gpu-node-1.23-v20221222
