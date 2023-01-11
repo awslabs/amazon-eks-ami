@@ -16,6 +16,7 @@
     "creator": "{{env `USER`}}",
     "docker_version": "20.10.17-1.amzn2.0.1",
     "encrypted": "false",
+    "install_docker": "true",
     "kernel_version": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "4",
