@@ -376,8 +376,13 @@ if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
     mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
     KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
   fi
+  ### For Local Outpost deployments, we will use the the external cloud provider
+  KUBELET_CLOUD_PROVIDER="external"
 else
   sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
+
+  ### For any other type of deployment we will use the aws cloud provider for backwards compatibility
+  KUBELET_CLOUD_PROVIDER="aws"
 fi
 
 ### kubelet.service configuration
@@ -460,6 +465,11 @@ mkdir -p /etc/systemd/system/kubelet.service.d
 cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
 Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
+EOF
+
+cat << EOF > /etc/systemd/system/kubelet.service.d/20-kubelet-cloud-provider.conf
+[Service]
+Environment='KUBELET_CLOUD_PROVIDER=$KUBELET_CLOUD_PROVIDER'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
