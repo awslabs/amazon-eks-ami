@@ -490,11 +490,19 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
 
   sudo mkdir -p /etc/containerd
   sudo mkdir -p /etc/cni/net.d
-  if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
-    sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
+
+  sudo mkdir -p /etc/systemd/system/containerd.service.d
+  printf '[Service]\nSlice=runtime.slice\n' | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
+
+  if [[ -n "${CONTAINERD_CONFIG_FILE}" ]]; then
+    sudo cp -v "${CONTAINERD_CONFIG_FILE}" /etc/eks/containerd/containerd-config.toml
   fi
-  echo "$(jq '.cgroupDriver="systemd"' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
+
+  echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
 
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
