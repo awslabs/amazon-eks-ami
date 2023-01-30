@@ -3,7 +3,6 @@
 set -o pipefail
 set -o nounset
 set -o errexit
-set -o xtrace
 IFS=$'\n\t'
 export AWS_DEFAULT_OUTPUT="json"
 
