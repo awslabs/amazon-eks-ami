@@ -3,6 +3,7 @@
 set -o pipefail
 set -o nounset
 set -o errexit
+set -o xtrace
 IFS=$'\n\t'
 export AWS_DEFAULT_OUTPUT="json"
 
@@ -203,11 +204,12 @@ EOF
 
 sudo yum install -y device-mapper-persistent-data lvm2
 
-if [[ -z "$INSTALL_DOCKER" ]]; then
-  INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0")
+if [[ ! -v "INSTALL_DOCKER" ]]; then
+  INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
 else
   echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
 fi
+
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
   sudo groupadd -og 1950 docker
