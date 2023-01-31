@@ -21,6 +21,6 @@ jobs:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           feed: "https://alas.aws.amazon.com/AL2/alas.rss"
           dry-run: "false"
-          lastTime: "${{ github.event.inputs.window }}"
+          lastTime: "${{ github.event.inputs.window || '24h' }}"
           labels: "alas,alas/al2"
           titleFilter: "(medium|low)"
