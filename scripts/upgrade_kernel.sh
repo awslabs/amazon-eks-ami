@@ -21,4 +21,9 @@ else
   exit 1
 fi
 
+# enable pressure stall information
+sudo grubby \
+  --update-kernel=ALL \
+  --args="psi=1"
+
 sudo reboot
