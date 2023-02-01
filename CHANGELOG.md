@@ -39,11 +39,13 @@ Notable changes:
 - Updated kernel version to `5.4.228-131.415.amzn2` for:
   - [ALAS2KERNEL-5.4-2023-041](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-041.html).
 - Add support for `C6in`, `M6in`, `M6idn`, `R6in`, `R6idn` and `Hpc6id` instances [#1153](https://github.com/awslabs/amazon-eks-ami/pull/1153)
+- This is the first AMI release available in `ap-south-2`, `eu-central-2`, and `eu-south-2`.
 - Cache image content without unpacking/snapshotting [#1144](https://github.com/awslabs/amazon-eks-ami/pull/1144)
   - Container image caching has been re-enabled for 1.24 AMI's.
 
 Minor changes:
 - Update AWS CLI to `2.9.18`
+- Configure containerd registry certificates by default in the GPU AMI.
 
 ### AMI Release v20230105
 * amazon-eks-gpu-node-1.24-v20230105
