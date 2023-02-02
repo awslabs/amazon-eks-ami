@@ -1,5 +1,52 @@
 # Changelog
 
+### AMI Release v20230127
+* amazon-eks-gpu-node-1.24-v20230127
+* amazon-eks-gpu-node-1.23-v20230127
+* amazon-eks-gpu-node-1.22-v20230127
+* amazon-eks-gpu-node-1.21-v20230127
+* amazon-eks-arm64-node-1.24-v20230127
+* amazon-eks-arm64-node-1.23-v20230127
+* amazon-eks-arm64-node-1.22-v20230127
+* amazon-eks-arm64-node-1.21-v20230127
+* amazon-eks-node-1.24-v20230127
+* amazon-eks-node-1.23-v20230127
+* amazon-eks-node-1.22-v20230127
+* amazon-eks-node-1.21-v20230127
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.24.9-20230127`
+* `1.23.15-20230127`
+* `1.22.17-20230127`
+* `1.21.14-20230127`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.24.9/2023-01-11/
+* s3://amazon-eks/1.23.15/2023-01-11/
+* s3://amazon-eks/1.22.17/2023-01-11/
+* s3://amazon-eks/1.21.14/2023-01-11/
+
+AMI details:
+* kernel: 5.4.228-131.415.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: 1.1.4-1.amzn2
+* cuda: 11.4.0-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Updated kernel version to `5.4.228-131.415.amzn2` for:
+  - [ALAS2KERNEL-5.4-2023-041](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-041.html).
+- Add support for `C6in`, `M6in`, `M6idn`, `R6in`, `R6idn` and `Hpc6id` instances [#1153](https://github.com/awslabs/amazon-eks-ami/pull/1153)
+- This is the first AMI release available in `ap-south-2`, `eu-central-2`, and `eu-south-2`.
+- Cache image content without unpacking/snapshotting [#1144](https://github.com/awslabs/amazon-eks-ami/pull/1144)
+  - Container image caching has been re-enabled for 1.24 AMI's.
+
+Minor changes:
+- Update AWS CLI to `2.9.18`
+- Configure containerd registry certificates by default in the GPU AMI.
+
 ### AMI Release v20230105
 * amazon-eks-gpu-node-1.24-v20230105
 * amazon-eks-gpu-node-1.23-v20230105
