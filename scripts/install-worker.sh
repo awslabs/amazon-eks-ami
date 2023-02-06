@@ -504,14 +504,16 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
 
   ecr_password=$(aws ecr get-login-password --region "eu-central-1")
 
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.8.7-eks-1-24-3
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.18.2
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.29.0
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.8.7-eks-1-24-8
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.19.0
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.0
   sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.13.0
   sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.1_sylr.1
-  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.5.1
-  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/livenessprobe:v2.6.0
+  sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.6_sylr.2
+  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.6.3
+  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/livenessprobe:v2.9.0
   sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.12.5
+  sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.12.6
   sudo ctr --namespace k8s.io image pull quay.io/cilium/startup-script:d69851597ea019af980891a4628fb36b7880ec26
   sudo ctr --namespace k8s.io image pull quay.io/prometheus/node-exporter:v1.5.0
 
