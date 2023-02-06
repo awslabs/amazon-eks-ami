@@ -24,4 +24,4 @@ if [[ -z ${ecr_password} ]]; then
   echo >&2 "Unable to retrieve the ECR password."
   exit 1
 fi
-retry sudo ctr --namespace k8s.io image pull "${img}" --user AWS:${ecr_password}
+retry sudo ctr --namespace k8s.io content fetch "${img}" --user AWS:${ecr_password}
