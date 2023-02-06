@@ -376,8 +376,13 @@ if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
     mv /var/lib/kubelet/kubeconfig /var/lib/kubelet/bootstrap-kubeconfig
     KUBELET_EXTRA_ARGS="--bootstrap-kubeconfig /var/lib/kubelet/bootstrap-kubeconfig $KUBELET_EXTRA_ARGS"
   fi
+  ### For Local Outpost deployments, we will use the the external cloud provider
+  KUBELET_CLOUD_PROVIDER="external"
 else
   sed -i s,CLUSTER_NAME,$CLUSTER_NAME,g /var/lib/kubelet/kubeconfig
+
+  ### For any other type of deployment we will use the aws cloud provider for backwards compatibility
+  KUBELET_CLOUD_PROVIDER="aws"
 fi
 
 ### kubelet.service configuration
@@ -462,6 +467,11 @@ cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
 EOF
 
+cat << EOF > /etc/systemd/system/kubelet.service.d/20-kubelet-cloud-provider.conf
+[Service]
+Environment='KUBELET_CLOUD_PROVIDER=$KUBELET_CLOUD_PROVIDER'
+EOF
+
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
   cat << EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
 [Service]
@@ -480,11 +490,19 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
 
   sudo mkdir -p /etc/containerd
   sudo mkdir -p /etc/cni/net.d
-  if [[ -n "$CONTAINERD_CONFIG_FILE" ]]; then
-    sudo cp -v $CONTAINERD_CONFIG_FILE /etc/eks/containerd/containerd-config.toml
+
+  sudo mkdir -p /etc/systemd/system/containerd.service.d
+  printf '[Service]\nSlice=runtime.slice\n' | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
+
+  if [[ -n "${CONTAINERD_CONFIG_FILE}" ]]; then
+    sudo cp -v "${CONTAINERD_CONFIG_FILE}" /etc/eks/containerd/containerd-config.toml
   fi
-  echo "$(jq '.cgroupDriver="systemd"' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
+
+  echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
 
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
