@@ -8,11 +8,11 @@ MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 arch ?= x86_64
 ifeq ($(arch), arm64)
-instance_type ?= m6g.large
+instance_type ?= m6g.xlarge
 ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
-instance_type ?= m4.large
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+instance_type ?= m5a.xlarge
+ami_name ?= amazon-eks-amd64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
