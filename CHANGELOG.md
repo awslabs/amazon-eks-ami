@@ -1,5 +1,43 @@
 # Changelog
 
+### AMI Release v20230203
+* amazon-eks-gpu-node-1.24-v20230203
+* amazon-eks-gpu-node-1.23-v20230203
+* amazon-eks-gpu-node-1.22-v20230203
+* amazon-eks-gpu-node-1.21-v20230203
+* amazon-eks-arm64-node-1.24-v20230203
+* amazon-eks-arm64-node-1.23-v20230203
+* amazon-eks-arm64-node-1.22-v20230203
+* amazon-eks-arm64-node-1.21-v20230203
+* amazon-eks-node-1.24-v20230203
+* amazon-eks-node-1.23-v20230203
+* amazon-eks-node-1.22-v20230203
+* amazon-eks-node-1.21-v20230203
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.24.9-20230203`
+* `1.23.15-20230203`
+* `1.22.17-20230203`
+* `1.21.14-20230203`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.24.9/2023-01-11/
+* s3://amazon-eks/1.23.15/2023-01-11/
+* s3://amazon-eks/1.22.17/2023-01-11/
+* s3://amazon-eks/1.21.14/2023-01-11/
+
+AMI details:
+* kernel: 5.4.228-131.415.amzn2
+* dockerd: 20.10.17-1.amzn2.0.1
+* containerd: 1.6.6-1.amzn2.0.2
+* runc: 1.1.4-1.amzn2
+* cuda: 11.4.0-1
+* nvidia-container-runtime-hook: 1.4.0-1.amzn2
+* SSM agent: 3.1.1732.0-1.amzn2
+
+Notable changes:
+* Reverted [Use external cloud provider for EKS Local deployments](https://github.com/awslabs/amazon-eks-ami/commit/4b9b546dc325e6372e705f1e192f68395ce017db)
+
 ### AMI Release v20230127
 * amazon-eks-gpu-node-1.24-v20230127
 * amazon-eks-gpu-node-1.23-v20230127
