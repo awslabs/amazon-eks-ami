@@ -2,6 +2,7 @@
   "_comment": "All template variables are enumerated here; and most variables have a default value defined in eks-worker-al2-variables.json",
   "variables": {
     "additional_yum_repos": null,
+    "ami_component_description": null,    
     "ami_description": null,
     "ami_name": null,
     "ami_regions": null,
@@ -107,7 +108,7 @@
         "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "{{ user `ami_description` }}, (k8s: {{ user `kubernetes_version` }}, docker: {{ user `docker_version` }}, containerd: {{ user `containerd_version` }})"
+      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
     }
   ],
   "provisioners": [
