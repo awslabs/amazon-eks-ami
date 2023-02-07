@@ -29,7 +29,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.21 1.22 1.23 1.24 ## Build all versions of EKS Optimized AL2 AMI
+all: 1.21 1.22 1.23 1.24 1.25 ## Build all versions of EKS Optimized AL2 AMI
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -95,6 +95,10 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
 	$(MAKE) k8s kubernetes_version=1.24.9 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
+
+.PHONY: 1.25
+1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
+	$(MAKE) k8s kubernetes_version=1.25.5 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
 
 .PHONY: help
 help: ## Display help
