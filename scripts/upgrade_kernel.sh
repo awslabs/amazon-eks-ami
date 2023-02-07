@@ -24,4 +24,7 @@ sudo grubby \
   --update-kernel=ALL \
   --args="psi=1"
 
+sudo yum install -y yum-plugin-versionlock
+sudo yum versionlock kernel
+
 sudo reboot
