@@ -64,7 +64,9 @@ sudo yum install -y \
   ec2-instance-connect \
   ipvsadm \
   jq \
+  mdadm \
   nfs-utils \
+  nvme-cli \
   socat \
   unzip \
   wget \

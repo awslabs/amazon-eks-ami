@@ -32,6 +32,7 @@ function print_help {
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
   echo "--cluster-id Specify the id of EKS cluster"
+  echo "--enable-instance-store Use EC2 instance storage (if available) for images and container data/metadata to improve performance. WARNING: Data will be lost if instance is stopped or terminated. (default: false)"
 }
 
 POSITIONAL=()
@@ -123,6 +124,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --enable-instance-store)
+      ENABLE_INSTANCE_STORE=$2
+      shift
+      shift
+      ;;
     *)                   # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift              # past argument
@@ -177,6 +183,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
+ENABLE_INSTANCE_STORE="${ENABLE_INSTANCE_STORE:-}"
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
@@ -239,6 +246,80 @@ get_cpu_millicores_to_reserve() {
   echo $cpu_to_reserve
 }
 
+# Optionally mounts EC2 instance storage to /var/lib/{docker,kubelet,containerd} if available.
+maybe_mount_instance_storage() {
+  local ssd_nvme_device_list
+  mapfile -t ssd_nvme_device_list < <(nvme list | grep "Amazon EC2 NVMe Instance Storage" | cut -d " " -f 1 || :)
+  local ssd_nvme_device_count=${#ssd_nvme_device_list[@]}
+  local raid_device=${RAID_DEVICE:-/dev/md0}
+  local raid_chunk_size=${RAID_CHUNK_SIZE:-512}              # KiB
+  local filesystem_block_size=${FILESYSTEM_BLOCK_SIZE:-4096} # Bytes
+  local stride=$((raid_chunk_size * 1024 / filesystem_block_size))
+  local stripe_width=$((ssd_nvme_device_count * stride))
+
+  # Perform provisioning based on EC2 instance storage device count
+  case $ssd_nvme_device_count in
+    "0")
+      echo 'No devices found of type "Amazon EC2 NVMe Instance Storage". Container data and metadata will not be relocated.'
+      return
+      ;;
+    "1")
+      mkfs.ext4 -m 0 -b "$filesystem_block_size" "${ssd_nvme_device_list[0]}"
+      local device="${ssd_nvme_device_list[0]}"
+      ;;
+    *)
+      mdadm --create --verbose "$raid_device" --level=0 -c "${raid_chunk_size}" \
+        --raid-devices=${#ssd_nvme_device_list[@]} "${ssd_nvme_device_list[@]}"
+      while [ -n "$(mdadm --detail "$raid_device" | grep -ioE 'State :.*resyncing')" ]; do
+        echo "Raid is resyncing.."
+        sleep 1
+      done
+      echo "Raid0 device $raid_device has been created with disks ${ssd_nvme_device_list[*]}"
+      mkfs.ext4 -m 0 -b "$filesystem_block_size" -E "stride=$stride,stripe-width=$stripe_width" "$raid_device"
+      local device=$raid_device
+      ;;
+  esac
+
+  local uuid=$(blkid -s UUID -o value "$device")
+  cat > /etc/systemd/system/mnt-instance_store.mount << EOF
+  [Unit]
+  DefaultDependencies=no
+  Conflicts=umount.target
+  Before=local-fs.target umount.target
+
+  [Mount]
+  What=UUID=$uuid
+  Where=/mnt/instance_store
+  Type=none
+  Options=defaults,noatime,discard,nobarrier
+
+  [Install]
+  WantedBy=local-fs.target
+EOF
+  systemctl enable --now mnt-instance_store.mount
+
+  for mnt in kubelet docker containerd; do
+    [[ ! -d /var/lib/$mnt ]] && continue
+    cp -a /var/lib/$mnt/ /mnt/instance_store/
+    cat > /etc/systemd/system/var-lib-$mnt.mount << EOF
+    [Unit]
+    DefaultDependencies=no
+    Conflicts=umount.target
+    Before=local-fs.target umount.target
+
+    [Mount]
+    What=/mnt/instance_store/$mnt
+    Where=/var/lib/$mnt
+    Type=none
+    Options=bind
+
+    [Install]
+    WantedBy=local-fs.target
+EOF
+    systemctl enable --now var-lib-$mnt.mount
+  done
+}
+
 if [ -z "$CLUSTER_NAME" ]; then
   echo "CLUSTER_NAME is not defined"
   exit 1
@@ -272,6 +353,11 @@ fi
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
 PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
+
+### optionally mount instance storage
+if [[ "$ENABLE_INSTANCE_STORE" = "true" ]]; then
+  maybe_mount_instance_storage
+fi
 
 ### kubelet kubeconfig
 
