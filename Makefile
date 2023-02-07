@@ -6,6 +6,14 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# Docker is not present on 1.25+ AMI's
+ifeq ($(shell $(MAKEFILE_DIR)/files/bin/vercmp "$(kubernetes_version)" gteq "1.25.0"), true)
+# do not tag the AMI with the Docker version
+docker_version ?= none
+# do not include the Docker version in the AMI description
+ami_component_description ?= (k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})
+endif
+
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= m6g.large
