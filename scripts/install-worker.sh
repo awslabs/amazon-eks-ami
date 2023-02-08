@@ -68,7 +68,6 @@ sudo yum install -y \
   socat \
   unzip \
   wget \
-  yum-plugin-versionlock \
   yum-utils
 
 # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
