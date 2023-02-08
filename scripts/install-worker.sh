@@ -508,7 +508,6 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
   sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.19.0
   sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.0
   sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.13.0
-  sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.1_sylr.1
   sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.6_sylr.2
   sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.6.3
   sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/livenessprobe:v2.9.0
