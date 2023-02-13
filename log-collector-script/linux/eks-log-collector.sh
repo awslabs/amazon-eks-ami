@@ -177,6 +177,9 @@ systemd_check() {
   fi
 }
 
+# Get token for IMDSv2 calls
+IMDS_TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 360")
+
 create_directories() {
   # Make sure the directory the script lives in is there. Not an issue if
   # the EKS AMI is used, as it will have it.
@@ -195,7 +198,7 @@ get_instance_id() {
     cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
     readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
   else
-    readonly INSTANCE_ID=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    readonly INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
     if [ 0 -eq $? ]; then # Check if previous command was successful.
       echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
     else
@@ -205,13 +208,13 @@ get_instance_id() {
 }
 
 get_region() {
-  if REGION=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
+  if REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
     echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
   else
     warning "Unable to find EC2 Region, skipping."
   fi
 
-  if AZ=$(curl -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone); then
+  if AZ=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone); then
     echo "${AZ}" > "${COLLECT_DIR}"/system/availability-zone.txt
   else
     warning "Unable to find EC2 AZ, skipping."

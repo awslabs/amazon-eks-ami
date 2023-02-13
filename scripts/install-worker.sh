@@ -207,7 +207,12 @@ EOF
 
 sudo yum install -y device-mapper-persistent-data lvm2
 
-INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
+if [[ ! -v "INSTALL_DOCKER" ]]; then
+  INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
+else
+  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
+fi
+
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
   sudo groupadd -og 1950 docker

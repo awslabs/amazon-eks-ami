@@ -8,11 +8,11 @@ MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 arch ?= x86_64
 ifeq ($(arch), arm64)
-instance_type ?= m6g.large
+instance_type ?= m6g.xlarge
 ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
-instance_type ?= m4.large
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+instance_type ?= m5a.xlarge
+ami_name ?= amazon-eks-amd64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
@@ -82,19 +82,19 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.21
 1.21: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.15 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.13 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.15 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.7 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.24.9 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
 
 .PHONY: help
 help: ## Display help
