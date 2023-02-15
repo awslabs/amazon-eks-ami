@@ -6,7 +6,7 @@
     "ami_users": "",
     "associate_public_ip_address": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
-    "aws_region": "us-west-2",
+    "aws_region": "us-east-1",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
     "binary_bucket_name": "amazon-eks",
@@ -33,5 +33,5 @@
     "ssh_username": "ec2-user",
     "subnet_id": "",
     "temporary_security_group_source_cidrs": "",
-    "volume_type": "gp2"
+    "volume_type": "gp3"
 }

@@ -7,6 +7,14 @@ EKS-optimized AMI.
 
 **Check out the AMI's [user guide](doc/USER_GUIDE.md) for more information.**
 
+## Excuting ##
+```shell
+EXPORT AWS_PROFILE=prod
+K8S_VERSION=1.24
+make 1.24
+make 1.24 arch=arm64
+```
+
 ## 🚀 Getting started
 
 If you are new to Amazon EKS, we recommend that you follow
