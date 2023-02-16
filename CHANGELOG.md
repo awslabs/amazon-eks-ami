@@ -52,6 +52,7 @@ Notable changes:
 Minor changes:
 - Updated `eni-max-pods.txt` with new instance types.
 - Allow `kernel_version` to be set to any value (such as `5.15`) when building a custom AMI.
+- Fix a misconfiguration in the GPU AMI with `containerd`'s registry certificates. [#1168](https://github.com/awslabs/amazon-eks-ami/issues/1168).
 
 ### AMI Release v20230203
 * amazon-eks-gpu-node-1.24-v20230203
