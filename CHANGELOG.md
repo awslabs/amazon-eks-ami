@@ -1,6 +1,6 @@
 # Changelog
 
-### AMI Release v20230211
+### [Recalled] AMI Release v20230211
 * amazon-eks-gpu-node-1.25-v20230211
 * amazon-eks-gpu-node-1.24-v20230211
 * amazon-eks-gpu-node-1.23-v20230211
