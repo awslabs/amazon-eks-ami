@@ -62,4 +62,3 @@ if [ $(yum versionlock list --quiet | grep -c "kernel-$KERNEL_VERSION") -ne 1 ];
 fi
 
 echo "Kernel has the correct versionlock!"
-
