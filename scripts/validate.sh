@@ -36,11 +36,30 @@ validate_file_nonexists '/var/log/secure'
 validate_file_nonexists '/var/log/wtmp'
 
 actual_kernel=$(uname -r)
-echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION"
+echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION..."
 
 if [[ $actual_kernel == $KERNEL_VERSION* ]]; then
-  echo "Kernel matches expected version"
+  echo "Kernel matches expected version!"
 else
-  echo "Kernel does not match expected version."
+  echo "Kernel does not match expected version!"
   exit 1
 fi
+
+echo "Verifying that the kernel has the correct versionlock..."
+
+# only one version of the kernel should be version locked
+if [ $(yum versionlock list --quiet | grep -c "kernel") -ne 1 ]; then
+  echo "More than one version of the kernel has a versionlock!"
+  yum versionlock list
+  exit 1
+fi
+
+# the current version of the kernel should be version locked
+if [ $(yum versionlock list --quiet | grep -c "kernel-$KERNEL_VERSION") -ne 1 ]; then
+  echo "The current version of the kernel does not have a versionlock!"
+  yum versionlock list
+  exit 1
+fi
+
+echo "Kernel has the correct versionlock!"
+
