@@ -16,14 +16,14 @@ vercmp = $(shell $(MAKEFILE_DIR)/files/bin/vercmp "$1" "$2" "$3")
 # gp2 volumes are used by default prior to 1.26
 # TODO: remove this when 1.25 reaches EOL
 ifeq ($(call packer_variable_file_contains,volume_type), false)
-	ifeq ($(call vercmp, $(kubernetes_version), lt, 1.26.0), true)
+	ifeq ($(call vercmp,$(kubernetes_version),lt,1.26.0), true)
 		volume_type ?= gp2
 	endif
 endif
 
 # Docker is not present on 1.25+ AMI's
 # TODO: remove this when 1.24 reaches EOL
-ifeq ($(call vercmp, $(kubernetes_version), gteq, 1.25.0), true)
+ifeq ($(call vercmp,$(kubernetes_version),gteq,1.25.0), true)
 	# do not tag the AMI with the Docker version
 	docker_version ?= none
 	# do not include the Docker version in the AMI description
