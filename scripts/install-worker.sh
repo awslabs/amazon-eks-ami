@@ -122,15 +122,25 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
-  AWSCLI_DIR=$(mktemp -d)
-  curl \
-    --silent \
+  AWSCLI_DIR="${AWSCLI_DIR:-""}"
+  if [[ -n $AWSCLI_DIR ]]; then
+    AWSCLI_DIR=$AWSCLI_DIR
+    sudo mkdir -p $AWSCLI_DIR
+  else
+    AWSCLI_DIR=$(mktemp -d)
+  fi
+  sudo curl \
     --show-error \
     --retry 10 \
     --retry-delay 1 \
     -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
-  unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
-  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/
+  sudo unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
+  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin --update
+
+  if [[ -n $AWSCLI_DIR ]]; then
+    sudo rm -rf $AWSCLI_DIR
+  fi
+
 else
   echo "Installing awscli package"
   sudo yum install -y awscli
