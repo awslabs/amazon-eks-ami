@@ -13,11 +13,11 @@ packer_variable_file_contains = $(if $(PACKER_VARIABLE_FILE),$(shell grep -Fq $1
 
 vercmp = $(shell $(MAKEFILE_DIR)/files/bin/vercmp "$1" "$2" "$3")
 
-# gp2 volumes are used by default prior to 1.26
+# gp3 volumes are used by default for 1.26+
 # TODO: remove this when 1.25 reaches EOL
 ifeq ($(call packer_variable_file_contains,volume_type), false)
-	ifeq ($(call vercmp,$(kubernetes_version),lt,1.26.0), true)
-		volume_type ?= gp2
+	ifeq ($(call vercmp,$(kubernetes_version),gteq,1.26.0), true)
+		volume_type ?= gp3
 	endif
 endif
 

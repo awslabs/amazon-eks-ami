@@ -33,5 +33,5 @@
     "ssh_username": "ec2-user",
     "subnet_id": "",
     "temporary_security_group_source_cidrs": "",
-    "volume_type": "gp3"
+    "volume_type": "gp2"
 }
