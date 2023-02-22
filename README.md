@@ -41,7 +41,7 @@ make 1.23 ## Build a Amazon EKS Worker AMI for k8s 1.23
 > The default instance type to build this AMI does not qualify for the AWS free tier.
 > You are charged for any instances created when building this AMI.
 
-## ℹ️ Using the AMI
+## 👩‍💻 Using the AMI
 
 The [AMI user guide](doc/USER_GUIDE.md) has details about the AMI's internals, and the [EKS user guide](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html#launch-template-custom-ami) explains how to use a custom AMI in a managed node group.
 
