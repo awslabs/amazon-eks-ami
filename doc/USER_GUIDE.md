@@ -294,6 +294,9 @@ Some packages are critical for correct, performant behavior of a Kubernetes node
 - `containerd`
 - `runc`
 
+> **Note**
+> This is not an exhaustive list. The complete list of locked packages is available with `yum versionlock list`.
+
 As a result, these packages should generally be modified within the bounds of a managed process that gracefully handles failures and prevents disruption to the cluster's workloads.
 
 To prevent unintentional changes, the [yum-versionlock](https://github.com/rpm-software-management/yum-utils/tree/05db7ef501fc9d6698935bcc039c83c0761c3be2/plugins/versionlock) plugin is used on these packages.
