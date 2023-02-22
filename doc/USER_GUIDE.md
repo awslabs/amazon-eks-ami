@@ -1,6 +1,6 @@
 # User Guide
 
-This guide will provide more detailed usage information on this repo.
+This document provides more detailed information about using the AMI template, and the resulting AMIs.
 
 1. [AMI template variables](#ami-template-variables)
 1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
@@ -10,6 +10,7 @@ This guide will provide more detailed usage information on this repo.
 1. [Customizing kubelet config](#customizing-kubelet-config)
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
+1. [Version-locked packages](#version-locked-packages)
 
 ---
 
@@ -283,3 +284,25 @@ $ git diff
 ```
 
 At this point, you can build an AMI and it will include the updated list of instance types.
+
+---
+
+## Version-locked packages
+
+Some packages are critical for correct, performant behavior of a Kubernetes node; such as:
+- `kernel`
+- `containerd`
+- `runc`
+
+As a result, these packages should generally be modified within the bounds of a managed process that gracefully handles failures and prevents disruption to the cluster's workloads.
+
+To prevent unintentional changes, the [yum-versionlock](https://github.com/rpm-software-management/yum-utils/tree/05db7ef501fc9d6698935bcc039c83c0761c3be2/plugins/versionlock) plugin is used on these packages.
+
+If you wish to modify a locked package, you can:
+```
+# unlock a single package
+sudo yum versionlock delete $PACKAGE_NAME
+
+# unlock all packages
+sudo yum versionlock clear
+```
