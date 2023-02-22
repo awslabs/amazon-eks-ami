@@ -1,5 +1,60 @@
 # Changelog
 
+### AMI Release v20230217
+* amazon-eks-gpu-node-1.25-v20230217
+* amazon-eks-gpu-node-1.24-v20230217
+* amazon-eks-gpu-node-1.23-v20230217
+* amazon-eks-gpu-node-1.22-v20230217
+* amazon-eks-gpu-node-1.21-v20230217
+* amazon-eks-arm64-node-1.25-v20230217
+* amazon-eks-arm64-node-1.24-v20230217
+* amazon-eks-arm64-node-1.23-v20230217
+* amazon-eks-arm64-node-1.22-v20230217
+* amazon-eks-arm64-node-1.21-v20230217
+* amazon-eks-node-1.25-v20230217
+* amazon-eks-node-1.24-v20230217
+* amazon-eks-node-1.23-v20230217
+* amazon-eks-node-1.22-v20230217
+* amazon-eks-node-1.21-v20230217
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.25.6-20230217`
+* `1.24.10-20230217`
+* `1.23.16-20230217`
+* `1.22.17-20230217`
+* `1.21.14-20230217`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.25.6/20230130/
+* s3://amazon-eks/1.24.10/20230130/
+* s3://amazon-eks/1.23.16/20230130/
+* s3://amazon-eks/1.22.17/20230211/
+* s3://amazon-eks/1.21.14/20230130/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.228-132.418.amzn2
+  * Kubernetes 1.24 and above: 5.10.165-143.735.amzn2
+* `dockerd`: 20.10.17-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.6-1.amzn2.0.2
+* `runc`: 1.1.4-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Kubernetes 1.24+ now use `kernel-5.10` for x86 and ARM AMIs.
+  - The GPU AMI will continue to use `kernel-5.4` as we work to address a compatibility issue with `nvidia-driver-latest-dkms`.
+- The `kernel` package is now properly version-locked [#1191](https://github.com/awslabs/amazon-eks-ami/pull/1191).
+  - See [#1193](https://github.com/awslabs/amazon-eks-ami/issues/1193) for more information.
+- New AMIs released for kubernetes version 1.25
+- Pressure stall information (PSI) is now enabled [#1161](https://github.com/awslabs/amazon-eks-ami/pull/1161).
+
+Minor changes:
+- Updated `eni-max-pods.txt` with new instance types.
+- Allow `kernel_version` to be set to any value (such as `5.15`) when building a custom AMI.
+
 ### [Recalled] AMI Release v20230211
 * amazon-eks-gpu-node-1.25-v20230211
 * amazon-eks-gpu-node-1.24-v20230211
