@@ -1,6 +1,6 @@
 # User Guide
 
-This document provides more detailed information about using the AMI template, and the resulting AMIs.
+This document includes details about using the AMI template, and the resulting AMIs.
 
 1. [AMI template variables](#ami-template-variables)
 1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
