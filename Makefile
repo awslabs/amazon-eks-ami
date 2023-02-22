@@ -6,29 +6,45 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# expands to 'true' if PACKER_VARIABLE_FILE is non-empty
+# and the file contains the string passed as the first argument
+# otherwise, expands to 'false'
+packer_variable_file_contains = $(if $(PACKER_VARIABLE_FILE),$(shell grep -Fq $1 $(PACKER_VARIABLE_FILE) && echo true || echo false),false)
+
+vercmp = $(shell $(MAKEFILE_DIR)/files/bin/vercmp "$1" "$2" "$3")
+
+# gp2 volumes are used by default prior to 1.26
+# TODO: remove this when 1.25 reaches EOL
+ifeq ($(call packer_variable_file_contains,volume_type), false)
+	ifeq ($(call vercmp, $(kubernetes_version), lt, 1.26.0), true)
+		volume_type ?= gp2
+	endif
+endif
+
 # Docker is not present on 1.25+ AMI's
-ifeq ($(shell $(MAKEFILE_DIR)/files/bin/vercmp "$(kubernetes_version)" gteq "1.25.0"), true)
-# do not tag the AMI with the Docker version
-docker_version ?= none
-# do not include the Docker version in the AMI description
-ami_component_description ?= (k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})
+# TODO: remove this when 1.24 reaches EOL
+ifeq ($(call vercmp, $(kubernetes_version), gteq, 1.25.0), true)
+	# do not tag the AMI with the Docker version
+	docker_version ?= none
+	# do not include the Docker version in the AMI description
+	ami_component_description ?= (k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})
 endif
 
 arch ?= x86_64
 ifeq ($(arch), arm64)
-instance_type ?= m6g.large
-ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+	instance_type ?= m6g.large
+	ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
-instance_type ?= m4.large
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+	instance_type ?= m4.large
+	ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
-source_ami_owners ?= 141808717104
+	source_ami_owners ?= 141808717104
 endif
 
 ifeq ($(aws_region), us-gov-west-1)
-source_ami_owners ?= 045324592363
+	source_ami_owners ?= 045324592363
 endif
 
 T_RED := \e[0;31m
@@ -49,7 +65,7 @@ SHFMT_FLAGS := --list \
 
 SHFMT_COMMAND := $(shell which shfmt)
 ifeq (, $(SHFMT_COMMAND))
-SHFMT_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) mvdan/shfmt
+	SHFMT_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) mvdan/shfmt
 endif
 
 .PHONY: fmt
@@ -58,7 +74,7 @@ fmt: ## Format the source files
 
 SHELLCHECK_COMMAND := $(shell which shellcheck)
 ifeq (, $(SHELLCHECK_COMMAND))
-SHELLCHECK_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) koalaman/shellcheck:stable
+	SHELLCHECK_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) koalaman/shellcheck:stable
 endif
 SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
 
