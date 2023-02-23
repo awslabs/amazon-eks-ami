@@ -40,7 +40,8 @@
     "ssh_username": null,
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
-    "volume_type": null
+    "volume_type": null,
+    "awscli_dir": null
   },
   "builders": [
     {
@@ -174,13 +175,17 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
-        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
+        "AWSCLI_DIR={{user `awscli_dir`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup.sh"
+      "script": "{{template_dir}}/scripts/cleanup.sh",
+      "environment_vars": [
+        "AWSCLI_DIR={{user `awscli_dir`}}"
+      ]
     },
     {
       "type": "shell",
