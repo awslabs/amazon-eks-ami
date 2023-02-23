@@ -7,7 +7,7 @@ set -o pipefail
 echo "--> Should fetch imds details correctly"
 EXPECTED_INSTANCE_ID="i-1234567890abcdef0"
 EXPECTED_AVAILABILITY_ZONE="us-east-1a"
-EXPECTED_PROVIDER_ID="aws://$EXPECTED_AVAILABILITY_ZONE/$EXPECTED_INSTANCE_ID"
+EXPECTED_PROVIDER_ID="aws:///$EXPECTED_AVAILABILITY_ZONE/$EXPECTED_INSTANCE_ID"
 PROVIDER_ID=$(provider-id)
 if [ ! "$PROVIDER_ID" = "$EXPECTED_PROVIDER_ID" ]; then
   echo "❌ Test Failed: expected provider-id=$EXPECTED_PROVIDER_ID but got '${PROVIDER_ID}'"

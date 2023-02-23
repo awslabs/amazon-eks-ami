@@ -6,4 +6,4 @@ set -o nounset
 AVAILABILITY_ZONE=$(imds '/latest/meta-data/placement/availability-zone')
 INSTANCE_ID=$(imds '/latest/meta-data/instance-id')
 
-echo "aws://$AVAILABILITY_ZONE/$INSTANCE_ID"
+echo "aws:///$AVAILABILITY_ZONE/$INSTANCE_ID"
