@@ -462,7 +462,7 @@ if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
   KUBELET_CLOUD_PROVIDER="aws"
 else
   KUBELET_CLOUD_PROVIDER="external"
-  KUBELET_ARGS="$KUBELET_ARGS --provider-id=$(provider-id)"
+  echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
 KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
