@@ -1,7 +1,7 @@
 FROM public.ecr.aws/aws-ec2/amazon-ec2-metadata-mock:v1.11.2 as aemm
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 RUN amazon-linux-extras enable docker && \
-    yum install -y jq containerd wget && \
+    yum install -y jq containerd wget which && \
     wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
     chmod a+x /usr/local/bin/yq
 
