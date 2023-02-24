@@ -54,6 +54,12 @@ else
     ap-south-2)
       acct="900889452093"
       ;;
+    ap-southeast-4)
+      acct="491585149902"
+      ;;
+    il-central-1)
+      acct="066635153087"
+      ;;
     *)
       acct="602401143452"
       ;;
