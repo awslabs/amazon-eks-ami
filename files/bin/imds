@@ -41,7 +41,7 @@ function imdscurl() {
     "$@" || echo "1")
   # CODE will be either the HTTP status code, or 1 if the exit code of `curl` is non-zero
   if [[ ${CODE} -lt 200 || ${CODE} -gt 299 ]]; then
-    >&2 cat $OUTPUT_FILE
+    cat >&2 $OUTPUT_FILE
     return $CODE
   fi
   printf "$(cat $OUTPUT_FILE)\n"
