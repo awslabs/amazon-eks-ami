@@ -207,7 +207,15 @@ fi
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
   sudo groupadd -og 1950 docker
-  sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+
+  if id -u docker >/dev/null 2>&1
+  then
+      echo "The 'docker' user already exists. Adding it to 'docker' group."
+      sudo usermod --gid $(getent group docker | cut -d: -f3) docker
+  else
+      echo "Creating the user 'docker' and adding it to group 'docker'"
+      sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+  fi
 
   # install docker and lock version
   sudo yum install -y docker-${DOCKER_VERSION}*
