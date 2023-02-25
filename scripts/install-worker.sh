@@ -206,7 +206,18 @@ fi
 
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
-  sudo groupadd -og 1950 docker
+
+  if grep -q "^docker:" /etc/group
+  then
+      echo "The 'docker' group already exists. Changing the GID of the group to '1950'."
+      sudo groupmod -og 1950 docker
+      echo "Group: docker"
+      echo "Group ID: $(getent group docker | cut -d: -f3)"
+  else
+      echo "Creating the group 'docker'."    
+      sudo groupadd -fog 1950 docker
+  fi
+  
   sudo useradd --gid $(getent group docker | cut -d: -f3) docker
 
   # install docker and lock version
