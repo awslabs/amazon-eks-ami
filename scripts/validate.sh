@@ -46,7 +46,7 @@ else
 fi
 
 echo "Verifying that the package versionlocks are correct..."
-  
+
 function versionlock-entries() {
   # the format of this output is EPOCH:NAME-VERSION-RELEASE.ARCH
   # more info in yum-versionlock(1)
@@ -55,7 +55,7 @@ function versionlock-entries() {
 }
 
 function versionlock-packages() {
-  versionlock-entries | xargs -I '{}' rpm --query  '{}' --queryformat '%{NAME}\n'
+  versionlock-entries | xargs -I '{}' rpm --query '{}' --queryformat '%{NAME}\n'
 }
 
 for ENTRY in $(versionlock-entries); do
