@@ -88,10 +88,6 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-.PHONY: 1.21
-1.21: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
-
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
 	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
