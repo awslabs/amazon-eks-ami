@@ -62,7 +62,6 @@ sudo yum install -y \
   conntrack \
   curl \
   ec2-instance-connect \
-  ipvsadm \
   jq \
   nfs-utils \
   socat \
@@ -70,9 +69,6 @@ sudo yum install -y \
   wget \
   yum-utils \
   yum-plugin-versionlock
-
-# Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
-sudo package-cleanup --oldkernels --count=1 -y
 
 sudo yum versionlock kernel-$(uname -r)
 
