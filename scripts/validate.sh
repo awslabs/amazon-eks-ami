@@ -71,3 +71,5 @@ if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
   echo "Package(s) have multiple version locks!"
   versionlock-entries
 fi
+
+echo "Package versionlocks are correct!"
