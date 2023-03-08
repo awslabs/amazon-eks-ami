@@ -29,13 +29,14 @@ invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
 ```bash
+# build an AMI with the latest Kubernetes version
 make
+
+# build an AMI with a specific Kubernetes version
+make 1.25
 ```
-The Makefile chooses a particular kubelet binary to use per kubernetes version which you can [view here](Makefile).
-To build an Amazon EKS Worker AMI for a particular Kubernetes version run the following command
-```bash
-make 1.23 ## Build a Amazon EKS Worker AMI for k8s 1.23
-```
+
+The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
 
 > **Note**
 > The default instance type to build this AMI does not qualify for the AWS free tier.
