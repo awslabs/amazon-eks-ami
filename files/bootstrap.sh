@@ -455,11 +455,23 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
   echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
+KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
+
+if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
+  # TODO: remove this when 1.25 is EOL
+  KUBELET_CLOUD_PROVIDER="aws"
+else
+  KUBELET_CLOUD_PROVIDER="external"
+  echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+fi
+
+KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
+
 mkdir -p /etc/systemd/system/kubelet.service.d
 
 cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
 [Service]
-Environment='KUBELET_ARGS=--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2'
+Environment='KUBELET_ARGS=$KUBELET_ARGS'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
