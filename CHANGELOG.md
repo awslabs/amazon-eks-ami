@@ -1,5 +1,55 @@
 # Changelog
 
+### AMI Release v20230304
+* amazon-eks-gpu-node-1.25-v20230304
+* amazon-eks-gpu-node-1.24-v20230304
+* amazon-eks-gpu-node-1.23-v20230304
+* amazon-eks-gpu-node-1.22-v20230304
+* amazon-eks-gpu-node-1.21-v20230304
+* amazon-eks-arm64-node-1.25-v20230304
+* amazon-eks-arm64-node-1.24-v20230304
+* amazon-eks-arm64-node-1.23-v20230304
+* amazon-eks-arm64-node-1.22-v20230304
+* amazon-eks-arm64-node-1.21-v20230304
+* amazon-eks-node-1.25-v20230304
+* amazon-eks-node-1.24-v20230304
+* amazon-eks-node-1.23-v20230304
+* amazon-eks-node-1.22-v20230304
+* amazon-eks-node-1.21-v20230304
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.25.6-20230304`
+* `1.24.10-20230304`
+* `1.23.16-20230304`
+* `1.22.17-20230304`
+* `1.21.14-20230304`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.25.6/20230130/
+* s3://amazon-eks/1.24.10/20230130/
+* s3://amazon-eks/1.23.16/20230130/
+* s3://amazon-eks/1.22.17/20230130/
+* s3://amazon-eks/1.21.14/20230130/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.231-137.341.amzn2
+  * Kubernetes 1.24 and above: 5.10.167-147.601.amzn2
+* `dockerd`: 20.10.17-1.amzn2.0.1
+  * **Note** that with Kubernetes 1.25+, Docker is only installed on GPU AMI's. This is subject to change as we remove unnecessary dependencies, and we recommend completing the migration to `containerd` immediately.
+* `containerd`: 1.6.6-1.amzn2.0.2
+* `runc`: 1.1.4-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- This is the last AMI release for Kubernetes 1.21
+- This is the first AMI release available in `ap-southeast-4`
+
+Minor changes:
+- Adds a user guide section about packages in the versionlock file. [(#1199)](https://github.com/awslabs/amazon-eks-ami/pull/1199)
+
 ### AMI Release v20230217
 * amazon-eks-gpu-node-1.25-v20230217
 * amazon-eks-gpu-node-1.24-v20230217
