@@ -33,7 +33,13 @@ validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
-validate_env_set AWSCLI_DIR
+validate_env_set WORKING_DIR
+
+################################################################################
+### Bootstrap actions ##########################################################
+################################################################################
+
+sudo mkdir -p $WORKING_DIR
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -123,14 +129,13 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
-  sudo mkdir -p $AWSCLI_DIR
   sudo curl \
     --show-error \
     --retry 10 \
     --retry-delay 1 \
-    -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
-  sudo unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
-  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin --update
+    -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${WORKING_DIR}/awscliv2.zip"
+  sudo unzip -q "${WORKING_DIR}/awscliv2.zip" -d ${WORKING_DIR}
+  sudo "${WORKING_DIR}/aws/install" --bin-dir /bin --update
 else
   echo "Installing awscli package"
   sudo yum install -y awscli

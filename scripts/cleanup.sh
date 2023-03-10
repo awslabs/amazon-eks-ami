@@ -6,8 +6,8 @@ sudo rm -rf /var/cache/yum
 
 # Clean up build artifacts
 sudo rm -rf /tmp/worker
-if [[ $AWSCLI_DIR != /tmp* ]]; then
-  sudo rm -rf $AWSCLI_DIR
+if [[ $WORKING_DIR != /tmp* ]]; then
+  sudo rm -rf $WORKING_DIR
 fi
 
 # Clean up files to reduce confusion during debug

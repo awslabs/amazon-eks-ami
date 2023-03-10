@@ -41,7 +41,7 @@
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
     "volume_type": null,
-    "awscli_dir": null
+    "working_dir": null
   },
   "builders": [
     {
@@ -176,7 +176,7 @@
         "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
-        "AWSCLI_DIR={{user `awscli_dir`}}"
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {
@@ -184,7 +184,7 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/cleanup.sh",
       "environment_vars": [
-        "AWSCLI_DIR={{user `awscli_dir`}}"
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {
