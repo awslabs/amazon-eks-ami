@@ -36,8 +36,8 @@ T_GREEN := \e[0;32m
 T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
-.PHONY: all
-all: 1.21 1.22 1.23 1.24 1.25 ## Build all versions of EKS Optimized AL2 AMI
+.PHONY: latest
+latest: 1.25 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -87,10 +87,6 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) eks-worker-al2.json
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
-
-.PHONY: 1.21
-1.21: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
