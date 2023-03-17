@@ -25,7 +25,7 @@
     "runc_version": "*",
     "security_group_id": "",
     "sonobuoy_e2e_registry": "",
-    "source_ami_filter_name": "al2023-ami-minimal-2023.0.*-kernel-6.1-x86_64",
+    "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.1-x86_64",
     "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "ssh_interface": "",
