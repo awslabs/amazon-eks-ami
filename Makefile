@@ -6,6 +6,14 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+# Docker is not present on 1.25+ AMI's
+ifeq ($(shell $(MAKEFILE_DIR)/files/bin/vercmp "$(kubernetes_version)" gteq "1.25.0"), true)
+# do not tag the AMI with the Docker version
+docker_version ?= none
+# do not include the Docker version in the AMI description
+ami_component_description ?= (k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})
+endif
+
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= m6g.xlarge
@@ -29,7 +37,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all
-all: 1.21 1.22 1.23 1.24 ## Build all versions of EKS Optimized AL2 AMI
+all: 1.21 1.22 1.23 1.24 1.25 ## Build all versions of EKS Optimized AL2 AMI
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -82,19 +90,23 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.21
 1.21: ## Build EKS Optimized AL2 AMI - K8s 1.21
-	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.21.14 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.15 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.16 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.9 kubernetes_build_date=2023-01-11 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.24.10 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
+
+.PHONY: 1.25
+1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
+	$(MAKE) k8s kubernetes_version=1.25.6 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 .PHONY: help
 help: ## Display help

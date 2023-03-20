@@ -1,6 +1,6 @@
 # User Guide
 
-This guide will provide more detailed usage information on this repo.
+This document includes details about using the AMI template and the resulting AMIs.
 
 1. [AMI template variables](#ami-template-variables)
 1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
@@ -10,6 +10,7 @@ This guide will provide more detailed usage information on this repo.
 1. [Customizing kubelet config](#customizing-kubelet-config)
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
+1. [Version-locked packages](#version-locked-packages)
 
 ---
 
@@ -249,7 +250,16 @@ $ curl -sSL "http://localhost:8001/api/v1/nodes/ip-192-168-92-220.us-east-2.comp
 
 By default, the `amazon-eks-ami` uses a [source_ami_filter](https://github.com/awslabs/amazon-eks-ami/blob/e3f1b910f83ad1f27e68312e50474ea6059f052d/eks-worker-al2.json#L46) that selects the latest [hvm](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) AL2 AMI for the given architecture as the base AMI. For more information on what kernel versions are running on published Amazon EKS optimized Linux AMIs, see [the public documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html).
 
-When building an AMI, you can set the `kernel_version` to `4.14` or `5.4` to customize the kernel version. The [upgrade_kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/master/scripts/upgrade_kernel.sh#L26) contains the logic for updating and upgrading the kernel. For Kubernetes versions 1.18 and below, it uses the `4.14` kernel if not set, and it will install the latest patches. For Kubernetes version 1.19 and above, it uses the `5.4` kernel if not set.
+When building an AMI, you can set `kernel_version` to customize the kernel version. Valid values are:
+- `4.14`
+- `5.4`
+- `5.10`
+
+If `kernel_version` is not set:
+- For Kubernetes 1.23 and below, `5.4` is used.
+- For Kubernetes 1.24 and above, `5.10` is used.
+
+The [upgrade_kernel.sh script](../scripts/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
 
 ---
 
@@ -274,3 +284,28 @@ $ git diff
 ```
 
 At this point, you can build an AMI and it will include the updated list of instance types.
+
+---
+
+## Version-locked packages
+
+Some packages are critical for correct, performant behavior of a Kubernetes node; such as:
+- `kernel`
+- `containerd`
+- `runc`
+
+> **Note**
+> This is not an exhaustive list. The complete list of locked packages is available with `yum versionlock list`.
+
+As a result, these packages should generally be modified within the bounds of a managed process that gracefully handles failures and prevents disruption to the cluster's workloads.
+
+To prevent unintentional changes, the [yum-versionlock](https://github.com/rpm-software-management/yum-utils/tree/05db7ef501fc9d6698935bcc039c83c0761c3be2/plugins/versionlock) plugin is used on these packages.
+
+If you wish to modify a locked package, you can:
+```
+# unlock a single package
+sudo yum versionlock delete $PACKAGE_NAME
+
+# unlock all packages
+sudo yum versionlock clear
+```
