@@ -25,7 +25,7 @@ elif [ -f "$SYSTEMD_UNIT" ]; then
   exit 0
 fi
 
-cat >"$SYSTEMD_UNIT" <<EOL
+cat > "$SYSTEMD_UNIT" << EOL
 [Unit]
 Description=BPF mounts
 Documentation=https://docs.kernel.org/bpf/index.html
