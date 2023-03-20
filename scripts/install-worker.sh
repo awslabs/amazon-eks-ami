@@ -49,13 +49,6 @@ else
 fi
 
 ################################################################################
-### Utilities ##################################################################
-################################################################################
-
-sudo chmod -R a+x $TEMPLATE_DIR/bin/
-sudo mv $TEMPLATE_DIR/bin/* /usr/bin/
-
-################################################################################
 ### Packages ###################################################################
 ################################################################################
 
@@ -64,26 +57,27 @@ sudo yum update -y
 
 # Install necessary packages
 sudo yum install -y \
-    aws-cfn-bootstrap \
-    awscli \
-    chrony \
-    conntrack \
-    curl \
-    ec2-instance-connect \
-    ipvsadm \
-    jq \
-    nfs-utils \
-    socat \
-    unzip \
-    wget \
-    htop \
-    vim \
-    yum-plugin-versionlock \
-    yum-cron \
-    yum-utils
+  aws-cfn-bootstrap \
+  chrony \
+  conntrack \
+  curl \
+  ec2-instance-connect \
+  ipvsadm \
+  jq \
+  nfs-utils \
+  socat \
+  unzip \
+  wget \
+  yum-utils \
+  yum-plugin-versionlock \
+  htop \
+  vim \
+  yum-utils
 
 # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
 sudo package-cleanup --oldkernels --count=1 -y
+
+sudo yum versionlock kernel-$(uname -r)
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi

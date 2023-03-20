@@ -5,9 +5,12 @@ set -o nounset
 set -o errexit
 
 if [[ -z "$KERNEL_VERSION" ]]; then
-  KERNEL_VERSION=5.4
-
-  echo "kernel_version is unset. Setting to $KERNEL_VERSION"
+  if vercmp "$KUBERNETES_VERSION" gteq "1.24.0"; then
+    KERNEL_VERSION=5.10
+  else
+    KERNEL_VERSION=5.4
+  fi
+  echo "kernel_version is unset. Setting to $KERNEL_VERSION based on Kubernetes version $KUBERNETES_VERSION."
 fi
 
 if [[ $KERNEL_VERSION == "4.14" ]]; then
@@ -19,8 +22,12 @@ elif [[ $KERNEL_VERSION == "5.10" ]]; then
 elif [[ $KERNEL_VERSION == "5.15" ]]; then
   sudo amazon-linux-extras install -y kernel-5.15
 else
-  echo "$KERNEL_VERSION is not a valid kernel version"
-  exit 1
+  sudo amazon-linux-extras install -y "kernel-${KERNEL_VERSION}"
 fi
+
+# enable pressure stall information
+sudo grubby \
+  --update-kernel=ALL \
+  --args="psi=1"
 
 sudo reboot
