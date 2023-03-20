@@ -16,22 +16,24 @@ function print_help {
   echo "Bootstraps an instance into an EKS cluster"
   echo ""
   echo "-h,--help print this help"
-  echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
-  echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
+  echo
   echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
-  echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
-  echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
   echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
-  echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+  echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
+  echo "--cluster-id Specify the id of EKS cluster"
+  echo "--container-runtime Specify a container runtime (default: dockerd)"
   echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
   echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+  echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
+  echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
+  echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
+  echo "--ip-family Specify ip family of the cluster"
+  echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
+  echo "--mount-bfs-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
-  echo "--container-runtime Specify a container runtime (default: dockerd)"
-  echo "--ip-family Specify ip family of the cluster"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
-  echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
-  echo "--cluster-id Specify the id of EKS cluster"
+  echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
 
 POSITIONAL=()
@@ -123,6 +125,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --mount-bpf-fs)
+      MOUNT_BPF_FS=$2
+      shift
+      shift
+      ;;
     *)                   # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift              # past argument
@@ -177,6 +184,7 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
+MOUNT_BPF_FS="${MOUNT_BPF_FS:-true}"
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
@@ -267,6 +275,10 @@ MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
   echo "Unknown machine architecture '$MACHINE'" >&2
   exit 1
+fi
+
+if [ "$MOUNT_BPF_FS" = "true" ]; then
+  sudo mount-bpf-fs
 fi
 
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
