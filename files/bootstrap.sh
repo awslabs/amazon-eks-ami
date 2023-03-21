@@ -577,5 +577,7 @@ if command -v nvidia-smi &> /dev/null; then
     cat /tmp/nvidia-smi-check
   fi
 else
-  echo "nvidia-smi not found"
+  echo "WARNING: nvidia-smi not found, this warning can be ignored when using ec2 instance without GPU"
 fi
+
+echo EKS Bootstrap.sh Ended
