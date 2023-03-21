@@ -25,6 +25,7 @@ elif [ -f "$SYSTEMD_UNIT" ]; then
   exit 0
 fi
 
+mkdir -p $(dirname $SYSTEMD_UNIT)
 cat > "$SYSTEMD_UNIT" << EOL
 [Unit]
 Description=BPF mounts
