@@ -3,7 +3,9 @@
 set -o errexit
 set -o nounset
 
-SYSTEMD_UNIT="/etc/systemd/system/sys-fs-bpf.mount"
+SYSTEMD_UNIT_DIR="/etc/systemd/system"
+SYSTEMD_UNIT="sys-fs-bpf.mount"
+SYSTEMD_UNIT_PATH="$SYSTEMD_UNIT_DIR/$SYSTEMD_UNIT"
 MOUNT_POINT="/sys/fs/bpf"
 FS_TYPE="bpf"
 
@@ -20,13 +22,13 @@ if mount | grep "type $FS_TYPE"; then
 elif mount | grep "$MOUNT_POINT"; then
   debug "mount point at $MOUNT_POINT already exists!"
   exit 0
-elif [ -f "$SYSTEMD_UNIT" ]; then
-  debug "systemd unit at $SYSTEMD_UNIT already exists!"
+elif [ -f "$SYSTEMD_UNIT_PATH" ]; then
+  debug "systemd unit at $SYSTEMD_UNIT_PATH already exists!"
   exit 0
 fi
 
-mkdir -p $(dirname $SYSTEMD_UNIT)
-cat > "$SYSTEMD_UNIT" << EOL
+mkdir -p "$SYSTEMD_UNIT_DIR"
+cat > "$SYSTEMD_UNIT_PATH" << EOL
 [Unit]
 Description=BPF mounts
 Documentation=https://docs.kernel.org/bpf/index.html
