@@ -16,10 +16,10 @@ function debug() {
   fi
 }
 
-if mount | grep "type $FS_TYPE"; then
+if [ $(mount --types "$FS_TYPE" | wc -l) -gt 0 ]; then
   debug "$FS_TYPE filesystem already mounted!"
   exit 0
-elif mount | grep "$MOUNT_POINT"; then
+elif mount | awk '{print $3}' | grep "$MOUNT_POINT"; then
   debug "mount point at $MOUNT_POINT already exists!"
   exit 0
 elif [ -f "$SYSTEMD_UNIT_PATH" ]; then
