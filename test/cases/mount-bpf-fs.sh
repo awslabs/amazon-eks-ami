@@ -48,3 +48,49 @@ if [[ ${EXIT_CODE} -ne 0 ]]; then
 fi
 export -nf mount
 rm $SYSTEMD_UNIT
+
+echo "--> Should default to true on 1.26+"
+export KUBELET_VERSION=v1.26.0-eks-ba74326
+MOUNT_BPF_FS_MOCK=$(mktemp)
+function mount-bpf-fs() {
+  echo "called" >> $MOUNT_BPF_FS_MOCK
+}
+export MOUNT_BPF_FS_MOCK
+export -f mount-bpf-fs
+EXIT_CODE=0
+/etc/eks/bootstrap.sh \
+  --b64-cluster-ca dGVzdA== \
+  --apiserver-endpoint http://my-api-endpoint \
+  test || exit_code=$?
+if [[ ${EXIT_CODE} -ne 0 ]]; then
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
+fi
+if [ "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
+  echo "❌ Test Failed: expected mount-bpf-fs to be called once but it was not!"
+  exit 1
+fi
+export -nf mount-bpf-fs
+
+echo "--> Should default to false on 1.25-"
+export KUBELET_VERSION=v1.25.0-eks-ba74326
+MOUNT_BPF_FS_MOCK=$(mktemp)
+function mount-bpf-fs() {
+  echo "called" >> $MOUNT_BPF_FS_MOCK
+}
+export MOUNT_BPF_FS_MOCK
+export -f mount-bpf-fs
+EXIT_CODE=0
+/etc/eks/bootstrap.sh \
+  --b64-cluster-ca dGVzdA== \
+  --apiserver-endpoint http://my-api-endpoint \
+  test || exit_code=$?
+if [[ ${EXIT_CODE} -ne 0 ]]; then
+  echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
+  exit 1
+fi
+if [ "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
+  echo "❌ Test Failed: expected mount-bpf-fs to not be called but it was!"
+  exit 1
+fi
+export -nf mount-bpf-fs
