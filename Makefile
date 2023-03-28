@@ -104,6 +104,11 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
 	$(MAKE) k8s kubernetes_version=1.25.7 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
 
+.PHONY: clean
+clean:
+	rm *-manifest.json
+	rm *-version-info.json
+
 .PHONY: help
 help: ## Display help
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make \033[36m<target>\033[0m\n"} /^[\.a-zA-Z_0-9\-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
