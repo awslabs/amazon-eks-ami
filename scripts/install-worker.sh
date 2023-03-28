@@ -343,6 +343,9 @@ sudo systemctl daemon-reload
 # Disable the kubelet until the proper dropins have been configured
 sudo systemctl disable kubelet
 
+# install crictl, critest
+sudo yum install -y cri-tools
+
 ################################################################################
 ### EKS ########################################################################
 ################################################################################
