@@ -17,13 +17,11 @@ endif
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= m6g.large
-AMI_NAME_PREFIX = amazon-eks-arm64-node
+ami_name = amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
 instance_type ?= m4.large
-AMI_NAME_PREFIX = amazon-eks-node
+ami_name = amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
-
-ami_name ?= $(AMI_NAME_PREFIX)-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 
 ifeq ($(aws_region), cn-northwest-1)
 source_ami_owners ?= 141808717104
@@ -108,8 +106,8 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: clean
 clean:
-	rm $(AMI_NAME_PREFIX)-*-manifest.json
-	rm $(AMI_NAME_PREFIX)-*-version-info.json
+	rm *-manifest.json
+	rm *-version-info.json
 
 .PHONY: help
 help: ## Display help
