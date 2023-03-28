@@ -17,11 +17,13 @@ endif
 arch ?= x86_64
 ifeq ($(arch), arm64)
 instance_type ?= m6g.large
-ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+AMI_NAME_PREFIX = amazon-eks-arm64-node
 else
 instance_type ?= m4.large
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+AMI_NAME_PREFIX = amazon-eks-node
 endif
+
+ami_name ?= $(AMI_NAME_PREFIX)-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 
 ifeq ($(aws_region), cn-northwest-1)
 source_ami_owners ?= 141808717104
@@ -103,6 +105,11 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 .PHONY: 1.25
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
 	$(MAKE) k8s kubernetes_version=1.25.7 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+
+.PHONY: clean
+clean:
+	rm $(AMI_NAME_PREFIX)-*-manifest.json
+	rm $(AMI_NAME_PREFIX)-*-version-info.json
 
 .PHONY: help
 help: ## Display help
