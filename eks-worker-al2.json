@@ -4,7 +4,7 @@
     "ami_name": null,
     "creator": "{{env `USER`}}",
     "encrypted": "false",
-    "kms_key_id": "",
+    "kms_key_id": "{{env `KMS_KEY_ID`}}",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_secret_access_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
@@ -15,7 +15,7 @@
     "kernel_version": "",
     "docker_version": "20.10.17-1.amzn2.0.1",
     "containerd_version": "1.6.6-1.amzn2.0.2",
-    "runc_version": "1.1.3-1.amzn2.0.2",
+    "runc_version": "1.1.4-1.amzn2",
     "cni_plugin_version": "v0.8.6",
     "pull_cni_from_github": "true",
     "source_ami_id": "",
@@ -30,10 +30,11 @@
     "temporary_security_group_source_cidrs": "",
     "security_group_id": "",
     "associate_public_ip_address": "",
-    "subnet_id": "",
+    "vpc_id": "{{env `VPC_ID`}}",
+    "subnet_id": "{{env `SUBNET_ID`}}",
     "remote_folder": "",
     "launch_block_device_mappings_volume_size": "4",
-    "ami_users": "",
+    "ami_users": "{{env `AMI_USERS`}}",
     "additional_yum_repos": "",
     "sonobuoy_e2e_registry": ""
   },
@@ -84,12 +85,21 @@
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
-        "creator": "{{user `creator`}}"
+        "creator": "{{user `creator`}}",
+        "Creator": "Packer"
       },
+      "run_volume_tags":{
+        "Creator": "Packer"
+      },
+      "snapshot_tags": {
+        "Creator": "Packer"
+      },
+      "vpc_id": "{{user `vpc_id`}}",
       "subnet_id": "{{user `subnet_id`}}",
       "tags": {
         "Name": "{{user `ami_name`}}",
         "created": "{{timestamp}}",
+        "Creator": "Packer",
         "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
         "source_ami_id": "{{ user `source_ami_id`}}",

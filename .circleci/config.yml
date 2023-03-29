@@ -1,174 +1,92 @@
 version: 2.1
 
-# Inline dd agent orb definition
-orbs:
-  dd-agent:
-    commands:
-      setup:
-        description: "Installs and starts the Datadog Agent"
-        parameters:
-          api_key:
-            type: env_var_name
-            description: The name of the environmental variable containing the API key
-            default: DD_API_KEY
-          agent_major_version:
-            type: string
-            description: The major version of the agent to use
-            default: "7"
-          site:
-            type: string
-            description: The datadog site to send data to. If the environment variable DD_SITE is set that will take preference.
-            default: "datadoghq.com"
-        steps:
-          - run:
-              environment:
-                PARAM_DD_API_KEY: <<parameters.api_key>>
-                PARAM_DD_AGENT_MAJOR_VERSION: <<parameters.agent_major_version>>
-                PARAM_DD_SITE: <<parameters.site>>
-              name: Install and start the Datadog Agent
-              working_directory: /tmp
-              command: |
-                Install() {
-                    PARAM_DD_API_KEY=$(eval echo "\$$PARAM_DD_API_KEY")
-
-                    if [[ -n "${DD_SITE}" ]]; then
-                        PARAM_DD_SITE=${DD_SITE}
-                    fi
-
-                    DD_API_KEY=${PARAM_DD_API_KEY} DD_AGENT_MAJOR_VERSION=${PARAM_DD_AGENT_MAJOR_VERSION} DD_SITE=${PARAM_DD_SITE} \
-                        DD_HOSTNAME="none" DD_INSTALL_ONLY="true" DD_APM_ENABLED="true" \
-                        bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)"
-
-                    if [ "$UID" = "0" ]; then export SUDO=''; else export SUDO='sudo'; fi
-                    $SUDO find /etc/datadog-agent/conf.d/ -iname "*.yaml.default" -delete
-                    $SUDO service datadog-agent start
-
-                    set +e
-                    attempts=0
-
-                    until [[ $attempts -eq 10 ]] || $SUDO datadog-agent health; do
-                        attempts=$((attempts+1))
-                        sleep_time=$(( attempts*5 < 30 ? attempts*5 : 30 ))
-                        echo "Waiting for agent to start up sleeping for ${sleep_time} seconds"
-                        sleep $sleep_time
-                    done
-
-                    if [[ $attempts -eq 10 ]]; then
-                        echo "Could not start the agent"
-                        exit 1
-                    else
-                        echo "Agent is ready"
-                    fi
-                }
-
-                # Will not run if sourced for bats-core tests.
-                # View src/tests for more information.
-                ORB_TEST_ENV="bats-core"
-                if [ "${0#*$ORB_TEST_ENV}" == "$0" ]; then
-                    Install
-                fi
-      stop:
-        description: "Gracefully stop the Datadog Agent"
-        steps:
-          - run:
-              when: always
-              name: Gracefully stop the Datadog Agent
-              command: |
-                StopAgent() {
-                    if [ "$UID" = "0" ]; then export SUDO=''; else export SUDO='sudo'; fi
-                    $SUDO service datadog-agent stop
-                }
-                
-                
-                # Will not run if sourced for bats-core tests.
-                # View src/tests for more information.
-                ORB_TEST_ENV="bats-core"
-                if [ "${0#*$ORB_TEST_ENV}" == "$0" ]; then
-                    StopAgent
-                fi
-
 # workflow jobs definition
 jobs:
   prepare_env:
     # job to prepare build environment
     docker:
-      - image: ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/devops/ci/base:latest
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
     working_directory: ~/aws_ecr_ami
     steps:
       - checkout:
           path: ~/aws_ecr_ami
-      - dd-agent/setup
-      - run:
-          name: Prepare env for build
-          command: echo 'export BUILD_TAG="${CIRCLE_BRANCH}-${CIRCLE_BUILD_NUM}-$(git rev-parse --verify HEAD | cut -c1-8)"' >> ${BASH_ENV}
       - persist_to_workspace:
           root: "~"
           paths:
             - aws_ecr_ami
-      - dd-agent/stop
   validate:
-    # job to validate aws ecr ami image
     docker:
-      - image: ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/devops/ci/base:latest
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
     steps:
       - attach_workspace:
             at: .
-      - dd-agent/setup
       - run:
           name: Packer Validate
           command: cd aws_ecr_ami && make -e -j2 all-validate
-      - dd-agent/stop
   build:
-    # job to build aws ecr ami image
     docker:
-      - image: ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/devops/ci/base:latest
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
     steps:
       - attach_workspace:
             at: .
-      - dd-agent/setup
+      - run:
+          name: Prepare BUILD_TAG env
+          command: |
+            NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
+            echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
       - run:
           name: Packer build
           # AWS sometimes take really long to finish ami build.
-          # By default, Crircle CI have 10 minutes timeout without response,
+          # By default, Circle CI have 10 minutes timeout without response,
           # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
           command: cd aws_ecr_ami && make -e -j2 all
-      - dd-agent/stop
-  mock-test:
-    # Mock test to trigger integration with datadog
-    docker:
-      - image: ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/devops/ci/base:latest
-    steps:
-      - attach_workspace:
-            at: .
-      - dd-agent/setup
-      - run:
-          name: Dummy test
-          command: |
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install pytest ddtrace
-            DD_SERVICE=${DD_SERVICE} DD_ENV=${DD_ENV} pytest test.py --ddtrace
-      - dd-agent/stop
 workflows:
   aws_eks_ami:
     jobs:
       - prepare_env:
-          context: CICD
+          context: AWS_OPERATIONS_DEV_0
       - validate:
-          context: CICD
-          requires:
-            - prepare_env
-      - build:
-          context: CICD
-          requires:
-            - validate
+          name: validate main
+          context:
+            - AWS_OPERATIONS_0
+            - PACKER_OPERATIONS_0
           filters:
             branches:
               only:
-                - master
-      - mock-test:
-          context: CICD
+                - main
           requires:
-            - validate
-            - build
+            - prepare_env
+      - validate:
+          name: validate dev
+          context:
+            - AWS_OPERATIONS_DEV_0
+            - PACKER_OPERATIONS_DEV_0
+          filters:
+            branches:
+              only:
+                - dev
+          requires:
+            - prepare_env
+      - build:
+          name: build main
+          context:
+            - AWS_OPERATIONS_0
+            - PACKER_OPERATIONS_0
+          requires:
+            - validate main
+          filters:
+            branches:
+              only:
+                - main
+      - build:
+          name: build dev
+          context:
+            - AWS_OPERATIONS_DEV_0
+            - PACKER_OPERATIONS_DEV_0
+          requires:
+            - validate dev
+          filters:
+            branches:
+              only:
+                - dev

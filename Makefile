@@ -11,6 +11,21 @@ PACKER_BINARY = docker run -v /mnt/credentials:/root/.aws/credentials \
 	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
 PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry build_tag encrypted
 
+ifndef VPC_ID
+  $(error VPC_ID is undefined)
+endif
+
+ifndef SUBNET_ID
+  $(error SUBNET_ID is undefined)
+endif
+
+ifndef AMI_USERS
+  $(error AMI_USERS is undefined)
+endif
+
+ifndef KMS_KEY_ID
+  $(error KMS_KEY_ID is undefined)
+endif
 
 #PACKER_BINARY ?= packer
 #PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry
@@ -43,9 +58,11 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all 1.18 1.19 1.20 1.21 1.22
-all: 1.21
 
-all-validate: 1.21
+all: 1.22-build
+
+all-validate: 1.22-validate
+
 
 .PHONY: k8s
 k8s: validate
@@ -70,16 +87,24 @@ k8s: validate
 1.20-build:
 	$(MAKE) ci-build kubernetes_version=1.20.11 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
 
-.PHONY: 1.21
-1.21:
+.PHONY: 1.21-validate
+1.21-validate:
+	$(MAKE) ci-validate kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+
+.PHONY: 1.21-build
+1.21-build:
 	$(MAKE) ci-build kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
-.PHONY: 1.22
-1.22:
-	$(MAKE) ci-build kubernetes_version=1.22.6 kubernetes_build_date=2022-03-09 pull_cni_from_github=true
+.PHONY: 1.22-validate
+1.22-validate:
+	$(MAKE) ci-validate  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
+
+.PHONY: 1.22-build
+1.22-build:
+	$(MAKE) ci-build  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 # Circle CI pipeline
-.PHONY: ci-valiedate
+.PHONY: ci-validate
 ci-validate:
 	$(P) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
 
