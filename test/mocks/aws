@@ -5,6 +5,8 @@ SCRIPTPATH="$(
   pwd -P
 )"
 
+echo >&2 "mocking 'aws $@'"
+
 if [[ $1 == "ec2" ]]; then
 
   if [[ $2 == "describe-instance-types" ]]; then
