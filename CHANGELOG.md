@@ -1,5 +1,51 @@
 # Changelog
 
+### AMI Release v20230322
+* amazon-eks-gpu-node-1.25-v20230322
+* amazon-eks-gpu-node-1.24-v20230322
+* amazon-eks-gpu-node-1.23-v20230322
+* amazon-eks-gpu-node-1.22-v20230322
+* amazon-eks-arm64-node-1.25-v20230322
+* amazon-eks-arm64-node-1.24-v20230322
+* amazon-eks-arm64-node-1.23-v20230322
+* amazon-eks-arm64-node-1.22-v20230322
+* amazon-eks-node-1.25-v20230322
+* amazon-eks-node-1.24-v20230322
+* amazon-eks-node-1.23-v20230322
+* amazon-eks-node-1.22-v20230322
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.25.7-20230322`
+* `1.24.11-20230322`
+* `1.23.17-20230322`
+* `1.22.17-20230322`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.25.7/2023-03-17/
+* s3://amazon-eks/1.24.11/2023-03-17/
+* s3://amazon-eks/1.23.17/2023-03-17/
+* s3://amazon-eks/1.22.17/2023-03-17/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.235-144.344.amzn2
+  * Kubernetes 1.24 and above: 5.10.173-154.642.amzn2
+* `dockerd`: 20.10.17-1.amzn2.0.1
+  * **Note** that with Kubernetes 1.25+, Docker is only installed on GPU AMI's. This is subject to change as we remove unnecessary dependencies, and we recommend completing the migration to `containerd` immediately.
+* `containerd`: 1.6.6-1.amzn2.0.2
+* `runc`: 1.1.4-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Validate package versionlocks ([#1195](https://github.com/awslabs/amazon-eks-ami/pull/1195))
+- Updated `kernel-5.4` to address:
+  - [ALASKERNEL-5.4-2023-043](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-043.html)
+- Updated `kernel-5.10` to address:
+  - [ALASKERNEL-5.10-2023-027](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-027.html)
+  - [ALASKERNEL-5.10-2023-028](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-028.html)
+
 ### AMI Release v20230304
 * amazon-eks-gpu-node-1.25-v20230304
 * amazon-eks-gpu-node-1.24-v20230304
