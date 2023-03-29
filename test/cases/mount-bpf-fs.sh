@@ -49,8 +49,8 @@ fi
 export -nf mount
 rm $SYSTEMD_UNIT
 
-echo "--> Should default to true on 1.26+"
-export KUBELET_VERSION=v1.26.0-eks-ba74326
+echo "--> Should default to true on 1.27+"
+export KUBELET_VERSION=v1.27.0-eks-ba74326
 MOUNT_BPF_FS_MOCK=$(mktemp)
 function mount-bpf-fs() {
   echo "called" >> $MOUNT_BPF_FS_MOCK
@@ -72,8 +72,8 @@ if [ "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
 fi
 export -nf mount-bpf-fs
 
-echo "--> Should default to false on 1.25-"
-export KUBELET_VERSION=v1.25.0-eks-ba74326
+echo "--> Should default to false on 1.26-"
+export KUBELET_VERSION=v1.26.0-eks-ba74326
 MOUNT_BPF_FS_MOCK=$(mktemp)
 function mount-bpf-fs() {
   echo "called" >> $MOUNT_BPF_FS_MOCK

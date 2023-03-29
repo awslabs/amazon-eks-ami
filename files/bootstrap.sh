@@ -29,7 +29,7 @@ function print_help {
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
-  echo "--mount-bfs-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.26+; false otherwise)"
+  echo "--mount-bfs-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.27+; false otherwise)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
@@ -186,7 +186,7 @@ ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
 
 DEFAULT_MOUNT_BPF_FS="true"
-if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
+if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
   DEFAULT_MOUNT_BPF_FS="false"
 fi
 MOUNT_BPF_FS="${MOUNT_BPF_FS:-$DEFAULT_MOUNT_BPF_FS}"
