@@ -437,8 +437,9 @@ else
 fi
 INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 
-if vercmp "$KUBELET_VERSION" gteq "1.22.0"; then
+if vercmp "$KUBELET_VERSION" gteq "1.22.0" && vercmp "$KUBELET_VERSION" lt "1.27.0"; then
   # for K8s versions that suport API Priority & Fairness, increase our API server QPS
+  # in 1.27, the default is already increased to 50/100, so use the higher defaults
   echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
 fi
 
