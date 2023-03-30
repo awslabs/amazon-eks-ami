@@ -11,6 +11,8 @@ ExecStart=/usr/bin/kubelet \
     --kubeconfig /var/lib/kubelet/kubeconfig \
     --container-runtime docker \
     --network-plugin cni \
+    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \
+    --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider \
     $KUBELET_ARGS \
     $KUBELET_EXTRA_ARGS
 
