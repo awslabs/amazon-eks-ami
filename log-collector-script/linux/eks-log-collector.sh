@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.5"
+readonly PROGRAM_VERSION="0.7.6"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -275,6 +275,7 @@ collect() {
   get_sysctls_info
   get_networking_info
   get_cni_config
+  get_cni_configuration_variables
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
@@ -542,6 +543,35 @@ get_cni_config() {
 
   if [[ -e "/etc/cni/net.d/" ]]; then
     cp --force --recursive --dereference /etc/cni/net.d/* "${COLLECT_DIR}"/cni/
+  fi
+
+  ok
+}
+
+get_cni_configuration_variables() {
+  # To get cni configuration variables, gather from the main container "amazon-k8s-cni"
+  # - https://github.com/aws/amazon-vpc-cni-k8s#cni-configuration-variables
+  try "collect CNI Configuration Variables from Docker"
+
+  # "docker container list" will only show "RUNNING" containers.
+  # "docker container inspect" will generate plain text output.
+  if [[ "$(pgrep -o dockerd)" -ne 0 ]]; then
+    timeout 75 docker container list | awk '/amazon-k8s-cni/{print$NF}' | xargs -n 1 docker container inspect > "${COLLECT_DIR}"/cni/cni-configuration-variables-dockerd.txt 2>&1 || echo -e "\tTimed out, ignoring \"cni configuration variables output \" "
+  else
+    warning "The Docker daemon is not running."
+  fi
+
+  try "collect CNI Configuration Variables from Containerd"
+
+  # "ctr container list" will list down all containers, including stopped ones.
+  # "ctr container info" will generate JSON format output.
+  if ! command -v ctr > /dev/null 2>&1; then
+    warning "ctr not installed"
+  else
+    # "ctr --namespace k8s.io container list" will return two containers
+    # - amazon-k8s-cni:v1.xx.yy
+    # - amazon-k8s-cni-init:v1.xx.yy
+    timeout 75 ctr --namespace k8s.io container list | awk '/amazon-k8s-cni:v/{print$1}' | xargs -n 1 ctr --namespace k8s.io container info > "${COLLECT_DIR}"/cni/cni-configuration-variables-containerd.json 2>&1 || echo -e "\tTimed out, ignoring \"cni configuration variables output \" "
   fi
 
   ok
