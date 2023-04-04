@@ -21,7 +21,7 @@ function print_help {
   echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
   echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
   echo "--cluster-id Specify the id of EKS cluster"
-  echo "--container-runtime Specify a container runtime (default: dockerd)"
+  echo "--container-runtime Specify a container runtime. For Kubernetes 1.23 and below, possible values are [dockerd, containerd] and the default value is dockerd. For Kubernetes 1.24 and above, containerd is the only valid value. This flag is deprecated and will be removed in a future release."
   echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
   echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
   echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
@@ -542,6 +542,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo containerd config dump > /dev/null
 
   # --container-runtime flag is gone in 1.27+
+  # TODO: remove this when 1.26 is EOL
   if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
     KUBELET_ARGS="$KUBELET_ARGS --container-runtime=remote"
   fi
