@@ -191,6 +191,8 @@ if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
 fi
 MOUNT_BPF_FS="${MOUNT_BPF_FS:-$DEFAULT_MOUNT_BPF_FS}"
 
+KUBELET_ARGS=""
+
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
 # of the resource to reserve. Note that we return zero if the start of the resource range is
@@ -473,7 +475,7 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
   echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
-KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
+KUBELET_ARGS="$KUBELET_ARGS --node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
 
 if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
   # TODO: remove this when 1.25 is EOL
@@ -538,6 +540,11 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo chown root:root /etc/systemd/system/kubelet.service
   # Validate containerd config
   sudo containerd config dump > /dev/null
+
+  # --container-runtime flag is gone in 1.27+
+  if vercmp "${KUBELET_VERSION}" lt "1.27.0"; then
+    KUBELET_ARGS="$KUBELET_ARGS --container-runtime=remote"
+  fi
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   mkdir -p /etc/docker
   bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
