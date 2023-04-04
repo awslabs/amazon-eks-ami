@@ -10,7 +10,6 @@ ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
-    --container-runtime remote \
     --container-runtime-endpoint unix:///run/containerd/containerd.sock \
     --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \
     --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider \
