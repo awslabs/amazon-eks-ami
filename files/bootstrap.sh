@@ -191,8 +191,6 @@ if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
 fi
 MOUNT_BPF_FS="${MOUNT_BPF_FS:-$DEFAULT_MOUNT_BPF_FS}"
 
-KUBELET_ARGS=""
-
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
 # of the resource to reserve. Note that we return zero if the start of the resource range is
