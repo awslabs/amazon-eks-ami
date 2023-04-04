@@ -542,7 +542,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo containerd config dump > /dev/null
 
   # --container-runtime flag is gone in 1.27+
-  if vercmp "${KUBELET_VERSION}" lt "1.27.0"; then
+  if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
     KUBELET_ARGS="$KUBELET_ARGS --container-runtime=remote"
   fi
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
