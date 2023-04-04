@@ -271,6 +271,10 @@ inf1.24xlarge 321
 inf1.2xlarge 38
 inf1.6xlarge 234
 inf1.xlarge 38
+inf2.24xlarge 737
+inf2.48xlarge 737
+inf2.8xlarge 234
+inf2.xlarge 58
 is4gen.2xlarge 58
 is4gen.4xlarge 234
 is4gen.8xlarge 234
@@ -623,6 +627,7 @@ t4g.small 11
 t4g.xlarge 58
 trn1.2xlarge 58
 trn1.32xlarge 247
+trn1n.32xlarge 247
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.112xlarge 737
