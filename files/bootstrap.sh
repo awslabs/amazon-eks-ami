@@ -473,7 +473,7 @@ if [[ "$USE_MAX_PODS" = "true" ]]; then
   echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
-KUBELET_ARGS="$KUBELET_ARGS --node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
+KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
 
 if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
   # TODO: remove this when 1.25 is EOL
