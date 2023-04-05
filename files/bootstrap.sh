@@ -485,6 +485,8 @@ fi
 
 KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
 
+mkdir -p /etc/systemd/system
+
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   if $ENABLE_DOCKER_BRIDGE; then
     echo "WARNING: Flag --enable-docker-bridge was set but will be ignored as it's not relevant to containerd"
