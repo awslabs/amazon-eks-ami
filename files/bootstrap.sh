@@ -485,20 +485,6 @@ fi
 
 KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
 
-mkdir -p /etc/systemd/system/kubelet.service.d
-
-cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
-[Service]
-Environment='KUBELET_ARGS=$KUBELET_ARGS'
-EOF
-
-if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
-  cat << EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
-[Service]
-Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
-EOF
-fi
-
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   if $ENABLE_DOCKER_BRIDGE; then
     echo "WARNING: Flag --enable-docker-bridge was set but will be ignored as it's not relevant to containerd"
@@ -568,6 +554,21 @@ else
   exit 1
 fi
 
+mkdir -p /etc/systemd/system/kubelet.service.d
+
+cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet-args.conf
+[Service]
+Environment='KUBELET_ARGS=$KUBELET_ARGS'
+EOF
+
+if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
+  cat << EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
+[Service]
+Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
+EOF
+fi
+
+systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
 
