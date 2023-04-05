@@ -240,41 +240,54 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
-echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-S3_DOMAIN="amazonaws.com"
-if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-  S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ]; then
-  S3_DOMAIN="c2s.ic.gov"
-elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
-  S3_DOMAIN="sc2s.sgov.gov"
-fi
-S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
-S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+if [ "$PULL_K8S_FROM_UPSTREAM" = "true" ]; then
+  echo "Downloading binaries from upstream"
+  sudo wget "https://dl.k8s.io/release/v$KUBERNETES_VERSION/bin/linux/amd64/kubelet"
+  sudo wget "https://dl.k8s.io/release/v$KUBERNETES_VERSION/bin/linux/amd64/kubelet.sha256"
+  echo "$(cat kubelet.sha256) kubelet" | sha256sum -c -
+  sudo chmod +x kubelet
+  sudo mv kubelet /usr/bin/
 
-BINARIES=(
-  kubelet
-  aws-iam-authenticator
-)
-for binary in ${BINARIES[*]}; do
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
-  else
-    echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
-    sudo wget $S3_URL_BASE/$binary
-    sudo wget $S3_URL_BASE/$binary.sha256
+  wget -O aws-iam-authenticator "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.6.2/aws-iam-authenticator_0.6.2_linux_amd64"
+  sudo chmod +x aws-iam-authenticator
+  sudo mv aws-iam-authenticator /usr/bin/
+else
+  echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
+  S3_DOMAIN="amazonaws.com"
+  if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
+    S3_DOMAIN="amazonaws.com.cn"
+  elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ]; then
+    S3_DOMAIN="c2s.ic.gov"
+  elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
+    S3_DOMAIN="sc2s.sgov.gov"
   fi
-  sudo sha256sum -c $binary.sha256
-  sudo chmod +x $binary
-  sudo mv $binary /usr/bin/
-done
+  S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+  S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+
+  BINARIES=(
+    kubelet
+    aws-iam-authenticator
+  )
+  for binary in ${BINARIES[*]}; do
+    if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+      echo "AWS cli present - using it to copy binaries from s3."
+      aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
+      aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    else
+      echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
+      sudo wget $S3_URL_BASE/$binary
+      sudo wget $S3_URL_BASE/$binary.sha256
+    fi
+    sudo sha256sum -c $binary.sha256
+    sudo chmod +x $binary
+    sudo mv $binary /usr/bin/
+  done
+fi
 
 # Verify that the aws-iam-authenticator is at last v0.5.9 or greater. Otherwise, nodes will be
 # unable to join clusters due to upgrading to client.authentication.k8s.io/v1beta1
 iam_auth_version=$(sudo /usr/bin/aws-iam-authenticator version | jq -r .Version)
-if vercmp "$iam_auth_version" lt "v0.5.9"; then
+if vercmp "v$iam_auth_version" lt "v0.5.9"; then
   # To resolve this issue, you need to update the aws-iam-authenticator binary. Using binaries distributed by EKS
   # with kubernetes_build_date 2022-10-31 or later include v0.5.10 or greater.
   echo "❌ The aws-iam-authenticator should be on version v0.5.9 or later. Found $iam_auth_version"
@@ -352,7 +365,11 @@ fi
 ################################################################################
 if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
   ECR_BINARY="ecr-credential-provider"
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+
+  if [ "$PULL_K8S_FROM_UPSTREAM" = "true" ]; then
+    echo "copy ecr-credential-provider binary from upstream."
+    wget -O $ECR_BINARY "https://storage.googleapis.com/k8s-artifacts-prod/binaries/cloud-provider-aws/v1.26.1/linux/amd64/ecr-credential-provider-linux-amd64"
+  elif [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
   else
