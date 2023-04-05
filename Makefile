@@ -43,9 +43,11 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: all 1.18 1.19 1.20 1.21 1.22
-all: 1.21
 
-all-validate: 1.21
+all: 1.22-build
+
+all-validate: 1.22-validate
+
 
 .PHONY: k8s
 k8s: validate
@@ -70,16 +72,24 @@ k8s: validate
 1.20-build:
 	$(MAKE) ci-build kubernetes_version=1.20.11 kubernetes_build_date=2021-11-10 pull_cni_from_github=true
 
-.PHONY: 1.21
-1.21:
+.PHONY: 1.21-validate
+1.21-validate:
+	$(MAKE) ci-validate kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
+
+.PHONY: 1.21-build
+1.21-build:
 	$(MAKE) ci-build kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
 
-.PHONY: 1.22
-1.22:
-	$(MAKE) ci-build kubernetes_version=1.22.6 kubernetes_build_date=2022-03-09 pull_cni_from_github=true
+.PHONY: 1.22-validate
+1.22-validate:
+	$(MAKE) ci-validate  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
+
+.PHONY: 1.22-build
+1.22-build:
+	$(MAKE) ci-build  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
 
 # Circle CI pipeline
-.PHONY: ci-valiedate
+.PHONY: ci-validate
 ci-validate:
 	$(P) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
 
