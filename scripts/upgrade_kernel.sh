@@ -24,4 +24,8 @@ sudo grubby \
   --update-kernel=ALL \
   --args="psi=1"
 
+sudo mkdir -p /etc/sysctl.d
+sudo mv /tmp/worker/sysctl.conf /etc/sysctl.d/00-eks.conf
+sudo chown root:root /etc/sysctl.d/00-eks.conf
+
 sudo reboot
