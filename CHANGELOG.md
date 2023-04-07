@@ -1,28 +1,28 @@
 # Changelog
 
-### AMI Release v20230405
-* amazon-eks-gpu-node-1.26-v20230405
-* amazon-eks-gpu-node-1.25-v20230405
-* amazon-eks-gpu-node-1.24-v20230405
-* amazon-eks-gpu-node-1.23-v20230405
-* amazon-eks-gpu-node-1.22-v20230405
-* amazon-eks-arm64-node-1.26-v20230405
-* amazon-eks-arm64-node-1.25-v20230405
-* amazon-eks-arm64-node-1.24-v20230405
-* amazon-eks-arm64-node-1.23-v20230405
-* amazon-eks-arm64-node-1.22-v20230405
-* amazon-eks-node-1.26-v20230405
-* amazon-eks-node-1.25-v20230405
-* amazon-eks-node-1.24-v20230405
-* amazon-eks-node-1.23-v20230405
-* amazon-eks-node-1.22-v20230405
+### AMI Release v20230406
+* amazon-eks-gpu-node-1.26-v20230406
+* amazon-eks-gpu-node-1.25-v20230406
+* amazon-eks-gpu-node-1.24-v20230406
+* amazon-eks-gpu-node-1.23-v20230406
+* amazon-eks-gpu-node-1.22-v20230406
+* amazon-eks-arm64-node-1.26-v20230406
+* amazon-eks-arm64-node-1.25-v20230406
+* amazon-eks-arm64-node-1.24-v20230406
+* amazon-eks-arm64-node-1.23-v20230406
+* amazon-eks-arm64-node-1.22-v20230406
+* amazon-eks-node-1.26-v20230406
+* amazon-eks-node-1.25-v20230406
+* amazon-eks-node-1.24-v20230406
+* amazon-eks-node-1.23-v20230406
+* amazon-eks-node-1.22-v20230406
 
 [Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
-* `1.26.2-20230405`
-* `1.25.7-20230405`
-* `1.24.11-20230405`
-* `1.23.17-20230405`
-* `1.22.17-20230405`
+* `1.26.2-20230406`
+* `1.25.7-20230406`
+* `1.24.11-20230406`
+* `1.23.17-20230406`
+* `1.22.17-20230406`
 
 Binaries used to build these AMIs are published:
 * s3://amazon-eks/1.26.2/2023-03-17/
