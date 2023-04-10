@@ -62,6 +62,7 @@ sudo yum install -y \
   conntrack \
   curl \
   ec2-instance-connect \
+  ethtool \
   ipvsadm \
   jq \
   nfs-utils \

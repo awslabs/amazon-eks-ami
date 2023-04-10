@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.4"
+readonly PROGRAM_VERSION="0.7.5"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -526,6 +526,14 @@ get_networking_info() {
   fi
 
   cp /etc/resolv.conf "${COLLECT_DIR}"/networking/resolv.conf
+
+  # collect ethtool -S for all interfaces
+  INTERFACES=$(ip -o a | awk '{print $2}' | sort -n | uniq)
+  for ifc in ${INTERFACES}; do
+    echo "Interface ${ifc}" >> "${COLLECT_DIR}"/networking/ethtool.txt
+    ethtool -S ${ifc} >> "${COLLECT_DIR}"/networking/ethtool.txt 2>&1
+    echo -e "\n" >> "${COLLECT_DIR}"/networking/ethtool.txt
+  done
   ok
 }
 
