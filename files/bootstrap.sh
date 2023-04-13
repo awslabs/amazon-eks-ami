@@ -481,6 +481,12 @@ if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
 else
   KUBELET_CLOUD_PROVIDER="external"
   echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+  # When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
+  # If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
+  # then /etc/hostname is not the same as EC2's PrivateDnsName.
+  # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
+  PRIVATE_DNS_NAME=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[].Instances[].PrivateDnsName' --output text)
+  KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$PRIVATE_DNS_NAME"
 fi
 
 KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
