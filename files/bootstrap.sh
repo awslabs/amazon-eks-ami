@@ -485,6 +485,7 @@ else
   # If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
   # then /etc/hostname is not the same as EC2's PrivateDnsName.
   # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
+  INSTANCE_ID=$(imds /latest/meta-data/instance-id)
   PRIVATE_DNS_NAME=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[].Instances[].PrivateDnsName' --output text)
   KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$PRIVATE_DNS_NAME"
 fi
