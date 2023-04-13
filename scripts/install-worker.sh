@@ -147,13 +147,21 @@ sudo mv "${TEMPLATE_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 ### Containerd setup ##########################################################
 ###############################################################################
 
-# install runc and lock version
-sudo yum install -y runc-${RUNC_VERSION}
-sudo yum versionlock runc-*
+if [[ ! -v "SKIP_INSTALL_RUNC" ]]; then
+  # install runc and lock version
+  sudo yum install -y runc-${RUNC_VERSION}
+  sudo yum versionlock runc-*
+else
+  echo "skipping runc install"
+fi
 
-# install containerd and lock version
-sudo yum install -y containerd-${CONTAINERD_VERSION}
-sudo yum versionlock containerd-*
+if [[ ! -v "SKIP_INSTALL_CONTAINERD" ]]; then
+  # install containerd and lock version
+  sudo yum install -y containerd-${CONTAINERD_VERSION}
+  sudo yum versionlock containerd-*
+else
+  echo "skipping containerd install"
+fi
 
 sudo mkdir -p /etc/eks/containerd
 if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
