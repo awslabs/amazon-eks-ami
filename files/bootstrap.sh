@@ -145,28 +145,29 @@ set -u
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 echo "Using kubelet version $KUBELET_VERSION"
 
-# As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
-# and no longer support docker as a container runtime.
-IS_124_OR_GREATER=false
-DEFAULT_CONTAINER_RUNTIME=dockerd
-if vercmp "$KUBELET_VERSION" gteq "1.24.0"; then
-  IS_124_OR_GREATER=true
-  DEFAULT_CONTAINER_RUNTIME=containerd
-elif vercmp "$KUBELET_VERSION" gteq "1.22.0"; then
-  # These APIs are only available in alpha pre-1.24.
-  # This can be removed when version 1.23 is no longer supported.
-  sed -i s,kubelet.config.k8s.io/v1beta1,kubelet.config.k8s.io/v1alpha1,g /etc/eks/ecr-credential-provider/ecr-credential-provider-config
-  sed -i s,credentialprovider.kubelet.k8s.io/v1beta1,credentialprovider.kubelet.k8s.io/v1alpha1,g /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+# ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27: https://github.com/kubernetes/cloud-provider-aws/pull/597
+# TODO: remove this when 1.26 is EOL
+if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
+  ECR_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/ecr-credential-provider/ecr-credential-provider-config
+  echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG
+  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG  
 fi
 
 # Set container runtime related variables
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
+
+# As of Kubernetes version 1.24, we will start defaulting the container runtime to containerd
+# and no longer support docker as a container runtime.
+DEFAULT_CONTAINER_RUNTIME=dockerd
+if vercmp "$KUBELET_VERSION" gteq "1.24.0"; then
+  DEFAULT_CONTAINER_RUNTIME=containerd
+fi
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-$DEFAULT_CONTAINER_RUNTIME}"
 
 echo "Using $CONTAINER_RUNTIME as the container runtime"
 
-if $IS_124_OR_GREATER && [ $CONTAINER_RUNTIME != "containerd" ]; then
+if vercmp "$KUBELET_VERSION" gteq "1.24.0" && [ $CONTAINER_RUNTIME != "containerd" ]; then
   echo "ERROR: containerd is the only supported container runtime as of Kubernetes version 1.24"
   exit 1
 fi
