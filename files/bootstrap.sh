@@ -150,7 +150,7 @@ echo "Using kubelet version $KUBELET_VERSION"
 if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
   ECR_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/ecr-credential-provider/ecr-credential-provider-config
   echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG
-  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG  
+  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG
 fi
 
 # Set container runtime related variables
