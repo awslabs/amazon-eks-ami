@@ -4,7 +4,7 @@ set -euo pipefail
 exit_code=0
 TEMP_DIR=$(mktemp -d)
 
-export CRED_PROVIDER_FILE="/etc/eks/ecr-credential-provider/ecr-credential-provider-config"
+export CRED_PROVIDER_FILE="/etc/eks/image-credential-provider/config.json"
 export CRED_PROVIDER_RESET_FILE="./cred-provider-config"
 
 # Store the original version of the config

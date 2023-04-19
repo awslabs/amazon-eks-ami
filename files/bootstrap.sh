@@ -145,12 +145,12 @@ set -u
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 echo "Using kubelet version $KUBELET_VERSION"
 
-# ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27: https://github.com/kubernetes/cloud-provider-aws/pull/597
+# ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27.1: https://github.com/kubernetes/cloud-provider-aws/pull/597
 # TODO: remove this when 1.26 is EOL
 if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
-  ECR_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/ecr-credential-provider/ecr-credential-provider-config
-  echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG
-  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $ECR_CREDENTIAL_PROVIDER_CONFIG)" > $ECR_CREDENTIAL_PROVIDER_CONFIG
+  IMAGE_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/image-credential-provider/config.json
+  echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
+  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
 fi
 
 # Set container runtime related variables
