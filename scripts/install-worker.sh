@@ -351,22 +351,18 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
-  ECR_BINARY="ecr-credential-provider"
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
-  else
-    echo "AWS cli missing - using wget to fetch ecr-credential-provider binaries from s3. Note: This won't work for private bucket."
-    sudo wget "$S3_URL_BASE/$ECR_BINARY"
-  fi
-  sudo chmod +x $ECR_BINARY
-  sudo mkdir -p /etc/eks/ecr-credential-provider
-  sudo mv $ECR_BINARY /etc/eks/ecr-credential-provider
-
-  # copying credential provider config file to eks folder
-  sudo mv $TEMPLATE_DIR/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
+if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+  echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
+  aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
+else
+  echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
+  sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
+sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
+sudo mkdir -p /etc/eks/image-credential-provider
+sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 
 ################################################################################
 ### Cache Images ###############################################################
