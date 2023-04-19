@@ -23,4 +23,4 @@ BEGIN {RS=";";FS=","}
 }
 {cmd="rm -f " Repo; system(cmd)}
 '
-sudo awk "$AWK_CMD" <<< "${ADDITIONAL_YUM_REPOS}"
+sudo awk "${AWK_CMD}" <<< "${ADDITIONAL_YUM_REPOS}"

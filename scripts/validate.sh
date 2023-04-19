@@ -10,8 +10,8 @@
 #   1 if a file exists, after printing an error
 validate_file_nonexists() {
   local file_blob=$1
-  for f in $file_blob; do
-    if [ -e "$f" ]; then
+  for f in ${file_blob}; do
+    if [ -e "${f}" ]; then
       echo "$f shouldn't exists"
       exit 1
     fi
@@ -36,9 +36,9 @@ validate_file_nonexists '/var/log/secure'
 validate_file_nonexists '/var/log/wtmp'
 
 actual_kernel=$(uname -r)
-echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION..."
+echo "Verifying that kernel version ${actual_kernel} matches ${KERNEL_VERSION}..."
 
-if [[ $actual_kernel == $KERNEL_VERSION* ]]; then
+if [[ ${actual_kernel} == ${KERNEL_VERSION}* ]]; then
   echo "Kernel matches expected version!"
 else
   echo "Kernel does not match expected version!"
@@ -59,15 +59,15 @@ function versionlock-packages() {
 }
 
 for ENTRY in $(versionlock-entries); do
-  if ! rpm --query "$ENTRY" &> /dev/null; then
-    echo "There is no package matching the versionlock entry: '$ENTRY'"
+  if ! rpm --query "${ENTRY}" &> /dev/null; then
+    echo "There is no package matching the versionlock entry: '${ENTRY}'"
     exit 1
   fi
 done
 
 LOCKED_PACKAGES=$(versionlock-packages | wc -l)
 UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
-if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
+if [ ${LOCKED_PACKAGES} -ne ${UNIQUE_LOCKED_PACKAGES} ]; then
   echo "Package(s) have multiple version locks!"
   versionlock-entries
 fi
