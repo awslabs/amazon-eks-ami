@@ -11,6 +11,7 @@ This document includes details about using the AMI template and the resulting AM
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
 1. [Version-locked packages](#version-locked-packages)
+1. [Image credential provider plugins](#image-credential-provider-plugins)
 
 ---
 
@@ -309,3 +310,14 @@ sudo yum versionlock delete $PACKAGE_NAME
 # unlock all packages
 sudo yum versionlock clear
 ```
+
+---
+
+## Image credential provider plugins
+
+Prior to Kubernetes 1.27, the `kubelet` could obtain credentials for ECR out of the box. This legacy credential process has been removed in Kubernetes 1.27, and
+ECR credentials should now be obtained via a plugin, the `ecr-credential-provider`. More information about this plugin is available in the [`cloud-provider-aws` documentation](https://cloud-provider-aws.sigs.k8s.io/credential_provider/).
+
+This plugin is installed in the AMI at `/etc/eks/image-credential-provider/ecr-credential-provider`, and additional image credential provider plugins may be appended to `/etc/eks/image-credential-provider/config.json`.
+
+For more information about image credential provider plugins, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-credential-provider/).
