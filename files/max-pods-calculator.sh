@@ -80,15 +80,15 @@ SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
 
-if [ "$INSTANCE_TYPE_FROM_IMDS" = true ]; then
+if [ "${INSTANCE_TYPE_FROM_IMDS}" = true ]; then
   export AWS_DEFAULT_REGION=$(imds /latest/dynamic/instance-identity/document | jq .region -r)
   INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
-elif [ -z "$INSTANCE_TYPE" ]; then # There's no reasonable default for an instanceType so force one to be provided to the script.
+elif [ -z "${INSTANCE_TYPE}" ]; then # There's no reasonable default for an instanceType so force one to be provided to the script.
   echo "You must specify an instance type to calculate max pods value."
   exit 1
 fi
 
-if [ -z "$CNI_VERSION" ]; then
+if [ -z "${CNI_VERSION}" ]; then
   echo "You must specify a CNI Version to use. Example - 1.7.5"
   exit 1
 fi
@@ -96,13 +96,13 @@ fi
 calculate_max_ip_addresses_prefix_delegation() {
   enis=$1
   instance_max_eni_ips=$2
-  echo $(($enis * (($instance_max_eni_ips - 1) * $IPS_PER_PREFIX) + 2))
+  echo $((${enis} * ((${instance_max_eni_ips} - 1) * ${IPS_PER_PREFIX}) + 2))
 }
 
 calculate_max_ip_addresses_secondary_ips() {
   enis=$1
   instance_max_eni_ips=$2
-  echo $(($enis * ($instance_max_eni_ips - 1) + 2))
+  echo $((${enis} * (${instance_max_eni_ips} - 1) + 2))
 }
 
 min_number() {
@@ -112,48 +112,48 @@ min_number() {
 VERSION_SPLIT=(${CNI_VERSION//./ })
 CNI_MAJOR_VERSION="${VERSION_SPLIT[0]}"
 CNI_MINOR_VERSION="${VERSION_SPLIT[1]}"
-if [[ "$CNI_MAJOR_VERSION" -gt 1 ]] || ([[ "$CNI_MAJOR_VERSION" = 1 ]] && [[ "$CNI_MINOR_VERSION" -gt 8 ]]); then
+if [[ "${CNI_MAJOR_VERSION}" -gt 1 ]] || ([[ "${CNI_MAJOR_VERSION}" = 1 ]] && [[ "${CNI_MINOR_VERSION}" -gt 8 ]]); then
   PREFIX_DELEGATION_SUPPORTED=true
 fi
 
 DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type "${INSTANCE_TYPE}" --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus}' --output json)
 
-HYPERVISOR_TYPE=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.Hypervisor')
+HYPERVISOR_TYPE=$(echo "${DESCRIBE_INSTANCES_RESULT}" | jq -r '.Hypervisor')
 IS_NITRO=false
-if [[ "$HYPERVISOR_TYPE" == "nitro" ]]; then
+if [[ "${HYPERVISOR_TYPE}" == "nitro" ]]; then
   IS_NITRO=true
 fi
-INSTANCE_MAX_ENIS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.EniCount')
-INSTANCE_MAX_ENIS_IPS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.PodsPerEniCount')
+INSTANCE_MAX_ENIS=$(echo "${DESCRIBE_INSTANCES_RESULT}" | jq -r '.EniCount')
+INSTANCE_MAX_ENIS_IPS=$(echo "${DESCRIBE_INSTANCES_RESULT}" | jq -r '.PodsPerEniCount')
 
-if [ -z "$CNI_MAX_ENI" ]; then
-  enis_for_pods=$INSTANCE_MAX_ENIS
+if [ -z "${CNI_MAX_ENI}" ]; then
+  enis_for_pods="${INSTANCE_MAX_ENIS}"
 else
-  enis_for_pods="$(min_number $CNI_MAX_ENI $INSTANCE_MAX_ENIS)"
+  enis_for_pods="$(min_number "${CNI_MAX_ENI}" "${INSTANCE_MAX_ENIS}")"
 fi
 
-if [ "$CNI_CUSTOM_NETWORKING_ENABLED" = true ]; then
+if [ "${CNI_CUSTOM_NETWORKING_ENABLED}" = true ]; then
   enis_for_pods=$((enis_for_pods - 1))
 fi
 
-if [ "$IS_NITRO" = true ] && [ "$CNI_PREFIX_DELEGATION_ENABLED" = true ] && [ "$PREFIX_DELEGATION_SUPPORTED" = true ]; then
-  max_pods=$(calculate_max_ip_addresses_prefix_delegation $enis_for_pods $INSTANCE_MAX_ENIS_IPS)
+if [ "${IS_NITRO}" = true ] && [ "${CNI_PREFIX_DELEGATION_ENABLED}" = true ] && [ "${PREFIX_DELEGATION_SUPPORTED}" = true ]; then
+  max_pods=$(calculate_max_ip_addresses_prefix_delegation "${enis_for_pods}" "${INSTANCE_MAX_ENIS_IPS}")
 else
-  max_pods=$(calculate_max_ip_addresses_secondary_ips $enis_for_pods $INSTANCE_MAX_ENIS_IPS)
+  max_pods=$(calculate_max_ip_addresses_secondary_ips "${enis_for_pods}" "${INSTANCE_MAX_ENIS_IPS}")
 fi
 
 # Limit the total number of pods that can be launched on any instance type based on the vCPUs on that instance type.
 MAX_POD_CEILING_FOR_LOW_CPU=110
 MAX_POD_CEILING_FOR_HIGH_CPU=250
-CPU_COUNT=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.CpuCount')
+CPU_COUNT=$(echo "${DESCRIBE_INSTANCES_RESULT}" | jq -r '.CpuCount')
 
-if [ "$SHOW_MAX_ALLOWED" = true ]; then
-  echo $max_pods
+if [ "${SHOW_MAX_ALLOWED}" = true ]; then
+  echo "${max_pods}"
   exit 0
 fi
 
-if [ "$CPU_COUNT" -gt 30 ]; then
-  echo $(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)
+if [ "${CPU_COUNT}" -gt 30 ]; then
+  echo $(min_number "${MAX_POD_CEILING_FOR_HIGH_CPU}" "${max_pods}")
 else
-  echo $(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)
+  echo $(min_number "${MAX_POD_CEILING_FOR_LOW_CPU}" "${max_pods}")
 fi

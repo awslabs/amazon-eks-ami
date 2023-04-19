@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPTPATH="$(
-  cd "$(dirname "$0")"
+  cd "$(dirname "${0}")"
   pwd -P
 )"
 

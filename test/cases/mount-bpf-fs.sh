@@ -14,7 +14,7 @@ export -f mount
 EXIT_CODE=0
 mount-bpf-fs || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-  echo "❌ Test Failed: expected a zero exit code but got: $EXIT_CODE"
+  echo "❌ Test Failed: expected a zero exit code but got: ${EXIT_CODE}"
   exit 1
 fi
 export -nf mount
@@ -27,7 +27,7 @@ export -f mount
 EXIT_CODE=0
 mount-bpf-fs || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-  echo "❌ Test Failed: expected a zero exit code but got: $EXIT_CODE"
+  echo "❌ Test Failed: expected a zero exit code but got: ${EXIT_CODE}"
   exit 1
 fi
 export -nf mount
@@ -38,12 +38,12 @@ function mount() {
 }
 export -f mount
 SYSTEMD_UNIT=/etc/systemd/system/sys-fs-bpf.mount
-mkdir -p $(dirname $SYSTEMD_UNIT)
-echo "foo" > $SYSTEMD_UNIT
+mkdir -p "$(dirname "${SYSTEMD_UNIT}")"
+echo "foo" > "${SYSTEMD_UNIT}"
 EXIT_CODE=0
 mount-bpf-fs || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
-  echo "❌ Test Failed: expected a zero exit code but got: $EXIT_CODE"
+  echo "❌ Test Failed: expected a zero exit code but got: ${EXIT_CODE}"
   exit 1
 fi
 export -nf mount
@@ -61,7 +61,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  test || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
   exit 1
@@ -84,12 +84,13 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  test || EXIT_CODE=$?
+
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
   exit 1
 fi
-if [ "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
+if [ "$(cat ${MOUNT_BPF_FS_MOCK})" = "called" ]; then
   echo "❌ Test Failed: expected mount-bpf-fs to not be called but it was!"
   exit 1
 fi
