@@ -316,8 +316,8 @@ sudo yum versionlock clear
 ## Image credential provider plugins
 
 Prior to Kubernetes 1.27, the `kubelet` could obtain credentials for ECR out of the box. This legacy credential process has been removed in Kubernetes 1.27, and
-ECR credentials should now be obtained via a plugin, the `ecr-credential-provider`. More information about this plugin is available in the [`cloud-provider-aws` documentation](https://cloud-provider-aws.sigs.k8s.io/credential_provider/).
+ECR credentials should now be obtained via a plugin, the `ecr-credential-provider`. This plugin is installed in the AMI at `/etc/eks/image-credential-provider/ecr-credential-provider`. More information about this plugin is available in the [`cloud-provider-aws` documentation](https://cloud-provider-aws.sigs.k8s.io/credential_provider/).
 
-This plugin is installed in the AMI at `/etc/eks/image-credential-provider/ecr-credential-provider`, and additional image credential provider plugins may be appended to `/etc/eks/image-credential-provider/config.json`.
+Additional image credential provider plugins may be appended to `/etc/eks/image-credential-provider/config.json`. In Kubernetes versions before 1.27, all plugins in this file must support `credentialprovider.kubelet.k8s.io/v1alpha1`. In Kubernetes versions 1.27 and above, they must support `credentialprovider.kubelet.k8s.io/v1`.
 
 For more information about image credential provider plugins, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-credential-provider/).
