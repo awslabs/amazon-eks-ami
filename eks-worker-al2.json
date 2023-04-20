@@ -16,7 +16,6 @@
     "binary_bucket_name": null,
     "binary_bucket_region": null,
     "cache_container_images": null,    
-    "cni_plugin_version": null,
     "containerd_version": null,
     "creator": null,
     "docker_version": null,
@@ -28,7 +27,6 @@
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
     "pause_container_version": null,    
-    "pull_cni_from_github": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -104,8 +102,7 @@
         "source_ami_name": "{{ .SourceAMIName }}",
         "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
-        "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+        "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}"
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
@@ -167,8 +164,6 @@
         "DOCKER_VERSION={{user `docker_version`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
         "RUNC_VERSION={{user `runc_version`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
-        "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
