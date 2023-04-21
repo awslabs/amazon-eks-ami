@@ -221,6 +221,14 @@ get_region() {
   fi
 }
 
+get_user_data() {
+  if USER_DATA=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/user-data); then
+    echo "${USER_DATA}" > "${COLLECT_DIR}"/system/user-data.txt
+  else
+    warning "Unable to find EC2 user-data, skipping."
+  fi
+}
+
 is_diskfull() {
   local threshold
   local result
@@ -260,6 +268,7 @@ collect() {
   is_diskfull
   get_instance_id
   get_region
+  get_user_data
   get_common_logs
   get_kernel_info
   get_mounts_info
