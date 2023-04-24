@@ -11,6 +11,9 @@ trap 'err_report $LINENO' ERR
 
 IFS=$'\n\t'
 
+# mute stdout from vercmp
+export VERCMP_QUIET=true
+
 function print_help {
   echo "usage: $0 [options] <cluster-name>"
   echo "Bootstraps an instance into an EKS cluster"
@@ -36,6 +39,12 @@ function print_help {
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
 
+function log {
+  echo >&2 "$(date '+%Y-%m-%dT%H:%M:%S%z')" "[eks-bootstrap]" "$@"
+}
+
+log "INFO: starting..."
+
 POSITIONAL=()
 
 while [[ $# -gt 0 ]]; do
@@ -47,86 +56,103 @@ while [[ $# -gt 0 ]]; do
       ;;
     --use-max-pods)
       USE_MAX_PODS="$2"
+      log "INFO: --use-max-pods='${USE_MAX_PODS}'"
       shift
       shift
       ;;
     --b64-cluster-ca)
       B64_CLUSTER_CA=$2
+      log "INFO: --b64-cluster-ca='${B64_CLUSTER_CA}'"
       shift
       shift
       ;;
     --apiserver-endpoint)
       APISERVER_ENDPOINT=$2
+      log "INFO: --apiserver-endpoint='${APISERVER_ENDPOINT}'"
       shift
       shift
       ;;
     --kubelet-extra-args)
       KUBELET_EXTRA_ARGS=$2
+      log "INFO: --kubelet-extra-args='${KUBELET_EXTRA_ARGS}'"
       shift
       shift
       ;;
     --enable-docker-bridge)
       ENABLE_DOCKER_BRIDGE=$2
+      log "INFO: --enable-docker-bridge='${ENABLE_DOCKER_BRIDGE}'"
       shift
       shift
       ;;
     --aws-api-retry-attempts)
       API_RETRY_ATTEMPTS=$2
+      log "INFO: --aws-api-retry-attempts='${API_RETRY_ATTEMPTS}'"
       shift
       shift
       ;;
     --docker-config-json)
       DOCKER_CONFIG_JSON=$2
+      log "INFO: --docker-config-json='${DOCKER_CONFIG_JSON}'"
       shift
       shift
       ;;
     --containerd-config-file)
       CONTAINERD_CONFIG_FILE=$2
+      log "INFO: --containerd-config-file='${CONTAINERD_CONFIG_FILE}'"
       shift
       shift
       ;;
     --pause-container-account)
       PAUSE_CONTAINER_ACCOUNT=$2
+      log "INFO: --pause-container-accounte='${PAUSE_CONTAINER_ACCOUNT}'"
       shift
       shift
       ;;
     --pause-container-version)
       PAUSE_CONTAINER_VERSION=$2
+      log "INFO: --pause-container-version='${PAUSE_CONTAINER_VERSION}'"
       shift
       shift
       ;;
     --dns-cluster-ip)
       DNS_CLUSTER_IP=$2
+      log "INFO: --dns-cluster-ip='${DNS_CLUSTER_IP}'"
       shift
       shift
       ;;
     --container-runtime)
       CONTAINER_RUNTIME=$2
+      log "INFO: --container-runtime='${CONTAINER_RUNTIME}'"
       shift
       shift
       ;;
     --ip-family)
       IP_FAMILY=$2
+      log "INFO: --ip-family='${IP_FAMILY}'"
       shift
       shift
       ;;
     --service-ipv6-cidr)
       SERVICE_IPV6_CIDR=$2
+      log "INFO: --service-ipv6-cidr='${SERVICE_IPV6_CIDR}'"
       shift
       shift
       ;;
     --enable-local-outpost)
       ENABLE_LOCAL_OUTPOST=$2
+      log "INFO: --enable-local-outpost='${ENABLE_LOCAL_OUTPOST}'"
       shift
       shift
       ;;
     --cluster-id)
       CLUSTER_ID=$2
+      log "INFO: --cluster-id='${CLUSTER_ID}'"
       shift
       shift
       ;;
     --mount-bpf-fs)
       MOUNT_BPF_FS=$2
+      log "INFO: --mount-bpf-fs='${MOUNT_BPF_FS}'"
       shift
       shift
       ;;
@@ -143,7 +169,7 @@ CLUSTER_NAME="$1"
 set -u
 
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
-echo "Using kubelet version $KUBELET_VERSION"
+log "INFO: Using kubelet version $KUBELET_VERSION"
 
 # ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27.1: https://github.com/kubernetes/cloud-provider-aws/pull/597
 # TODO: remove this when 1.26 is EOL
@@ -165,10 +191,10 @@ if vercmp "$KUBELET_VERSION" gteq "1.24.0"; then
 fi
 CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-$DEFAULT_CONTAINER_RUNTIME}"
 
-echo "Using $CONTAINER_RUNTIME as the container runtime"
+log "INFO: Using $CONTAINER_RUNTIME as the container runtime"
 
 if vercmp "$KUBELET_VERSION" gteq "1.24.0" && [ $CONTAINER_RUNTIME != "containerd" ]; then
-  echo "ERROR: containerd is the only supported container runtime as of Kubernetes version 1.24"
+  log "ERROR: containerd is the only supported container runtime as of Kubernetes version 1.24"
   exit 1
 fi
 
@@ -254,21 +280,21 @@ get_cpu_millicores_to_reserve() {
 }
 
 if [ -z "$CLUSTER_NAME" ]; then
-  echo "CLUSTER_NAME is not defined"
+  log "ERROR: cluster name is not defined!"
   exit 1
 fi
 
 if [[ ! -z "${IP_FAMILY}" ]]; then
   IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
   if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]]; then
-    echo "Invalid IpFamily. Only ipv4 or ipv6 are allowed"
+    log "ERROR: Invalid --ip-family. Only ipv4 or ipv6 are allowed"
     exit 1
   fi
 fi
 
 if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
   if [[ "${IP_FAMILY}" == "ipv4" ]]; then
-    echo "ip-family should be ipv6 when service-ipv6-cidr is specified"
+    log "ERROR: --ip-family should be ipv6 when --service-ipv6-cidr is specified"
     exit 1
   fi
   IP_FAMILY="ipv6"
@@ -279,7 +305,7 @@ AWS_SERVICES_DOMAIN=$(imds 'latest/meta-data/services/domain')
 
 MACHINE=$(uname -m)
 if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
-  echo "Unknown machine architecture '$MACHINE'" >&2
+  log "ERROR: Unknown machine architecture: '$MACHINE'"
   exit 1
 fi
 
@@ -297,13 +323,14 @@ CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
+  log "INFO: --cluster-ca or --api-server-endpoint is not defined, describing cluster..."
   DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
   # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
   for attempt in $(seq 0 $API_RETRY_ATTEMPTS); do
     rc=0
     if [[ $attempt -gt 0 ]]; then
-      echo "Attempt $attempt of $API_RETRY_ATTEMPTS"
+      log "INFO: Attempt $attempt of $API_RETRY_ATTEMPTS"
     fi
 
     aws eks wait cluster-active \
@@ -319,6 +346,7 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
       break
     fi
     if [[ $attempt -eq $API_RETRY_ATTEMPTS ]]; then
+      log "ERROR: Exhausted retries while describing cluster!"
       exit $rc
     fi
     jitter=$((1 + RANDOM % 10))
@@ -355,6 +383,8 @@ if [[ -z "${IP_FAMILY}" ]] || [[ "${IP_FAMILY}" == "None" ]]; then
   IP_FAMILY="ipv4"
 fi
 
+log "INFO: Using IP family: ${IP_FAMILY}"
+
 echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
@@ -385,7 +415,7 @@ if [[ "${ENABLE_LOCAL_OUTPOST}" == "true" ]]; then
   ###   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
   ###   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
   if [[ -z "${CLUSTER_ID}" ]]; then
-    echo "Cluster ID is required when local outpost support is enabled"
+    log "ERROR: Cluster ID is required when local outpost support is enabled"
     exit 1
   else
     sed -i s,CLUSTER_NAME,$CLUSTER_ID,g /var/lib/kubelet/kubeconfig
@@ -405,7 +435,7 @@ MAC=$(imds 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$/
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
   if [[ "${IP_FAMILY}" == "ipv6" ]]; then
     if [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
-      echo "One of --service-ipv6-cidr or --dns-cluster-ip must be provided when ip-family is specified as ipv6"
+      log "ERROR: One of --service-ipv6-cidr or --dns-cluster-ip must be provided when --ip-family is ipv6"
       exit 1
     fi
     DNS_CLUSTER_IP=$(awk -F/ '{print $1}' <<< $SERVICE_IPV6_CIDR)a
@@ -455,7 +485,7 @@ set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
-  echo "No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
+  log "INFO: No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
   # When determining the value of maxPods, we're using the legacy calculation by default since it's more restrictive than
   # the PrefixDelegation based alternative and is likely to be in-use by more customers.
   # The legacy numbers also maintain backwards compatibility when used to calculate `kubeReserved.memory`
@@ -497,11 +527,11 @@ mkdir -p /etc/systemd/system
 
 if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   if $ENABLE_DOCKER_BRIDGE; then
-    echo "WARNING: Flag --enable-docker-bridge was set but will be ignored as it's not relevant to containerd"
+    log "WARNING: Flag --enable-docker-bridge was set but will be ignored as it's not relevant to containerd"
   fi
 
   if [ ! -z "$DOCKER_CONFIG_JSON" ]; then
-    echo "WARNING: Flag --docker-config-json was set but will be ignored as it's not relevant to containerd"
+    log "WARNING: Flag --docker-config-json was set but will be ignored as it's not relevant to containerd"
   fi
 
   sudo mkdir -p /etc/containerd
@@ -560,7 +590,7 @@ elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   systemctl enable docker
   systemctl restart docker
 else
-  echo "Container runtime ${CONTAINER_RUNTIME} is not supported."
+  log "ERROR: unsupported container runtime: '${CONTAINER_RUNTIME}'"
   exit 1
 fi
 
@@ -584,7 +614,7 @@ systemctl start kubelet
 
 # gpu boost clock
 if command -v nvidia-smi &> /dev/null; then
-  echo "nvidia-smi found"
+  log "INFO: nvidia-smi found"
 
   nvidia-smi -q > /tmp/nvidia-smi-check
   if [[ "$?" == "0" ]]; then
@@ -592,7 +622,7 @@ if command -v nvidia-smi &> /dev/null; then
     sudo nvidia-smi --auto-boost-default=0
 
     GPUNAME=$(nvidia-smi -L | head -n1)
-    echo $GPUNAME
+    log "INFO: GPU name: $GPUNAME"
 
     # set application clock to maximum
     if [[ $GPUNAME == *"A100"* ]]; then
@@ -609,8 +639,9 @@ if command -v nvidia-smi &> /dev/null; then
       echo "unsupported gpu"
     fi
   else
+    log "ERROR: nvidia-smi check failed!"
     cat /tmp/nvidia-smi-check
   fi
-else
-  echo "nvidia-smi not found"
 fi
+
+log "INFO: complete!"
