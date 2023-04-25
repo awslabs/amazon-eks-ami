@@ -32,6 +32,7 @@ function print_help {
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
+  echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
   echo "--mount-bfs-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.27+; false otherwise)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
@@ -156,6 +157,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --local-disks)
+      LOCAL_DISKS=$2
+      shift
+      shift
+      ;;
     *)                   # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift              # past argument
@@ -211,6 +217,11 @@ IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
+LOCAL_DISKS="${LOCAL_DISKS:-}"
+
+if [[ ! -z ${LOCAL_DISKS} ]]; then
+  setup-local-disks "${LOCAL_DISKS}"
+fi
 
 DEFAULT_MOUNT_BPF_FS="true"
 if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
