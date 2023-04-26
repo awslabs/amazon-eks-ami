@@ -10,9 +10,11 @@ permissions:
   pull-requests: write
 jobs:
   update-max-pods:
+    # this workflow will always fail in forks; bail if this isn't running in the upstream
+    if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}

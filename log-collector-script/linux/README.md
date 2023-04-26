@@ -102,10 +102,11 @@ Trying to archive gathered information...
 1. Create the SSM document named "EKSLogCollector" using the following commands:
 
 ```
+curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-ssm-content.json
 aws ssm create-document \
   --name "EKSLogCollectorLinux" \
   --document-type "Command" \
-  --content https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/linux/eks-ssm-content.json
+  --content file://eks-ssm-content.json
 ```
 
 2. To execute the bash script in the SSM document and to collect the logs from worker, run the following command:
