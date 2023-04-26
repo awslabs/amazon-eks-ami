@@ -35,6 +35,7 @@ function print_help {
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.25+; false otherwise)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
+  echo "--pause-container-repository-name The AWS ECR repository name to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
@@ -106,6 +107,12 @@ while [[ $# -gt 0 ]]; do
     --pause-container-account)
       PAUSE_CONTAINER_ACCOUNT=$2
       log "INFO: --pause-container-account='${PAUSE_CONTAINER_ACCOUNT}'"
+      shift
+      shift
+      ;;
+    --pause-container-repository-name)
+      PAUSE_CONTAINER_REPOSITORY_NAME=$2
+      log "INFO: --pause-container-repository-name='${PAUSE_CONTAINER_REPOSITORY_NAME}'"
       shift
       shift
       ;;
@@ -326,8 +333,11 @@ if [ "$MOUNT_BPF_FS" = "true" ]; then
 fi
 
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
+PAUSE_CONTAINER_REPOSITORY_NAME=${PAUSE_CONTAINER_REPOSITORY_NAME:-eks/pause}
+PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/$PAUSE_CONTAINER_REPOSITORY_NAME}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
+
+log "INFO: PAUSE_CONTAINER: $PAUSE_CONTAINER"
 
 ### kubelet kubeconfig
 
