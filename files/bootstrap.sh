@@ -528,7 +528,11 @@ else
   # then /etc/hostname is not the same as EC2's PrivateDnsName.
   # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
   INSTANCE_ID=$(imds /latest/meta-data/instance-id)
-  PRIVATE_DNS_NAME=$(AWS_RETRY_MODE=standard AWS_MAX_ATTEMPTS=10 aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[].Instances[].PrivateDnsName' --output text)
+  # the AWS CLI currently constructs the wrong endpoint URL on localzones (the availability zone group will be used instead of the parent region)
+  # more info: https://github.com/aws/aws-cli/issues/7043
+  REGION=$(imds /latest/meta-data/placement/region)
+  PRIVATE_DNS_NAME=$(AWS_RETRY_MODE=standard AWS_MAX_ATTEMPTS=10 aws ec2 describe-instances --region $REGION --instance-ids $INSTANCE_ID --query 'Reservations[].Instances[].PrivateDnsName' 
+--output text)
   KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$PRIVATE_DNS_NAME"
 fi
 
