@@ -71,7 +71,8 @@ sudo yum install -y \
   wget \
   yum-utils \
   yum-plugin-versionlock \
-  mdadm
+  mdadm \
+  pigz
 
 # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
 sudo package-cleanup --oldkernels --count=1 -y
