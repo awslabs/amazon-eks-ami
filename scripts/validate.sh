@@ -73,3 +73,14 @@ if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
 fi
 
 echo "Package versionlocks are correct!"
+
+REQUIRED_COMMANDS=(unpigz)
+
+for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
+  if ! command -v "$ENTRY" > /dev/null; then
+    echo "Required command does not exist: '$ENTRY'"
+    exit 1
+  fi
+done
+
+echo "Required commands were found: ${REQUIRED_COMMANDS[*]}"

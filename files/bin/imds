@@ -50,7 +50,7 @@ function imdscurl() {
 
 function get-token() {
   local TOKEN_DIR=/tmp/imds-tokens
-  mkdir -p $TOKEN_DIR
+  mkdir -p -m a+wrx $TOKEN_DIR
 
   # cleanup expired tokens
   local DELETED_TOKENS=0

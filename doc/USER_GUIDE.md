@@ -11,6 +11,8 @@ This document includes details about using the AMI template and the resulting AM
 1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
 1. [Updating known instance types](#updating-known-instance-types)
 1. [Version-locked packages](#version-locked-packages)
+1. [Image credential provider plugins](#image-credential-provider-plugins)
+1. [Ephemeral Storage](#ephemeral-storage)
 
 ---
 
@@ -309,3 +311,32 @@ sudo yum versionlock delete $PACKAGE_NAME
 # unlock all packages
 sudo yum versionlock clear
 ```
+
+---
+
+## Image credential provider plugins
+
+Prior to Kubernetes 1.27, the `kubelet` could obtain credentials for ECR out of the box. This legacy credential process has been removed in Kubernetes 1.27, and
+ECR credentials should now be obtained via a plugin, the `ecr-credential-provider`. This plugin is installed in the AMI at `/etc/eks/image-credential-provider/ecr-credential-provider`. More information about this plugin is available in the [`cloud-provider-aws` documentation](https://cloud-provider-aws.sigs.k8s.io/credential_provider/).
+
+Additional image credential provider plugins may be appended to `/etc/eks/image-credential-provider/config.json`. In Kubernetes versions 1.26 and below, all plugins in this file must support `credentialprovider.kubelet.k8s.io/v1alpha1`. In Kubernetes versions 1.27 and above, they must support `credentialprovider.kubelet.k8s.io/v1`.
+
+For more information about image credential provider plugins, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-credential-provider/).
+
+---
+
+## Ephemeral Storage
+
+Some instance types launch with ephemeral NVMe instance storage (i3, i4i, c5d, c6id, etc). There are two main ways of utilizing this storage within Kubernetes: a single RAID-0 array for use by kubelet and containerd or mounting the individual disks for pod usage.
+
+The EKS Optimized AMI includes a utility script to configure ephemeral storage. The script can be invoked by passing the `--local-disks <raid0 | mount>` flag to the `/etc/eks/bootstrap.sh` script or the script can be invoked directly at `/bin/setup-local-disks`. All disks are formatted with an XFS file system. 
+
+Below are details on the two disk setup options:
+
+### RAID-0 for Kubelet and Containerd (raid0)
+
+A RAID-0 array is setup that includes all ephemeral NVMe instance storage disks. The containerd and kubelet state directories (`/var/lib/containerd` and `/var/lib/kubelet`) will then use the ephemeral storage for more and faster node ephemeral-storage. The node's ephemeral storage can be shared among pods that request ephemeral storage and container images that are downloaded to the node.
+
+### Mount for Persistent Volumes (mount)
+
+Another way of utilizing the ephemeral disks is to format and mount the individual disks. Mounting individual disks allows the [local-static-provisioner](https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner) DaemonSet to create Persistent Volume Claims that pods can utilize.

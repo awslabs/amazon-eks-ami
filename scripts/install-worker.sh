@@ -62,6 +62,7 @@ sudo yum install -y \
   conntrack \
   curl \
   ec2-instance-connect \
+  ethtool \
   ipvsadm \
   jq \
   nfs-utils \
@@ -69,7 +70,9 @@ sudo yum install -y \
   unzip \
   wget \
   yum-utils \
-  yum-plugin-versionlock
+  yum-plugin-versionlock \
+  mdadm \
+  pigz
 
 # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
 sudo package-cleanup --oldkernels --count=1 -y
@@ -119,7 +122,9 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ### awscli #####################################################
 ################################################################################
 
-if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
+ISOLATED_REGIONS=(us-iso-east-1 us-iso-west-1 us-isob-east-1)
+if ! [[ " ${ISOLATED_REGIONS[*]} " =~ " ${BINARY_BUCKET_REGION} " ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR=$(mktemp -d)
@@ -244,7 +249,7 @@ echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="amazonaws.com"
 if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
   S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ]; then
+elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" = "us-iso-west-1" ]; then
   S3_DOMAIN="c2s.ic.gov"
 elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
   S3_DOMAIN="sc2s.sgov.gov"
@@ -350,27 +355,24 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
-  ECR_BINARY="ecr-credential-provider"
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
-  else
-    echo "AWS cli missing - using wget to fetch ecr-credential-provider binaries from s3. Note: This won't work for private bucket."
-    sudo wget "$S3_URL_BASE/$ECR_BINARY"
-  fi
-  sudo chmod +x $ECR_BINARY
-  sudo mkdir -p /etc/eks/ecr-credential-provider
-  sudo mv $ECR_BINARY /etc/eks/ecr-credential-provider
-
-  # copying credential provider config file to eks folder
-  sudo mv $TEMPLATE_DIR/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
+if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+  echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
+  aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
+else
+  echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
+  sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
+sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
+sudo mkdir -p /etc/eks/image-credential-provider
+sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 
 ################################################################################
 ### Cache Images ###############################################################
 ################################################################################
-if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+
+if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ " ${ISOLATED_REGIONS[*]} " =~ " ${BINARY_BUCKET_REGION} " ]]; then
   AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
   ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
 

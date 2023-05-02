@@ -12,7 +12,7 @@ COPY files/ /etc/eks/
 COPY files/containerd-config.toml files/kubelet-containerd.service files/pull-sandbox-image.sh files/sandbox-image.service /etc/eks/containerd/
 COPY files/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 COPY files/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
-COPY files/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+COPY files/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 COPY test/entrypoint.sh /entrypoint.sh
 COPY files/bin/* /usr/bin/
 COPY test/mocks/ /sbin/
