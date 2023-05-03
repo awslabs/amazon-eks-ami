@@ -7,12 +7,14 @@ Requires=containerd.service sandbox-image.service
 [Service]
 Slice=runtime.slice
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
-ExecStart=/usr/bin/kubelet --cloud-provider aws \
+ExecStart=/usr/bin/kubelet \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
-    --container-runtime remote \
     --container-runtime-endpoint unix:///run/containerd/containerd.sock \
-    $KUBELET_ARGS $KUBELET_EXTRA_ARGS
+    --image-credential-provider-config /etc/eks/image-credential-provider/config.json \
+    --image-credential-provider-bin-dir /etc/eks/image-credential-provider \
+    $KUBELET_ARGS \
+    $KUBELET_EXTRA_ARGS
 
 Restart=on-failure
 RestartForceExitStatus=SIGPIPE

@@ -36,11 +36,40 @@ validate_file_nonexists '/var/log/secure'
 validate_file_nonexists '/var/log/wtmp'
 
 actual_kernel=$(uname -r)
-echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION"
+echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION..."
 
 if [[ $actual_kernel == $KERNEL_VERSION* ]]; then
-  echo "Kernel matches expected version"
+  echo "Kernel matches expected version!"
 else
-  echo "Kernel does not match expected version."
+  echo "Kernel does not match expected version!"
   exit 1
 fi
+
+echo "Verifying that the package versionlocks are correct..."
+
+function versionlock-entries() {
+  # the format of this output is EPOCH:NAME-VERSION-RELEASE.ARCH
+  # more info in yum-versionlock(1)
+  # rpm doesn't accept EPOCH when querying the db, so remove it
+  yum versionlock list --quiet | cut -d ':' -f2
+}
+
+function versionlock-packages() {
+  versionlock-entries | xargs -I '{}' rpm --query '{}' --queryformat '%{NAME}\n'
+}
+
+for ENTRY in $(versionlock-entries); do
+  if ! rpm --query "$ENTRY" &> /dev/null; then
+    echo "There is no package matching the versionlock entry: '$ENTRY'"
+    exit 1
+  fi
+done
+
+LOCKED_PACKAGES=$(versionlock-packages | wc -l)
+UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
+if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
+  echo "Package(s) have multiple version locks!"
+  versionlock-entries
+fi
+
+echo "Package versionlocks are correct!"

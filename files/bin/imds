@@ -4,13 +4,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-IMDS_DEBUG="${IMDS_DEBUG:-false}"
-function log() {
-  if [ "$IMDS_DEBUG" = "true" ]; then
-    echo >&2 "$1"
-  fi
-}
-
 if [ "$#" -ne 1 ]; then
   echo >&2 "usage: imds API_PATH"
   exit 1
@@ -21,57 +14,79 @@ API_PATH="${1#/}"
 
 CURRENT_TIME=$(date '+%s')
 
+IMDS_DEBUG="${IMDS_DEBUG:-false}"
+# default ttl is 15 minutes
+IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
+# max ttl is 6 hours, see: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+IMDS_MAX_TOKEN_TTL_SECONDS=${IMDS_MAX_TOKEN_TTL_SECONDS:-21600}
+IMDS_RETRIES=${IMDS_RETRIES:-10}
+IMDS_RETRY_DELAY_SECONDS=${IMDS_RETRY_DELAY_SECONDS:-1}
 IMDS_ENDPOINT=${IMDS_ENDPOINT:-169.254.169.254}
+
+function log() {
+  if [ "$IMDS_DEBUG" = "true" ]; then
+    echo >&2 "$1"
+  fi
+}
+
+function imdscurl() {
+  local OUTPUT_FILE=$(mktemp)
+  local CODE=$(curl \
+    --silent \
+    --show-error \
+    --output $OUTPUT_FILE \
+    --write-out "%{http_code}" \
+    --retry $IMDS_RETRIES \
+    --retry-delay $IMDS_RETRY_DELAY_SECONDS \
+    "$@" || echo "1")
+  # CODE will be either the HTTP status code, or 1 if the exit code of `curl` is non-zero
+  if [[ ${CODE} -lt 200 || ${CODE} -gt 299 ]]; then
+    cat >&2 $OUTPUT_FILE
+    return $CODE
+  fi
+  printf "$(cat $OUTPUT_FILE)\n"
+  rm $OUTPUT_FILE
+}
+
+function get-token() {
+  local TOKEN_DIR=/tmp/imds-tokens
+  mkdir -p -m a+wrx $TOKEN_DIR
+
+  # cleanup expired tokens
+  local DELETED_TOKENS=0
+  for TOKEN_FILE in $(ls $TOKEN_DIR | awk '$0 < '$(($CURRENT_TIME - $IMDS_MAX_TOKEN_TTL_SECONDS))); do
+    rm $TOKEN_DIR/$TOKEN_FILE
+    DELETED_TOKENS=$(($DELETED_TOKENS + 1))
+  done
+  if [ "$DELETED_TOKENS" -gt 0 ]; then
+    log "🗑️ Deleted $DELETED_TOKENS expired IMDS token(s)."
+  fi
+
+  local TOKEN_FILE=$(ls $TOKEN_DIR | awk '$0 > '$CURRENT_TIME | sort -n -r | head -n 1)
+
+  if [ "$TOKEN_FILE" = "" ]; then
+    TOKEN_FILE=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
+    local TOKEN=$(imdscurl \
+      -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS" \
+      -X PUT \
+      "http://$IMDS_ENDPOINT/latest/api/token")
+    echo "$TOKEN" > "$TOKEN_DIR/$TOKEN_FILE"
+    # make sure any user can utilize (and clean up) these tokens
+    chmod a+rwx $TOKEN_DIR/$TOKEN_FILE
+    log "🔑 Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
+  else
+    log "ℹ️ Using cached IMDS token that expires in $(($TOKEN_FILE - $CURRENT_TIME)) seconds."
+  fi
+  cat "$TOKEN_DIR/$TOKEN_FILE"
+}
+
+function get-with-token() {
+  local API_PATH="$1"
+  imdscurl \
+    -H "X-aws-ec2-metadata-token: $(get-token)" \
+    "http://$IMDS_ENDPOINT/$API_PATH"
+}
 
 log "ℹ️ Talking to IMDS at $IMDS_ENDPOINT"
 
-TOKEN_DIR=/tmp/imds-tokens
-mkdir -p $TOKEN_DIR
-
-IMDS_RETRIES=${IMDS_RETRIES:-10}
-IMDS_RETRY_DELAY_SECONDS=${IMDS_RETRY_DELAY_SECONDS:-1}
-
-# default ttl is 15 minutes
-IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
-
-# max ttl is 6 hours, see: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
-IMDS_MAX_TOKEN_TTL_SECONDS=${IMDS_MAX_TOKEN_TTL_SECONDS:-21600}
-
-# cleanup expired tokens
-DELETED_TOKENS=0
-for TOKEN_FILE in $(ls $TOKEN_DIR | awk '$0 < '$(($CURRENT_TIME - $IMDS_MAX_TOKEN_TTL_SECONDS))); do
-  rm $TOKEN_DIR/$TOKEN_FILE
-  DELETED_TOKENS=$(($DELETED_TOKENS + 1))
-done
-if [ "$DELETED_TOKENS" -gt 0 ]; then
-  log "🗑️ Deleted $DELETED_TOKENS expired IMDS token(s)."
-fi
-
-TOKEN_FILE=$(ls $TOKEN_DIR | awk '$0 > '$CURRENT_TIME | sort -n -r | head -n 1)
-
-if [ "$TOKEN_FILE" = "" ]; then
-  TOKEN_FILE=$(($CURRENT_TIME + $IMDS_TOKEN_TTL_SECONDS))
-  curl \
-    --silent \
-    --show-error \
-    --retry $IMDS_RETRIES \
-    --retry-delay $IMDS_RETRY_DELAY_SECONDS \
-    -o $TOKEN_DIR/$TOKEN_FILE \
-    -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS" \
-    -X PUT \
-    "http://$IMDS_ENDPOINT/latest/api/token"
-  # make sure any user can utilize (and clean up) these tokens
-  chmod a+rwx $TOKEN_DIR/$TOKEN_FILE
-  log "🔑 Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
-else
-  log "ℹ️ Using cached IMDS token that expires in $(($TOKEN_FILE - $CURRENT_TIME)) seconds."
-fi
-
-curl \
-  --silent \
-  --show-error \
-  --retry $IMDS_RETRIES \
-  --retry-delay $IMDS_RETRY_DELAY_SECONDS \
-  --write-out '\n' \
-  -H "X-aws-ec2-metadata-token: $(cat $TOKEN_DIR/$TOKEN_FILE)" \
-  "http://$IMDS_ENDPOINT/$API_PATH"
+get-with-token "$API_PATH"

@@ -62,6 +62,7 @@ sudo yum install -y \
   conntrack \
   curl \
   ec2-instance-connect \
+  ethtool \
   ipvsadm \
   jq \
   nfs-utils \
@@ -72,7 +73,8 @@ sudo yum install -y \
   yum-plugin-versionlock \
   htop \
   vim \
-  yum-utils
+  yum-utils \
+  mdadm
 
 # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
 sudo package-cleanup --oldkernels --count=1 -y
@@ -133,7 +135,7 @@ if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "
     --retry-delay 1 \
     -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
   unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
-  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/
+  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/ --update
 else
   echo "Installing awscli package"
   sudo yum install -y awscli
@@ -163,12 +165,6 @@ if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   echo "containerd config is already present"
 else
   sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
-fi
-
-if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
-  # enable CredentialProviders features in kubelet-containerd service file
-  IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n   --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
-  sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet-containerd.service
 fi
 
 sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
@@ -328,15 +324,6 @@ if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
   echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $TEMPLATE_DIR/kubelet-config.json
 fi
 
-if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
-  # enable CredentialProviders feature flags in kubelet service file
-  IMAGE_CREDENTIAL_PROVIDER_FLAGS='\\\n    --image-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config \\\n    --image-credential-provider-bin-dir /etc/eks/ecr-credential-provider'
-  sudo sed -i s,"aws","aws $IMAGE_CREDENTIAL_PROVIDER_FLAGS", $TEMPLATE_DIR/kubelet.service
-  # enable KubeletCredentialProviders features in kubelet configuration
-  KUBELET_CREDENTIAL_PROVIDERS_FEATURES=$(cat $TEMPLATE_DIR/kubelet-config.json | jq '.featureGates += {KubeletCredentialProviders: true}')
-  printf "%s" "$KUBELET_CREDENTIAL_PROVIDERS_FEATURES" > "$TEMPLATE_DIR/kubelet-config.json"
-fi
-
 sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
 sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
@@ -368,22 +355,18 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-if vercmp "$KUBERNETES_VERSION" gteq "1.22.0"; then
-  ECR_BINARY="ecr-credential-provider"
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy ecr-credential-provider binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_BINARY .
-  else
-    echo "AWS cli missing - using wget to fetch ecr-credential-provider binaries from s3. Note: This won't work for private bucket."
-    sudo wget "$S3_URL_BASE/$ECR_BINARY"
-  fi
-  sudo chmod +x $ECR_BINARY
-  sudo mkdir -p /etc/eks/ecr-credential-provider
-  sudo mv $ECR_BINARY /etc/eks/ecr-credential-provider
-
-  # copying credential provider config file to eks folder
-  sudo mv $TEMPLATE_DIR/ecr-credential-provider-config /etc/eks/ecr-credential-provider/ecr-credential-provider-config
+ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
+if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
+  echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
+  aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
+else
+  echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
+  sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
+sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
+sudo mkdir -p /etc/eks/image-credential-provider
+sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 
 ################################################################################
 ### Cache Images ###############################################################
@@ -503,15 +486,15 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
 
   ecr_password=$(aws ecr get-login-password --region "eu-central-1")
 
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.9.3-eks-1-25-9
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.9.3-eks-1-26-7
   sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.19.0
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.7
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.17.0
-  sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.8_sylr.2
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.9
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.18.0
+  sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.10_sylr.2
   sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.7.0
   sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/livenessprobe:v2.9.0
-  sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.13.1
-  sudo ctr --namespace k8s.io image pull quay.io/cilium/startup-script:d69851597ea019af980891a4628fb36b7880ec26
+  sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.13.2
+  sudo ctr --namespace k8s.io image pull quay.io/cilium/startup-script:5e928f628f9fc644a1d2651d6cd6aecbde0e7acd
   sudo ctr --namespace k8s.io image pull quay.io/prometheus/node-exporter:v1.5.0
 
 fi

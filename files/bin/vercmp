@@ -81,7 +81,10 @@ case $OPERATOR in
     ;;
 esac
 
-echo "$OUTCOME"
+VERCMP_QUIET="${VERCMP_QUIET:-false}"
+if [ ! "$VERCMP_QUIET" = "true" ]; then
+  echo "$OUTCOME"
+fi
 
 if [ "$OUTCOME" = "true" ]; then
   exit 0

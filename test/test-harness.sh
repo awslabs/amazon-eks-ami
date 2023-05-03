@@ -37,12 +37,14 @@ done
 docker build -t eks-optimized-ami -f "${SCRIPTPATH}/Dockerfile" "${SCRIPTPATH}/../"
 overall_status=0
 
+test_run_log_file=$(mktemp)
+
 function run() {
   docker run -v "$(realpath $1):/test.sh" \
     --attach STDOUT \
     --attach STDERR \
     --rm \
-    eks-optimized-ami
+    eks-optimized-ami > $test_run_log_file 2>&1
 }
 
 if [[ ! -z ${TEST_CASE_SCRIPT} ]]; then
@@ -59,6 +61,7 @@ for case in "${test_cases[@]}"; do
   if [[ ${status} -eq 0 ]]; then
     echo "✅ ✅ $(basename ${case}) Tests Passed! ✅ ✅"
   else
+    cat $test_run_log_file
     echo "❌ ❌ $(basename ${case}) Tests Failed! ❌ ❌"
     overall_status=1
   fi
