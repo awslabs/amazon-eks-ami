@@ -1,5 +1,58 @@
 # Changelog
 
+### AMI Release v20230501
+* amazon-eks-gpu-node-1.26-v20230501
+* amazon-eks-gpu-node-1.25-v20230501
+* amazon-eks-gpu-node-1.24-v20230501
+* amazon-eks-gpu-node-1.23-v20230501
+* amazon-eks-gpu-node-1.22-v20230501
+* amazon-eks-arm64-node-1.26-v20230501
+* amazon-eks-arm64-node-1.25-v20230501
+* amazon-eks-arm64-node-1.24-v20230501
+* amazon-eks-arm64-node-1.23-v20230501
+* amazon-eks-arm64-node-1.22-v20230501
+* amazon-eks-node-1.26-v20230501
+* amazon-eks-node-1.25-v20230501
+* amazon-eks-node-1.24-v20230501
+* amazon-eks-node-1.23-v20230501
+* amazon-eks-node-1.22-v20230501
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.26.2-20230501`
+* `1.25.7-20230501`
+* `1.24.11-20230501`
+* `1.23.17-20230501`
+* `1.22.17-20230501`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.26.2/2023-03-17/
+* s3://amazon-eks/1.25.7/2023-03-17/
+* s3://amazon-eks/1.24.11/2023-03-17/
+* s3://amazon-eks/1.23.17/2023-03-17/
+* s3://amazon-eks/1.22.17/2023-03-17/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.241-150.347.amzn2
+  * Kubernetes 1.24 and above: 5.10.178-162.673.amzn2
+* `dockerd`: 20.10.17-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.1
+* `runc`: 1.1.4-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Add bootstrap option to create a local NVMe raid0 or individual volume mounts ([#1171](https://github.com/awslabs/amazon-eks-ami/pull/1171))
+- Improve bootstrap logging ([#1276](https://github.com/awslabs/amazon-eks-ami/pull/1276))
+- Use credential provider API v1 in 1.27+, v1alpha1 in 1.26- ([#1269](https://github.com/awslabs/amazon-eks-ami/pull/1269))
+- Override hostname to match EC2's PrivateDnsName ([#1264](https://github.com/awslabs/amazon-eks-ami/pull/1264))
+- Add ethtool ([#1261](https://github.com/awslabs/amazon-eks-ami/pull/1261))
+- Update `kernel-5.10` for [ALASKERNEL-5.10-2023-031](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-031.html)
+- Kernel version upgrade to `5.10.178-162.673.amzn2` fixes the [Containers failing to create and probe exec errors related to seccomp on recent kernel-5.10 versions](https://github.com/awslabs/amazon-eks-ami/issues/1219) issue
+
+
 ### AMI Release v20230411
 * amazon-eks-gpu-node-1.26-v20230411
 * amazon-eks-gpu-node-1.25-v20230411
