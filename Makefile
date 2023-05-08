@@ -46,7 +46,7 @@ ifeq ($(arch), arm64)
 	instance_type ?= m6g.large
 	ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
-	instance_type ?= m4.large
+	instance_type ?= m5.large
 	ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 

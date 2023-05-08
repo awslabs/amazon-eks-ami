@@ -123,8 +123,8 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
-ISOLATED_REGIONS=(us-iso-east-1 us-iso-west-1 us-isob-east-1)
-if ! [[ " ${ISOLATED_REGIONS[*]} " =~ " ${BINARY_BUCKET_REGION} " ]]; then
+ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1}"
+if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR=$(mktemp -d)
@@ -372,7 +372,7 @@ sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credent
 ### Cache Images ###############################################################
 ################################################################################
 
-if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ " ${ISOLATED_REGIONS[*]} " =~ " ${BINARY_BUCKET_REGION} " ]]; then
+if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
   ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
 
