@@ -441,7 +441,7 @@ fi
 
 ### kubelet.service configuration
 
-MAC=$(imds 'latest/meta-data/network/interfaces/macs/' | head -n 1 | sed 's/\/$//')
+MAC=$(imds 'latest/meta-data/mac')
 
 if [[ -z "${DNS_CLUSTER_IP}" ]]; then
   if [[ "${IP_FAMILY}" == "ipv6" ]]; then
