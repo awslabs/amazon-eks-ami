@@ -42,11 +42,11 @@ T_GREEN := \e[0;32m
 T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
-.PHONY: all 1.18 1.19 1.20 1.21 1.22
+.PHONY: all 1.18 1.19 1.20 1.21 1.22 1.23 1.24
 
-all: 1.22-build
+all: 1.24-build
 
-all-validate: 1.22-validate
+all-validate: 1.24-validate
 
 
 .PHONY: k8s
@@ -87,6 +87,22 @@ k8s: validate
 .PHONY: 1.22-build
 1.22-build:
 	$(MAKE) ci-build  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
+
+.PHONY: 1.23-validate
+1.23-validate:
+	$(MAKE) ci-validate  kubernetes_version=1.23.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+
+.PHONY: 1.23-build
+1.23-build:
+	$(MAKE) ci-build  kubernetes_version=1.23.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+
+.PHONY: 1.24-validate
+1.24-validate:
+	$(MAKE) ci-validate  kubernetes_version=1.24.11 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+
+.PHONY: 1.24-build
+1.24-build:
+	$(MAKE) ci-build  kubernetes_version=1.24.11 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
 
 # Circle CI pipeline
 .PHONY: ci-validate
