@@ -17,21 +17,6 @@ packer_variable_file_contains = $(if $(PACKER_VARIABLE_FILE),$(shell grep -Fq $1
 # otherwise expands to 'false'
 vercmp = $(shell $(MAKEFILE_DIR)/files/bin/vercmp "$1" "$2" "$3")
 
-# expands to 'true' if the 'aws_region' contains 'us-iso' (an isolated region)
-# otherwise, expands to 'false'
-in_iso_region = $(if $(findstring us-iso,$(aws_region)),true,false)
-
-# gp3 volumes are used by default for 1.27+
-# TODO: remove when 1.26 reaches EOL
-# TODO: remove when gp3 is supported in isolated regions
-ifneq ($(call packer_variable_file_contains,volume_type), true)
-	ifeq ($(call in_iso_region), true)
-		volume_type ?= gp2
-	else ifeq ($(call vercmp,$(kubernetes_version),lt,1.27.0), true)
-		volume_type ?= gp2
-	endif
-endif
-
 # Docker is not present on 1.25+ AMI's
 # TODO: remove this when 1.24 reaches EOL
 ifeq ($(call vercmp,$(kubernetes_version),gteq,1.25.0), true)
