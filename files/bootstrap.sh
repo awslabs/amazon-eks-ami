@@ -105,7 +105,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --pause-container-account)
       PAUSE_CONTAINER_ACCOUNT=$2
-      log "INFO: --pause-container-accounte='${PAUSE_CONTAINER_ACCOUNT}'"
+      log "INFO: --pause-container-account='${PAUSE_CONTAINER_ACCOUNT}'"
       shift
       shift
       ;;
@@ -159,6 +159,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --local-disks)
       LOCAL_DISKS=$2
+      log "INFO: --local-disks='${LOCAL_DISKS}'"
       shift
       shift
       ;;
