@@ -44,12 +44,9 @@ AMI details:
 * `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
 
 Notable changes:
-- The new AMIs have updated docker version 20.10.23-1.amzn2.0.1 that addresses two docker CVEs; CVE-2022-36109 - docker  and CVE-2022-37708 - docker.
-
+- The new AMIs have updated docker version 20.10.23-1.amzn2.0.1 that addresses two docker CVEs; [CVE-2022-36109 - docker](https://alas.aws.amazon.com/cve/html/CVE-2022-36109.html)  and [CVE-2022-37708 - docker](https://alas.aws.amazon.com/cve/html/CVE-2022-37708.html).
 - For the GPU Variants of these AMIs, the Nvidia Fabric Manager version is upgraded from 470.161.03-1 to 470.182.03-1.
-
--  Fix ECR pattern for aws-cn ([#1280](https://github.com/awslabs/amazon-eks-ami/pull/1280))
-
+- Fix ECR pattern for aws-cn ([#1280](https://github.com/awslabs/amazon-eks-ami/pull/1280))
 - Fix imds setting for multiple enis on ipv6 ([1275](https://github.com/awslabs/amazon-eks-ami/pull/1275))
 
 ### AMI Release v20230501
