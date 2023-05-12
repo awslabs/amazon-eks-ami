@@ -49,7 +49,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: latest
-latest: 1.26 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
+latest: 1.27 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -102,24 +102,28 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.11 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.24.13 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.25
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
-	$(MAKE) k8s kubernetes_version=1.25.7 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.25.9 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.26
 1.26: ## Build EKS Optimized AL2 AMI - K8s 1.26
-	$(MAKE) k8s kubernetes_version=1.26.2 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.26.4 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
+.PHONY: 1.27
+1.27: ## Build EKS Optimized AL2 AMI - K8s 1.27
+	$(MAKE) k8s kubernetes_version=1.27.1 kubernetes_build_date=2023-04-19 pull_cni_from_github=true
+	
 .PHONY: clean
 clean:
 	rm *-manifest.json
