@@ -71,6 +71,7 @@ COMMON_LOGS=(
   pods           # eks
   cloud-init.log
   cloud-init-output.log
+  user-data.log
   kube-proxy.log
 )
 
