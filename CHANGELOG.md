@@ -1,5 +1,58 @@
 # Changelog
 
+### AMI Release v20230526
+* amazon-eks-gpu-node-1.27-v20230526
+* amazon-eks-gpu-node-1.26-v20230526
+* amazon-eks-gpu-node-1.25-v20230526
+* amazon-eks-gpu-node-1.24-v20230526
+* amazon-eks-gpu-node-1.23-v20230526
+* amazon-eks-gpu-node-1.22-v20230526
+* amazon-eks-arm64-node-1.27-v20230526
+* amazon-eks-arm64-node-1.26-v20230526
+* amazon-eks-arm64-node-1.25-v20230526
+* amazon-eks-arm64-node-1.24-v20230526
+* amazon-eks-arm64-node-1.23-v20230526
+* amazon-eks-arm64-node-1.22-v20230526
+* amazon-eks-node-1.27-v20230526
+* amazon-eks-node-1.26-v20230526
+* amazon-eks-node-1.25-v20230526
+* amazon-eks-node-1.24-v20230526
+* amazon-eks-node-1.23-v20230526
+* amazon-eks-node-1.22-v20230526
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.27.1-20230526`
+* `1.26.4-20230526`
+* `1.25.9-20230526`
+* `1.24.13-20230526`
+* `1.23.17-20230526`
+* `1.22.17-20230526`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.27.1/2023-04-19/
+* s3://amazon-eks/1.26.4/2023-05-11/
+* s3://amazon-eks/1.25.9/2023-05-11/
+* s3://amazon-eks/1.24.13/2023-05-11/
+* s3://amazon-eks/1.23.17/2023-05-11/
+* s3://amazon-eks/1.22.17/2023-05-11/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.242-155.348.amzn2
+  * Kubernetes 1.24 and above: 5.10.179-166.674.amzn2
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.1
+* `runc`: 1.1.4-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+* `5.4` kernel update to `5.4.242-155.348.amzn2` addresses CVE [ALAS2KERNEL-5.4-2023-045](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-045.html)
+* `5.10` kernel update to `5.10.179-166.674.amzn2` addresses [ALAS2KERNEL-5.10-2023-032](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-032.html)
+* `Glib` update to `glib2-2.56.1-9.amzn2` addresses [ALAS-2023-2049](https://alas.aws.amazon.com/AL2/ALAS-2023-2049.html)
+
 ### AMI Release v20230513
 * amazon-eks-gpu-node-1.27-v20230513
 * amazon-eks-gpu-node-1.26-v20230513
