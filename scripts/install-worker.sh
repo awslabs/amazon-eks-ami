@@ -71,6 +71,8 @@ sudo yum install -y \
   wget \
   yum-utils \
   yum-plugin-versionlock \
+  mdadm \
+  pigz
   htop \
   vim \
   yum-utils \
@@ -124,7 +126,9 @@ sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ### awscli #####################################################
 ################################################################################
 
-if [[ "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
+ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1}"
+if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR=$(mktemp -d)
@@ -249,7 +253,7 @@ echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
 S3_DOMAIN="amazonaws.com"
 if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
   S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ]; then
+elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" = "us-iso-west-1" ]; then
   S3_DOMAIN="c2s.ic.gov"
 elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
   S3_DOMAIN="sc2s.sgov.gov"
@@ -371,7 +375,8 @@ sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credent
 ################################################################################
 ### Cache Images ###############################################################
 ################################################################################
-if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-east-1" && "$BINARY_BUCKET_REGION" != "us-isob-east-1" ]]; then
+
+if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
   ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
 

@@ -289,7 +289,7 @@ Function get_k8s_info{
         Write-Host "Collecting kubelet information"
         copy C:\ProgramData\kubernetes\kubeconfig $info_system\kubelet\
         copy C:\ProgramData\kubernetes\kubelet-config.json $info_system\kubelet\
-        copy C:\ProgramData\Amazon\EKS\cni\config\vpc-shared-eni.conf $info_system\cni\
+        copy C:\ProgramData\Amazon\EKS\cni\config\* $info_system\cni\
         Write-Host "OK" -foregroundcolor "green"
     }
     catch {

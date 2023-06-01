@@ -84,7 +84,7 @@ Done... your bundled logs are located in  C:\log-collector\eks_i-0b318f704c74b6a
 
 * SSM agent should be installed and running on Worker Node(s). [How to Install SSM Agent link](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-manual-agent-install.html)
 
-* Worker Node(s) should have required permissions to communicate with SSM service. IAM managed role `AmazonEC2RoleforSSM` will have all the required permission for SSM agent to run on EC2 instances. The IAM managed role `AmazonEC2RoleforSSM` has `S3:PutObject` permission to all S3 resources.
+* Worker Node(s) should have required permissions to communicate with SSM service. IAM managed role `AmazonSSMManagedInstanceCore` will have all the required permission for SSM agent to run on EC2 instances. The IAM managed role `AmazonSSMManagedInstanceCore` has `S3:PutObject` permission to all S3 resources.
 
 *Note:* For more granular control of the IAM permission check [Actions defined by AWS Systems Manager](https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awssystemsmanager.html%23awssystemsmanager-actions-as-permissions)
 

@@ -17,21 +17,6 @@ packer_variable_file_contains = $(if $(PACKER_VARIABLE_FILE),$(shell grep -Fq $1
 # otherwise expands to 'false'
 vercmp = $(shell $(MAKEFILE_DIR)/files/bin/vercmp "$1" "$2" "$3")
 
-# expands to 'true' if the 'aws_region' contains 'us-iso' (an isolated region)
-# otherwise, expands to 'false'
-in_iso_region = $(if $(findstring us-iso,$(aws_region)),true,false)
-
-# gp3 volumes are used by default for 1.27+
-# TODO: remove when 1.26 reaches EOL
-# TODO: remove when gp3 is supported in isolated regions
-ifneq ($(call packer_variable_file_contains,volume_type), true)
-	ifeq ($(call in_iso_region), true)
-		volume_type ?= gp2
-	else ifeq ($(call vercmp,$(kubernetes_version),lt,1.27.0), true)
-		volume_type ?= gp2
-	endif
-endif
-
 # Docker is not present on 1.25+ AMI's
 # TODO: remove this when 1.24 reaches EOL
 ifeq ($(call vercmp,$(kubernetes_version),gteq,1.25.0), true)
@@ -46,8 +31,8 @@ ifeq ($(arch), arm64)
 instance_type ?= m6g.xlarge
 ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 else
-instance_type ?= m5a.xlarge
-ami_name ?= amazon-eks-amd64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
+	instance_type ?= m5.large
+	ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
@@ -64,7 +49,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: latest
-latest: 1.26 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
+latest: 1.27 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -117,24 +102,28 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.11 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.24.13 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.25
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
-	$(MAKE) k8s kubernetes_version=1.25.7 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.25.9 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
 .PHONY: 1.26
 1.26: ## Build EKS Optimized AL2 AMI - K8s 1.26
-	$(MAKE) k8s kubernetes_version=1.26.2 kubernetes_build_date=2023-03-17 pull_cni_from_github=true
+	$(MAKE) k8s kubernetes_version=1.26.4 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
 
+.PHONY: 1.27
+1.27: ## Build EKS Optimized AL2 AMI - K8s 1.27
+	$(MAKE) k8s kubernetes_version=1.27.1 kubernetes_build_date=2023-04-19 pull_cni_from_github=true
+	
 .PHONY: clean
 clean:
 	rm *-manifest.json
