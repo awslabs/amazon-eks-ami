@@ -486,16 +486,16 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" && "$BINARY_BUCKET_REGION" != "us-iso-
 
   ecr_password=$(aws ecr get-login-password --region "eu-central-1")
 
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.9.3-eks-1-26-7
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/coredns/coredns:v1.10.1-eks-1-27-4
   sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-ec2/aws-node-termination-handler:v1.19.0
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.9
-  sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.18.0
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/aws-observability/aws-for-fluent-bit:2.31.11
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver:v1.19.0
   sudo ctr --namespace k8s.io image pull ghcr.io/sylr/traefik:v2.9.10_sylr.2
-  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.7.0
-  sudo ctr --namespace k8s.io image pull k8s.gcr.io/sig-storage/livenessprobe:v2.9.0
-  sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.13.2
-  sudo ctr --namespace k8s.io image pull quay.io/cilium/startup-script:5e928f628f9fc644a1d2651d6cd6aecbde0e7acd
-  sudo ctr --namespace k8s.io image pull quay.io/prometheus/node-exporter:v1.5.0
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.8.0-eks-1-27-4
+  sudo ctr --namespace k8s.io image pull public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.10.0-eks-1-27-4
+  sudo ctr --namespace k8s.io image pull quay.io/cilium/cilium:v1.13.3
+  sudo ctr --namespace k8s.io image pull quay.io/cilium/startup-script:62093c5c233ea914bfa26a10ba41f8780d9b737f
+  sudo ctr --namespace k8s.io image pull quay.io/prometheus/node-exporter:v1.6.0
 
 fi
 
