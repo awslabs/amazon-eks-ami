@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-#
-# Do basic validation of the generated AMI
 
-# Validates that a file or blob doesn't exist
-#
-# Arguments:
-#   a file name or blob
-# Returns:
-#   1 if a file exists, after printing an error
+set -o nounset
+set -o errexit
+set -o pipefail
+
 validate_file_nonexists() {
   local file_blob=$1
   for f in $file_blob; do
@@ -84,3 +80,18 @@ for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
 done
 
 echo "Required commands were found: ${REQUIRED_COMMANDS[*]}"
+
+function free-space-in-megabytes () {
+  df -m / | tail -n1 | awk '{print $4}'
+}
+
+REQUIRED_FREE_MEBIBYTES=1024
+TOTAL_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $2}')
+FREE_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $4}')
+echo "Disk space in mebibytes (required/free/total): ${REQUIRED_FREE_MEBIBYTES}/${FREE_MEBIBYTES}/${TOTAL_MEBIBYTES}"
+if [ ${FREE_MEBIBYTES} -lt ${REQUIRED_FREE_MEBIBYTES} ]; then
+  echo "Disk space requirements not met!"
+  exit 1
+else
+  echo "Disk space requirements were met."
+fi
