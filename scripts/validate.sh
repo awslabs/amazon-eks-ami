@@ -81,10 +81,6 @@ done
 
 echo "Required commands were found: ${REQUIRED_COMMANDS[*]}"
 
-function free-space-in-megabytes () {
-  df -m / | tail -n1 | awk '{print $4}'
-}
-
 REQUIRED_FREE_MEBIBYTES=1024
 TOTAL_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $2}')
 FREE_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $4}')
