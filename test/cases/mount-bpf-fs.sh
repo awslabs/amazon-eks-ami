@@ -66,14 +66,14 @@ if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
   exit 1
 fi
-if [ "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
+if [ ! "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
   echo "❌ Test Failed: expected mount-bpf-fs to be called once but it was not!"
   exit 1
 fi
 export -nf mount-bpf-fs
 
-echo "--> Should default to false on 1.26-"
-export KUBELET_VERSION=v1.26.0-eks-ba74326
+echo "--> Should default to false on 1.24-"
+export KUBELET_VERSION=v1.24.0-eks-ba74326
 MOUNT_BPF_FS_MOCK=$(mktemp)
 function mount-bpf-fs() {
   echo "called" >> $MOUNT_BPF_FS_MOCK

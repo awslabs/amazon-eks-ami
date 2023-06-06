@@ -33,7 +33,7 @@ function print_help {
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
-  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.27+; false otherwise)"
+  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.25+; false otherwise)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
@@ -322,7 +322,7 @@ if [[ "$MACHINE" != "x86_64" && "$MACHINE" != "aarch64" ]]; then
 fi
 
 if [ "$MOUNT_BPF_FS" = "true" ]; then
-  sudo mount-bpf-fs
+  mount-bpf-fs
 fi
 
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
