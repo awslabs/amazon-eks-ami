@@ -23,7 +23,7 @@
     "pause_container_version": "3.5",
     "pull_cni_from_github": "true",
     "remote_folder": "",
-    "runc_version": "1.1.4-1.amzn2",
+    "runc_version": "1.1.5-1.amzn2",
     "security_group_id": "",
     "sonobuoy_e2e_registry": "",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
