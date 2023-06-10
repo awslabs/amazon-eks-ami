@@ -1,5 +1,57 @@
 # Changelog
 
+### AMI Release v20230607
+* amazon-eks-gpu-node-1.27-v20230607
+* amazon-eks-gpu-node-1.26-v20230607
+* amazon-eks-gpu-node-1.25-v20230607
+* amazon-eks-gpu-node-1.24-v20230607
+* amazon-eks-gpu-node-1.23-v20230607
+* amazon-eks-gpu-node-1.22-v20230607
+* amazon-eks-arm64-node-1.27-v20230607
+* amazon-eks-arm64-node-1.26-v20230607
+* amazon-eks-arm64-node-1.25-v20230607
+* amazon-eks-arm64-node-1.24-v20230607
+* amazon-eks-arm64-node-1.23-v20230607
+* amazon-eks-arm64-node-1.22-v20230607
+* amazon-eks-node-1.27-v20230607
+* amazon-eks-node-1.26-v20230607
+* amazon-eks-node-1.25-v20230607
+* amazon-eks-node-1.24-v20230607
+* amazon-eks-node-1.23-v20230607
+* amazon-eks-node-1.22-v20230607
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.27.1-20230607`
+* `1.26.4-20230607`
+* `1.25.9-20230607`
+* `1.24.13-20230607`
+* `1.23.17-20230607`
+* `1.22.17-20230607`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.27.1/2023-04-19/
+* s3://amazon-eks/1.26.4/2023-05-11/
+* s3://amazon-eks/1.25.9/2023-05-11/
+* s3://amazon-eks/1.24.13/2023-05-11/
+* s3://amazon-eks/1.23.17/2023-05-11/
+* s3://amazon-eks/1.22.17/2023-05-11/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.242-156.349.amzn2
+  * Kubernetes 1.24 and above: 5.10.179-168.710.amzn2
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.1
+* `runc`: 1.1.5-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+* `5.4` kernel update to `5.4.242-156.349.amzn2` and `5.10` kernel update to `5.10.179-168.710.amzn2` address [CVE-2023-32233](https://alas.aws.amazon.com/cve/html/CVE-2023-32233.html)
+* Updating `runc` version to `1.1.5-1.amzn2` which contains fixes for [CVE-2023-28642](https://explore.alas.aws.amazon.com/CVE-2023-27561.html) and [CVE-2023-27561](https://explore.alas.aws.amazon.com/CVE-2023-28642.html).
+
 ### AMI Release v20230526
 * amazon-eks-gpu-node-1.27-v20230526
 * amazon-eks-gpu-node-1.26-v20230526
