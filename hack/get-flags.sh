@@ -27,7 +27,7 @@ function find-public-key() {
       return 0
     fi
   done
-  log "No SSH public key found, checked common locations: [${COMMON_PUB_KEY_LOCATIONS[@]}]"
+  log "No SSH public key found, checked common locations:" "${COMMON_PUB_KEY_LOCATIONS[@]}"
   exit 1
 }
 
