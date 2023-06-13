@@ -355,7 +355,6 @@ fi
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
-<<<<<<< HEAD
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
 if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
   echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
