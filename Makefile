@@ -95,8 +95,11 @@ validate: ## Validate packer config
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
-	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
+ifeq ($(hack),true)
+	$(eval HACK_FLAGS := $(shell hack/get-flags.sh $(K8S_VERSION_MINOR) || echo failed))
+endif
+	echo "Building AMI for version $(kubernetes_version) on $(arch)"; \
+	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) $(HACK_FLAGS) $(PACKER_TEMPLATE_FILE)
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 

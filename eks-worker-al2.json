@@ -21,6 +21,9 @@
     "creator": null,
     "docker_version": null,
     "encrypted": null,
+    "hack_bootstrap_args": null,
+    "hack": null,
+    "iam_instance_profile": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -32,6 +35,7 @@
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
+    "security_group_ids": null,
     "sonobuoy_e2e_registry": null,
     "source_ami_filter_name": null,
     "source_ami_id": null,
@@ -88,6 +92,7 @@
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
       "security_group_id": "{{user `security_group_id`}}",
+      "security_group_ids": "{{user `security_group_ids`}}",
       "associate_public_ip_address": "{{user `associate_public_ip_address`}}",
       "ssh_pty": true,
       "encrypt_boot": "{{user `encrypted`}}",
@@ -108,7 +113,8 @@
         "cni_plugin_version": "{{ user `cni_plugin_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
+      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
+      "iam_instance_profile": "{{ user `iam_instance_profile` }}"
     }
   ],
   "provisioners": [
@@ -209,6 +215,16 @@
       "direction": "download",
       "source": "/tmp/version-info.json",
       "destination": "{{ user `ami_name` }}-version-info.json"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/hack/run-bootstrap.sh",
+      "environment_vars": [
+        "HACK={{user `hack`}}",
+        "HACK_BOOTSTRAP_ARGS={{user `hack_bootstrap_args`}}",
+        "HACK_SSH_PRIVATE_KEY={{build `SSHPrivateKey`}}"
+      ]
     }
   ],
   "post-processors": [
