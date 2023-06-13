@@ -18,9 +18,9 @@ with open('../eks-worker-al2-variables.json') as default_var_file:
 all_vars = {}
 
 for var in template['variables']:
-  all_vars[var] = None
+    all_vars[var] = None
 for var, default_val in default_vars.items():
-  all_vars[var] = default_val
+    all_vars[var] = default_val
 
 doc_file_name = '../doc/USER_GUIDE.md'
 doc = None
@@ -38,20 +38,20 @@ new_table += f"{existing_table_lines[2]}\n"
 
 existing_descriptions = {}
 for line in existing_table_lines[3:]:
-  columns = line.split('|')
-  var = columns[1].strip(" `")
-  existing_descriptions[var] = columns[3].strip(" `")
+    columns = line.split('|')
+    var = columns[1].strip(" `")
+    existing_descriptions[var] = columns[3].strip(" `")
 
 for var, val in all_vars.items():
-  if val is not None:
-    if val == "":
-      val = f"`\"\"`"
-    else:
-      val = f"```{default_val}```"
-  description = ""
-  if var in existing_descriptions:
-    description = existing_descriptions[var]
-  new_table += f"| `{var}` | {val} | {description} |\n"
+    if val is not None:
+        if val == "":
+            val = f"`\"\"`"
+        else:
+            val = f"```{default_val}```"
+    description = ""
+    if var in existing_descriptions:
+        description = existing_descriptions[var]
+    new_table += f"| `{var}` | {val} | {description} |\n"
 
 new_table += table_boundary
 
