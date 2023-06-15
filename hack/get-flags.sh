@@ -33,6 +33,7 @@ function find-public-key() {
 
 function get-cluster-info() {
   eksctl get cluster --name "${CLUSTER_NAME}" --output json | jq -c . > "${CLUSTER_INFO}"
+  eksctl utils write-kubeconfig --cluster "${CLUSTER_NAME}" >&2
 }
 
 function get-nodegroup-info() {
@@ -68,4 +69,4 @@ NODE_INSTANCE_PROFILE=$(aws iam list-instance-profiles-for-role --role-name ${NO
 LAUNCH_TEMPLATE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $(jq -r .[0].AutoScalingGroupName ${NODEGROUP_INFO}) | jq -r .AutoScalingGroups[0].LaunchTemplate.LaunchTemplateId)
 SECURITY_GROUP_IDS=$(aws ec2 describe-launch-template-versions --launch-template-id ${LAUNCH_TEMPLATE_ID} | jq -r '.LaunchTemplateVersions[0].LaunchTemplateData.NetworkInterfaces[0].Groups | join(",")')
 
-echo "-var hack=true -var subnet_id=${SUBNET_ID} -var security_group_ids='${SECURITY_GROUP_IDS}' -var iam_instance_profile=${NODE_INSTANCE_PROFILE} -var hack_bootstrap_args='${CLUSTER_NAME} --b64-cluster-ca ${CLUSTER_CA} --apiserver-endpoint ${CLUSTER_ENDPOINT}'"
+echo "-var subnet_id=${SUBNET_ID} -var security_group_ids='${SECURITY_GROUP_IDS}' -var iam_instance_profile=${NODE_INSTANCE_PROFILE} -var hack_bootstrap_args='${CLUSTER_NAME} --b64-cluster-ca ${CLUSTER_CA} --apiserver-endpoint ${CLUSTER_ENDPOINT}'"
