@@ -34,9 +34,10 @@ function print_help {
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.25+; false otherwise)"
-  echo "--pause-container-account The AWS account (number) to pull the pause container from"
-  echo "--pause-container-repository-name The AWS ECR repository name to pull the pause container from"
-  echo "--pause-container-version The tag of the pause container"
+  echo "--pause-container-account The AWS account (number) to pull the pause container from. This flag is deprecated and will be removed in a future release."
+  echo "--pause-container-repository-name The AWS ECR repository name to pull the pause container from. This flag is deprecated and will be removed in a future release."
+  echo "--pause-container-version The tag of the pause container. This flag is deprecated and will be removed in a future release."
+  echo "--pause-container-image-uri The image URI for pause image."
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
@@ -119,6 +120,12 @@ while [[ $# -gt 0 ]]; do
     --pause-container-version)
       PAUSE_CONTAINER_VERSION=$2
       log "INFO: --pause-container-version='${PAUSE_CONTAINER_VERSION}'"
+      shift
+      shift
+      ;;
+    --pause-container-image-uri)
+      PAUSE_CONTAINER_IMAGE_URI=$2
+      log "INFO: --pause-container-image-uri='${PAUSE_CONTAINER_IMAGE_URI}'"
       shift
       shift
       ;;
@@ -220,7 +227,6 @@ DNS_CLUSTER_IP="${DNS_CLUSTER_IP:-}"
 KUBELET_EXTRA_ARGS="${KUBELET_EXTRA_ARGS:-}"
 API_RETRY_ATTEMPTS="${API_RETRY_ATTEMPTS:-3}"
 CONTAINERD_CONFIG_FILE="${CONTAINERD_CONFIG_FILE:-}"
-PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.5}"
 IP_FAMILY="${IP_FAMILY:-}"
 SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
@@ -332,10 +338,22 @@ if [ "$MOUNT_BPF_FS" = "true" ]; then
   mount-bpf-fs
 fi
 
+if [ -n "${PAUSE_CONTAINER_ACCOUNT}" ] || [ -n "${PAUSE_CONTAINER_REPOSITORY_NAME}" ] || [ -n "${PAUSE_CONTAINER_VERSION}" ]; then
+  log "INFO: the following flags are now marked as deprecated, it is suggest to use \$PAUSE_CONTAINER_IMAGE_URI instead.\n- \"--pause-container-account\"\n- \"--pause-container-repository-name\"\n- \"--pause-container-version\""
+fi
+
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
 PAUSE_CONTAINER_REPOSITORY_NAME=${PAUSE_CONTAINER_REPOSITORY_NAME:-eks/pause}
 PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/$PAUSE_CONTAINER_REPOSITORY_NAME}
+PAUSE_CONTAINER_VERSION="${PAUSE_CONTAINER_VERSION:-3.5}"
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
+
+# TODO: uncomment this block after PAUSE_CONTAINER_{REPOSITORY_NAME,IMAGE,VERSION} deprecated.
+# PAUSE_CONTAINER_IMAGE_URI="${PAUSE_CONTAINER_IMAGE_URI:-public.ecr.aws/eks-distro/kubernetes/pause:3.5}"
+
+if [ -n "${PAUSE_CONTAINER_IMAGE_URI}" ]; then
+  PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE_URI}
+fi
 
 log "INFO: PAUSE_CONTAINER: $PAUSE_CONTAINER"
 
