@@ -22,7 +22,7 @@
     "launch_block_device_mappings_volume_size": "4",
     "pause_container_version": "3.5",
     "pull_cni_from_github": "true",
-    "remote_folder": "",
+    "remote_folder": "/tmp",
     "runc_version": "1.1.5-1.amzn2",
     "security_group_id": "",
     "sonobuoy_e2e_registry": "",
@@ -33,5 +33,6 @@
     "ssh_username": "ec2-user",
     "subnet_id": "",
     "temporary_security_group_source_cidrs": "",
-    "volume_type": "gp2"
+    "volume_type": "gp2",
+    "working_dir": "{{user `remote_folder`}}/worker"
 }

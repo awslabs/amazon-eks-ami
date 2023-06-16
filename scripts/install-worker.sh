@@ -6,8 +6,6 @@ set -o errexit
 IFS=$'\n\t'
 export AWS_DEFAULT_OUTPUT="json"
 
-TEMPLATE_DIR=${TEMPLATE_DIR:-/tmp/worker}
-
 ################################################################################
 ### Validate Required Arguments ################################################
 ################################################################################
@@ -33,6 +31,7 @@ validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
+validate_env_set WORKING_DIR
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -116,7 +115,7 @@ sudo systemctl restart sshd.service
 ### iptables ###################################################################
 ################################################################################
 sudo mkdir -p /etc/eks
-sudo mv $TEMPLATE_DIR/iptables-restore.service /etc/eks/iptables-restore.service
+sudo mv $WORKING_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 
 ################################################################################
 ### awscli #####################################################
@@ -127,7 +126,8 @@ ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1
 if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
-  AWSCLI_DIR=$(mktemp -d)
+  AWSCLI_DIR="${WORKING_DIR}/awscli-install"
+  mkdir "${AWSCLI_DIR}"
   curl \
     --silent \
     --show-error \
@@ -145,7 +145,7 @@ fi
 ### systemd ####################################################################
 ################################################################################
 
-sudo mv "${TEMPLATE_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
+sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 
 ###############################################################################
 ### Containerd setup ##########################################################
@@ -164,13 +164,13 @@ if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
   echo "containerd config is already present"
 else
-  sudo mv $TEMPLATE_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+  sudo mv $WORKING_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
 fi
 
-sudo mv $TEMPLATE_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
-sudo mv $TEMPLATE_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
-sudo mv $TEMPLATE_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
-sudo mv $TEMPLATE_DIR/pull-image.sh /etc/eks/containerd/pull-image.sh
+sudo mv $WORKING_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
+sudo mv $WORKING_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
+sudo mv $WORKING_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
+sudo mv $WORKING_DIR/pull-image.sh /etc/eks/containerd/pull-image.sh
 sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
 sudo chmod +x /etc/eks/containerd/pull-image.sh
 
@@ -217,7 +217,7 @@ if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
 
   sudo mkdir -p /etc/docker
-  sudo mv $TEMPLATE_DIR/docker-daemon.json /etc/docker/daemon.json
+  sudo mv $WORKING_DIR/docker-daemon.json /etc/docker/daemon.json
   sudo chown root:root /etc/docker/daemon.json
 
   # Enable docker daemon to start on boot.
@@ -230,8 +230,8 @@ fi
 
 # kubelet uses journald which has built-in rotation and capped size.
 # See man 5 journald.conf
-sudo mv $TEMPLATE_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
-sudo mv $TEMPLATE_DIR/logrotate.conf /etc/logrotate.conf
+sudo mv $WORKING_DIR/logrotate-kube-proxy /etc/logrotate.d/kube-proxy
+sudo mv $WORKING_DIR/logrotate.conf /etc/logrotate.conf
 sudo chown root:root /etc/logrotate.d/kube-proxy
 sudo chown root:root /etc/logrotate.conf
 sudo mkdir -p /var/log/journal
@@ -314,19 +314,19 @@ sudo rm ./*.sha256
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
-sudo mv $TEMPLATE_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv $WORKING_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
 
 # Inject CSIServiceAccountToken feature gate to kubelet config if kubernetes version starts with 1.20.
 # This is only injected for 1.20 since CSIServiceAccountToken will be moved to beta starting 1.21.
 if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
-  KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $TEMPLATE_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
-  echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $TEMPLATE_DIR/kubelet-config.json
+  KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
+  echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $WORKING_DIR/kubelet-config.json
 fi
 
-sudo mv $TEMPLATE_DIR/kubelet.service /etc/systemd/system/kubelet.service
+sudo mv $WORKING_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
-sudo mv $TEMPLATE_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
+sudo mv $WORKING_DIR/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 sudo chown root:root /etc/kubernetes/kubelet/kubelet-config.json
 
 sudo systemctl daemon-reload
@@ -338,17 +338,17 @@ sudo systemctl disable kubelet
 ################################################################################
 
 sudo mkdir -p /etc/eks
-sudo mv $TEMPLATE_DIR/get-ecr-uri.sh /etc/eks/get-ecr-uri.sh
+sudo mv $WORKING_DIR/get-ecr-uri.sh /etc/eks/get-ecr-uri.sh
 sudo chmod +x /etc/eks/get-ecr-uri.sh
-sudo mv $TEMPLATE_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
-sudo mv $TEMPLATE_DIR/bootstrap.sh /etc/eks/bootstrap.sh
+sudo mv $WORKING_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
+sudo mv $WORKING_DIR/bootstrap.sh /etc/eks/bootstrap.sh
 sudo chmod +x /etc/eks/bootstrap.sh
-sudo mv $TEMPLATE_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
+sudo mv $WORKING_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
 sudo chmod +x /etc/eks/max-pods-calculator.sh
 
 SONOBUOY_E2E_REGISTRY="${SONOBUOY_E2E_REGISTRY:-}"
 if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
-  sudo mv $TEMPLATE_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
+  sudo mv $WORKING_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
   sudo sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
 fi
 
@@ -366,7 +366,7 @@ fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
-sudo mv $TEMPLATE_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
+sudo mv $WORKING_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 
 ################################################################################
 ### Cache Images ###############################################################
@@ -489,13 +489,13 @@ sudo yum install -y amazon-ssm-agent
 ################################################################################
 
 BASE_AMI_ID=$(imds /latest/meta-data/ami-id)
-cat << EOF > /tmp/release
+cat << EOF > "${WORKING_DIR}/release"
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
 ARCH="$(uname -m)"
 EOF
-sudo mv /tmp/release /etc/eks/release
+sudo mv "${WORKING_DIR}/release" /etc/eks/release
 sudo chown -R root:root /etc/eks
 
 ################################################################################
@@ -520,7 +520,7 @@ echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
 ### adding log-collector-script ################################################
 ################################################################################
 sudo mkdir -p /etc/eks/log-collector-script/
-sudo cp $TEMPLATE_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
+sudo cp $WORKING_DIR/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/
 
 ################################################################################
 ### Remove Yum Update from cloud-init config ###################################
