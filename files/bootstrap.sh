@@ -325,6 +325,11 @@ if [ "$MOUNT_BPF_FS" = "true" ]; then
   mount-bpf-fs
 fi
 
+cp -v /etc/eks/configure-clocksource.service /etc/systemd/system/configure-clocksource.service
+chown root:root /etc/systemd/system/configure-clocksource.service
+systemctl daemon-reload
+systemctl enable --now configure-clocksource
+
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
 PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
