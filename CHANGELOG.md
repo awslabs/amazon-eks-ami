@@ -1,6 +1,6 @@
 # Changelog
 
-### AMI Release v20230607
+## AMI Release v20230607
 * amazon-eks-gpu-node-1.27-v20230607
 * amazon-eks-gpu-node-1.26-v20230607
 * amazon-eks-gpu-node-1.25-v20230607
