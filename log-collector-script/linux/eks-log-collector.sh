@@ -50,6 +50,7 @@ REQUIRED_UTILS=(
 
 COMMON_DIRECTORIES=(
   kernel
+  modinfo
   system
   docker
   containerd
@@ -263,6 +264,7 @@ collect() {
   get_region
   get_common_logs
   get_kernel_info
+  get_modinfo
   get_mounts_info
   get_selinux_info
   get_iptables_info
@@ -384,6 +386,12 @@ get_kernel_info() {
   uname -a > "${COLLECT_DIR}/kernel/uname.txt"
 
   ok
+}
+
+# collect modinfo on specific modules for debugging purposes
+get_modinfo() {
+  try "collect modinfo"
+  modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
 }
 
 get_docker_logs() {
