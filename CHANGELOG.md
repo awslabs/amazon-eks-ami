@@ -53,9 +53,9 @@ Notable changes:
 - Update Kernel to 5.4.247-162.350.amzn2 to address [ALASKERNEL-5.4-2023-048](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-048.html), [CVE-2023-1206](https://alas.aws.amazon.com/cve/html/CVE-2023-1206.html)
 - Update Kernel to 5.10.184-175.731.amzn2 to address [ALASKERNEL-5.10-2023-035](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-035.html), [CVE-2023-1206](https://alas.aws.amazon.com/cve/html/CVE-2023-1206.html)
 - Use recommended clocksources ([#1328](https://github.com/awslabs/amazon-eks-ami/pull/1328))
-- Add configurable working directory ([#1231]((https://github.com/awslabs/amazon-eks-ami/pull/1231))
+- Add configurable working directory ([#1231](https://github.com/awslabs/amazon-eks-ami/pull/1231))
 - Update eni-max-pods.txt ([#1330](https://github.com/awslabs/amazon-eks-ami/pull/1330))
-- Mount bpffs by default on 1.25+ ([#1320]((https://github.com/awslabs/amazon-eks-ami/pull/1320))
+- Mount bpffs by default on 1.25+ ([#1320](https://github.com/awslabs/amazon-eks-ami/pull/1320))
 
 ### AMI Release v20230607
 * amazon-eks-gpu-node-1.27-v20230607
