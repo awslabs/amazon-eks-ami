@@ -59,7 +59,6 @@ sudo yum install -y \
   aws-cfn-bootstrap \
   chrony \
   conntrack \
-  curl \
   ec2-instance-connect \
   ethtool \
   ipvsadm \
@@ -73,8 +72,20 @@ sudo yum install -y \
   mdadm \
   pigz
 
-# Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
-sudo package-cleanup --oldkernels --count=1 -y
+# skip kernel version cleanup on al2023
+if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+  # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
+  sudo package-cleanup --oldkernels --count=1 -y
+fi
+
+# packages that need special handling
+if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+  # exists in al2023 only (needed by kubelet)
+  sudo yum install -y iptables-legacy
+else
+  # curl-minimal already exists in al2023 so install curl only on al2
+  sudo yum install -y curl
+fi
 
 sudo yum versionlock kernel-$(uname -r)
 

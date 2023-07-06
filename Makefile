@@ -74,6 +74,12 @@ ifeq (, $(SHELLCHECK_COMMAND))
 endif
 SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
 
+.PHONY: transform-al2-to-al2023
+transform-al2-to-al2023:
+	PACKER_TEMPLATE_FILE=$(PACKER_TEMPLATE_FILE) \
+	PACKER_DEFAULT_VARIABLE_FILE=$(PACKER_DEFAULT_VARIABLE_FILE) \
+		hack/transform-al2-to-al2023.sh
+
 .PHONY: lint
 lint: ## Check the source files for syntax and format issues
 	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
