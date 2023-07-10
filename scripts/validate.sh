@@ -45,8 +45,6 @@ else
   exit 1
 fi
 
-echo "Verifying that the package versionlocks are correct..."
-
 function versionlock-entries() {
   # the format of this output is EPOCH:NAME-VERSION-RELEASE.ARCH
   # more info in yum-versionlock(1)
@@ -58,21 +56,29 @@ function versionlock-packages() {
   versionlock-entries | xargs -I '{}' rpm --query '{}' --queryformat '%{NAME}\n'
 }
 
-for ENTRY in $(versionlock-entries); do
-  if ! rpm --query "$ENTRY" &> /dev/null; then
-    echo "There is no package matching the versionlock entry: '$ENTRY'"
-    exit 1
+function verify-versionlocks() {
+  for ENTRY in $(versionlock-entries); do
+    if ! rpm --query "$ENTRY" &> /dev/null; then
+      echo "There is no package matching the versionlock entry: '$ENTRY'"
+      exit 1
+    fi
+  done
+
+  LOCKED_PACKAGES=$(versionlock-packages | wc -l)
+  UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
+  if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
+    echo "Package(s) have multiple version locks!"
+    versionlock-entries
   fi
-done
 
-LOCKED_PACKAGES=$(versionlock-packages | wc -l)
-UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
-if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
-  echo "Package(s) have multiple version locks!"
-  versionlock-entries
+  echo "Package versionlocks are correct!"
+}
+
+# run verify-versionlocks on al2 only, as it is not needed on al2023
+if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+  echo "Verifying that the package versionlocks are correct..."
+  verify-versionlocks
 fi
-
-echo "Package versionlocks are correct!"
 
 REQUIRED_COMMANDS=(unpigz)
 
