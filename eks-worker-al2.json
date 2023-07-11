@@ -32,7 +32,6 @@
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
-    "sonobuoy_e2e_registry": null,
     "source_ami_filter_name": null,
     "source_ami_id": null,
     "source_ami_owners": null,
@@ -173,7 +172,6 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
         "WORKING_DIR={{user `working_dir`}}"

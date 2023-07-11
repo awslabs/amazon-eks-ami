@@ -343,12 +343,6 @@ sudo chmod +x /etc/eks/bootstrap.sh
 sudo mv $WORKING_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
 sudo chmod +x /etc/eks/max-pods-calculator.sh
 
-SONOBUOY_E2E_REGISTRY="${SONOBUOY_E2E_REGISTRY:-}"
-if [[ -n "$SONOBUOY_E2E_REGISTRY" ]]; then
-  sudo mv $WORKING_DIR/sonobuoy-e2e-registry-config /etc/eks/sonobuoy-e2e-registry-config
-  sudo sed -i s,SONOBUOY_E2E_REGISTRY,$SONOBUOY_E2E_REGISTRY,g /etc/eks/sonobuoy-e2e-registry-config
-fi
-
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
