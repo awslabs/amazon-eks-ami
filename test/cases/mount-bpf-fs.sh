@@ -49,7 +49,7 @@ fi
 export -nf mount
 rm $SYSTEMD_UNIT
 
-echo "--> Should default to true on 1.27+"
+echo "--> Should default to true"
 export KUBELET_VERSION=v1.27.0-eks-ba74326
 MOUNT_BPF_FS_MOCK=$(mktemp)
 function mount-bpf-fs() {
@@ -72,8 +72,8 @@ if [ ! "$(cat $MOUNT_BPF_FS_MOCK)" = "called" ]; then
 fi
 export -nf mount-bpf-fs
 
-echo "--> Should default to false on 1.24-"
-export KUBELET_VERSION=v1.24.0-eks-ba74326
+echo "--> Should be disabled by flag"
+export KUBELET_VERSION=v1.27.0-eks-ba74326
 MOUNT_BPF_FS_MOCK=$(mktemp)
 function mount-bpf-fs() {
   echo "called" >> $MOUNT_BPF_FS_MOCK
@@ -84,6 +84,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
+  --mount-bpf-fs false \
   test || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
