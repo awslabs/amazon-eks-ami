@@ -113,23 +113,23 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-05-11
+	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-06-30
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.13 kubernetes_build_date=2023-05-11
+	$(MAKE) k8s kubernetes_version=1.24.15 kubernetes_build_date=2023-06-30
 
 .PHONY: 1.25
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
-	$(MAKE) k8s kubernetes_version=1.25.9 kubernetes_build_date=2023-05-11
+	$(MAKE) k8s kubernetes_version=1.25.11 kubernetes_build_date=2023-06-30
 
 .PHONY: 1.26
 1.26: ## Build EKS Optimized AL2 AMI - K8s 1.26
-	$(MAKE) k8s kubernetes_version=1.26.4 kubernetes_build_date=2023-05-11
+	$(MAKE) k8s kubernetes_version=1.26.6 kubernetes_build_date=2023-06-30
 
 .PHONY: 1.27
 1.27: ## Build EKS Optimized AL2 AMI - K8s 1.27
-	$(MAKE) k8s kubernetes_version=1.27.1 kubernetes_build_date=2023-04-19
+	$(MAKE) k8s kubernetes_version=1.27.3 kubernetes_build_date=2023-06-30
 	
 .PHONY: clean
 clean:
