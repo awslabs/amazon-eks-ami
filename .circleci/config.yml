@@ -5,7 +5,7 @@ jobs:
   prepare_env:
     # job to prepare build environment
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
     working_directory: ~/aws_ecr_ami
     steps:
       - checkout:
@@ -16,7 +16,7 @@ jobs:
             - aws_ecr_ami
   validate:
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
     steps:
       - attach_workspace:
             at: .
@@ -25,7 +25,7 @@ jobs:
           command: cd aws_ecr_ami && make -e -j2 all-validate
   build:
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:0.0.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
     steps:
       - attach_workspace:
             at: .
@@ -66,6 +66,7 @@ workflows:
             branches:
               only:
                 - dev
+                - test_packer_1_9_1
           requires:
             - prepare_env
       - build:
@@ -90,3 +91,4 @@ workflows:
             branches:
               only:
                 - dev
+                - test_packer_1_9_1
