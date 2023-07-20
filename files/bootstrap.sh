@@ -33,7 +33,7 @@ function print_help {
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
-  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.25+; false otherwise)"
+  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
@@ -224,11 +224,7 @@ if [[ ! -z ${LOCAL_DISKS} ]]; then
   setup-local-disks "${LOCAL_DISKS}"
 fi
 
-DEFAULT_MOUNT_BPF_FS="true"
-if vercmp "$KUBELET_VERSION" lt "1.25.0"; then
-  DEFAULT_MOUNT_BPF_FS="false"
-fi
-MOUNT_BPF_FS="${MOUNT_BPF_FS:-$DEFAULT_MOUNT_BPF_FS}"
+MOUNT_BPF_FS="${MOUNT_BPF_FS:-true}"
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
