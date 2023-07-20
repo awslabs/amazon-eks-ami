@@ -7,6 +7,7 @@ address = "/run/containerd/containerd.sock"
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
 default_runtime_name = "runc"
+discard_unpacked_layers = true
 
 [plugins."io.containerd.grpc.v1.cri"]
 sandbox_image = "SANDBOX_IMAGE"
