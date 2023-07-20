@@ -10,6 +10,7 @@ default_runtime_name = "runc"
 
 [plugins."io.containerd.grpc.v1.cri"]
 sandbox_image = "SANDBOX_IMAGE"
+discard_unpacked_layers = true
 
 [plugins."io.containerd.grpc.v1.cri".registry]
 config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
