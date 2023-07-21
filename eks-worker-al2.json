@@ -114,6 +114,7 @@
   "provisioners": [
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "mkdir -p {{user `working_dir`}}",
         "mkdir -p {{user `working_dir`}}/log-collector-script"
@@ -139,6 +140,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "sudo chmod -R a+x {{user `working_dir`}}/bin/",
         "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
@@ -215,6 +217,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "rm -rf {{user `working_dir`}}"
       ]
