@@ -468,6 +468,11 @@ m7gd.8xlarge 234
 m7gd.large 29
 m7gd.medium 8
 m7gd.xlarge 58
+m7i-flex.2xlarge 58
+m7i-flex.4xlarge 234
+m7i-flex.8xlarge 234
+m7i-flex.large 29
+m7i-flex.xlarge 58
 mac1.metal 234
 mac2.metal 234
 p2.16xlarge 234
