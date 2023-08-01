@@ -37,6 +37,7 @@
     "source_ami_owners": null,
     "ssh_interface": null,
     "ssh_username": null,
+    "ssm_agent_version": null,
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
     "volume_type": null,
@@ -105,7 +106,8 @@
         "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}",
+        "ssm_agent_version": "{{ user `ssm_agent_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
@@ -174,7 +176,8 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
-        "WORKING_DIR={{user `working_dir`}}"
+        "WORKING_DIR={{user `working_dir`}}",
+        "SSM_AGENT_VERSION={{user `ssm_agent_version`}}"
       ]
     },
     {

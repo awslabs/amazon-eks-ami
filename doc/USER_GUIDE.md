@@ -64,12 +64,12 @@ Users have the following options for specifying their own values:
 | `remote_folder` | ```{{user `remote_folder`}}/worker``` | Directory path for shell provisioner scripts on the builder instance |
 | `runc_version` | ```{{user `remote_folder`}}/worker``` |  |
 | `security_group_id` | `""` |  |
-| `sonobuoy_e2e_registry` | `""` |  |
 | `source_ami_filter_name` | ```{{user `remote_folder`}}/worker``` |  |
 | `source_ami_id` | `""` |  |
 | `source_ami_owners` | ```{{user `remote_folder`}}/worker``` |  |
 | `ssh_interface` | `""` |  |
 | `ssh_username` | ```{{user `remote_folder`}}/worker``` |  |
+| `ssm_agent_version` | ```{{user `remote_folder`}}/worker``` |  |
 | `subnet_id` | `""` |  |
 | `temporary_security_group_source_cidrs` | `""` |  |
 | `volume_type` | ```{{user `remote_folder`}}/worker``` |  |
