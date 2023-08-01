@@ -1,5 +1,53 @@
 # Changelog
 
+### AMI Release v20230728
+* amazon-eks-gpu-node-1.27-v20230728
+* amazon-eks-gpu-node-1.26-v20230728
+* amazon-eks-gpu-node-1.25-v20230728
+* amazon-eks-gpu-node-1.24-v20230728
+* amazon-eks-gpu-node-1.23-v20230728
+* amazon-eks-arm64-node-1.27-v20230728
+* amazon-eks-arm64-node-1.26-v20230728
+* amazon-eks-arm64-node-1.25-v20230728
+* amazon-eks-arm64-node-1.24-v20230728
+* amazon-eks-arm64-node-1.23-v20230728
+* amazon-eks-node-1.27-v20230728
+* amazon-eks-node-1.26-v20230728
+* amazon-eks-node-1.25-v20230728
+* amazon-eks-node-1.24-v20230728
+* amazon-eks-node-1.23-v20230728
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.27.3-20230728`
+* `1.26.6-20230728`
+* `1.25.11-20230728`
+* `1.24.15-20230728`
+* `1.23.17-20230728`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.27.3/2023-06-30/
+* s3://amazon-eks/1.26.6/2023-06-30/
+* s3://amazon-eks/1.25.11/2023-06-30/
+* s3://amazon-eks/1.24.15/2023-06-30/
+* s3://amazon-eks/1.23.17/2023-06-30/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.249-163.359.amzn2
+  * Kubernetes 1.24 and above: 5.10.184-175.749.amzn2
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.1
+* `runc`: 1.1.5-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
+
+Notable changes:
+- Kernel fix for `CVE-2023-3117` and `CVE-2023-35001` with new versions: [5.10 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-037.html) and [5.4 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-049.html) 
+- Mount bpffs on all supported Kubernetes versions. ([#1349](https://github.com/awslabs/amazon-eks-ami/pull/1349))
+- Enable discard_unpacked_layers by default to clean up compressed image layers in containerd's content store.([#1360](https://github.com/awslabs/amazon-eks-ami/pull/1360))
+
 ### AMI Release v20230711
 * amazon-eks-gpu-node-1.27-v20230711
 * amazon-eks-gpu-node-1.26-v20230711
