@@ -1,5 +1,9 @@
 # Changelog
 
+### 2023-08-07
+
+* Upgrade repository with upstream repo: `awslabs/amazon-eks-ami`, with tag `v20230607`
+
 ### 2020-05-07
 
 * Switch to Docker 19.03.6

@@ -1,34 +1,3 @@
-# commands:
-P := packer
-
-#Fluence Edited Variables
-AWS_DEFAULT_REGION = us-west-2
-build_tag := $(or $(BUILD_TAG), $(shell date +%s))
-encrypted := true
-PACKER_BINARY = docker run -v /mnt/credentials:/root/.aws/credentials \
-	-e AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials \
-	-v `pwd`/:/workspace -w /workspace \
-	876270261134.dkr.ecr.us-west-2.amazonaws.com/devops/packer:1.6.1
-PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry build_tag encrypted
-
-ifndef VPC_ID
-  $(error VPC_ID is undefined)
-endif
-
-ifndef SUBNET_ID
-  $(error SUBNET_ID is undefined)
-endif
-
-ifndef AMI_USERS
-  $(error AMI_USERS is undefined)
-endif
-
-ifndef KMS_KEY_ID
-  $(error KMS_KEY_ID is undefined)
-endif
-
-#PACKER_BINARY ?= packer
-#PACKER_VARIABLES := aws_region ami_name binary_bucket_name binary_bucket_region kubernetes_version kubernetes_build_date kernel_version docker_version containerd_version runc_version cni_plugin_version source_ami_id source_ami_owners source_ami_filter_name arch instance_type security_group_id additional_yum_repos pull_cni_from_github sonobuoy_e2e_registry
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 PACKER_DEFAULT_VARIABLE_FILE ?= $(MAKEFILE_DIR)/eks-worker-al2-variables.json
@@ -59,11 +28,11 @@ endif
 
 arch ?= x86_64
 ifeq ($(arch), arm64)
-instance_type ?= m6g.large
-ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
+	instance_type ?= m6g.large
+	ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
 else
-instance_type ?= m4.large
-ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
+	instance_type ?= m5.large
+	ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
 endif
 
 ifeq ($(aws_region), cn-northwest-1)
@@ -120,8 +89,6 @@ PACKER_VAR_FLAGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
 $(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
 $(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
-all-validate: 1.22-validate
-
 .PHONY: validate
 validate: ## Validate packer config
 	$(PACKER_BINARY) validate $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
@@ -132,7 +99,6 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
 
 # Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
-
 
 .PHONY: 1.22
 1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
@@ -166,24 +132,3 @@ clean:
 .PHONY: help
 help: ## Display help
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make \033[36m<target>\033[0m\n"} /^[\.a-zA-Z_0-9\-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-.PHONY: 1.21-build
-1.21-build:
-	$(MAKE) ci-build kubernetes_version=1.21.14 kubernetes_build_date=2022-10-31 pull_cni_from_github=true
-
-.PHONY: 1.22-validate
-1.22-validate:
-	$(MAKE) ci-validate  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
-
-.PHONY: 1.22-build
-1.22-build:
-	$(MAKE) ci-build  kubernetes_version=1.22.17 kubernetes_build_date=2023-01-30 pull_cni_from_github=true
-
-# Circle CI pipeline
-.PHONY: ci-validate
-ci-validate:
-	$(P) validate $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
-
-.PHONY: ci-build
-ci-build:
-	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(P) build $(foreach packerVar,$(PACKER_VARIABLES), $(if $($(packerVar)),--var $(packerVar)='$($(packerVar))',)) eks-worker-al2.json
