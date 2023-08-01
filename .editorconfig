@@ -1,0 +1,11 @@
+# ensure that these rules are equivalent to the flags to shfmt in the Makefile.
+# we can't use this file with shfmt directly because there's no way to express
+# shebang matching on files without the `sh` extension.
+[*.sh]
+indent_style       = space
+indent_size        = 2
+binary_next_line   = true
+switch_case_indent = true
+space_redirects    = true
+keep_padding       = false
+function_next_line = false

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+
+SYSTEMD_UNIT_DIR="/etc/systemd/system"
+SYSTEMD_UNIT="sys-fs-bpf.mount"
+SYSTEMD_UNIT_PATH="$SYSTEMD_UNIT_DIR/$SYSTEMD_UNIT"
+MOUNT_POINT="/sys/fs/bpf"
+FS_TYPE="bpf"
+
+MOUNT_BPF_FS_DEBUG=${MOUNT_BPF_FS_DEBUG:-false}
+function debug() {
+  if [ "$MOUNT_BPF_FS_DEBUG" = "true" ]; then
+    echo >&2 "DEBUG:" "$@"
+  fi
+}
+
+if [ $(mount --types "$FS_TYPE" | wc -l) -gt 0 ]; then
+  debug "$FS_TYPE filesystem already mounted!"
+  exit 0
+elif mount | awk '{print $3}' | grep "$MOUNT_POINT"; then
+  debug "mount point at $MOUNT_POINT already exists!"
+  exit 0
+elif [ -f "$SYSTEMD_UNIT_PATH" ]; then
+  debug "systemd unit at $SYSTEMD_UNIT_PATH already exists!"
+  exit 0
+fi
+
+mkdir -p "$SYSTEMD_UNIT_DIR"
+cat > "$SYSTEMD_UNIT_PATH" << EOL
+[Unit]
+Description=BPF mounts
+Documentation=https://docs.kernel.org/bpf/index.html
+DefaultDependencies=no
+Before=local-fs.target umount.target
+After=swap.target
+
+[Mount]
+What=bpffs
+Where=$MOUNT_POINT
+Type=bpf
+Options=rw,nosuid,nodev,noexec,relatime,mode=700
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+systemctl enable "$SYSTEMD_UNIT"
+systemctl start "$SYSTEMD_UNIT"
