@@ -69,6 +69,7 @@ Users have the following options for specifying their own values:
 | `source_ami_owners` | ```{{user `remote_folder`}}/worker``` |  |
 | `ssh_interface` | `""` |  |
 | `ssh_username` | ```{{user `remote_folder`}}/worker``` |  |
+| `ssm_agent_rpm_bucket_region` | ```{{user `remote_folder`}}/worker``` |  |
 | `ssm_agent_version` | ```{{user `remote_folder`}}/worker``` |  |
 | `subnet_id` | `""` |  |
 | `temporary_security_group_source_cidrs` | `""` |  |
