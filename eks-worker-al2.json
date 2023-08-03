@@ -37,7 +37,6 @@
     "source_ami_owners": null,
     "ssh_interface": null,
     "ssh_username": null,
-    "ssm_agent_rpm_bucket_region": null,
     "ssm_agent_version": null,
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
@@ -178,7 +177,6 @@
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
         "WORKING_DIR={{user `working_dir`}}",
-        "SSM_AGENT_RPM_BUCKET_REGION={{user `ssm_agent_rpm_bucket_region`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}"
       ]
     },
