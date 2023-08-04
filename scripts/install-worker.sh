@@ -474,7 +474,12 @@ fi
 ### SSM Agent ##################################################################
 ################################################################################
 
-sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+echo "Installing amazon-ssm-agent"
+if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+  sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+else
+  sudo yum install -y amazon-ssm-agent
+fi
 
 ################################################################################
 ### AMI Metadata ###############################################################
