@@ -32,6 +32,7 @@ validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
 validate_env_set WORKING_DIR
+validate_env_set SSM_AGENT_VERSION
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -473,7 +474,12 @@ fi
 ### SSM Agent ##################################################################
 ################################################################################
 
-sudo yum install -y amazon-ssm-agent
+echo "Installing amazon-ssm-agent"
+if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+  sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+else
+  sudo yum install -y amazon-ssm-agent
+fi
 
 ################################################################################
 ### AMI Metadata ###############################################################
