@@ -317,7 +317,7 @@ sudo chown root:root /var/lib/kubelet/kubeconfig
 # Inject CSIServiceAccountToken feature gate to kubelet config if kubernetes version starts with 1.20.
 # This is only injected for 1.20 since CSIServiceAccountToken will be moved to beta starting 1.21.
 if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
-  KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates -= {CSIServiceAccountToken: true}')
+  KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
   echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $WORKING_DIR/kubelet-config.json
 fi
 
