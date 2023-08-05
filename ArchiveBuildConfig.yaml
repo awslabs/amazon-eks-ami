@@ -7,8 +7,8 @@
 dependencies:
   source:
     dirs:
-      - src: files/
-      - src: scripts/
+      - src: boot/
+      - src: build/
       - src: log-collector-script/
     files:
       - src: Makefile

@@ -268,7 +268,7 @@ echo "$(jq ".registryPullQPS=20 | .registryBurst=40" /etc/kubernetes/kubelet/kub
 There are a couple of important caveats here:
 
 1. If you update the `kubelet` config file after `kubelet` has already started (i.e. `bootstrap.sh` already ran), you'll need to restart `kubelet` to pick up the latest configuration.
-2. [bootstrap.sh](https://github.com/awslabs/amazon-eks-ami/blob/master/files/bootstrap.sh) does modify a few fields, like `kubeReserved` and `evictionHard`, so you'd need to modify the config after the bootstrap script is run and restart `kubelet` to overwrite those properties.
+2. [bootstrap.sh](https://github.com/awslabs/amazon-eks-ami/blob/master/boot/bootstrap.sh) does modify a few fields, like `kubeReserved` and `evictionHard`, so you'd need to modify the config after the bootstrap script is run and restart `kubelet` to overwrite those properties.
 
 **View active kubelet config**
 
@@ -310,15 +310,15 @@ If `kernel_version` is not set:
 - For Kubernetes 1.23 and below, `5.4` is used.
 - For Kubernetes 1.24 and above, `5.10` is used.
 
-The [upgrade_kernel.sh script](../scripts/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
+The [upgrade_kernel.sh script](../build/upgrade-kernel.sh) contains the logic for updating and upgrading the kernel.
 
 ---
 
 ## Updating known instance types
 
-`files/bootstrap.sh` configures the maximum number of pods on a node based off of the number of ENIs available, which is determined by the instance type. Larger instances generally have more ENIs. The number of ENIs limits how many IPV4 addresses are available on an instance, and we need one IP address per pod. You can [see this file](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/scripts/gen_vpc_ip_limits.go) for the code that calculates the max pods for more information.
+`boot/bootstrap.sh` configures the maximum number of pods on a node based off of the number of ENIs available, which is determined by the instance type. Larger instances generally have more ENIs. The number of ENIs limits how many IPV4 addresses are available on an instance, and we need one IP address per pod. You can [see this file](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/scripts/gen_vpc_ip_limits.go) for the code that calculates the max pods for more information.
 
-To add support for new instance types, at a minimum, we need to update `files/eni-max-pods.txt` using the [amazon-vpc-cni-k8s package.](https://github.com/aws/amazon-vpc-cni-k8s) to set the number of max pods available for those instance types. If the instance type is not on the list, `bootstrap.sh` will fail when the node is started.
+To add support for new instance types, at a minimum, we need to update `boot/eni-max-pods.txt` using the [amazon-vpc-cni-k8s package.](https://github.com/aws/amazon-vpc-cni-k8s) to set the number of max pods available for those instance types. If the instance type is not on the list, `bootstrap.sh` will fail when the node is started.
 
 ```
 $ git clone git@github.com:aws/amazon-vpc-cni-k8s.git
@@ -328,7 +328,7 @@ $ make generate-limits
 # misc/eni-max-pods.txt should be generated
 
 # Copy the generated file to this repo, something like this:
-$ cp misc/eni-max-pods.txt ../amazon-eks-ami/files/
+$ cp misc/eni-max-pods.txt ../amazon-eks-ami/boot/
 
 # Verify that expected types were added
 $ git diff

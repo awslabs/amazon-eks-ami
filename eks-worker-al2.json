@@ -124,14 +124,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+      "script": "{{template_dir}}/build/01-install-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/files/",
+      "source": "{{template_dir}}/boot/",
       "destination": "{{user `working_dir`}}"
     },
     {
@@ -151,7 +151,7 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "expect_disconnect": true,
       "pause_after": "90s",
-      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
+      "script": "{{template_dir}}/build/02-upgrade-kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
@@ -160,7 +160,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install-worker.sh",
+      "script": "{{template_dir}}/build/03-install-worker.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
@@ -183,12 +183,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup.sh"
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "script": "{{template_dir}}/build/04-cleanup-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
@@ -196,15 +191,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/validate.sh",
-      "environment_vars": [
-        "KERNEL_VERSION={{user `kernel_version`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/generate-version-info.sh",
+      "script": "{{template_dir}}/build/05-generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
       "environment_vars": [
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
@@ -216,6 +203,19 @@
       "source": "{{user `working_dir`}}/version-info.json",
       "destination": "{{ user `ami_name` }}-version-info.json"
     },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/build/06-cleanup.sh"
+    },    
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/build/07-validate.sh",
+      "environment_vars": [
+        "KERNEL_VERSION={{user `kernel_version`}}"
+      ]
+    },    
     {
       "type": "shell",
       "inline": [
