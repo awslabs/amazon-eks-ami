@@ -12,4 +12,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: pip install mkdocs mkdocs-material
-    - run: mkdocs gh-deploy
+    - run: mkdocs gh-deploy --strict --no-history --force
