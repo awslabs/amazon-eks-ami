@@ -1,0 +1,13 @@
+name: Deploy documentation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'master'
+jobs:
+  mkdocs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: pip install mkdocs mkdocs-material
+    - run: mkdocs gh-deploy

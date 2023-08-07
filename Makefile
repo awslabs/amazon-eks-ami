@@ -86,7 +86,7 @@ transform-al2-to-al2023:
 		hack/transform-al2-to-al2023.sh
 
 .PHONY: lint
-lint: ## Check the source files for syntax and format issues
+lint: lint-docs ## Check the source files for syntax and format issues
 	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
 	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
 
@@ -130,7 +130,11 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 .PHONY: 1.27
 1.27: ## Build EKS Optimized AL2 AMI - K8s 1.27
 	$(MAKE) k8s kubernetes_version=1.27.3 kubernetes_build_date=2023-06-30
-	
+
+.PHONY: lint-docs
+lint-docs: ## Lint the docs
+	hack/lint-docs.sh
+
 .PHONY: clean
 clean:
 	rm *-manifest.json

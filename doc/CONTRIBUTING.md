@@ -46,7 +46,7 @@ When submitting PRs, we want to verify that there are no regressions in the AMI 
 
 **Test #1: Verify that the unit tests pass**
 
-Please add a test case for your changes, if possible. See the [unit test README](test/README.md) for more information. These tests will be run automatically for every pull request.
+Please add a test case for your changes, if possible. See the [unit test README](https://github.com/awslabs/amazon-eks-ami/tree/master/test#readme) for more information. These tests will be run automatically for every pull request.
 
 ```
 make test

@@ -1,0 +1,19 @@
+site_name: Amazon EKS AMI
+docs_dir: doc/
+site_description: Build template and runtime resources for the Amazon EKS AMI
+repo_name: awslabs/amazon-eks-ami
+repo_url: https://github.com/awslabs/amazon-eks-ami
+nav:
+  - 'Overview': README.md
+  - 'User Guide': USER_GUIDE.md
+  - 'Changelog': CHANGELOG.md
+  - 'Community':
+    - 'Contribution guidelines': CONTRIBUTING.md
+    - 'Code of Conduct': CODE_OF_CONDUCT.md
+
+theme:
+  name: material
+  palette:
+    primary: black
+  features:
+    - navigation.sections

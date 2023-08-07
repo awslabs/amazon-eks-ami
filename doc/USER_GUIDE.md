@@ -2,23 +2,11 @@
 
 This document includes details about using the AMI template and the resulting AMIs.
 
-1. [AMI template variables](#ami-template-variables)
-1. [Building against other versions of Kubernetes binaries](#building-against-other-versions-of-kubernetes-binaries)
-1. [Providing your own Kubernetes binaries](#providing-your-own-kubernetes-binaries)
-1. [Container image caching](#container-image-caching)
-1. [IAM permissions](#iam-permissions)
-1. [Customizing kubelet config](#customizing-kubelet-config)
-1. [AL2 and Linux kernel information](#al2-and-linux-kernel-information)
-1. [Updating known instance types](#updating-known-instance-types)
-1. [Version-locked packages](#version-locked-packages)
-1. [Image credential provider plugins](#image-credential-provider-plugins)
-1. [Ephemeral Storage](#ephemeral-storage)
-
 ---
 
 ## AMI template variables
 
-Default values for most variables are defined in [a default variable file](eks-worker-al2-variables.json).
+Default values for most variables are defined in [a default variable file](https://github.com/awslabs/amazon-eks-ami/blob/master/eks-worker-al2-variables.json).
 
 Users have the following options for specifying their own values:
 
@@ -310,7 +298,7 @@ If `kernel_version` is not set:
 - For Kubernetes 1.23 and below, `5.4` is used.
 - For Kubernetes 1.24 and above, `5.10` is used.
 
-The [upgrade_kernel.sh script](../scripts/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
+The [upgrade_kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/master/scripts/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
 
 ---
 

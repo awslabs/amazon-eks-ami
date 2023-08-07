@@ -44,7 +44,7 @@ The Makefile chooses a particular kubelet binary to use per Kubernetes version w
 
 ## 👩‍💻 Using the AMI
 
-The [AMI user guide](doc/USER_GUIDE.md) has details about the AMI's internals, and the [EKS user guide](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html#launch-template-custom-ami) explains how to use a custom AMI in a managed node group.
+The [AMI user guide](https://awslabs.github.io/amazon-eks-ami/USER_GUIDE/) has details about the AMI's internals, and the [EKS user guide](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html#launch-template-custom-ami) explains how to use a custom AMI in a managed node group.
 
 ## 🔒 Security
 
