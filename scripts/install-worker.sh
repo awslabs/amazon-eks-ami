@@ -78,12 +78,6 @@ sudo package-cleanup --oldkernels --count=1 -y
 
 sudo yum versionlock kernel-$(uname -r)
 
-# Fluence packages
-sudo yum install -y \
-    htop \
-    screen \
-    nmap
-
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
 
