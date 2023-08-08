@@ -5,33 +5,29 @@ set -o nounset
 set -o errexit
 
 if [[ -z "$KERNEL_VERSION" ]]; then
-    # Save for resetting
-    OLDIFS=$IFS
-    # Makes 5.4 kernel the default on 1.19 and higher
-    IFS='.'
-    # Convert kubernetes version in an array to compare versions
-    read -ra ADDR <<< "$KUBERNETES_VERSION"
-    # Reset
-    IFS=$OLDIFS
-
-    if (( ADDR[0] == 1 && ADDR[1] < 19 )); then
-        KERNEL_VERSION=4.14
-    else
-        KERNEL_VERSION=5.4
-    fi
-
-    echo "kernel_version is unset. Setting to $KERNEL_VERSION based on kubernetes_version $KUBERNETES_VERSION"
+  if vercmp "$KUBERNETES_VERSION" gteq "1.24.0"; then
+    KERNEL_VERSION=5.10
+  else
+    KERNEL_VERSION=5.4
+  fi
+  echo "kernel_version is unset. Setting to $KERNEL_VERSION based on Kubernetes version $KUBERNETES_VERSION."
 fi
 
 if [[ $KERNEL_VERSION == "4.14" ]]; then
-    sudo yum update -y kernel
-elif [[ $KERNEL_VERSION == "5.4" ]]; then
-    sudo amazon-linux-extras install -y kernel-5.4
-elif [[ $KERNEL_VERSION == "5.10" ]]; then
-    sudo amazon-linux-extras install -y kernel-5.10
+  sudo yum update -y kernel
 else
-    echo "$KERNEL_VERSION is not a valid kernel version"
-    exit 1
+  sudo amazon-linux-extras install -y "kernel-${KERNEL_VERSION}"
 fi
+
+# enable pressure stall information
+sudo grubby \
+  --update-kernel=ALL \
+  --args="psi=1"
+
+# use the tsc clocksource by default
+# https://repost.aws/knowledge-center/manage-ec2-linux-clock-source
+sudo grubby \
+  --update-kernel=ALL \
+  --args="clocksource=tsc tsc=reliable"
 
 sudo reboot
