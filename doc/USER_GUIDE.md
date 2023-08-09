@@ -50,7 +50,7 @@ Users have the following options for specifying their own values:
 | `pause_container_version` | ```3.5``` |  |
 | `pull_cni_from_github` | ```true``` |  |
 | `remote_folder` | ```/tmp``` | Directory path for shell provisioner scripts on the builder instance |
-| `runc_version` | ```1.1.5-1.amzn2``` |  |
+| `runc_version` | ```1.1.*``` |  |
 | `security_group_id` | `""` |  |
 | `source_ami_filter_name` | ```amzn2-ami-minimal-hvm-*``` |  |
 | `source_ami_id` | `""` |  |
