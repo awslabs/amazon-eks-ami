@@ -263,13 +263,19 @@ for binary in ${BINARIES[*]}; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+      aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    fi
   else
     echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
     sudo wget $S3_URL_BASE/$binary
-    sudo wget $S3_URL_BASE/$binary.sha256
+    if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+      sudo wget $S3_URL_BASE/$binary.sha256
+    fi
   fi
-  sudo sha256sum -c $binary.sha256
+  if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+    sudo sha256sum -c $binary.sha256
+  fi
   sudo chmod +x $binary
   sudo mv $binary /usr/bin/
 done
@@ -297,18 +303,24 @@ else
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
+    if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+      aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
+    fi
   else
     echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
     sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
-    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
+    if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+      sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
+    fi
   fi
-  sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+    sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  fi
 fi
 sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
 rm "${CNI_PLUGIN_FILENAME}.tgz"
 
-sudo rm ./*.sha256
+sudo rm -f ./*.sha256
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
