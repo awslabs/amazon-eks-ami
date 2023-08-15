@@ -6,7 +6,7 @@ set -o pipefail
 
 echo "--> Should refresh IMDS token on configured interval"
 exit_code=0
-TOKEN_DIR=/tmp/imds-tokens
+TOKEN_DIR=/tmp/imds-tokens/$(whoami)
 TTL=5
 export IMDS_TOKEN_TTL_SECONDS=$TTL
 export IMDS_DEBUG=true

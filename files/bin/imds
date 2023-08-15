@@ -49,8 +49,8 @@ function imdscurl() {
 }
 
 function get-token() {
-  local TOKEN_DIR=/tmp/imds-tokens
-  mkdir -p -m a+wrx $TOKEN_DIR
+  local TOKEN_DIR="/tmp/imds-tokens/$(whoami)"
+  mkdir -p -m 0600 $TOKEN_DIR
 
   # cleanup expired tokens
   local DELETED_TOKENS=0
@@ -71,8 +71,7 @@ function get-token() {
       -X PUT \
       "http://$IMDS_ENDPOINT/latest/api/token")
     echo "$TOKEN" > "$TOKEN_DIR/$TOKEN_FILE"
-    # make sure any user can utilize (and clean up) these tokens
-    chmod a+rwx $TOKEN_DIR/$TOKEN_FILE
+    chmod 0600 "$TOKEN_DIR/$TOKEN_FILE"
     log "🔑 Retrieved a fresh IMDS token that will expire in $IMDS_TOKEN_TTL_SECONDS seconds."
   else
     log "ℹ️ Using cached IMDS token that expires in $(($TOKEN_FILE - $CURRENT_TIME)) seconds."
