@@ -1,5 +1,58 @@
 # Changelog
 
+### AMI Release v20230816
+* amazon-eks-gpu-node-1.27-v20230816
+* amazon-eks-gpu-node-1.26-v20230816
+* amazon-eks-gpu-node-1.25-v20230816
+* amazon-eks-gpu-node-1.24-v20230816
+* amazon-eks-gpu-node-1.23-v20230816
+* amazon-eks-arm64-node-1.27-v20230816
+* amazon-eks-arm64-node-1.26-v20230816
+* amazon-eks-arm64-node-1.25-v20230816
+* amazon-eks-arm64-node-1.24-v20230816
+* amazon-eks-arm64-node-1.23-v20230816
+* amazon-eks-node-1.27-v20230816
+* amazon-eks-node-1.26-v20230816
+* amazon-eks-node-1.25-v20230816
+* amazon-eks-node-1.24-v20230816
+* amazon-eks-node-1.23-v20230816
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.27.3-20230816`
+* `1.26.6-20230816`
+* `1.25.11-20230816`
+* `1.24.15-20230816`
+* `1.23.17-20230816`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.27.3/2023-08-14/
+* s3://amazon-eks/1.26.6/2023-08-14/
+* s3://amazon-eks/1.25.11/2023-08-14/
+* s3://amazon-eks/1.24.15/2023-08-14/
+* s3://amazon-eks/1.23.17/2023-08-15/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.250-166.369.amzn2
+  * Kubernetes 1.24 and above: 5.10.186-179.751.amzn2
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.1
+* `runc`: 1.1.7-1.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.2.1377.0-1
+Notable changes:
+- Install latest runc `1.1.*` ([#1384](https://github.com/awslabs/amazon-eks-ami/pull/1384)).
+- Install latest amazon-ssm-agent from S3 ([#1370](https://github.com/awslabs/amazon-eks-ami/pull/1370)).
+- `kernel` updated to address:
+  - [ALASKERNEL-5.4-2023-050](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-050.html)
+  - [ALASKERNEL-5.10-2023-038](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-038.html)
+
+Other changes:
+- Do not set `KubeletCredentialProviders` feature flag for 1.28+ ([#1375](https://github.com/awslabs/amazon-eks-ami/pull/1375))
+- Cache IMDS tokens per-user ([#1386](https://github.com/awslabs/amazon-eks-ami/pull/1386))
+
 ### AMI Release v20230728
 * amazon-eks-gpu-node-1.27-v20230728
 * amazon-eks-gpu-node-1.26-v20230728
