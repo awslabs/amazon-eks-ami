@@ -1,0 +1,12 @@
+name: "Bot"
+description: "🤖 beep boop"
+inputs:
+  user:
+    description: "The issuer of the command"
+    required: true
+  command:
+    description: "The user's instructions"
+    required: true
+runs:
+  using: "node16"
+  main: "parse.js"
