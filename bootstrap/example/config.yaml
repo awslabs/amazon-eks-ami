@@ -1,0 +1,8 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: BootstrapConfig
+spec:
+  clusterDetails:
+    name: foo
+    certificateAuthority: Zm9vCg==
+    apiServerEndpoint: https://example.com

@@ -1,0 +1,13 @@
+codegen:
+    FROM golang
+    RUN go install k8s.io/code-generator/cmd/deepcopy-gen@latest
+    RUN go install k8s.io/code-generator/cmd/defaulter-gen@latest
+    ENV MODULE=github.com/awslabs/amazon-eks-ami/bootstrap
+    COPY . ${GOPATH}/src/${MODULE}/
+    WORKDIR ${GOPATH}/src/${MODULE}
+    RUN deepcopy-gen --go-header-file=$(mktemp) --input-dirs=${MODULE}/pkg/apis/bootstrapconfig/v1alpha1 && \
+        defaulter-gen --go-header-file=$(mktemp) --input-dirs=${MODULE}/pkg/apis/bootstrapconfig/v1alpha1
+    RUN deepcopy-gen --go-header-file=$(mktemp) --input-dirs=${MODULE}/pkg/config && \
+        defaulter-gen --go-header-file=$(mktemp) --input-dirs=${MODULE}/pkg/config
+    RUN ls -la
+    SAVE ARTIFACT ${GOPATH}/src/${MODULE}/* AS LOCAL .
