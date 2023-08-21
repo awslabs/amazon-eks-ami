@@ -534,7 +534,7 @@ get_networking_info() {
     CA_CRT=$(grep certificate-authority: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*certificate-authority: //')
     for i in $(seq 5); do
       echo -e "curling ${API_SERVER} ($i of 5) $(date --utc +%FT%T.%3N%Z)\n\n" >> ${COLLECT_DIR}"/networking/curl_api_server.txt"
-      timeout 75 curl -v --connect-timeout 3 --no-proxy '*' --cacert "${CA_CRT}" "${API_SERVER}"/livez?verbose >> ${COLLECT_DIR}"/networking/curl_api_server.txt" 2>&1
+      timeout 75 curl -v --connect-timeout 3 --noproxy '*' --cacert "${CA_CRT}" "${API_SERVER}"/livez?verbose >> ${COLLECT_DIR}"/networking/curl_api_server.txt" 2>&1
     done
   fi
 
