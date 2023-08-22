@@ -249,6 +249,10 @@ h1.4xlarge 234
 h1.8xlarge 234
 hpc6a.48xlarge 100
 hpc6id.32xlarge 51
+hpc7a.12xlarge 100
+hpc7a.24xlarge 100
+hpc7a.48xlarge 100
+hpc7a.96xlarge 100
 hpc7g.16xlarge 198
 hpc7g.4xlarge 198
 hpc7g.8xlarge 198
