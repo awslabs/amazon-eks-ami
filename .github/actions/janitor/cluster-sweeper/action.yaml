@@ -1,0 +1,13 @@
+name: "[Janitor] Cluster sweeper"
+description: "🗑️ Deletes CI clusters when they're no longer needed"
+inputs:
+  max_age_seconds:
+    description: "Number of seconds after creation when a cluster becomes eligible for deletion"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/script.sh
+      shell: bash
+      env:
+        MAX_AGE_SECONDS: ${{ inputs.max_age_seconds }}
