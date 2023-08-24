@@ -207,6 +207,13 @@ if vercmp "$KUBELET_VERSION" gteq "1.24.0" && [ $CONTAINER_RUNTIME != "container
   exit 1
 fi
 
+##allow --reserved-cpus options via kubelet arg directly and not set default cgroup option
+USE_RESERVED_CPUS=false
+if [[ ${KUBELET_EXTRA_ARGS} == *'--reserved-cpus'* ]]; then
+  USE_RESERVED_CPUS=true
+  log "INFO: received reserved-cpus options via kubelet arg: ${KUBELET_EXTRA_ARGS} .cgroup settings will not be set"
+fi  
+
 USE_MAX_PODS="${USE_MAX_PODS:-true}"
 B64_CLUSTER_CA="${B64_CLUSTER_CA:-}"
 APISERVER_ENDPOINT="${APISERVER_ENDPOINT:-}"
@@ -565,8 +572,11 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
 
   echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  ##allow --reserved-cpus options via kubelet arg directly and not set default cgroup option
+  if [[ "${USE_RESERVED_CPUS}" = false ]]; then
+    echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+    echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  fi  
 
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
