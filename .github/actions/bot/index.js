@@ -10,6 +10,8 @@ async function bot(core, github, context, uuid) {
     }
     console.log("Comment found in payload");
 
+    // user's org membership must be public for the author_association to be MEMBER
+    // go to the org's member page, find yourself, and set the visibility to public
     const author = payload.comment.user.login;
     const authorized = ["OWNER", "MEMBER"].includes(payload.comment.author_association);
     if (!authorized) {
