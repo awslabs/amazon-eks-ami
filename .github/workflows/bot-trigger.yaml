@@ -1,0 +1,14 @@
+name: Bot
+run-name: 🤖 beep boop
+on:
+  issue_comment:
+    types:
+      - created
+jobs:
+  bot:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/bot

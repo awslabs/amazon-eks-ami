@@ -1,9 +1,5 @@
-name: CI
+name: "[CI] Auto"
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - 'master'
   pull_request:
     types:
       - opened
@@ -17,7 +13,7 @@ jobs:
     - run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
     - run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make lint
-  test:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
