@@ -16,12 +16,12 @@ if [[ ${exit_code} -ne 0 ]]; then
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-if grep -q systemReservedCgroup ${KUBELET_CONFIG} ; then
+if grep -q systemReservedCgroup ${KUBELET_CONFIG}; then
   echo "❌ Test Failed: expected systemReservedCgroup to be absent in ${KUBELET_CONFIG}.Found: $(grep systemReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
 
-if grep -q kubeReservedCgroup ${KUBELET_CONFIG} ; then
+if grep -q kubeReservedCgroup ${KUBELET_CONFIG}; then
   echo "❌ Test Failed: expected kubeReservedCgroup to be absent ${KUBELET_CONFIG}.Found: $(grep kubeReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
@@ -39,12 +39,12 @@ if [[ ${exit_code} -ne 0 ]]; then
   exit 1
 fi
 
-if ! $(grep -q systemReservedCgroup ${KUBELET_CONFIG}) ; then
+if ! $(grep -q systemReservedCgroup ${KUBELET_CONFIG}); then
   echo "❌ Test Failed: expected systemReservedCgroup to be present in ${KUBELET_CONFIG}. Found: $(grep systemReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
 
-if ! $(grep -q kubeReservedCgroup ${KUBELET_CONFIG}) ; then
+if ! $(grep -q kubeReservedCgroup ${KUBELET_CONFIG}); then
   echo "❌ Test Failed: expected kubeReservedCgroup to be present ${KUBELET_CONFIG}.Found: $(grep kubeReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
@@ -57,18 +57,17 @@ export KUBELET_VERSION=v1.23.15-eks-ba74326
   --apiserver-endpoint http://my-api-endpoint \
   test || exit_code=$?
 
-
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"
   exit 1
 fi
 
-if ! $(grep -q systemReservedCgroup ${KUBELET_CONFIG}) ; then
+if ! $(grep -q systemReservedCgroup ${KUBELET_CONFIG}); then
   echo "❌ Test Failed: expected systemReservedCgroup to be present in ${KUBELET_CONFIG}.Found: $(grep systemReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
 
-if ! $(grep -q kubeReservedCgroup ${KUBELET_CONFIG}) ; then
+if ! $(grep -q kubeReservedCgroup ${KUBELET_CONFIG}); then
   echo "❌ Test Failed: expected kubeReservedCgroup to be present ${KUBELET_CONFIG}.Found: $(grep kubeReservedCgroup ${KUBELET_CONFIG})"
   exit 1
 fi
