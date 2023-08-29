@@ -1,5 +1,55 @@
 # Changelog
 
+### AMI Release v20230825
+* amazon-eks-gpu-node-1.27-v20230825
+* amazon-eks-gpu-node-1.26-v20230825
+* amazon-eks-gpu-node-1.25-v20230825
+* amazon-eks-gpu-node-1.24-v20230825
+* amazon-eks-gpu-node-1.23-v20230825
+* amazon-eks-arm64-node-1.27-v20230825
+* amazon-eks-arm64-node-1.26-v20230825
+* amazon-eks-arm64-node-1.25-v20230825
+* amazon-eks-arm64-node-1.24-v20230825
+* amazon-eks-arm64-node-1.23-v20230825
+* amazon-eks-node-1.27-v20230825
+* amazon-eks-node-1.26-v20230825
+* amazon-eks-node-1.25-v20230825
+* amazon-eks-node-1.24-v20230825
+* amazon-eks-node-1.23-v20230825
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.27.4-20230825`
+* `1.26.7-20230825`
+* `1.25.12-20230825`
+* `1.24.16-20230825`
+* `1.23.17-20230825`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.27.4/2023-08-16/
+* s3://amazon-eks/1.26.7/2023-08-16/
+* s3://amazon-eks/1.25.12/2023-08-16/
+* s3://amazon-eks/1.24.16/2023-08-16/
+* s3://amazon-eks/1.23.17/2023-08-16/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.253-167.359.amzn2
+  * Kubernetes 1.24 and above: 5.10.186-179.751.amzn2
+  * **Note** that the GPU AMI will continue to use kernel-5.4 as we work to address a [compatibility issue](https://github.com/awslabs/amazon-eks-ami/issues/1222) with `nvidia-driver-latest-dkms`.
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.3
+* `runc`: 1.1.7-3.amzn2
+* `cuda`: 11.4.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.2.1478.0-1
+
+Notable changes:
+  - containerd updated to address:
+    - [ALAS2DOCKER-2023-029](https://alas.aws.amazon.com/AL2/ALASDOCKER-2023-029.html)
+  - runc updated to address:
+    - [ALAS2DOCKER-2023-028](https://alas.aws.amazon.com/AL2/ALASDOCKER-2023-028.html)
+
 ### AMI Release v20230816
 * amazon-eks-gpu-node-1.27-v20230816
 * amazon-eks-gpu-node-1.26-v20230816
