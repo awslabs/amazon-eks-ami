@@ -49,6 +49,7 @@ Notable changes:
     - [ALAS2DOCKER-2023-029](https://alas.aws.amazon.com/AL2/ALASDOCKER-2023-029.html)
   - runc updated to address:
     - [ALAS2DOCKER-2023-028](https://alas.aws.amazon.com/AL2/ALASDOCKER-2023-028.html)
+  - Fetch new IMDS token for every request. ([#1395](https://github.com/awslabs/amazon-eks-ami/pull/1395))
 
 ### AMI Release v20230816
 * amazon-eks-gpu-node-1.27-v20230816
