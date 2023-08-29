@@ -16,11 +16,7 @@ if [[ ${exit_code} -ne 0 ]]; then
   exit 1
 fi
 
-retCode=$(
-  grep -q systemReservedCgroup /etc/kubernetes/kubelet/kubelet-config.json
-  echo $?
-)
-if [[ ${retCode} -eq 0 ]]; then
+if grep -q systemReservedCgroup /etc/kubernetes/kubelet/kubelet-config.json; then
   echo "❌ Test Failed: expected systemReservedCgroup to be absent from /etc/kubernetes/kubelet/kubelet-config.json. expected: 1 Received: ${retCode}"
   exit 1
 fi
