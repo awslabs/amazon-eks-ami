@@ -226,7 +226,7 @@ LOCAL_DISKS="${LOCAL_DISKS:-}"
 USE_RESERVED_CPUS=false
 if [[ ${KUBELET_EXTRA_ARGS} == *'--reserved-cpus'* ]]; then
   USE_RESERVED_CPUS=true
-  log "INFO: received reserved-cpus options via kubelet arg: ${KUBELET_EXTRA_ARGS} .cgroup settings will not be set"
+  log "INFO: --kubelet-extra-args includes --reserved-cpus, so kube/system-reserved cgroups will not be used."
 fi
 
 if [[ ! -z ${LOCAL_DISKS} ]]; then
