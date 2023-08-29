@@ -574,7 +574,6 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
   ##allow --reserved-cpus options via kubelet arg directly and not set default cgroup option
   if [[ "${USE_RESERVED_CPUS}" = false ]]; then
-    log "INFO: skipping setting of .systemReservedCgroup and .kubeReservedCgroup!"
     echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
     echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
   fi
