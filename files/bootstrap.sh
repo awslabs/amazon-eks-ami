@@ -222,6 +222,13 @@ ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
 LOCAL_DISKS="${LOCAL_DISKS:-}"
 
+##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
+USE_RESERVED_CGROUPS=true
+if [[ ${KUBELET_EXTRA_ARGS} == *'--reserved-cpus'* ]]; then
+  USE_RESERVED_CGROUPS=false
+  log "INFO: --kubelet-extra-args includes --reserved-cpus, so kube/system-reserved cgroups will not be used."
+fi
+
 if [[ ! -z ${LOCAL_DISKS} ]]; then
   setup-local-disks "${LOCAL_DISKS}"
 fi
@@ -565,8 +572,11 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
 
   echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  ##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
+  if [[ "${USE_RESERVED_CGROUPS}" = true ]]; then
+    echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+    echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  fi
 
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
