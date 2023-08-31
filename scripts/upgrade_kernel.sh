@@ -19,6 +19,8 @@ else
   sudo amazon-linux-extras install -y "kernel-${KERNEL_VERSION}"
 fi
 
+sudo yum install -y kernel-headers kernel-devel
+
 # enable pressure stall information
 sudo grubby \
   --update-kernel=ALL \
