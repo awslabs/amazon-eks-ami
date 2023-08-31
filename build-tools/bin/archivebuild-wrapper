@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# This file is for Amazon internal build processes
+
+git rev-parse HEAD > .git-commit
+archivebuild
