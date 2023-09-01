@@ -15,7 +15,7 @@ package.Amazon-eks-ami-mirror = {
         network-access = blocked;
     };
 
-    build-system = archivebuild;
+    build-system = archivebuild-wrapper;
     build-tools = {
         1.0 = {
             ArchiveBuild = 1.0;
