@@ -2,5 +2,12 @@
 
 # This file is for Amazon internal build processes
 
-git rev-parse HEAD > .git-commit
+HEAD_COMMIT="${BRAZIL_PACKAGE_CHANGE_ID:-$(git rev-parse HEAD)}"
+
+if [ "${HEAD_COMMIT}" = "" ]; then
+  echo >&2 "could not determine HEAD commit"
+  exit 1
+fi
+
+echo "${HEAD_COMMIT}" > .git-commit
 archivebuild
