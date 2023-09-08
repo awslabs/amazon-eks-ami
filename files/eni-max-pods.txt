@@ -668,6 +668,14 @@ r7gd.8xlarge 234
 r7gd.large 29
 r7gd.medium 8
 r7gd.xlarge 58
+r7iz.12xlarge 234
+r7iz.16xlarge 737
+r7iz.2xlarge 58
+r7iz.32xlarge 737
+r7iz.4xlarge 234
+r7iz.8xlarge 234
+r7iz.large 29
+r7iz.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
