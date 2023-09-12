@@ -651,6 +651,17 @@ r6in.8xlarge 234
 r6in.large 29
 r6in.metal 345
 r6in.xlarge 58
+r7a.12xlarge 234
+r7a.16xlarge 737
+r7a.24xlarge 737
+r7a.2xlarge 58
+r7a.32xlarge 737
+r7a.48xlarge 737
+r7a.4xlarge 234
+r7a.8xlarge 234
+r7a.large 29
+r7a.medium 8
+r7a.xlarge 58
 r7g.12xlarge 234
 r7g.16xlarge 737
 r7g.2xlarge 58
