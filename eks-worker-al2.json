@@ -110,7 +110,10 @@
         "ssm_agent_version": "{{ user `ssm_agent_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
+      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
+      "metadata_options": {
+        "http_tokens": "required"
+      }
     }
   ],
   "provisioners": [
