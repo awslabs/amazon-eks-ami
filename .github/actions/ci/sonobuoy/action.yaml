@@ -1,0 +1,15 @@
+name: '[CI] Integration test / Sonobuoy'
+inputs:
+  cluster_name:
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        aws eks update-kubeconfig --name ${{ inputs.cluster_name }}
+        wget --no-verbose -O sonobuoy.tar.gz "https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.56.11/sonobuoy_0.56.11_linux_amd64.tar.gz"
+        tar xf sonobuoy.tar.gz && chmod +x ./sonobuoy
+        ./sonobuoy run --wait
+        ./sonobuoy results $(./sonobuoy retrieve)

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPTPATH="$(
+  cd "$(dirname "$0")"
+  pwd -P
+)"
+
+echo >&2 "mocking 'aws $@'"
+
+AWS_MOCK_FAIL=${AWS_MOCK_FAIL:-false}
+if [ "$AWS_MOCK_FAIL" = "true" ]; then
+  echo >&2 "failing mocked 'aws $@'"
+  exit 1
+fi
+
+if [[ $1 == "ec2" ]]; then
+  if [[ $2 == "describe-instance-types" ]]; then
+    instance_type=$(echo "${@}" | grep -o '[a-z]\+[0-9]\+[a-z]*\.[0-9a-z]\+' | tr '.' '-')
+    if [[ -f "${SCRIPTPATH}/describe-instance-types/${instance_type}.json" ]]; then
+      cat "${SCRIPTPATH}/describe-instance-types/${instance_type}.json"
+      exit 0
+    fi
+    echo >&2 "instance type not found"
+    exit 1
+  fi
+  if [[ $2 == "describe-instances" ]]; then
+    instance_id=$(echo "${@}" | grep -o 'i\-[a-z0-9]\+')
+    echo >&2 "instance-id: $instance_id"
+    if [[ -f "${SCRIPTPATH}/describe-instances/${instance_id}.json" ]]; then
+      cat "${SCRIPTPATH}/describe-instances/${instance_id}.json"
+      exit 0
+    fi
+    echo >&2 "instance not found"
+    exit 1
+  fi
+fi

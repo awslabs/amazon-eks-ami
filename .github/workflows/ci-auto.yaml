@@ -1,0 +1,20 @@
+name: "[CI] Auto"
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+    - run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
+    - run: make lint
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: make test

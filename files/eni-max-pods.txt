@@ -11,26 +11,19 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2022-05-09T10:14:37-07:00
-#
 # The regions queried were:
-# - af-south-1
-# - ap-east-1
 # - ap-northeast-1
 # - ap-northeast-2
 # - ap-northeast-3
 # - ap-south-1
 # - ap-southeast-1
 # - ap-southeast-2
-# - ap-southeast-3
 # - ca-central-1
 # - eu-central-1
 # - eu-north-1
-# - eu-south-1
 # - eu-west-1
 # - eu-west-2
 # - eu-west-3
-# - me-south-1
 # - sa-east-1
 # - us-east-1
 # - us-east-2
@@ -51,6 +44,7 @@ a1.large 29
 a1.medium 8
 a1.metal 234
 a1.xlarge 58
+bmn-sf1.metal 737
 c1.medium 12
 c1.xlarge 58
 c3.2xlarge 58
@@ -153,6 +147,26 @@ c6i.8xlarge 234
 c6i.large 29
 c6i.metal 737
 c6i.xlarge 58
+c6id.12xlarge 234
+c6id.16xlarge 737
+c6id.24xlarge 737
+c6id.2xlarge 58
+c6id.32xlarge 737
+c6id.4xlarge 234
+c6id.8xlarge 234
+c6id.large 29
+c6id.metal 737
+c6id.xlarge 58
+c6in.12xlarge 234
+c6in.16xlarge 737
+c6in.24xlarge 737
+c6in.2xlarge 58
+c6in.32xlarge 345
+c6in.4xlarge 234
+c6in.8xlarge 234
+c6in.large 29
+c6in.metal 345
+c6in.xlarge 58
 c7g.12xlarge 234
 c7g.16xlarge 737
 c7g.2xlarge 58
@@ -162,7 +176,22 @@ c7g.large 29
 c7g.medium 8
 c7g.metal 737
 c7g.xlarge 58
-cc2.8xlarge 234
+c7gd.12xlarge 234
+c7gd.16xlarge 737
+c7gd.2xlarge 58
+c7gd.4xlarge 234
+c7gd.8xlarge 234
+c7gd.large 29
+c7gd.medium 8
+c7gd.xlarge 58
+c7gn.12xlarge 234
+c7gn.16xlarge 737
+c7gn.2xlarge 58
+c7gn.4xlarge 234
+c7gn.8xlarge 234
+c7gn.large 29
+c7gn.medium 8
+c7gn.xlarge 58
 cr1.8xlarge 234
 d2.2xlarge 58
 d2.4xlarge 234
@@ -204,7 +233,7 @@ g5.12xlarge 737
 g5.16xlarge 234
 g5.24xlarge 737
 g5.2xlarge 58
-g5.48xlarge 737
+g5.48xlarge 345
 g5.4xlarge 234
 g5.8xlarge 234
 g5.xlarge 58
@@ -219,6 +248,14 @@ h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
 hpc6a.48xlarge 100
+hpc6id.32xlarge 51
+hpc7a.12xlarge 100
+hpc7a.24xlarge 100
+hpc7a.48xlarge 100
+hpc7a.96xlarge 100
+hpc7g.16xlarge 198
+hpc7g.4xlarge 198
+hpc7g.8xlarge 198
 hs1.8xlarge 234
 i2.2xlarge 58
 i2.4xlarge 234
@@ -239,12 +276,19 @@ i3en.6xlarge 234
 i3en.large 29
 i3en.metal 737
 i3en.xlarge 58
+i4g.16xlarge 737
+i4g.2xlarge 58
+i4g.4xlarge 234
+i4g.8xlarge 234
+i4g.large 29
+i4g.xlarge 58
 i4i.16xlarge 737
 i4i.2xlarge 58
 i4i.32xlarge 737
 i4i.4xlarge 234
 i4i.8xlarge 234
 i4i.large 29
+i4i.metal 737
 i4i.xlarge 58
 im4gn.16xlarge 737
 im4gn.2xlarge 58
@@ -256,6 +300,10 @@ inf1.24xlarge 321
 inf1.2xlarge 38
 inf1.6xlarge 234
 inf1.xlarge 38
+inf2.24xlarge 737
+inf2.48xlarge 737
+inf2.8xlarge 234
+inf2.xlarge 58
 is4gen.2xlarge 58
 is4gen.4xlarge 234
 is4gen.8xlarge 234
@@ -377,7 +425,81 @@ m6i.8xlarge 234
 m6i.large 29
 m6i.metal 737
 m6i.xlarge 58
+m6id.12xlarge 234
+m6id.16xlarge 737
+m6id.24xlarge 737
+m6id.2xlarge 58
+m6id.32xlarge 737
+m6id.4xlarge 234
+m6id.8xlarge 234
+m6id.large 29
+m6id.metal 737
+m6id.xlarge 58
+m6idn.12xlarge 234
+m6idn.16xlarge 737
+m6idn.24xlarge 737
+m6idn.2xlarge 58
+m6idn.32xlarge 345
+m6idn.4xlarge 234
+m6idn.8xlarge 234
+m6idn.large 29
+m6idn.metal 345
+m6idn.xlarge 58
+m6in.12xlarge 234
+m6in.16xlarge 737
+m6in.24xlarge 737
+m6in.2xlarge 58
+m6in.32xlarge 345
+m6in.4xlarge 234
+m6in.8xlarge 234
+m6in.large 29
+m6in.metal 345
+m6in.xlarge 58
+m7a.12xlarge 234
+m7a.16xlarge 737
+m7a.24xlarge 737
+m7a.2xlarge 58
+m7a.32xlarge 737
+m7a.48xlarge 737
+m7a.4xlarge 234
+m7a.8xlarge 234
+m7a.large 29
+m7a.medium 8
+m7a.metal-48xl 737
+m7a.xlarge 58
+m7g.12xlarge 234
+m7g.16xlarge 737
+m7g.2xlarge 58
+m7g.4xlarge 234
+m7g.8xlarge 234
+m7g.large 29
+m7g.medium 8
+m7g.metal 737
+m7g.xlarge 58
+m7gd.12xlarge 234
+m7gd.16xlarge 737
+m7gd.2xlarge 58
+m7gd.4xlarge 234
+m7gd.8xlarge 234
+m7gd.large 29
+m7gd.medium 8
+m7gd.xlarge 58
+m7i-flex.2xlarge 58
+m7i-flex.4xlarge 234
+m7i-flex.8xlarge 234
+m7i-flex.large 29
+m7i-flex.xlarge 58
+m7i.12xlarge 234
+m7i.16xlarge 737
+m7i.24xlarge 737
+m7i.2xlarge 58
+m7i.48xlarge 737
+m7i.4xlarge 234
+m7i.8xlarge 234
+m7i.large 29
+m7i.xlarge 58
 mac1.metal 234
+mac2.metal 234
 p2.16xlarge 234
 p2.8xlarge 234
 p2.xlarge 58
@@ -386,6 +508,8 @@ p3.2xlarge 58
 p3.8xlarge 234
 p3dn.24xlarge 737
 p4d.24xlarge 737
+p4de.24xlarge 737
+p5.48xlarge 100
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
@@ -458,6 +582,17 @@ r5n.8xlarge 234
 r5n.large 29
 r5n.metal 737
 r5n.xlarge 58
+r6a.12xlarge 234
+r6a.16xlarge 737
+r6a.24xlarge 737
+r6a.2xlarge 58
+r6a.32xlarge 737
+r6a.48xlarge 737
+r6a.4xlarge 234
+r6a.8xlarge 234
+r6a.large 29
+r6a.metal 737
+r6a.xlarge 58
 r6g.12xlarge 234
 r6g.16xlarge 737
 r6g.2xlarge 58
@@ -486,6 +621,72 @@ r6i.8xlarge 234
 r6i.large 29
 r6i.metal 737
 r6i.xlarge 58
+r6id.12xlarge 234
+r6id.16xlarge 737
+r6id.24xlarge 737
+r6id.2xlarge 58
+r6id.32xlarge 737
+r6id.4xlarge 234
+r6id.8xlarge 234
+r6id.large 29
+r6id.metal 737
+r6id.xlarge 58
+r6idn.12xlarge 234
+r6idn.16xlarge 737
+r6idn.24xlarge 737
+r6idn.2xlarge 58
+r6idn.32xlarge 345
+r6idn.4xlarge 234
+r6idn.8xlarge 234
+r6idn.large 29
+r6idn.metal 345
+r6idn.xlarge 58
+r6in.12xlarge 234
+r6in.16xlarge 737
+r6in.24xlarge 737
+r6in.2xlarge 58
+r6in.32xlarge 345
+r6in.4xlarge 234
+r6in.8xlarge 234
+r6in.large 29
+r6in.metal 345
+r6in.xlarge 58
+r7a.12xlarge 234
+r7a.16xlarge 737
+r7a.24xlarge 737
+r7a.2xlarge 58
+r7a.32xlarge 737
+r7a.48xlarge 737
+r7a.4xlarge 234
+r7a.8xlarge 234
+r7a.large 29
+r7a.medium 8
+r7a.xlarge 58
+r7g.12xlarge 234
+r7g.16xlarge 737
+r7g.2xlarge 58
+r7g.4xlarge 234
+r7g.8xlarge 234
+r7g.large 29
+r7g.medium 8
+r7g.metal 737
+r7g.xlarge 58
+r7gd.12xlarge 234
+r7gd.16xlarge 737
+r7gd.2xlarge 58
+r7gd.4xlarge 234
+r7gd.8xlarge 234
+r7gd.large 29
+r7gd.medium 8
+r7gd.xlarge 58
+r7iz.12xlarge 234
+r7iz.16xlarge 737
+r7iz.2xlarge 58
+r7iz.32xlarge 737
+r7iz.4xlarge 234
+r7iz.8xlarge 234
+r7iz.large 29
+r7iz.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
@@ -515,9 +716,14 @@ t4g.micro 4
 t4g.nano 4
 t4g.small 11
 t4g.xlarge 58
+trn1.2xlarge 58
+trn1.32xlarge 247
+trn1n.32xlarge 247
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
+u-18tb1.112xlarge 737
 u-18tb1.metal 737
+u-24tb1.112xlarge 737
 u-24tb1.metal 737
 u-3tb1.56xlarge 234
 u-6tb1.112xlarge 737
