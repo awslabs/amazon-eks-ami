@@ -344,7 +344,7 @@ get_iptables_legacy_info() {
   if ! command -v iptables-legacy > /dev/null 2>&1; then
     echo "IPtables-legacy not installed" | tee -a "${COLLECT_DIR}"/iptables-legacy.txt
   else
-    try "collect iptables information"
+    try "collect iptables-legacy information"
     iptables-legacy --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/iptables-legacy-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-legacy-mangle.txt
     iptables-legacy --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/iptables-legacy-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-legacy-filter.txt
     iptables-legacy --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/iptables-legacy-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-legacy-nat.txt
