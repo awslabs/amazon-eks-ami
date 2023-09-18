@@ -54,7 +54,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 .PHONY: latest
-latest: 1.28 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
+latest: 1.27 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
