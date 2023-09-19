@@ -508,6 +508,7 @@ m7i.8xlarge 234
 m7i.large 29
 m7i.xlarge 58
 mac1.metal 234
+mac2-m2pro.metal 234
 mac2.metal 234
 p2.16xlarge 234
 p2.8xlarge 234
