@@ -519,6 +519,7 @@ EOF
 echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
 echo fs.inotify.max_user_instances=8192 | sudo tee -a /etc/sysctl.conf
 echo vm.max_map_count=524288 | sudo tee -a /etc/sysctl.conf
+echo 'kernel.pid_max=4194304' | sudo tee -a /etc/sysctl.conf
 
 ################################################################################
 ### adding log-collector-script ################################################
