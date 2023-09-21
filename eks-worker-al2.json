@@ -5,6 +5,7 @@
     "ami_component_description": null,    
     "ami_description": null,
     "ami_name": null,
+    "ami_public": null,
     "ami_regions": null,
     "ami_users": null,
     "arch": null,
@@ -48,7 +49,9 @@
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
       "source_ami": "{{user `source_ami_id`}}",
+      "ami_groups": "{{user `ami_public` | replace_all `true` `all`}}",
       "ami_users": "{{user `ami_users`}}",
+      "snapshot_groups": "{{user `ami_public` | replace_all `true` `all`}}",
       "snapshot_users": "{{user `ami_users`}}",
       "source_ami_filter": {
         "filters": {

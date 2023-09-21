@@ -25,6 +25,7 @@ Users have the following options for specifying their own values:
 | `ami_component_description` | ```(k8s: {{ user `kubernetes_version` }}, docker: {{ user `docker_version` }}, containerd: {{ user `containerd_version` }})``` |  |
 | `ami_description` | ```EKS Kubernetes Worker AMI with AmazonLinux2 image``` |  |
 | `ami_name` | *None* |  |
+| `ami_public` | ```false``` | Make the AMI and underlying EBS snapshot publicly accessible. |
 | `ami_regions` | `""` |  |
 | `ami_users` | `""` |  |
 | `arch` | *None* |  |
