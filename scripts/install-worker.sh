@@ -175,6 +175,11 @@ sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
 sudo chmod +x /etc/eks/containerd/pull-image.sh
 
 sudo mkdir -p /etc/systemd/system/containerd.service.d
+cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
+[Service]
+Slice=runtime.slice
+EOF
+
 cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
 [Service]
 ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
