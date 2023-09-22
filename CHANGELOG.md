@@ -40,7 +40,7 @@ AMI details:
 * `kernel`:
   * Kubernetes 1.23 and below: 5.4.254-170.358.amzn2
   * Kubernetes 1.24 and above: 5.10.192-183.736.amzn2
-  * **Note** that the GPU AMI on Kubernetes 1.27 and below will continue to use kernel-5.4 as we work to address a [compatibility issue](https://github.com/awslabs/amazon-eks-ami/issues/1222) with `nvidia-driver-latest-dkms`.
+  * **Note** that the GPU AMI on Kubernetes 1.27 and below will continue to use kernel-5.4 due to a [compatibility issue](https://github.com/awslabs/amazon-eks-ami/issues/1222) with `nvidia-driver-latest-dkms`.
 * `dockerd`: 20.10.23-1.amzn2.0.1
   * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
 * `containerd`: 1.6.19-1.amzn2.0.3
