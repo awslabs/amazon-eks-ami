@@ -1,5 +1,67 @@
 # Changelog
 
+### AMI Release v20230919
+* amazon-eks-gpu-node-1.28-v20230919
+* amazon-eks-gpu-node-1.27-v20230919
+* amazon-eks-gpu-node-1.26-v20230919
+* amazon-eks-gpu-node-1.25-v20230919
+* amazon-eks-gpu-node-1.24-v20230919
+* amazon-eks-gpu-node-1.23-v20230919
+* amazon-eks-arm64-node-1.28-v20230919
+* amazon-eks-arm64-node-1.27-v20230919
+* amazon-eks-arm64-node-1.26-v20230919
+* amazon-eks-arm64-node-1.25-v20230919
+* amazon-eks-arm64-node-1.24-v20230919
+* amazon-eks-arm64-node-1.23-v20230919
+* amazon-eks-node-1.28-v20230919
+* amazon-eks-node-1.27-v20230919
+* amazon-eks-node-1.26-v20230919
+* amazon-eks-node-1.25-v20230919
+* amazon-eks-node-1.24-v20230919
+* amazon-eks-node-1.23-v20230919
+
+[Release versions](https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html) for these AMIs:
+* `1.28.1-20230919`
+* `1.27.5-20230919`
+* `1.26.8-20230919`
+* `1.25.13-20230919`
+* `1.24.17-20230919`
+* `1.23.17-20230919`
+
+Binaries used to build these AMIs are published:
+* s3://amazon-eks/1.28.1/20230914/
+* s3://amazon-eks/1.27.5/20230914/
+* s3://amazon-eks/1.26.8/20230914/
+* s3://amazon-eks/1.25.13/20230914/
+* s3://amazon-eks/1.24.17/20230914/
+* s3://amazon-eks/1.23.17/20230914/
+
+AMI details:
+* `kernel`:
+  * Kubernetes 1.23 and below: 5.4.254-170.358.amzn2
+  * Kubernetes 1.24 and above: 5.10.192-183.736.amzn2
+  * **Note** that the GPU AMI on Kubernetes 1.27 and below will continue to use kernel-5.4 as we work to address a [compatibility issue](https://github.com/awslabs/amazon-eks-ami/issues/1222) with `nvidia-driver-latest-dkms`.
+* `dockerd`: 20.10.23-1.amzn2.0.1
+  * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
+* `containerd`: 1.6.19-1.amzn2.0.3
+* `runc`: 1.1.7-3.amzn2
+* `cuda`: 12.2.0-1
+* `nvidia-container-runtime-hook`: 1.4.0-1.amzn2
+* `amazon-ssm-agent`: 3.2.1542.0-1
+
+Notable changes:
+  - kernel-5.10 updated to address:
+    - [ALAS2KERNEL-5.10-2023-039](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-039.html)
+  - Add support for Kubernetes 1.28 ([#1431](https://github.com/awslabs/amazon-eks-ami/pull/1431))  
+  - GPU AMI:
+    - Released with [Neuron version 2.14.0](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/index.html#neuron-2-14-0-09-15-2023)
+  - GPU AMIs on Kubernetes 1.28 and above:  
+    - Upgraded `kernel` to 5.10
+    - Upgraded `cuda` version to 12.2
+    - Upgraded Nvidia driver to 535.54.03-1
+    - [Installed EFA version 1.26.1](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa-start.html#efa-start-enable)
+    - Limited deeper [sleep states](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/processor_state_control.html)
+
 ### AMI Release v20230825
 * amazon-eks-gpu-node-1.27-v20230825
 * amazon-eks-gpu-node-1.26-v20230825
