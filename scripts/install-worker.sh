@@ -441,6 +441,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
     ${VPC_CNI_IMGS[@]+"${VPC_CNI_IMGS[@]}"}
   )
   PULLED_IMGS=()
+  REGIONS=$(aws ec2 describe-regions --all-regions --output text --query 'Regions[].[RegionName]')
 
   for img in "${CACHE_IMGS[@]}"; do
     ## only kube-proxy-minimal is vended for K8s 1.24+
@@ -465,7 +466,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   done
 
   #### Tag the pulled down image for all other regions in the partition
-  for region in $(aws ec2 describe-regions --all-regions | jq -r '.Regions[] .RegionName'); do
+  for REGION in ${REGIONS[@]}; do
     for img in "${PULLED_IMGS[@]}"; do
       region_uri=$(/etc/eks/get-ecr-uri.sh "${region}" "${AWS_DOMAIN}")
       regional_img="${img/$ECR_URI/$region_uri}"
