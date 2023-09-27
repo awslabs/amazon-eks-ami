@@ -466,7 +466,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   done
 
   #### Tag the pulled down image for all other regions in the partition
-  for REGION in ${REGIONS[@]}; do
+  for REGION in "${REGIONS[@]}"; do
     for img in "${PULLED_IMGS[@]}"; do
       region_uri=$(/etc/eks/get-ecr-uri.sh "${region}" "${AWS_DOMAIN}")
       regional_img="${img/$ECR_URI/$region_uri}"
