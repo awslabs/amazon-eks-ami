@@ -658,6 +658,8 @@ if command -v nvidia-smi &> /dev/null; then
       nvidia-smi -ac 5001,1590
     elif [[ $GPUNAME == *"M60"* ]]; then
       nvidia-smi -ac 2505,1177
+    elif [[ $GPUNAME == *"H100"* ]]; then
+      nvidia-smi -ac 2619,1980
     else
       echo "unsupported gpu"
     fi
