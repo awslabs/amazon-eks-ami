@@ -69,4 +69,10 @@ else
   esac
 fi
 
-echo "${acct}.dkr.ecr.${region}.${aws_domain}"
+AWS_ECR_SUBDOMAIN="ecr"
+# if FIPS is enabled on the machine, use the FIPS endpoint.
+if [[ "$(sysctl -n crypto.fips_enabled)" == 1 ]]; then
+  AWS_ECR_SUBDOMAIN="ecr-fips"
+fi
+
+echo "${acct}.dkr.${AWS_ECR_SUBDOMAIN}.${region}.${aws_domain}"

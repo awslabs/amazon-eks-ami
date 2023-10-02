@@ -21,6 +21,7 @@
     "creator": null,
     "docker_version": null,
     "encrypted": null,
+    "enable_fips": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -152,13 +153,25 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "expect_disconnect": true,
-      "pause_after": "90s",
       "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/enable-fips.sh",
+      "environment_vars": [
+        "ENABLE_FIPS={{user `enable_fips`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo reboot"],
+      "expect_disconnect": true,
+      "pause_after": "90s"
     },
     {
       "type": "shell",
