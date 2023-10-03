@@ -179,6 +179,16 @@
     },
     {
       "type": "shell",
+      "script": "scripts/p3-gpu.sh",
+      "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/cleanup.sh"
     },

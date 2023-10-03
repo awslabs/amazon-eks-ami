@@ -569,6 +569,16 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   # If different, then restart containerd w/ proper config
   if ! cmp -s /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml; then
     sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    cat <<EOF | sudo tee -a "/etc/containerd/config.toml"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+privileged_without_host_devices = false
+runtime_engine = ""
+runtime_root = ""
+runtime_type = "io.containerd.runc.v2"
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+BinaryName = "/usr/bin/nvidia-container-runtime"
+EOF
+    sudo sed -i 's/default_runtime_name = "runc"/default_runtime_name = "nvidia"/' "/etc/containerd/config.toml"
     sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
     sudo chown root:root /etc/systemd/system/sandbox-image.service
     systemctl daemon-reload
