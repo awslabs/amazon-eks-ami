@@ -167,6 +167,18 @@ c6in.8xlarge 234
 c6in.large 29
 c6in.metal 345
 c6in.xlarge 58
+c7a.12xlarge 234
+c7a.16xlarge 737
+c7a.24xlarge 737
+c7a.2xlarge 58
+c7a.32xlarge 737
+c7a.48xlarge 737
+c7a.4xlarge 234
+c7a.8xlarge 234
+c7a.large 29
+c7a.medium 8
+c7a.metal-48xl 737
+c7a.xlarge 58
 c7g.12xlarge 234
 c7g.16xlarge 737
 c7g.2xlarge 58
@@ -220,8 +232,6 @@ dl1.24xlarge 737
 f1.16xlarge 394
 f1.2xlarge 58
 f1.4xlarge 234
-g2.2xlarge 58
-g2.8xlarge 234
 g3.16xlarge 737
 g3.4xlarge 234
 g3.8xlarge 234
@@ -671,6 +681,7 @@ r7a.4xlarge 234
 r7a.8xlarge 234
 r7a.large 29
 r7a.medium 8
+r7a.metal-48xl 737
 r7a.xlarge 58
 r7g.12xlarge 234
 r7g.16xlarge 737
