@@ -169,6 +169,7 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["sudo reboot"],
       "expect_disconnect": true,
       "pause_after": "90s"
