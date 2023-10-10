@@ -49,7 +49,7 @@ async function bot(core, github, context, uuid) {
     }
 }
 
-// parseCommands splits the comment body into lines and parses each line as a command.
+// parseCommands splits the comment body into lines and parses each line as a command or named arguments to the previous command.
 function parseCommands(uuid, payload, commentBody) {
     const commands = [];
     if (!commentBody) {
@@ -57,9 +57,24 @@ function parseCommands(uuid, payload, commentBody) {
     }
     const lines = commentBody.split(/\r?\n/);
     for (const line of lines) {
+        console.log(`Parsing line: ${line}`);
         const command = parseCommand(uuid, payload, line);
         if (command) {
             commands.push(command);
+        } else {
+            const namedArguments = parseNamedArguments(line);
+            if (namedArguments) {
+                const previousCommand = commands.at(-1);
+                if (previousCommand) {
+                    if (typeof previousCommand.addNamedArguments === 'function') {
+                        previousCommand.addNamedArguments(namedArguments.name, namedArguments.args);
+                    } else {
+                        console.log(`Parsed named arguments but previous command (${previousCommand.constructor.name}) does not support arguments: ${JSON.stringify(namedArguments)}`)
+                    }
+                } else {
+                    console.log(`Parsed named arguments with no previous command: ${JSON.stringify(namedArguments)}`)
+                }
+            }
         }
     }
     return commands
@@ -89,6 +104,20 @@ function buildCommand(uuid, payload, name, args) {
     }
 }
 
+// parseNamedArgument parses a line as named arguments.
+// The format of a command is `+NAME ARGS...`.
+// Leading and trailing spaces are ignored.
+function parseNamedArguments(line) {
+    const parsed = line.trim().match(/^\+([a-z\-]+)(?:\s+(.+))?$/);
+    if (parsed) {
+        return {
+            name: parsed[1],
+            args: parsed[2]
+        }
+    }
+    return null;
+}
+
 class EchoCommand {
     constructor(uuid, payload, args) {
         this.phrase = args ? args : "echo";
@@ -111,6 +140,11 @@ class CICommand {
         if (args != null && args != "") {
             this.goal = args;
         }
+        this.goal_args = {};
+    }
+
+    addNamedArguments(goal, args) {
+        this.goal_args[goal] = args;
     }
 
     async run(author, github) {
@@ -137,6 +171,9 @@ class CICommand {
             requester: author,
             comment_url: this.comment_url
         };
+        for (const [goal, args] of Object.entries(this.goal_args)) {
+            inputs[`${goal}_arguments`] = args;
+        }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);
         await github.rest.actions.createWorkflowDispatch({
             owner: this.repository_owner,
