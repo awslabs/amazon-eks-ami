@@ -25,7 +25,7 @@ async function bot(core, github, context, uuid) {
         commands = parseCommands(uuid, payload, payload.comment.body);
     } catch (error) {
         console.log(error);
-        const reply = `@${author} I didn't understand [that](${payload.comment.html_url}! 🤔\nTake a look at my [logs](https://github.com/${github.repository}/actions/runs/${github.run_id}).`
+        const reply = `@${author} I didn't understand [that](${payload.comment.html_url})! 🤔\n\nTake a look at my [logs](${getBotWorkflowURL(payload, context)}).`
         replyToCommand(github, payload, reply);
         return;
     }
@@ -52,6 +52,7 @@ async function bot(core, github, context, uuid) {
     }
 }
 
+// replyToCommand creates a comment on the same PR that triggered this workflow
 function replyToCommand(github, payload, reply) {
     github.rest.issues.createComment({
         owner: payload.repository.owner.login,
@@ -59,6 +60,11 @@ function replyToCommand(github, payload, reply) {
         issue_number: payload.issue.number,
         body: reply
     });
+}
+
+// getBotWorkflowURL returns an HTML URL for this workflow execution of the bot
+function getBotWorkflowURL(payload, context) {
+    return `https://github.com/${payload.repository.owner.login}/${payload.repository.name}/actions/runs/${context.runId}`;
 }
 
 // parseCommands splits the comment body into lines and parses each line as a command or named arguments to the previous command.
@@ -84,7 +90,8 @@ function parseCommands(uuid, payload, commentBody) {
                         throw new Error(`Parsed named arguments but previous command (${previousCommand.constructor.name}) does not support arguments: ${JSON.stringify(namedArguments)}`);
                     }
                 } else {
-                    throw new Error(`Parsed named arguments with no previous command: ${JSON.stringify(namedArguments)}`);
+                    // don't treat this as an error, because the named argument syntax might just be someone '+1'-ing.
+                    console.log(`Parsed named arguments with no previous command: ${JSON.stringify(namedArguments)}`);
                 }
             }
         }
