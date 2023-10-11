@@ -31,5 +31,3 @@ sudo grubby \
 sudo grubby \
   --update-kernel=ALL \
   --args="clocksource=tsc tsc=reliable"
-
-sudo reboot
