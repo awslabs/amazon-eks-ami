@@ -42,7 +42,7 @@ jobs:
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
         # grab supported versions directly from eksctl
         wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
-        tar xf eksctl.tar.gz && chmod +x ./eksctl
+        tar xzf eksctl.tar.gz && chmod +x ./eksctl
         echo "kubernetes_versions=$(./eksctl version --output json | jq -c .EKSServerSupportedVersions)" >> $GITHUB_OUTPUT
         echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
