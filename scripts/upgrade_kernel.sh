@@ -13,13 +13,15 @@ if [[ -z "$KERNEL_VERSION" ]]; then
   echo "kernel_version is unset. Setting to $KERNEL_VERSION based on Kubernetes version $KUBERNETES_VERSION."
 fi
 
-if [[ $KERNEL_VERSION == "4.14" ]]; then
-  sudo yum update -y kernel
+if [[ $KERNEL_VERSION == 4.14* ]]; then
+  sudo yum install -y "kernel-${KERNEL_VERSION}*"
 else
-  sudo amazon-linux-extras install -y "kernel-${KERNEL_VERSION}"
+  KERNEL_MINOR_VERSION=$(echo ${KERNEL_VERSION} | cut -d. -f-2)
+  sudo amazon-linux-extras enable "kernel-${KERNEL_MINOR_VERSION}"
+  sudo yum install -y "kernel-${KERNEL_VERSION}*"
 fi
 
-sudo yum install -y kernel-headers kernel-devel
+sudo yum install -y "kernel-headers-${KERNEL_VERSION}*" "kernel-devel-${KERNEL_VERSION}*"
 
 # enable pressure stall information
 sudo grubby \

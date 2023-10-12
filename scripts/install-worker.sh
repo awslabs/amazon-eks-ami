@@ -52,6 +52,13 @@ fi
 ### Packages ###################################################################
 ################################################################################
 
+sudo yum install -y \
+  yum-utils \
+  yum-plugin-versionlock
+
+# lock the version of the kernel and associated packages before we yum update
+sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r)
+
 # Update the OS to begin with to catch up to the latest packages.
 sudo yum update -y
 
@@ -68,8 +75,6 @@ sudo yum install -y \
   socat \
   unzip \
   wget \
-  yum-utils \
-  yum-plugin-versionlock \
   mdadm \
   pigz
 
@@ -87,8 +92,6 @@ else
   # curl-minimal already exists in al2023 so install curl only on al2
   sudo yum install -y curl
 fi
-
-sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r)
 
 # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
 if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
