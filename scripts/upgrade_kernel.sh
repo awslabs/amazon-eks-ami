@@ -19,9 +19,15 @@ else
   sudo amazon-linux-extras install -y "kernel-${KERNEL_VERSION}"
 fi
 
+sudo yum install -y kernel-headers kernel-devel
+
 # enable pressure stall information
 sudo grubby \
   --update-kernel=ALL \
   --args="psi=1"
 
-sudo reboot
+# use the tsc clocksource by default
+# https://repost.aws/knowledge-center/manage-ec2-linux-clock-source
+sudo grubby \
+  --update-kernel=ALL \
+  --args="clocksource=tsc tsc=reliable"

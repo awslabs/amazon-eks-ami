@@ -21,6 +21,7 @@
     "creator": null,
     "docker_version": null,
     "encrypted": null,
+    "enable_fips": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -32,15 +33,16 @@
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
-    "sonobuoy_e2e_registry": null,
     "source_ami_filter_name": null,
     "source_ami_id": null,
     "source_ami_owners": null,
     "ssh_interface": null,
     "ssh_username": null,
+    "ssm_agent_version": null,
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
-    "volume_type": null
+    "volume_type": null,
+    "working_dir": null
   },
   "builders": [
     {
@@ -105,13 +107,25 @@
         "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-        "cni_plugin_version": "{{ user `cni_plugin_version`}}"
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}",
+        "ssm_agent_version": "{{ user `ssm_agent_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
-      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}"
+      "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
+      "metadata_options": {
+        "http_tokens": "required"
+      }
     }
   ],
   "provisioners": [
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "mkdir -p {{user `working_dir`}}",
+        "mkdir -p {{user `working_dir`}}/log-collector-script"
+      ]
+    },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
@@ -121,39 +135,46 @@
       ]
     },
     {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "inline": [
-        "mkdir -p /tmp/worker/log-collector-script/"
-      ]
-    },
-    {
       "type": "file",
       "source": "{{template_dir}}/files/",
-      "destination": "/tmp/worker/"
+      "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
       "source": "{{template_dir}}/log-collector-script/linux/",
-      "destination": "/tmp/worker/log-collector-script/"
+      "destination": "{{user `working_dir`}}/log-collector-script/"
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "sudo chmod -R a+x /tmp/worker/bin/",
-        "sudo mv /tmp/worker/bin/* /usr/bin/"
+        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
+        "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "expect_disconnect": true,
-      "pause_after": "90s",
       "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/enable-fips.sh",
+      "environment_vars": [
+        "ENABLE_FIPS={{user `enable_fips`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": ["sudo reboot"],
+      "expect_disconnect": true,
+      "pause_after": "90s"
     },
     {
       "type": "shell",
@@ -172,9 +193,10 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "SONOBUOY_E2E_REGISTRY={{user `sonobuoy_e2e_registry`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
-        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
+        "WORKING_DIR={{user `working_dir`}}",
+        "SSM_AGENT_VERSION={{user `ssm_agent_version`}}"
       ]
     },
     {
@@ -202,13 +224,23 @@
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/generate-version-info.sh",
-      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} /tmp/version-info.json"
+      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
+      "environment_vars": [
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
+      ]
     },
     {
       "type": "file",
       "direction": "download",
-      "source": "/tmp/version-info.json",
+      "source": "{{user `working_dir`}}/version-info.json",
       "destination": "{{ user `ami_name` }}-version-info.json"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "rm -rf {{user `working_dir`}}"
+      ]
     }
   ],
   "post-processors": [

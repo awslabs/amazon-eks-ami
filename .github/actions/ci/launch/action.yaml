@@ -1,0 +1,52 @@
+name: '[CI] Integration test / Launch'
+inputs:
+  build_id:
+    required: true
+    type: string
+  ami_id:
+    required: true
+    type: string
+  k8s_version:
+    required: true
+    type: string
+  aws_region:
+    required: true
+    type: string
+outputs:
+  cluster_name:
+    value: ${{ steps.launch.outputs.cluster_name }}
+runs:
+  using: "composite"
+  steps:
+    - id: launch
+      shell: bash
+      run: |
+        wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+        tar xf eksctl.tar.gz && chmod +x ./eksctl
+
+        SANITIZED_K8S_VERSION=$(echo ${{ inputs.k8s_version }} | tr -d '.')
+        CLUSTER_NAME="$SANITIZED_K8S_VERSION-${{ inputs.build_id }}"
+
+        echo '---
+        apiVersion: eksctl.io/v1alpha5
+        kind: ClusterConfig
+        metadata:
+          name: "'$CLUSTER_NAME'"
+          region: "${{ inputs.aws_region }}"
+          version: "${{ inputs.k8s_version }}"
+        nodeGroups:
+        - name: "${{ inputs.build_id }}"
+          instanceType: m5.large
+          minSize: 3
+          maxSize: 3
+          desiredCapacity: 3
+          ami: "${{ inputs.ami_id }}"
+          amiFamily: AmazonLinux2
+          overrideBootstrapCommand: |
+            #!/bin/bash
+            source /var/lib/cloud/scripts/eksctl/bootstrap.helper.sh
+            /etc/eks/bootstrap.sh "'$CLUSTER_NAME'" --kubelet-extra-args "--node-labels=${NODE_LABELS}"' >> cluster.yaml
+        cat cluster.yaml
+
+        ./eksctl create cluster --config-file cluster.yaml
+        echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT

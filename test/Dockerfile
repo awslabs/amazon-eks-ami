@@ -7,6 +7,7 @@ RUN amazon-linux-extras enable docker && \
 
 ENV IMDS_ENDPOINT=127.0.0.1:1338
 COPY --from=aemm /ec2-metadata-mock /sbin/ec2-metadata-mock
+RUN mkdir -p /etc/systemd/system
 RUN mkdir -p /etc/eks/containerd
 COPY files/ /etc/eks/
 COPY files/containerd-config.toml files/kubelet-containerd.service files/pull-sandbox-image.sh files/sandbox-image.service /etc/eks/containerd/

@@ -1,0 +1,8 @@
+[Unit]
+Description=Configure kernel clocksource
+
+[Service]
+ExecStart=/usr/bin/configure-clocksource
+
+[Install]
+WantedBy=multi-user.target

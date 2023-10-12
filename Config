@@ -3,7 +3,7 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates.
 # SPDX-License-Identifier: Apache-2.0
 
-package.Amazon-eks-ami = {
+package.Amazon-eks-ami-mirror = {
     interfaces = (1.0);
 
     deploy = {
@@ -15,7 +15,7 @@ package.Amazon-eks-ami = {
         network-access = blocked;
     };
 
-    build-system = archivebuild;
+    build-system = archivebuild-wrapper;
     build-tools = {
         1.0 = {
             ArchiveBuild = 1.0;
