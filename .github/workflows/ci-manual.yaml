@@ -39,14 +39,17 @@ jobs:
       build_id: ${{ steps.variables.outputs.build_id }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
     steps:
-    - uses: actions/checkout@v3
     - id: variables
       run: |
         echo "git_sha_short=$(echo ${{ inputs.git_sha }} | rev | cut -c-7 | rev)" >> $GITHUB_OUTPUT
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-        echo "kubernetes_versions=$(cat kubernetes-versions.json | jq -c .)" >> $GITHUB_OUTPUT
+        # grab supported versions directly from eksctl
+        wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+        tar xzf eksctl.tar.gz && chmod +x ./eksctl
+        echo "kubernetes_versions=$(./eksctl version --output json | jq -c .EKSServerSupportedVersions)" >> $GITHUB_OUTPUT
         echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
+
   notify-start:
     runs-on: ubuntu-latest
     needs:
