@@ -20,14 +20,22 @@ async function bot(core, github, context, uuid) {
     }
     console.log(`Comment author is authorized: ${author}`);
 
-    const commands = parseCommands(uuid, payload, payload.comment.body);
+    let commands;
+    try {
+        commands = parseCommands(uuid, payload, payload.comment.body);
+    } catch (error) {
+        console.log(error);
+        const reply = `@${author} I didn't understand [that](${payload.comment.html_url})! 🤔\n\nTake a look at my [logs](${getBotWorkflowURL(payload, context)}).`
+        replyToCommand(github, payload, reply);
+        return;
+    }
     if (commands.length === 0) {
         console.log("No commands found in comment body");
         return;
     }
     const uniqueCommands = [...new Set(commands.map(command => typeof command))];
     if (uniqueCommands.length != commands.length) {
-        console.log("Duplicate commands found in comment body");
+        replyToCommand(github, payload, `@${author} you can't use the same command more than once! 🙅`);
         return;
     }
     console.log(commands.length + " command(s) found in comment body");
@@ -35,12 +43,7 @@ async function bot(core, github, context, uuid) {
     for (const command of commands) {
         const reply = await command.run(author, github);
         if (typeof reply === 'string') {
-            github.rest.issues.createComment({
-                owner: payload.repository.owner.login,
-                repo: payload.repository.name,
-                issue_number: payload.issue.number,
-                body: reply
-            });
+            replyToCommand(github, payload, reply);
         } else if (reply) {
             console.log(`Command returned: ${reply}`);
         } else {
@@ -49,7 +52,22 @@ async function bot(core, github, context, uuid) {
     }
 }
 
-// parseCommands splits the comment body into lines and parses each line as a command.
+// replyToCommand creates a comment on the same PR that triggered this workflow
+function replyToCommand(github, payload, reply) {
+    github.rest.issues.createComment({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: payload.issue.number,
+        body: reply
+    });
+}
+
+// getBotWorkflowURL returns an HTML URL for this workflow execution of the bot
+function getBotWorkflowURL(payload, context) {
+    return `https://github.com/${payload.repository.owner.login}/${payload.repository.name}/actions/runs/${context.runId}`;
+}
+
+// parseCommands splits the comment body into lines and parses each line as a command or named arguments to the previous command.
 function parseCommands(uuid, payload, commentBody) {
     const commands = [];
     if (!commentBody) {
@@ -57,9 +75,25 @@ function parseCommands(uuid, payload, commentBody) {
     }
     const lines = commentBody.split(/\r?\n/);
     for (const line of lines) {
+        console.log(`Parsing line: ${line}`);
         const command = parseCommand(uuid, payload, line);
         if (command) {
             commands.push(command);
+        } else {
+            const namedArguments = parseNamedArguments(line);
+            if (namedArguments) {
+                const previousCommand = commands.at(-1);
+                if (previousCommand) {
+                    if (typeof previousCommand.addNamedArguments === 'function') {
+                        previousCommand.addNamedArguments(namedArguments.name, namedArguments.args);
+                    } else {
+                        throw new Error(`Parsed named arguments but previous command (${previousCommand.constructor.name}) does not support arguments: ${JSON.stringify(namedArguments)}`);
+                    }
+                } else {
+                    // don't treat this as an error, because the named argument syntax might just be someone '+1'-ing.
+                    console.log(`Parsed named arguments with no previous command: ${JSON.stringify(namedArguments)}`);
+                }
+            }
         }
     }
     return commands
@@ -89,6 +123,20 @@ function buildCommand(uuid, payload, name, args) {
     }
 }
 
+// parseNamedArgument parses a line as named arguments.
+// The format of a command is `+NAME ARGS...`.
+// Leading and trailing spaces are ignored.
+function parseNamedArguments(line) {
+    const parsed = line.trim().match(/^\+([a-z\-]+)(?:\s+(.+))?$/);
+    if (parsed) {
+        return {
+            name: parsed[1],
+            args: parsed[2]
+        }
+    }
+    return null;
+}
+
 class EchoCommand {
     constructor(uuid, payload, args) {
         this.phrase = args ? args : "echo";
@@ -111,6 +159,11 @@ class CICommand {
         if (args != null && args != "") {
             this.goal = args;
         }
+        this.goal_args = {};
+    }
+
+    addNamedArguments(goal, args) {
+        this.goal_args[goal] = args;
     }
 
     async run(author, github) {
@@ -137,6 +190,9 @@ class CICommand {
             requester: author,
             comment_url: this.comment_url
         };
+        for (const [goal, args] of Object.entries(this.goal_args)) {
+            inputs[`${goal}_arguments`] = args;
+        }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);
         await github.rest.actions.createWorkflowDispatch({
             owner: this.repository_owner,

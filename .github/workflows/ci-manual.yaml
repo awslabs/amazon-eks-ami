@@ -26,6 +26,9 @@ on:
           - "build"
           - "launch"
           - "test"
+      build_arguments:
+        required: false
+        type: string
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -92,6 +95,7 @@ jobs:
           git_sha: ${{ inputs.git_sha }}
           k8s_version: ${{ matrix.k8s_version }}
           build_id: ${{ needs.setup.outputs.build_id }}
+          additional_arguments: ${{ inputs.build_arguments }}
       - if: ${{ inputs.goal == 'launch' || inputs.goal == 'test' }}
         name: "${{ needs.setup.outputs.ci_step_name_prefix }} Launch"
         id: launch
