@@ -27,24 +27,11 @@ function cluster_is_eligible_for_deletion() {
   local CREATED_AT_ISO8601=$(aws eks describe-cluster --name $CLUSTER_NAME --query 'cluster.createdAt' --output text)
   iso8601_is_eligible_for_deletion "$CREATED_AT_ISO8601"
 }
-function nodegroup_is_eligible_for_deletion() {
-  local CLUSTER_NAME="$1"
-  local NODEGROUP_NAME="$2"
-  local CREATED_AT_ISO8601=$(aws eks describe-nodegroup --cluster-name "$CLUSTER_NAME" --nodegroup-name $NODEGROUP_NAME --query 'nodegroup.createdAt' --output text)
-  iso8601_is_eligible_for_deletion "$CREATED_AT_ISO8601"
-}
 wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
 tar xf eksctl.tar.gz && chmod +x ./eksctl
 for CLUSTER in $(aws eks list-clusters --query 'clusters[]' --output text); do
-  for NODEGROUP in $(aws eks list-nodegroups --cluster-name $CLUSTER --query 'nodegroups[]' --output text); do
-    if nodegroup_is_eligible_for_deletion $CLUSTER $NODEGROUP; then
-      ./eksctl delete nodegroup --cluster $CLUSTER --name $NODEGROUP
-    fi
-  done
-  if [ "$(aws eks list-nodegroups --cluster-name $CLUSTER --output json | jq '.nodegroups | length')" -gt 0 ]; then
-    echo "Skipping cluster $CLUSTER"
-  elif cluster_is_eligible_for_deletion $CLUSTER; then
+  if cluster_is_eligible_for_deletion $CLUSTER; then
     echo "Deleting cluster $CLUSTER"
-    ./eksctl delete cluster --name "$CLUSTER"
+    ./eksctl delete cluster --name "$CLUSTER" --force --disable-nodegroup-eviction
   fi
 done
