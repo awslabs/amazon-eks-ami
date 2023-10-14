@@ -8,7 +8,7 @@ permissions:
 jobs:
   setup:
     # this workflow will always fail in forks; bail if this isn't running in the upstream
-    if: github.repository == 'cartermckinnon/amazon-eks-ami'
+    if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
     outputs:
       tag_name: ${{ steps.variables.outputs.tag_name }}
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: cartermckinnon/amazon-eks-ami
+          repository: awslabs/amazon-eks-ami
           ref: refs/heads/master
           path: amazon-eks-ami/
       - uses: actions/github-script@v6
@@ -57,4 +57,4 @@ jobs:
           labels: |
             changelog/exclude
           body: |
-            Adds CHANGELOG.md entry for release [${{ needs.setup.outputs.tag_name }}](https://github.com/cartermckinnon/amazon-eks-ami/releases/tag/${{ needs.setup.outputs.tag_name }}).
+            Adds CHANGELOG.md entry for release [${{ needs.setup.outputs.tag_name }}](https://github.com/awslabs/amazon-eks-ami/releases/tag/${{ needs.setup.outputs.tag_name }}).
