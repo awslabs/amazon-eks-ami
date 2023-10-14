@@ -39,8 +39,8 @@ jobs:
               repo: context.repo.repo,
             });
             const changelog = fs.readFileSync(changelogPath, 'utf8');
-            if (changelog.contains(release.data.name)) {
-              throw new Error(`changelog already contains ${release.data.name}`);
+            if (changelog.includes(release.data.name)) {
+              throw new Error(`changelog already includes ${release.data.name}`);
             }
             const newEntry = `###  ${release.data.name}\n${release.data.body}`;
             const updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry);
