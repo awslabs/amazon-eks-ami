@@ -700,6 +700,15 @@ r7gd.8xlarge 234
 r7gd.large 29
 r7gd.medium 8
 r7gd.xlarge 58
+r7i.12xlarge 234
+r7i.16xlarge 737
+r7i.24xlarge 737
+r7i.2xlarge 58
+r7i.48xlarge 737
+r7i.4xlarge 234
+r7i.8xlarge 234
+r7i.large 29
+r7i.xlarge 58
 r7iz.12xlarge 234
 r7iz.16xlarge 737
 r7iz.2xlarge 58
