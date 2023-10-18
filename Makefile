@@ -79,7 +79,6 @@ endif
 .PHONY: fmt
 fmt: ## Format the source files
 	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
-	hack/fmt-trailing-spaces.sh
 
 SHELLCHECK_COMMAND := $(shell which shellcheck)
 ifeq (, $(SHELLCHECK_COMMAND))
