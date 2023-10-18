@@ -482,7 +482,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
       regional_img="${img/$ECR_URI/$region_uri}"
       sudo ctr -n k8s.io image tag "${img}" "${regional_img}" || :
       ## Tag ECR fips endpoint for supported regions
-      if [[ "${region}" =~ (us-east-1|us-east-2|us-west-1|us-west-2|us-gov-east-1|us-gov-east-2) ]]; then
+      if [[ "${region}" =~ (us-east-1|us-east-2|us-west-1|us-west-2|us-gov-east-1|us-gov-west-1) ]]; then
         regional_fips_img="${regional_img/.ecr./.ecr-fips.}"
         sudo ctr -n k8s.io image tag "${img}" "${regional_fips_img}" || :
         sudo ctr -n k8s.io image tag "${img}" "${regional_fips_img/-eksbuild.1/}" || :
