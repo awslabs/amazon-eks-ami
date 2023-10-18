@@ -33,8 +33,8 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      git_sha_short: ${{ steps.variables.outputs.git_sha_short }}    
-      workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}    
+      git_sha_short: ${{ steps.variables.outputs.git_sha_short }}
+      workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       build_id: ${{ steps.variables.outputs.build_id }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
@@ -150,7 +150,7 @@ jobs:
                     uniqueStepNames.add(stepName);
                   }
                 }
-              }              
+              }
             }
             const headers = [{
               data: 'Kubernetes version',

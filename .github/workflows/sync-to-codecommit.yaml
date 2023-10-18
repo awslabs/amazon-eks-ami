@@ -7,7 +7,7 @@ on:
 
 jobs:
   mirror:
-    if: github.repository == 'awslabs/amazon-eks-ami'  
+    if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
