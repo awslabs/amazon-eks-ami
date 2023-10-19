@@ -96,6 +96,7 @@ transform-al2-to-al2023:
 lint: lint-docs ## Check the source files for syntax and format issues
 	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
 	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
+	hack/lint-space-errors.sh
 
 .PHONY: test
 test: ## run the test-harness

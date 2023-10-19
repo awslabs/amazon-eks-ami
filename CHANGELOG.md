@@ -107,10 +107,10 @@ AMI details:
 Notable changes:
   - kernel-5.10 updated to address:
     - [ALAS2KERNEL-5.10-2023-039](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-039.html)
-  - Add support for Kubernetes 1.28 ([#1431](https://github.com/awslabs/amazon-eks-ami/pull/1431))  
+  - Add support for Kubernetes 1.28 ([#1431](https://github.com/awslabs/amazon-eks-ami/pull/1431))
   - GPU AMI:
     - Released with [Neuron version 2.14.0](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/index.html#neuron-2-14-0-09-15-2023)
-  - GPU AMIs on Kubernetes 1.28 and above:  
+  - GPU AMIs on Kubernetes 1.28 and above:
     - Upgraded `kernel` to 5.10
     - Upgraded `cuda` version to 12.2
     - Upgraded Nvidia driver to 535.54.03-1
@@ -265,7 +265,7 @@ AMI details:
 * `amazon-ssm-agent`: 3.1.1732.0-1.amzn2
 
 Notable changes:
-- Kernel fix for `CVE-2023-3117` and `CVE-2023-35001` with new versions: [5.10 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-037.html) and [5.4 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-049.html) 
+- Kernel fix for `CVE-2023-3117` and `CVE-2023-35001` with new versions: [5.10 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.10-2023-037.html) and [5.4 kernel](https://alas.aws.amazon.com/AL2/ALASKERNEL-5.4-2023-049.html)
 - Mount bpffs on all supported Kubernetes versions. ([#1349](https://github.com/awslabs/amazon-eks-ami/pull/1349))
 - Enable discard_unpacked_layers by default to clean up compressed image layers in containerd's content store.([#1360](https://github.com/awslabs/amazon-eks-ami/pull/1360))
 
@@ -1264,8 +1264,8 @@ AMI details:
 
 Notable changes:
 * Pin Kernel 5.4 to 5.4.209-116.367 to prevent nodes from going into Unready [#1072](https://github.com/awslabs/amazon-eks-ami/pull/1072)
-* Increase the kube-api-server QPS from 5/10 to 10/20 [#1030](https://github.com/awslabs/amazon-eks-ami/pull/1030) 
-* Update docker and containerd for [ALASDOCKER-2022-021](https://alas.aws.amazon.com/AL2/ALASDOCKER-2022-021.html) [#1056](https://github.com/awslabs/amazon-eks-ami/pull/1056) 
+* Increase the kube-api-server QPS from 5/10 to 10/20 [#1030](https://github.com/awslabs/amazon-eks-ami/pull/1030)
+* Update docker and containerd for [ALASDOCKER-2022-021](https://alas.aws.amazon.com/AL2/ALASDOCKER-2022-021.html) [#1056](https://github.com/awslabs/amazon-eks-ami/pull/1056)
 * runc version is updated to 1.1.3-1.amzn2.0.2 to include ALAS2DOCKER-2022-020 [#1055](https://github.com/awslabs/amazon-eks-ami/pull/1055)
 * Release AMI in me-central-1 with version 1.21, 1.22, 1.23. 1.20 is not supported in this region since it will be deprecated soon.
 * Fixes an issue with Docker daemon configuration on the GPU AMI (#351).
@@ -1425,9 +1425,9 @@ Binaries used to build these AMIs are published:
 
 AMI details:
 * kernel: 5.4.209-116.363.amzn2
-* dockerd: 20.10.17-1.amzn2 
-* containerd: 1.6.6-1.amzn2 
-* runc: 1.1.3-1.amzn2-1.amzn2 
+* dockerd: 20.10.17-1.amzn2
+* containerd: 1.6.6-1.amzn2
+* runc: 1.1.3-1.amzn2-1.amzn2
 * cuda: 470.57.02-1
 * nvidia-container-runtime-hook: 1.4.0-1.amzn2
 * SSM agent: 3.1.1575.0-1.amzn2
@@ -1609,7 +1609,7 @@ AMI details:
 Notable changes:
 * Update kubelet binaries for 1.20
 * Support packer's ami_regions feature
-* Increase /var/log/messages limit to 100M     
+* Increase /var/log/messages limit to 100M
 * Support local cluster in Outposts
 * Adding c6id, m6id, r6id to eni-max-pods.txt
 
@@ -3116,7 +3116,7 @@ Notable changes:
 - Fix Makefile indentation for 1.19 (#616)
 - Increase fs.inotify.max_user_instances to 8192 from the default of 128 (#614)
 - use dynamic lookup of docker gid (#622)
-- bump docker version to 19.03.13ce-1 (#624) 
+- bump docker version to 19.03.13ce-1 (#624)
 
 ### AMI Release v20210208
 * amazon-eks-gpu-node-1.19-v20210208
@@ -3167,7 +3167,7 @@ Binaries used to build these AMIs are published :
 * s3://amazon-eks/1.15.12/2020-11-02/
 
 Notable changes :
-* ARM AMIs built with m6g.large instance type (#601) 
+* ARM AMIs built with m6g.large instance type (#601)
 * Add Support for c6gn instance type (#597)
 * Patch for CVE-2021-3156 (https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-3156)
 

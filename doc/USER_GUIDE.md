@@ -142,7 +142,7 @@ make k8s \
 
 ## Container Image Caching
 
-Optionally, some container images can be cached during the AMI build process in order to reduce the latency of the node getting to a `Ready` state when launched. 
+Optionally, some container images can be cached during the AMI build process in order to reduce the latency of the node getting to a `Ready` state when launched.
 
 To turn on container image caching:
 
@@ -159,7 +159,7 @@ When container image caching is enabled, the following images are cached:
 
 The account ID can be different depending on the region and partition you are building the AMI in. See [here](https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html) for more details.
 
-Since the VPC CNI is not versioned with K8s itself, the latest version of the VPC CNI and the default version, based on the response from the EKS DescribeAddonVersions at the time of the AMI build, will be cached. 
+Since the VPC CNI is not versioned with K8s itself, the latest version of the VPC CNI and the default version, based on the response from the EKS DescribeAddonVersions at the time of the AMI build, will be cached.
 
 The images listed above are also tagged with each region in the partition the AMI is built in, since images are often built in one region and copied to others within the same partition. Images that are available to pull from an ECR FIPS endpoint are also tagged as such (i.e. `602401143452.dkr.ecr-fips.us-east-1.amazonaws.com/eks/pause:3.5`).
 
@@ -377,7 +377,7 @@ For more information about image credential provider plugins, refer to the [Kube
 
 Some instance types launch with ephemeral NVMe instance storage (i3, i4i, c5d, c6id, etc). There are two main ways of utilizing this storage within Kubernetes: a single RAID-0 array for use by kubelet and containerd or mounting the individual disks for pod usage.
 
-The EKS Optimized AMI includes a utility script to configure ephemeral storage. The script can be invoked by passing the `--local-disks <raid0 | mount>` flag to the `/etc/eks/bootstrap.sh` script or the script can be invoked directly at `/bin/setup-local-disks`. All disks are formatted with an XFS file system. 
+The EKS Optimized AMI includes a utility script to configure ephemeral storage. The script can be invoked by passing the `--local-disks <raid0 | mount>` flag to the `/etc/eks/bootstrap.sh` script or the script can be invoked directly at `/bin/setup-local-disks`. All disks are formatted with an XFS file system.
 
 Below are details on the two disk setup options:
 

@@ -12,13 +12,13 @@ fi
 AWK_CMD='
 BEGIN {RS=";";FS=","}
 {
-  delete vars; 
-  for(i = 1; i <= NF; ++i) { 
-    n = index($i, "="); 
-    if(n) { 
+  delete vars;
+  for(i = 1; i <= NF; ++i) {
+    n = index($i, "=");
+    if(n) {
       vars[substr($i, 1, n-1)] = substr($i, n + 1)
     }
-  } 
+  }
   Repo = "/etc/yum.repos.d/"vars["repo"]".repo"
 }
 {cmd="rm -f " Repo; system(cmd)}
