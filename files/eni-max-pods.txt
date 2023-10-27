@@ -301,7 +301,9 @@ i4g.4xlarge 234
 i4g.8xlarge 234
 i4g.large 29
 i4g.xlarge 58
+i4i.12xlarge 234
 i4i.16xlarge 737
+i4i.24xlarge 437
 i4i.2xlarge 58
 i4i.32xlarge 737
 i4i.4xlarge 234
