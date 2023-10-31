@@ -19,6 +19,8 @@ cat "${PACKER_TEMPLATE_FILE}" \
   | jq '._comment = "All template variables are enumerated here; and most variables have a default value defined in eks-worker-al2023-variables.json"' \
   | jq '.variables.temporary_key_pair_type = "ed25519"' \
   | jq 'del(.provisioners[5])' \
+  | jq 'del(.provisioners[5])' \
+  | jq 'del(.provisioners[5])' \
     > "${PACKER_TEMPLATE_FILE/al2/al2023}"
 
 # use newer versions of containerd and runc, do not install docker
