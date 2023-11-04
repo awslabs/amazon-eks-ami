@@ -209,6 +209,22 @@ get_instance_id() {
   fi
 }
 
+get_userdata() {
+  USER_DATA_FILE="/var/lib/cloud/instance/user-data.txt"
+
+  if [ -f "$USER_DATA_FILE" ]; then # Check if the user-data.txt file exists
+    cp ${USER_DATA_FILE} "${COLLECT_DIR}"/var_log/userdata.txt
+    readonly USER_DATA=$(cat "${COLLECT_DIR}"/var_log/userdata.txt)
+  else # if it doesn't we can pull it from IMDS
+    readonly USER_DATA=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/user-data/)
+    if [ 0 -eq $? ]; then 
+      echo "${USER_DATA}" > "${COLLECT_DIR}"/var_log/userdata.txt
+    else
+      warning "Unable to collect EC2 UserData. Skipped collection"
+    fi
+  fi
+}
+
 get_region() {
   if REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
     echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
@@ -261,6 +277,7 @@ collect() {
   init
   is_diskfull
   get_instance_id
+  get_userdata
   get_region
   get_common_logs
   get_kernel_info
