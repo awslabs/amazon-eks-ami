@@ -35,6 +35,7 @@ PACKAGE_TYPE=""
 # Script run defaults
 ignore_introspection='false'
 ignore_metrics='false'
+collect_userdata='false'
 
 REQUIRED_UTILS=(
   timeout
@@ -87,13 +88,15 @@ IPAMD_DATA=(
 
 help() {
   echo ""
-  echo "USAGE: ${PROGRAM_NAME} --help [ --ignore_introspection=true|false --ignore_metrics=true|false ]"
+  echo "USAGE: ${PROGRAM_NAME} --help [ --ignore_introspection=true|false --ignore_metrics=true|false --collect_userdata=true|false ]"
   echo ""
   echo "OPTIONS:"
   echo ""
   echo "   --ignore_introspection To ignore introspection of IPAMD; Pass this flag if DISABLE_INTROSPECTION is enabled on CNI"
   echo ""
   echo "   --ignore_metrics Variable To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI"
+  echo ""
+  echo "   --collect_userdata variable to opt-in to collecting userdata off of the EC2 Instance. This is false by default"
   echo ""
   echo "   --help  Show this help message."
   echo ""
@@ -112,6 +115,9 @@ parse_options() {
         eval "${param}"="${val}"
         ;;
       ignore_metrics)
+        eval "${param}"="${val}"
+        ;;
+      collect_userdata)
         eval "${param}"="${val}"
         ;;
       help)
@@ -166,6 +172,7 @@ version_output() {
 log_parameters() {
   echo ignore_introspection: "${ignore_introspection}" >> "${COLLECT_DIR}"/system/script-params.txt
   echo ignore_metrics: "${ignore_metrics}" >> "${COLLECT_DIR}"/system/script-params.txt
+  echo collect_userdata: "${collect_userdata}" >> "${COLLECT_DIR}"/system/script-params.txt
 }
 
 systemd_check() {
@@ -210,18 +217,25 @@ get_instance_id() {
 }
 
 get_userdata() {
-  USER_DATA_FILE="/var/lib/cloud/instance/user-data.txt"
+  # only collect userdata if opt-in 
+  if [[ ${collect_userdata} == "true" ]]; then
 
-  if [ -f "$USER_DATA_FILE" ]; then # Check if the user-data.txt file exists
-    cp ${USER_DATA_FILE} "${COLLECT_DIR}"/var_log/userdata.txt
-    readonly USER_DATA=$(cat "${COLLECT_DIR}"/var_log/userdata.txt)
-  else # if it doesn't we can pull it from IMDS
-    readonly USER_DATA=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/user-data/)
-    if [ 0 -eq $? ]; then 
-      echo "${USER_DATA}" > "${COLLECT_DIR}"/var_log/userdata.txt
-    else
-      warning "Unable to collect EC2 UserData. Skipped collection"
+    try "collect Userdata from EC2 Instance" 
+
+    USER_DATA_FILE="/var/lib/cloud/instance/user-data.txt"
+
+    if [ -f "$USER_DATA_FILE" ]; then # Check if the user-data.txt file exists
+      cp ${USER_DATA_FILE} "${COLLECT_DIR}"/var_log/userdata.txt
+      readonly USER_DATA=$(cat "${COLLECT_DIR}"/var_log/userdata.txt)
+    else # if it doesn't we can pull it from IMDS
+      readonly USER_DATA=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/user-data/)
+      if [ 0 -eq $? ]; then 
+        echo "${USER_DATA}" > "${COLLECT_DIR}"/var_log/userdata.txt
+      else
+        warning "Unable to collect EC2 UserData. Skipped collection"
+      fi
     fi
+
   fi
 }
 
