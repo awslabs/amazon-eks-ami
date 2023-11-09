@@ -390,7 +390,7 @@ AMI details:
   * ⚠️ **Note: A recent change in the Linux kernel caused the EFA and NVIDIA drivers to be incompatible.** More information is available in https://github.com/awslabs/amazon-eks-ami/issues/1494. To prevent unexpected failures, the kernel in the GPU AMI will remain at the following versions until we have determined a solution:
     * Kubernetes 1.27 and below: 5.4.254-170.358.amzn2
     * Kubernetes 1.28 and above: 5.10.192-183.736.amzn2
-* `dockerd`: 20.10.25-1.amzn2.0.3
+* `dockerd`: 20.10.23-1.amzn2.0.1
   * **Note** that Docker is not installed on AMI's with Kubernetes 1.25+.
 * `containerd`: 1.6.19-1.amzn2.0.5
 * `runc`: 1.1.7-4.amzn2
