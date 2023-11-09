@@ -39,7 +39,7 @@ Users have the following options for specifying their own values:
 | `cni_plugin_version` | ```v1.2.0``` |  |
 | `containerd_version` | ```1.6.*``` |  |
 | `creator` | ```{{env `USER`}}``` |  |
-| `docker_version` | ```20.10.23-1.amzn2.0.1``` |  |
+| `docker_version` | ```20.10.*``` |  |
 | `encrypted` | ```false``` |  |
 | `enable_fips` | ```false``` | Install openssl and enable fips related kernel parameters |
 | `instance_type` | *None* |  |
