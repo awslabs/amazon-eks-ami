@@ -42,8 +42,8 @@ jobs:
             if (changelog.includes(release.data.name)) {
               throw new Error(`changelog already includes ${release.data.name}`);
             }
-            const newEntry = `### ${release.data.name}\n${release.data.body}`;
-            const updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry);
+            const newEntry = `# ${release.data.name}\n${release.data.body}`;
+            const updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry + '\n---\n');
             fs.writeFileSync(changelogPath, updatedChangelog);
       - uses: peter-evans/create-pull-request@v4
         with:
