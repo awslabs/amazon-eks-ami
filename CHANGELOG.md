@@ -2,7 +2,7 @@
 
 <!--new-changelog-entry-placeholder-->
 
-### AMI Release v20231106 
+# AMI Release v20231106
 ## What's Changed
 * Add new i4i sizes to eni-max-pods.txt by @github-actions in https://github.com/awslabs/amazon-eks-ami/pull/1495
 * Set nerdctl default namespace to k8s.io by @reegnz in https://github.com/awslabs/amazon-eks-ami/pull/1488
@@ -344,6 +344,8 @@
 > To prevent unexpected failures, the kernel in the GPU AMI will remain at the following versions until we have determined a solution:
 > - Kubernetes 1.27 and below: `5.4.254-170.358.amzn2`
 > - Kubernetes 1.28 and above: `5.10.192-183.736.amzn2`
+
+---
 
 ### AMI Release v20231027
 * amazon-eks-gpu-node-1.28-v20231027
