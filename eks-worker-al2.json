@@ -207,6 +207,16 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/scripts/install-falcon.sh",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
