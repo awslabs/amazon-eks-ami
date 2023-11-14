@@ -48,6 +48,7 @@
     {
       "type": "amazon-ebs",
       "region": "{{user `aws_region`}}",
+      "profile": "{{user `AWS_PROFILE`}}",
       "source_ami": "{{user `source_ami_id`}}",
       "ami_users": "{{user `ami_users`}}",
       "snapshot_users": "{{user `ami_users`}}",

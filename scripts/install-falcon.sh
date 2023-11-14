@@ -4,6 +4,10 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
+validate_env_set AWS_ACCESS_KEY_ID
+validate_env_set AWS_SECRET_ACCESS_KEY
+validate_env_set AWS_SESSION_TOKEN
+
 # download the rpm from s3 bucket
 aws s3api get-object --bucket remote-dev-staging-falcon-rpm --key falcon-sensor-7.04.0-15907.amzn2.x86_64.rpm falcon-sensor.rpm
 
