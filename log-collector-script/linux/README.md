@@ -129,3 +129,12 @@ aws ssm get-command-invocation \
 ```
 
 4. Once the above command is executed successfully, the logs should be present in the S3 bucket specified in the previous step.
+
+### Collect User Data
+
+If collecting user data is required as apart of troubleshooting please use the commands below to retrieve data via IMDSv2:
+
+```
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
+&& curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/user-data
+```
