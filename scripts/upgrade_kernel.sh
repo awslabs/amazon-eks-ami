@@ -5,7 +5,9 @@ set -o nounset
 set -o errexit
 
 if [[ -z "$KERNEL_VERSION" ]]; then
-  if vercmp "$KUBERNETES_VERSION" gteq "1.24.0"; then
+  if vercmp "$KUBERNETES_VERSION" gteq "1.29.0"; then
+    KERNEL_VERSION=5.15
+  elif vercmp "$KUBERNETES_VERSION" gteq "1.24.0"; then
     KERNEL_VERSION=5.10
   else
     KERNEL_VERSION=5.4
