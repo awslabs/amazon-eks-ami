@@ -121,3 +121,12 @@ aws ssm get-command-invocation \
 ```
 
 4. Once the above command is executed successfully, the logs should be present in the S3 bucket specified in the previous step.
+
+### Collect User Data
+
+If collecting use rdata is required as apart of troubleshooting please use the commands below to retrieve data via IMDSv2:
+
+```
+[string]$token = Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token-ttl-seconds" = "21600"} -Method PUT -Uri http://169.254.169.254/latest/api/token
+Invoke-RestMethod -Headers @{"X-aws-ec2-metadata-token" = $token} -Method GET -Uri http://169.254.169.254/latest/user-data
+```
