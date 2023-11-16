@@ -231,6 +231,7 @@ d3en.6xlarge 58
 d3en.8xlarge 78
 d3en.xlarge 10
 dl1.24xlarge 737
+dl2q.24xlarge 737
 f1.16xlarge 394
 f1.2xlarge 58
 f1.4xlarge 234
