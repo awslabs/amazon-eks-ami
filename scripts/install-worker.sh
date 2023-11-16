@@ -504,7 +504,8 @@ fi
 ################################################################################
 
 if yum list installed | grep amazon-ssm-agent; then
-  echo "amazon-ssm-agent already present - skipping install"
+  echo "amazon-ssm-agent already present - ensuring package is up-to-date"
+  sudo yum update -y amazon-ssm-agent
 else
   echo "Installing amazon-ssm-agent"
   if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
