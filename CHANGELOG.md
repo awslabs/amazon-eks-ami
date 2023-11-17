@@ -2,6 +2,352 @@
 
 <!--new-changelog-entry-placeholder-->
 
+# AMI Release v20231116
+<!-- Release notes generated using configuration in .github/release.yaml at 872f5505e1de493694e74141985091b2c6f8354d -->
+
+## What's Changed
+* Sets docker to the latest 20.10 version by @mmerkes in https://github.com/awslabs/amazon-eks-ami/pull/1510
+
+## New Contributors
+* @edmondceausu made their first contribution in https://github.com/awslabs/amazon-eks-ami/pull/1504
+
+**Full Changelog**: https://github.com/awslabs/amazon-eks-ami/compare/v20231106...v20231116
+
+---
+
+<h2>AMI Details</h2>
+
+
+<details>
+<summary><b>Kubernetes 1.28</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.28-v20231116</td>
+      <td rowspan="3">1.28.3-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.28.3/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.28-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.28-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>12.2.0-1</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.10.198-187.748.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>535.54.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.27</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.27-v20231116</td>
+      <td rowspan="3">1.27.7-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.27.7/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.27-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.27-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>12.2.0-1</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.10.198-187.748.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>535.54.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.26</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.26-v20231116</td>
+      <td rowspan="3">1.26.10-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.26.10/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.26-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.26-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>12.2.0-1</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.10.198-187.748.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>535.54.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.25</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.25-v20231116</td>
+      <td rowspan="3">1.25.15-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.25.15/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.25-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.25-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>12.2.0-1</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.10.198-187.748.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>535.54.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.24</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.24-v20231116</td>
+      <td rowspan="3">1.24.17-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.24.17/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.24-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.24-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>11.4.0-1</td>
+    </tr>
+    <tr>
+      <td>docker</td>
+      <td>20.10.25-1.amzn2.0.3</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.10.198-187.748.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>470.182.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.23</b></summary>
+  <table>
+    <tr>
+      <th>AMI names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+    <tr>
+      <td>amazon-eks-node-1.23-v20231116</td>
+      <td rowspan="3">1.23.17-20231116</td>
+      <td rowspan="3">s3://amazon-eks/1.23.17/2023-11-14/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-gpu-node-1.23-v20231116</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-arm64-node-1.23-v20231116</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>Version</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td>3.2.1798.0-1</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td>1.6.19-1.amzn2.0.5</td>
+    </tr>
+    <tr>
+      <td>cuda</td>
+      <td>11.4.0-1</td>
+    </tr>
+    <tr>
+      <td>docker</td>
+      <td>20.10.25-1.amzn2.0.3</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td>5.4.258-171.360.amzn2</td>
+    </tr>
+    <tr>
+      <td>nvidia-driver-latest-dkms</td>
+      <td>470.182.03-1.el7</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td>1.1.7-4.amzn2</td>
+    </tr>
+  </table>
+</details>
+
+
+> **Note**
+> A recent change in the Linux kernel caused the EFA and NVIDIA drivers to be incompatible. More information is available in #1494.
+> To prevent unexpected failures, the kernel in the GPU AMI will remain at the following versions until we have determined a solution:
+> - Kubernetes 1.24 and below: `5.4.254-170.358.amzn2`
+> - Kubernetes 1.25 and above: `5.10.192-183.736.amzn2`
+
+---
+
+
 # AMI Release v20231106
 ## What's Changed
 * Add new i4i sizes to eni-max-pods.txt by @github-actions in https://github.com/awslabs/amazon-eks-ami/pull/1495
