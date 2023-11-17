@@ -79,13 +79,13 @@ sudo yum install -y \
   pigz
 
 # skip kernel version cleanup on al2023
-if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if ! cat /etc/*release | grep "al2023" >/dev/null 2>&1; then
   # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
   sudo package-cleanup --oldkernels --count=1 -y
 fi
 
 # packages that need special handling
-if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if cat /etc/*release | grep "al2023" >/dev/null 2>&1; then
   # exists in al2023 only (needed by kubelet)
   sudo yum install -y iptables-legacy
 else
@@ -117,6 +117,14 @@ sudo systemctl restart sshd.service
 ################################################################################
 
 sudo mv $WORKING_DIR/iptables-restore.service /etc/eks/iptables-restore.service
+
+################################################################################
+### IMDS emulator ##############################################################
+################################################################################
+
+sudo mv $WORKING_DIR/imds-emulator.service /etc/systemd/system/imds-emulator.service
+sudo systemctl enable imds-emulator.service
+sudo systemctl start imds-emulator.service
 
 ################################################################################
 ### awscli #####################################################
@@ -177,23 +185,23 @@ sudo chmod +x /etc/eks/containerd/pull-image.sh
 sudo mkdir -p /etc/systemd/system/containerd.service.d
 CONFIGURE_CONTAINERD_SLICE=$(vercmp "$KUBERNETES_VERSION" gteq "1.24.0" || true)
 if [ "$CONFIGURE_CONTAINERD_SLICE" == "true" ]; then
-  cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
+  cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
 [Service]
 Slice=runtime.slice
 EOF
 fi
 
-cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
+cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/10-compat-symlink.conf
 [Service]
 ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
 EOF
 
-cat << EOF | sudo tee -a /etc/modules-load.d/containerd.conf
+cat <<EOF | sudo tee -a /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
 EOF
 
-cat << EOF | sudo tee -a /etc/sysctl.d/99-kubernetes-cri.conf
+cat <<EOF | sudo tee -a /etc/sysctl.d/99-kubernetes-cri.conf
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
@@ -205,7 +213,7 @@ EOF
 
 sudo yum install -y nerdctl
 sudo mkdir /etc/nerdctl
-cat << EOF | sudo tee -a /etc/nerdctl/nerdctl.toml
+cat <<EOF | sudo tee -a /etc/nerdctl/nerdctl.toml
 namespace = "k8s.io"
 EOF
 
@@ -339,14 +347,14 @@ sudo chown root:root /var/lib/kubelet/kubeconfig
 # This is only injected for 1.20 since CSIServiceAccountToken will be moved to beta starting 1.21.
 if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
   KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
-  echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $WORKING_DIR/kubelet-config.json
+  echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED >$WORKING_DIR/kubelet-config.json
 fi
 
 # Enable Feature Gate for KubeletCredentialProviders in versions less than 1.28 since this feature flag was removed in 1.28.
 # TODO: Remove this during 1.27 EOL
 if vercmp $KUBERNETES_VERSION lt "1.28"; then
   KUBELET_CONFIG_WITH_KUBELET_CREDENTIAL_PROVIDER_FEATURE_GATE_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {KubeletCredentialProviders: true}')
-  echo $KUBELET_CONFIG_WITH_KUBELET_CREDENTIAL_PROVIDER_FEATURE_GATE_ENABLED > $WORKING_DIR/kubelet-config.json
+  echo $KUBELET_CONFIG_WITH_KUBELET_CREDENTIAL_PROVIDER_FEATURE_GATE_ENABLED >$WORKING_DIR/kubelet-config.json
 fi
 
 sudo mv $WORKING_DIR/kubelet.service /etc/systemd/system/kubelet.service
@@ -409,7 +417,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   #### Cache kube-proxy images starting with the addon default version and the latest version
   KUBE_PROXY_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version=${K8S_MINOR_VERSION})
   KUBE_PROXY_IMGS=()
-  if [[ $(jq '.addons | length' <<< $KUBE_PROXY_ADDON_VERSIONS) -gt 0 ]]; then
+  if [[ $(jq '.addons | length' <<<$KUBE_PROXY_ADDON_VERSIONS) -gt 0 ]]; then
     DEFAULT_KUBE_PROXY_FULL_VERSION=$(echo "${KUBE_PROXY_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
     DEFAULT_KUBE_PROXY_VERSION=$(echo "${DEFAULT_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f1)
     DEFAULT_KUBE_PROXY_PLATFORM_VERSION=$(echo "${DEFAULT_KUBE_PROXY_FULL_VERSION}" | cut -d"-" -f2)
@@ -432,7 +440,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   #### Cache VPC CNI images starting with the addon default version and the latest version
   VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${K8S_MINOR_VERSION})
   VPC_CNI_IMGS=()
-  if [[ $(jq '.addons | length' <<< $VPC_CNI_ADDON_VERSIONS) -gt 0 ]]; then
+  if [[ $(jq '.addons | length' <<<$VPC_CNI_ADDON_VERSIONS) -gt 0 ]]; then
     DEFAULT_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
     LATEST_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] .addonVersion' | sort -V | tail -n1)
     CNI_IMG="${ECR_URI}/amazon-k8s-cni"
@@ -519,7 +527,7 @@ fi
 ################################################################################
 
 BASE_AMI_ID=$(imds /latest/meta-data/ami-id)
-cat << EOF > "${WORKING_DIR}/release"
+cat <<EOF >"${WORKING_DIR}/release"
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
 BUILD_KERNEL="$(uname -r)"
@@ -532,7 +540,7 @@ sudo chown -R root:root /etc/eks
 ### Stuff required by "protectKernelDefaults=true" #############################
 ################################################################################
 
-cat << EOF | sudo tee -a /etc/sysctl.d/99-amazon.conf
+cat <<EOF | sudo tee -a /etc/sysctl.d/99-amazon.conf
 vm.overcommit_memory=1
 kernel.panic=10
 kernel.panic_on_oops=1

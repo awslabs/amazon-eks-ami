@@ -1,0 +1,10 @@
+[Unit]
+Description=SHIFT IMDS Emulator
+
+[Service]
+Environment="AWS_REGION=us-iso-east-1"
+ExecStart=/usr/bin/imds-emulator $AWS_REGION
+Restart=Always
+
+[Install]
+WantedBy=multi-user.target
