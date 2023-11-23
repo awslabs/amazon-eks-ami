@@ -34,6 +34,7 @@ function print_help {
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
+  echo "--pause-container-image The full image to pull the pause container from"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
@@ -100,6 +101,12 @@ while [[ $# -gt 0 ]]; do
     --containerd-config-file)
       CONTAINERD_CONFIG_FILE=$2
       log "INFO: --containerd-config-file='${CONTAINERD_CONFIG_FILE}'"
+      shift
+      shift
+      ;;
+    --pause-container-image)
+      PAUSE_CONTAINER_IMAGE=$2
+      log "INFO: --pause-container-image='${PAUSE_CONTAINER_IMAGE}'"
       shift
       shift
       ;;
@@ -335,8 +342,11 @@ chown root:root /etc/systemd/system/configure-clocksource.service
 systemctl daemon-reload
 systemctl enable --now configure-clocksource
 
-ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
+PAUSE_CONTAINER_IMAGE="${PAUSE_CONTAINER_IMAGE:-}"
+if [[ -z "${PAUSE_CONTAINER_IMAGE}" ]]; then
+  ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
+  PAUSE_CONTAINER_IMAGE="${ECR_URI}/eks/pause"
+fi
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 
 ### kubelet kubeconfig
