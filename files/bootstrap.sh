@@ -407,7 +407,7 @@ fi
 
 log "INFO: Using IP family: ${IP_FAMILY}"
 
-echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
+echo "$B64_CLUSTER_CA" | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig

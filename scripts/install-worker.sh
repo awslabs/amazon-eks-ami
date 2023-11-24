@@ -88,13 +88,19 @@ fi
 if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
   # exists in al2023 only (needed by kubelet)
   sudo yum install -y iptables-legacy
+
+  # Remove the amazon-ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
+  if yum list installed | grep amazon-ec2-net-utils; then sudo yum remove amazon-ec2-net-utils -y -q; fi
+
+  # Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
+  sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link
 else
   # curl-minimal already exists in al2023 so install curl only on al2
   sudo yum install -y curl
-fi
 
-# Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
-if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
+  # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
+  if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
+fi
 
 sudo mkdir -p /etc/eks/
 
