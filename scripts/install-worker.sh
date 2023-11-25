@@ -93,7 +93,7 @@ if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
   if yum list installed | grep amazon-ec2-net-utils; then sudo yum remove amazon-ec2-net-utils -y -q; fi
 
   # Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-  sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link
+  sudo sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link || true
 else
   # curl-minimal already exists in al2023 so install curl only on al2
   sudo yum install -y curl
