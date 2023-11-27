@@ -97,7 +97,14 @@
       "run_tags": {
         "creator": "{{user `creator`}}"
       },
-      "subnet_id": "{{user `subnet_id`}}",
+      "vpc_filter": {
+      },
+      "subnet_filter": {
+        "filters": {
+          "tag:kubernetes.io/role/internal-elb": "1"
+        },
+        "random": true
+      },
       "tags": {
         "Name": "{{user `ami_name`}}",
         "created": "{{timestamp}}",
