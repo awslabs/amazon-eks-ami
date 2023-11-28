@@ -32,7 +32,6 @@ validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
 validate_env_set WORKING_DIR
-validate_env_set SSM_AGENT_VERSION
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -512,10 +511,11 @@ fi
 if yum list installed | grep amazon-ssm-agent; then
   echo "amazon-ssm-agent already present - skipping install"
 else
-  echo "Installing amazon-ssm-agent"
-  if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+  if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
+    echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
     sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
+    echo "Installing amazon-ssm-agent from AL core repository"
     sudo yum install -y amazon-ssm-agent
   fi
 fi

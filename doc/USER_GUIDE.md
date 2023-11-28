@@ -58,7 +58,7 @@ Users have the following options for specifying their own values:
 | `source_ami_owners` | ```137112412989``` |  |
 | `ssh_interface` | `""` |  |
 | `ssh_username` | ```ec2-user``` |  |
-| `ssm_agent_version` | ```latest``` |  |
+| `ssm_agent_version` | `""` | Version of the SSM agent to install from the S3 bucket provided by the SSM agent project, such as ```latest```. If empty, the latest version of the SSM agent available in the Amazon Linux core repositories will be installed. |
 | `subnet_id` | `""` |  |
 | `temporary_security_group_source_cidrs` | `""` |  |
 | `volume_type` | ```gp2``` |  |
