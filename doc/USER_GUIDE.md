@@ -37,7 +37,7 @@ Users have the following options for specifying their own values:
 | `binary_bucket_region` | ```us-west-2``` |  |
 | `cache_container_images` | ```false``` |  |
 | `cni_plugin_version` | ```v1.2.0``` |  |
-| `containerd_version` | ```1.6.*``` |  |
+| `containerd_version` | ```1.7.*``` |  |
 | `creator` | ```{{env `USER`}}``` |  |
 | `docker_version` | ```20.10.*``` |  |
 | `encrypted` | ```false``` |  |
