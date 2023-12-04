@@ -276,6 +276,12 @@ elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" 
   S3_DOMAIN="c2s.ic.gov"
 elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
   S3_DOMAIN="sc2s.sgov.gov"
+# Updating binary_bucket_region variable to redirect from us-gov-west-1 and us-gov-east-1 to us-west-2 and us-east-2 respectively, as the buckets in GovCloud regions is returning Access Denieds
+# https://github.com/awslabs/amazon-eks-ami/issues/1536
+elif [ "$BINARY_BUCKET_REGION" = "us-gov-west-1" ]; then
+  BINARY_BUCKET_REGION="us-west-2"
+elif [ "$BINARY_BUCKET_REGION" = "us-gov-east-1" ]; then
+  BINARY_BUCKET_REGION="us-east-2"
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
@@ -295,7 +301,7 @@ for binary in ${BINARIES[*]}; do
     sudo wget $S3_URL_BASE/$binary.sha256
   fi
   sudo sha256sum -c $binary.sha256
-  sudo chmod +x $binary
+  sudo chmod 755 $binary
   sudo mv $binary /usr/bin/
 done
 
