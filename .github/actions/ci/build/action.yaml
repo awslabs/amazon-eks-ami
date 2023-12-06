@@ -1,0 +1,33 @@
+name: "[CI] Build"
+inputs:
+  git_sha:
+    required: true
+    type: string
+  build_id:
+    required: true
+    type: string
+  k8s_version:
+    required: true
+    type: string
+  additional_arguments:
+    required: false
+    type: string
+outputs:
+  ami_id:
+    value: ${{ steps.build.outputs.ami_id }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.git_sha }}
+    - id: build
+      shell: bash
+      run: |
+        AMI_NAME="amazon-eks-node-${{ inputs.k8s_version }}-${{ inputs.build_id }}"
+        make ${{ inputs.k8s_version }} ami_name=${AMI_NAME} ${{ inputs.additional_arguments }}
+        echo "ami_id=$(jq -r .builds[0].artifact_id "${AMI_NAME}-manifest.json" | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
+    - uses: actions/upload-artifact@v3
+      with:
+        name: version-info
+        path: "*-version-info.json"

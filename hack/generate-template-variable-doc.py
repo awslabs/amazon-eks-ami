@@ -47,7 +47,9 @@ for var, val in all_vars.items():
         if val == "":
             val = f"`\"\"`"
         else:
-            val = f"```{default_val}```"
+            val = f"```{val}```"
+    else:
+        val = "*None*"
     description = ""
     if var in existing_descriptions:
         description = existing_descriptions[var]

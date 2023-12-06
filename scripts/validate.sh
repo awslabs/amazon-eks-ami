@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-#
-# Do basic validation of the generated AMI
 
-# Validates that a file or blob doesn't exist
-#
-# Arguments:
-#   a file name or blob
-# Returns:
-#   1 if a file exists, after printing an error
+set -o nounset
+set -o errexit
+set -o pipefail
+
 validate_file_nonexists() {
   local file_blob=$1
   for f in $file_blob; do
@@ -45,8 +41,6 @@ else
   exit 1
 fi
 
-echo "Verifying that the package versionlocks are correct..."
-
 function versionlock-entries() {
   # the format of this output is EPOCH:NAME-VERSION-RELEASE.ARCH
   # more info in yum-versionlock(1)
@@ -58,21 +52,29 @@ function versionlock-packages() {
   versionlock-entries | xargs -I '{}' rpm --query '{}' --queryformat '%{NAME}\n'
 }
 
-for ENTRY in $(versionlock-entries); do
-  if ! rpm --query "$ENTRY" &> /dev/null; then
-    echo "There is no package matching the versionlock entry: '$ENTRY'"
-    exit 1
+function verify-versionlocks() {
+  for ENTRY in $(versionlock-entries); do
+    if ! rpm --query "$ENTRY" &> /dev/null; then
+      echo "There is no package matching the versionlock entry: '$ENTRY'"
+      exit 1
+    fi
+  done
+
+  LOCKED_PACKAGES=$(versionlock-packages | wc -l)
+  UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
+  if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
+    echo "Package(s) have multiple version locks!"
+    versionlock-entries
   fi
-done
 
-LOCKED_PACKAGES=$(versionlock-packages | wc -l)
-UNIQUE_LOCKED_PACKAGES=$(versionlock-packages | sort -u | wc -l)
-if [ $LOCKED_PACKAGES -ne $UNIQUE_LOCKED_PACKAGES ]; then
-  echo "Package(s) have multiple version locks!"
-  versionlock-entries
+  echo "Package versionlocks are correct!"
+}
+
+# run verify-versionlocks on al2 only, as it is not needed on al2023
+if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+  echo "Verifying that the package versionlocks are correct..."
+  verify-versionlocks
 fi
-
-echo "Package versionlocks are correct!"
 
 REQUIRED_COMMANDS=(unpigz)
 
@@ -84,3 +86,14 @@ for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
 done
 
 echo "Required commands were found: ${REQUIRED_COMMANDS[*]}"
+
+REQUIRED_FREE_MEBIBYTES=1024
+TOTAL_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $2}')
+FREE_MEBIBYTES=$(df -m / | tail -n1 | awk '{print $4}')
+echo "Disk space in mebibytes (required/free/total): ${REQUIRED_FREE_MEBIBYTES}/${FREE_MEBIBYTES}/${TOTAL_MEBIBYTES}"
+if [ ${FREE_MEBIBYTES} -lt ${REQUIRED_FREE_MEBIBYTES} ]; then
+  echo "Disk space requirements not met!"
+  exit 1
+else
+  echo "Disk space requirements were met."
+fi

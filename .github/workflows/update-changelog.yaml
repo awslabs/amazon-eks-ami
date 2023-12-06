@@ -1,0 +1,60 @@
+name: "[Release] Update CHANGELOG.md"
+on:
+  release:
+    types: [released]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  setup:
+    # this workflow will always fail in forks; bail if this isn't running in the upstream
+    if: github.repository == 'awslabs/amazon-eks-ami'
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.variables.outputs.tag_name }}
+    steps:
+      - id: variables
+        run: |
+          echo "tag_name=$(echo ${{ github.ref }} | cut -d/ -f3)" >> $GITHUB_OUTPUT
+  update-changelog:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: awslabs/amazon-eks-ami
+          ref: refs/heads/master
+          path: amazon-eks-ami/
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const changelogPath = './amazon-eks-ami/CHANGELOG.md';
+            const placeholder = '<!--new-changelog-entry-placeholder-->';
+            const tagName = '${{ needs.setup.outputs.tag_name }}';
+            const release = await github.rest.repos.getReleaseByTag({
+              tag: tagName,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const changelog = fs.readFileSync(changelogPath, 'utf8');
+            if (changelog.includes(release.data.name)) {
+              throw new Error(`changelog already includes ${release.data.name}`);
+            }
+            const newEntry = `# ${release.data.name}\n${release.data.body}`;
+            const updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry + '\n---\n');
+            fs.writeFileSync(changelogPath, updatedChangelog);
+      - uses: peter-evans/create-pull-request@v4
+        with:
+          branch: update-changelog
+          path: amazon-eks-ami/
+          add-paths: CHANGELOG.md
+          commit-message: "Update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
+          committer: "GitHub <noreply@github.com>"
+          author: "GitHub <noreply@github.com>"
+          title: "Update CHANGELOG.md"
+          labels: |
+            changelog/exclude
+          body: |
+            Adds CHANGELOG.md entry for release [${{ needs.setup.outputs.tag_name }}](https://github.com/awslabs/amazon-eks-ami/releases/tag/${{ needs.setup.outputs.tag_name }}).

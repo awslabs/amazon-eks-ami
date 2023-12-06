@@ -1,0 +1,186 @@
+name: '[CI] Manual'
+run-name: "#${{ inputs.pr_number }} - ${{ inputs.uuid }}"
+on:
+  workflow_dispatch:
+    inputs:
+      requester:
+        required: true
+        type: string
+      comment_url:
+        required: true
+        type: string
+      uuid:
+        required: true
+        type: string
+      pr_number:
+        required: true
+        type: string
+      git_sha:
+        required: true
+        type: string
+      goal:
+        required: true
+        type: choice
+        default: "test"
+        options:
+          - "build"
+          - "launch"
+          - "test"
+      build_arguments:
+        required: false
+        type: string
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      git_sha_short: ${{ steps.variables.outputs.git_sha_short }}
+      workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}
+      kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
+      build_id: ${{ steps.variables.outputs.build_id }}
+      ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
+    steps:
+    - id: variables
+      run: |
+        echo "git_sha_short=$(echo ${{ inputs.git_sha }} | rev | cut -c-7 | rev)" >> $GITHUB_OUTPUT
+        echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+        # grab supported versions directly from eksctl
+        wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+        tar xzf eksctl.tar.gz && chmod +x ./eksctl
+        echo "kubernetes_versions=$(./eksctl version --output json | jq -c .EKSServerSupportedVersions)" >> $GITHUB_OUTPUT
+        echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
+        echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
+
+  notify-start:
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: `@${{ inputs.requester }} roger [that](${{ inputs.comment_url }})! I've dispatched a [workflow](${{ needs.setup.outputs.workflow_run_url }}). 👍`
+            });
+  kubernetes-versions:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.k8s_version }}
+    needs:
+      - setup
+      - notify-start
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      # don't bail out of all sub-tasks if one fails
+      fail-fast: false
+      matrix:
+        k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 'master'
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
+          # 2.5 hours (job usually completes within 2 hours)
+          role-duration-seconds: 9000
+      - name: "${{ needs.setup.outputs.ci_step_name_prefix }} Build"
+        id: build
+        uses: ./.github/actions/ci/build
+        with:
+          git_sha: ${{ inputs.git_sha }}
+          k8s_version: ${{ matrix.k8s_version }}
+          build_id: ${{ needs.setup.outputs.build_id }}
+          additional_arguments: ${{ inputs.build_arguments }}
+      - if: ${{ inputs.goal == 'launch' || inputs.goal == 'test' }}
+        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Launch"
+        id: launch
+        uses: ./.github/actions/ci/launch
+        with:
+          ami_id: ${{ steps.build.outputs.ami_id }}
+          k8s_version: ${{ matrix.k8s_version }}
+          build_id: ${{ needs.setup.outputs.build_id }}
+          aws_region: ${{ secrets.AWS_REGION }}
+      - if: ${{ inputs.goal == 'test' }}
+        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
+        id: sonobuoy
+        uses: ./.github/actions/ci/sonobuoy
+        with:
+          cluster_name: ${{ steps.launch.outputs.cluster_name }}
+  notify-outcome:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs:
+      - setup
+      - kubernetes-versions
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const { data } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            const conclusionEmojis = {
+              "success": "✅",
+              "skipped": "⏭️",
+              "failure": "❌",
+              "cancelled": "🚮"
+            };
+            const uniqueStepNames = new Set();
+            const stepConclusionsByK8sVersion = new Map();
+            const ciStepNamePrefix = "${{ needs.setup.outputs.ci_step_name_prefix }}";
+            for (const job of data.jobs) {
+              if (/\d+\.\d+/.test(job.name)) {
+                const k8sVersion = job.name;
+                for (const step of job.steps) {
+                  if (step.name.startsWith(ciStepNamePrefix)) {
+                    const stepName = step.name.substring(ciStepNamePrefix.length).trim();
+                    let stepConclusions = stepConclusionsByK8sVersion.get(k8sVersion);
+                    if (!stepConclusions) {
+                      stepConclusions = new Map();
+                      stepConclusionsByK8sVersion.set(k8sVersion, stepConclusions);
+                    }
+                    stepConclusions.set(stepName, step.conclusion);
+                    uniqueStepNames.add(stepName);
+                  }
+                }
+              }
+            }
+            const headers = [{
+              data: 'Kubernetes version',
+              header: true
+            }];
+            for (const stepName of uniqueStepNames.values()) {
+              headers.push({
+                  data: stepName,
+                  header: true
+              });
+            }
+            const rows = [];
+            for (const stepConclusionsForK8sVersion of [...stepConclusionsByK8sVersion.entries()].sort()) {
+              const k8sVersion = stepConclusionsForK8sVersion[0];
+              const row = [k8sVersion];
+              for (const step of stepConclusionsForK8sVersion[1].entries()) {
+                  row.push(`${step[1]} ${conclusionEmojis[step[1]]}`);
+              }
+              rows.push(row);
+            }
+            const commentBody = core.summary
+              .addRaw("@${{ inputs.requester }} the <a href=${{ needs.setup.outputs.workflow_run_url }}>workflow</a> that you <a href=${{ inputs.comment_url }}>requested</a> has completed. 🎉")
+              .addTable([
+                headers,
+                ...rows,
+              ])
+              .stringify();
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.pr_number }},
+              body: commentBody
+            });
