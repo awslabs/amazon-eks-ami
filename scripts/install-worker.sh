@@ -89,11 +89,11 @@ if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
   sudo yum install -y iptables-nft
 
   # Mask udev triggers installed by amazon-ec2-net-utils package
-  sudo touch /etc/udev/rules.d/99-cni-empty.rules
+  sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
 
   # Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
-  sudo mkdir -p /etc/systemd/networkd.conf.d/
-  cat << EOF | sudo tee /etc/systemd/networkd.conf.d/80-release.conf
+  sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
+  cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
 # Do not clobber any routes or rules added by CNI.
 [Network]
 ManageForeignRoutes=no
