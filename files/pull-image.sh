@@ -19,9 +19,14 @@ function retry() {
   done
 }
 
-ecr_password=$(retry aws ecr get-login-password --region $region)
-if [[ -z ${ecr_password} ]]; then
-  echo >&2 "Unable to retrieve the ECR password."
-  exit 1
+if [[ "$img" =~ ^[0-9]{12}.dkr.ecr ]];
+then
+  ecr_password=$(retry aws ecr get-login-password --region $region)
+  if [[ -z ${ecr_password} ]]; then
+    echo >&2 "Unable to retrieve the ECR password."
+    exit 1
+  fi
+  retry sudo ctr --namespace k8s.io content fetch "${img}" --user AWS:${ecr_password}
+else
+  retry sudo ctr --namespace k8s.io content fetch "${img}"
 fi
-retry sudo ctr --namespace k8s.io content fetch "${img}" --user AWS:${ecr_password}
