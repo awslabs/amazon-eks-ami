@@ -26,7 +26,7 @@ cp ${TEMP_DIR}/containerd-config.toml /etc/eks/containerd/containerd-config.toml
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime containerd \
-  --pause-container-image "sample:8443/registry/pause" \
+  --pause-container-image "sample:8443/registry/pause:3.5" \
   test || exit_code=$?
 
 expected_image='sandbox_image = "sample:8443/registry/pause:3.5"'
