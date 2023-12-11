@@ -63,6 +63,9 @@ else
     il-central-1)
       acct="066635153087"
       ;;
+    ca-west-1)
+      acct="761377655185"
+      ;;
     # This sections includes all commercial non-opt-in regions, which use
     # the same account for ECR pause container images, but still have in-region
     # registries.
