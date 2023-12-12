@@ -19,8 +19,7 @@ function retry() {
   done
 }
 
-if [[ "$img" =~ ^[0-9]{12}.dkr.ecr ]];
-then
+if [[ "$img" =~ ^[0-9]{12}.dkr.ecr ]]; then
   ecr_password=$(retry aws ecr get-login-password --region $region)
   if [[ -z ${ecr_password} ]]; then
     echo >&2 "Unable to retrieve the ECR password."
