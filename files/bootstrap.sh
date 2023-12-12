@@ -34,7 +34,7 @@ function print_help {
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
-  echo "--pause-container-image The full image to pull the pause container from"
+  echo "--pause-container-image Image reference for the pause container image. If this flag is used, none of the other --pause-container-* flags take effect."
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
