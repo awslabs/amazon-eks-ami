@@ -6,7 +6,7 @@ This document includes details about using the AMI template and the resulting AM
 
 ## AMI template variables
 
-Default values for most variables are defined in [a default variable file](https://github.com/awslabs/amazon-eks-ami/blob/master/eks-worker-al2-variables.json).
+Default values for most variables are defined in [a default variable file](https://github.com/awslabs/amazon-eks-ami/blob/master/packer/al2/eks-worker-variables.json).
 
 Users have the following options for specifying their own values:
 
@@ -22,6 +22,7 @@ Users have the following options for specifying their own values:
 | Variable | Default value | Description |
 | - | - | - |
 | `additional_yum_repos` | `""` |  |
+| `al_variant` | ```al2``` |  |
 | `ami_component_description` | ```(k8s: {{ user `kubernetes_version` }}, docker: {{ user `docker_version` }}, containerd: {{ user `containerd_version` }})``` |  |
 | `ami_description` | ```EKS Kubernetes Worker AMI with AmazonLinux2 image``` |  |
 | `ami_name` | *None* |  |
@@ -40,8 +41,8 @@ Users have the following options for specifying their own values:
 | `containerd_version` | ```1.7.*``` |  |
 | `creator` | ```{{env `USER`}}``` |  |
 | `docker_version` | ```20.10.*``` |  |
-| `encrypted` | ```false``` |  |
 | `enable_fips` | ```false``` | Install openssl and enable fips related kernel parameters |
+| `encrypted` | ```false``` |  |
 | `instance_type` | *None* |  |
 | `kernel_version` | `""` |  |
 | `kms_key_id` | `""` |  |

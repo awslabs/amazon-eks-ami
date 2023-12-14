@@ -1,7 +1,8 @@
 {
-  "_comment": "All template variables are enumerated here; and most variables have a default value defined in eks-worker-al2-variables.json",
+  "_comment": "All template variables are enumerated here; and most variables have a default value defined in eks-worker-variables.json",
   "variables": {
     "additional_yum_repos": null,
+    "al_variant": null,
     "ami_component_description": null,
     "ami_description": null,
     "ami_name": null,
@@ -20,8 +21,8 @@
     "containerd_version": null,
     "creator": null,
     "docker_version": null,
-    "encrypted": null,
     "enable_fips": null,
+    "encrypted": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -129,19 +130,19 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+      "script": "{{template_dir}}/../../scripts/install_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/files/",
+      "source": "{{template_dir}}/../../files/",
       "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/log-collector-script/linux/",
+      "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
     {
@@ -155,7 +156,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
+      "script": "{{template_dir}}/../../scripts/upgrade_kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
@@ -164,7 +165,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/enable-fips.sh",
+      "script": "{{template_dir}}/../../scripts/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
       ]
@@ -179,8 +180,9 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install-worker.sh",
+      "script": "{{template_dir}}/../../scripts/install-worker.sh",
       "environment_vars": [
+        "AL_VARIANT={{user `al_variant`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
@@ -202,12 +204,12 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup.sh"
+      "script": "{{template_dir}}/../../scripts/cleanup.sh"
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "script": "{{template_dir}}/../../scripts/cleanup_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
@@ -215,15 +217,16 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/validate.sh",
+      "script": "{{template_dir}}/../../scripts/validate.sh",
       "environment_vars": [
+        "AL_VARIANT={{user `al_variant`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/generate-version-info.sh",
+      "script": "{{template_dir}}/../../scripts/generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
       "environment_vars": [
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"

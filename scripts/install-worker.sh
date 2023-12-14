@@ -20,9 +20,9 @@ validate_env_set() {
   )
 }
 
+validate_env_set AL_VARIANT
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
-validate_env_set DOCKER_VERSION
 validate_env_set CONTAINERD_VERSION
 validate_env_set RUNC_VERSION
 validate_env_set CNI_PLUGIN_VERSION
@@ -32,6 +32,10 @@ validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
 validate_env_set WORKING_DIR
+
+if [ "$AL_VARIANT" == "al2" ]; then
+  validate_env_set DOCKER_VERSION
+fi
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -78,13 +82,13 @@ sudo yum install -y \
   pigz
 
 # skip kernel version cleanup on al2023
-if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if ! [ "$AL_VARIANT" == "al2023" ]; then
   # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
   sudo package-cleanup --oldkernels --count=1 -y
 fi
 
 # packages that need special handling
-if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if [ "$AL_VARIANT" == "al2023" ]; then
   # exists in al2023 only (needed by kubelet)
   sudo yum install -y iptables-nft
 
