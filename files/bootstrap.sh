@@ -345,7 +345,7 @@ CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
-  log "INFO: --cluster-ca or --api-server-endpoint is not defined, describing cluster..."
+  log "INFO: --b64-cluster-ca or --apiserver-endpoint is not defined, describing cluster..."
   DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
   # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
