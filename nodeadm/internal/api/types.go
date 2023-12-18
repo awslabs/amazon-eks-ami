@@ -101,6 +101,7 @@ type LocalStorageStrategy string
 
 const (
 	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
+	LocalStorageRAID10 LocalStorageStrategy = "RAID10"
 	LocalStorageMount LocalStorageStrategy = "Mount"
 )
 

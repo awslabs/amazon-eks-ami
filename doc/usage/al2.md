@@ -171,6 +171,12 @@ A RAID-0 array is setup that includes all ephemeral NVMe instance storage disks.
 
 Another way of utilizing the ephemeral disks is to format and mount the individual disks. Mounting individual disks allows the [local-static-provisioner](https://github.com/kubernetes-sigs/sig-storage-local-static-provisioner) DaemonSet to create Persistent Volume Claims that pods can utilize.
 
+### Experimental: RAID-10 Kubelet and Containerd (raid10)
+
+Similar to RAID-0 array, it is possible to utilize RAID-10 array for instance types with four or more ephemeral NVMe instance storage disks. RAID-10 tolerates failure of maximum of 2 disks. However, individual ephemeral disks can not be replaced, so the purpose of redundancy is to make graceful decommisioning of a node possible.
+
+RAID-10 can be enabled by passing `--local-disks raid10` flag to the bootstrap script.
+
 ---
 
 ## Version-locked packages
