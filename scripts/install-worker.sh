@@ -202,12 +202,6 @@ cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/10-compat-symlink
 ExecStartPre=/bin/ln -sf /run/containerd/containerd.sock /run/dockershim.sock
 EOF
 
-cat << EOF | sudo tee /etc/systemd/system/containerd.service.d/20-limitnofile.conf
-[Service]
-# https://github.com/containerd/containerd/pull/8924
-LimitNOFILE=1024:524288
-EOF
-
 cat << EOF | sudo tee -a /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
