@@ -42,7 +42,8 @@
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
     "volume_type": null,
-    "working_dir": null
+    "working_dir": null,
+    "imds_support": null
   },
   "builders": [
     {
@@ -112,6 +113,7 @@
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
+      "imds_support": "{{user `imds_support`}}",
       "metadata_options": {
         "http_tokens": "required"
       }

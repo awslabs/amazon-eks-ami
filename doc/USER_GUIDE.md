@@ -63,6 +63,7 @@ Users have the following options for specifying their own values:
 | `temporary_security_group_source_cidrs` | `""` |  |
 | `volume_type` | ```gp2``` |  |
 | `working_dir` | ```{{user `remote_folder`}}/worker``` | Directory path for ephemeral resources on the builder instance |
+| `imds_support` | `""` | The only valid imds_support values are "v2.0" or the empty string |
 <!-- template-variable-table-boundary -->
 
 ---
@@ -107,6 +108,14 @@ aws s3 ls s3://amazon-eks/1.23.9/2022-07-27/bin/linux/x86_64/
 
 To build using the example binaries above:
 ```bash
+# Using IMDS v2
+make k8s \
+  kubernetes_version=1.23.9 \
+  kubernetes_build_date=2022-07-27 \
+  arch=x86_64 \
+  imds_support='v2.0'
+
+# Using IMDS v1
 make k8s \
   kubernetes_version=1.23.9 \
   kubernetes_build_date=2022-07-27 \
@@ -130,6 +139,15 @@ These binaries must be accessible using the credentials on the Packer builder EC
 
 2. Run the following command to start the build process to use your own Kubernetes binaries:
 ```bash
+# Using IMDS v2
+make k8s \
+  binary_bucket_name=my-custom-bucket \
+  binary_bucket_region=eu-west-1 \
+  kubernetes_version=1.14.9 \
+  kubernetes_build_date=2020-01-22 \
+  imds_support='v2.0'
+
+# Using IMDS v1
 make k8s \
   binary_bucket_name=my-custom-bucket \
   binary_bucket_region=eu-west-1 \

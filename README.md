@@ -15,7 +15,12 @@ Nodes](https://docs.aws.amazon.com/eks/latest/userguide/launch-workers.html).
 
 ## 🔢 Pre-requisites
 
-You must have [Packer](https://www.packer.io/) version 1.8.0 or later installed on your local system.
+You must have [Packer](https://www.packer.io/) version 1.8.6 or later installed on your local system.
+You must also have [Packer amazon-ebs plugin] version 1.2.7 or later installed.
+Note: The Packer team has moved away from bundling updated plugins with Packer since 1.8.x in favor of using packer plugins install for JSON users. This was called out in the [1.9.2 Packer release](https://github.com/hashicorp/packer/blob/main/CHANGELOG.md#notes-1).
+```bash
+packer plugins install "github.com/hashicorp/amazon" ">=1.2.7"
+```
 For more information, see [Installing Packer](https://www.packer.io/docs/install/index.html)
 in the Packer documentation. You must also have AWS account credentials
 configured so that Packer can make calls to AWS API operations on your behalf.

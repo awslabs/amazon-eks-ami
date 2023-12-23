@@ -102,8 +102,9 @@ lint: lint-docs ## Check the source files for syntax and format issues
 test: ## run the test-harness
 	test/test-harness.sh
 
-# include only variables which have a defined value
-PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
+# include only variables which have a defined value or the variable is imds_support
+PACKER_IMDS_SUPPORT_VAR := imds_support
+PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $(or $($(packerVar)), $(filter $(packerVar),$(PACKER_IMDS_SUPPORT_VAR))),$(packerVar)))
 PACKER_VAR_FLAGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
 $(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
 $(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
