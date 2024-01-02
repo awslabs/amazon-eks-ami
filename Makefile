@@ -1,31 +1,24 @@
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-# default to the latest supported Kubernetes version
+# `kubernetes_version` is a build variable, but requires some introspection
+# to dynamically pull determine build templates & variable defaults.
+# initialize the kubernetes version from the provided variables if missing.
+ifeq ($(kubernetes_version),)
+ifneq ($(PACKER_VARIABLE_FILE),)
+	kubernetes_version ?= $(shell jq -r .kubernetes_version $(PACKER_VARIABLE_FILE))
+endif
+endif
+
 K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
 
-AL_VARIANT ?= al2
-VALID_VARIANTS := al2 al2023
-ifneq ($(filter $(AL_VARIANT),$(VALID_VARIANTS)), $(AL_VARIANT))
-  $(error Invalid AL_VARIANT: $(AL_VARIANT). Must be one of [$(VALID_VARIANTS)])
-endif
-
-PACKER_DEFAULT_VARIABLE_FILE ?= $(shell hack/packer-gen.sh variables $(AL_VARIANT) $(K8S_VERSION_MINOR))
-PACKER_TEMPLATE_FILE ?= $(shell hack/packer-gen.sh template $(AL_VARIANT) $(K8S_VERSION_MINOR))
-PACKER_BINARY ?= packer
-AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
-
-# expands to 'true' if PACKER_VARIABLE_FILE is non-empty
-# and the file contains the string passed as the first argument
-# otherwise, expands to 'false'
-packer_variable_file_contains = $(if $(PACKER_VARIABLE_FILE),$(shell grep -Fq $1 $(PACKER_VARIABLE_FILE) && echo true || echo false),false)
-
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
+al_variant ?= al2
 arch ?= x86_64
 instance_type ?= m5.large
 
-ifeq ($(AL_VARIANT), al2023)
+ifeq ($(al_variant), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
 ifeq ($(arch), arm64)
@@ -38,24 +31,18 @@ endif
 
 ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
 
+# ami owner overrides for cn/gov-cloud
 ifeq ($(aws_region), cn-northwest-1)
 	source_ami_owners ?= 141808717104
-endif
-
-ifeq ($(aws_region), us-gov-west-1)
+else ifeq ($(aws_region), us-gov-west-1)
 	source_ami_owners ?= 045324592363
 endif
-
-T_RED := \e[0;31m
-T_GREEN := \e[0;32m
-T_YELLOW := \e[0;33m
-T_RESET := \e[0m
 
 # default to the latest supported Kubernetes version
 k8s=1.28
 
 .PHONY: build
-build: ## Build EKS Optimized AMI, default using AL2, use AL_VARIANT=al2023 for AL2023 AMI
+build: ## Build EKS Optimized AMI, default using AL2, use al_variant=al2023 for AL2023 AMI
 	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s))
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
@@ -66,49 +53,46 @@ SHFMT_FLAGS := --list \
 --case-indent \
 --space-redirects
 
-SHFMT_COMMAND := $(shell which shfmt)
-ifeq (, $(SHFMT_COMMAND))
-	SHFMT_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) mvdan/shfmt
-endif
-
 .PHONY: fmt
 fmt: ## Format the source files
-	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
-
-SHELLCHECK_COMMAND := $(shell which shellcheck)
-ifeq (, $(SHELLCHECK_COMMAND))
-	SHELLCHECK_COMMAND = docker run --rm -v $(MAKEFILE_DIR):$(MAKEFILE_DIR) koalaman/shellcheck:stable
-endif
-SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
+	hack/shfmt $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
 
 .PHONY: lint
 lint: lint-docs ## Check the source files for syntax and format issues
-	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
-	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
+	hack/shfmt $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
+	hack/shellcheck --format gcc --severity error $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
 	hack/lint-space-errors.sh
 
 .PHONY: test
 test: ## run the test-harness
 	test/test-harness.sh
 
-# include only variables which have a defined value
+PACKER_BINARY ?= packer
+PACKER_TEMPLATE_DIR ?= templates/$(al_variant)/$(K8S_VERSION_MINOR)
+PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
+PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables.json
+# extract Packer variables from the template file,
+# then store variables that are defined in the Makefile's execution context
+AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
 PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
-PACKER_VAR_FLAGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
-$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
-$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
+# read & construct Packer arguments in order from the following sources:
+# 1. default variable files
+# 2. (optional) user-specified variable file
+# 3. variables specified in the Make context
+PACKER_ARGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
+	$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
+	$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
 .PHONY: validate
 validate: ## Validate packer config
 	@echo "PACKER_TEMPLATE_FILE: $(PACKER_TEMPLATE_FILE)"
-	@echo "PACKER_VAR_FLAGS: $(PACKER_VAR_FLAGS)"
-	@echo "PACKER_DEFAULT_VARIABLES:"
-	@cat $(PACKER_DEFAULT_VARIABLE_FILE)
-	$(PACKER_BINARY) validate $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
+	@echo "PACKER_ARGS: $(PACKER_ARGS)"
+	$(PACKER_BINARY) validate $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AMI
-	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
-	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
+	@echo "Building AMI [al_variant=$(al_variant) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
+	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AMI - K8s 1.23
@@ -142,7 +126,6 @@ lint-docs: ## Lint the docs
 clean:
 	rm *-manifest.json
 	rm *-version-info.json
-	rm -rf .staging/
 
 .PHONY: help
 help: ## Display help

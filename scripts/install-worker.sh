@@ -33,8 +33,16 @@ validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
 validate_env_set WORKING_DIR
 
-if [ "$AL_VARIANT" == "al2" ]; then
-  validate_env_set DOCKER_VERSION
+if [[ ! -v "INSTALL_DOCKER" ]]; then
+  # allow docker on al2 below k8s 1.25
+  if [ "$AL_VARIANT" == "al2" ]; then
+    INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
+    if [[ "$INSTALL_DOCKER" == "true" ]]; then
+      validate_env_set DOCKER_VERSION
+    fi
+  fi
+else
+  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
 fi
 
 ################################################################################
@@ -232,12 +240,6 @@ EOF
 ################################################################################
 
 sudo yum install -y device-mapper-persistent-data lvm2
-
-if [[ ! -v "INSTALL_DOCKER" ]]; then
-  INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
-else
-  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
-fi
 
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker

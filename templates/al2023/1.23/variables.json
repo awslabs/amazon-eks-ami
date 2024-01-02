@@ -1,6 +1,5 @@
 {
     "additional_yum_repos": "",
-    "al_variant": "al2023",
     "ami_component_description": "(k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})",
     "ami_description": "EKS-optimized Kubernetes node based on Amazon Linux 2023",
     "ami_regions": "",
@@ -16,7 +15,6 @@
     "cni_plugin_version": "v1.2.0",
     "containerd_version": "*",
     "creator": "{{env `USER`}}",
-    "docker_version": "",
     "enable_fips": "false",
     "encrypted": "false",
     "kernel_version": "",

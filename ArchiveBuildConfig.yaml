@@ -9,8 +9,8 @@ dependencies:
     dirs:
       - src: files/
       - src: scripts/
+      - src: templates/
       - src: log-collector-script/
-      - src: packer/
     files:
       - src: Makefile
       - src: .git-commit
