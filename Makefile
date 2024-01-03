@@ -1,8 +1,8 @@
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # `kubernetes_version` is a build variable, but requires some introspection
-# to dynamically pull determine build templates & variable defaults.
-# initialize the kubernetes version from the provided variables if missing.
+# to dynamically determine build templates & variable defaults.
+# initialize the kubernetes version from the provided packer file if missing.
 ifeq ($(kubernetes_version),)
 ifneq ($(PACKER_VARIABLE_FILE),)
 	kubernetes_version ?= $(shell jq -r .kubernetes_version $(PACKER_VARIABLE_FILE))
@@ -14,11 +14,11 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
-al_variant ?= al2
+os_distro ?= al2
 arch ?= x86_64
 instance_type ?= m5.large
 
-ifeq ($(al_variant), al2023)
+ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
 ifeq ($(arch), arm64)
@@ -42,7 +42,7 @@ endif
 k8s=1.28
 
 .PHONY: build
-build: ## Build EKS Optimized AMI, default using AL2, use al_variant=al2023 for AL2023 AMI
+build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
 	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s))
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
@@ -68,9 +68,9 @@ test: ## run the test-harness
 	test/test-harness.sh
 
 PACKER_BINARY ?= packer
-PACKER_TEMPLATE_DIR ?= templates/$(al_variant)/$(K8S_VERSION_MINOR)
+PACKER_TEMPLATE_DIR ?= src/templates/$(os_distro)
 PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
-PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables.json
+PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/$(K8S_VERSION_MINOR)/variables.json
 # extract Packer variables from the template file,
 # then store variables that are defined in the Makefile's execution context
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
@@ -91,7 +91,7 @@ validate: ## Validate packer config
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AMI
-	@echo "Building AMI [al_variant=$(al_variant) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
+	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
 .PHONY: 1.23

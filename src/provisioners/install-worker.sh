@@ -20,30 +20,19 @@ validate_env_set() {
   )
 }
 
-validate_env_set AL_VARIANT
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
-validate_env_set CONTAINERD_VERSION
-validate_env_set RUNC_VERSION
-validate_env_set CNI_PLUGIN_VERSION
-validate_env_set KUBERNETES_VERSION
-validate_env_set KUBERNETES_BUILD_DATE
-validate_env_set PULL_CNI_FROM_GITHUB
-validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
+validate_env_set CNI_PLUGIN_VERSION
+validate_env_set CONTAINERD_VERSION
+validate_env_set DOCKER_VERSION
+validate_env_set KUBERNETES_BUILD_DATE
+validate_env_set KUBERNETES_VERSION
+validate_env_set OS_DISTRO
+validate_env_set PAUSE_CONTAINER_VERSION
+validate_env_set PULL_CNI_FROM_GITHUB
+validate_env_set RUNC_VERSION
 validate_env_set WORKING_DIR
-
-if [[ ! -v "INSTALL_DOCKER" ]]; then
-  # allow docker on al2 below k8s 1.25
-  if [ "$AL_VARIANT" == "al2" ]; then
-    INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
-    if [[ "$INSTALL_DOCKER" == "true" ]]; then
-      validate_env_set DOCKER_VERSION
-    fi
-  fi
-else
-  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
-fi
 
 ################################################################################
 ### Machine Architecture #######################################################
@@ -90,13 +79,13 @@ sudo yum install -y \
   pigz
 
 # skip kernel version cleanup on al2023
-if ! [ "$AL_VARIANT" == "al2023" ]; then
+if ! [ "$OS_DISTRO" == "al2023" ]; then
   # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
   sudo package-cleanup --oldkernels --count=1 -y
 fi
 
 # packages that need special handling
-if [ "$AL_VARIANT" == "al2023" ]; then
+if [ "$OS_DISTRO" == "al2023" ]; then
   # exists in al2023 only (needed by kubelet)
   sudo yum install -y iptables-nft
 
@@ -240,6 +229,16 @@ EOF
 ################################################################################
 
 sudo yum install -y device-mapper-persistent-data lvm2
+
+if [[ ! -v "INSTALL_DOCKER" ]]; then
+  if [[ "$OS_DISTRO" == "al2" ]]; then
+    INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
+  else
+    INSTALL_DOCKER=false
+  fi
+else
+  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
+fi
 
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
