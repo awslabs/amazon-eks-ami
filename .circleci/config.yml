@@ -26,6 +26,9 @@ jobs:
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
       - run:
+          name: Install aws cli
+          command: apk add aws-cli
+      - run:
           name: Packer validate and build AMI
           # AWS sometimes take really long to finish ami build.
           # By default, Circle CI have 10 minutes timeout without response,

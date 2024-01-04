@@ -63,6 +63,9 @@ else
     il-central-1)
       acct="066635153087"
       ;;
+    ca-west-1)
+      acct="761377655185"
+      ;;
     # This sections includes all commercial non-opt-in regions, which use
     # the same account for ECR pause container images, but still have in-region
     # registries.
@@ -110,10 +113,15 @@ else
   esac # end region check
 fi
 
-AWS_ECR_SUBDOMAIN="ecr"
-# if FIPS is enabled on the machine, use the FIPS endpoint.
+ECR_DOMAIN="${acct}.dkr.ecr.${region}.${aws_domain}"
+
+# if FIPS is enabled on the machine, use the FIPS endpoint if it's available
 if [[ "$(sysctl -n crypto.fips_enabled)" == 1 ]]; then
-  AWS_ECR_SUBDOMAIN="ecr-fips"
+  ECR_FIPS_DOMAIN="${acct}.dkr.ecr-fips.${region}.${aws_domain}"
+  if [ $(getent hosts "$ECR_FIPS_DOMAIN" | wc -l) -gt 0 ]; then
+    echo "$ECR_FIPS_DOMAIN"
+    exit 0
+  fi
 fi
 
-echo "${acct}.dkr.${AWS_ECR_SUBDOMAIN}.${region}.${aws_domain}"
+echo "$ECR_DOMAIN"
