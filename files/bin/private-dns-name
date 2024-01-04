@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o xtrace
+
+# Retrieves the PrivateDnsName from EC2 for this instance, waiting until
+# it is available if necessary (due to eventual consistency).
+
+function log {
+  echo >&2 "$(date '+%Y-%m-%dT%H:%M:%S%z')" "[private-dns-name]" "$@"
+}
+
+INSTANCE_ID=$(imds /latest/meta-data/instance-id)
+
+# the AWS CLI currently constructs the wrong endpoint URL on localzones (the availability zone group will be used instead of the parent region)
+# more info: https://github.com/aws/aws-cli/issues/7043
+REGION=$(imds /latest/meta-data/placement/region)
+
+# by default, wait for 120 seconds
+PRIVATE_DNS_NAME_MAX_ATTEMPTS=${PRIVATE_DNS_NAME_MAX_ATTEMPTS:-20}
+PRIVATE_DNS_NAME_ATTEMPT_INTERVAL=${PRIVATE_DNS_NAME_ATTEMPT_INTERVAL:-6}
+
+log "will make up to ${PRIVATE_DNS_NAME_MAX_ATTEMPTS} attempt(s) every ${PRIVATE_DNS_NAME_ATTEMPT_INTERVAL} second(s)"
+
+ATTEMPT=0
+while true; do
+  PRIVATE_DNS_NAME=$(aws ec2 describe-instances --region $REGION --instance-ids $INSTANCE_ID | jq -r '.Reservations[].Instances[].PrivateDnsName')
+  if [ ! "${PRIVATE_DNS_NAME}" = "" ] || [ ${ATTEMPT} -ge ${PRIVATE_DNS_NAME_MAX_ATTEMPTS} ]; then
+    break
+  fi
+  ATTEMPT=$((ATTEMPT + 1))
+  log "WARN: PrivateDnsName is not available, waiting for ${PRIVATE_DNS_NAME_ATTEMPT_INTERVAL} seconds..."
+  sleep ${PRIVATE_DNS_NAME_ATTEMPT_INTERVAL}
+done
+
+if [ "${PRIVATE_DNS_NAME}" = "" ]; then
+  log "ERROR: failed to retrieve PrivateDnsName after ${ATTEMPT} attempts!"
+  exit 1
+else
+  log "INFO: retrieved PrivateDnsName: ${PRIVATE_DNS_NAME}"
+  echo "${PRIVATE_DNS_NAME}"
+  exit 0
+fi

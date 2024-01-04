@@ -33,7 +33,7 @@ function print_help {
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
-  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true, for Kubernetes 1.25+; false otherwise)"
+  echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
@@ -175,6 +175,8 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 CLUSTER_NAME="$1"
 set -u
 
+export IMDS_TOKEN=$(imds token)
+
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 log "INFO: Using kubelet version $KUBELET_VERSION"
 
@@ -220,15 +222,18 @@ ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
 LOCAL_DISKS="${LOCAL_DISKS:-}"
 
+##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
+USE_RESERVED_CGROUPS=true
+if [[ ${KUBELET_EXTRA_ARGS} == *'--reserved-cpus'* ]]; then
+  USE_RESERVED_CGROUPS=false
+  log "INFO: --kubelet-extra-args includes --reserved-cpus, so kube/system-reserved cgroups will not be used."
+fi
+
 if [[ ! -z ${LOCAL_DISKS} ]]; then
   setup-local-disks "${LOCAL_DISKS}"
 fi
 
-DEFAULT_MOUNT_BPF_FS="true"
-if vercmp "$KUBELET_VERSION" lt "1.25.0"; then
-  DEFAULT_MOUNT_BPF_FS="false"
-fi
-MOUNT_BPF_FS="${MOUNT_BPF_FS:-$DEFAULT_MOUNT_BPF_FS}"
+MOUNT_BPF_FS="${MOUNT_BPF_FS:-true}"
 
 # Helper function which calculates the amount of the given resource (either CPU or memory)
 # to reserve in a given resource range, specified by a start and end of the range and a percentage
@@ -340,7 +345,7 @@ CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
 if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
-  log "INFO: --cluster-ca or --api-server-endpoint is not defined, describing cluster..."
+  log "INFO: --b64-cluster-ca or --apiserver-endpoint is not defined, describing cluster..."
   DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
   # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
@@ -402,7 +407,7 @@ fi
 
 log "INFO: Using IP family: ${IP_FAMILY}"
 
-echo $B64_CLUSTER_CA | base64 -d > $CA_CERTIFICATE_FILE_PATH
+echo "$B64_CLUSTER_CA" | base64 -d > $CA_CERTIFICATE_FILE_PATH
 
 sed -i s,MASTER_ENDPOINT,$APISERVER_ENDPOINT,g /var/lib/kubelet/kubeconfig
 sed -i s,AWS_REGION,$AWS_DEFAULT_REGION,g /var/lib/kubelet/kubeconfig
@@ -533,12 +538,7 @@ else
   # If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
   # then /etc/hostname is not the same as EC2's PrivateDnsName.
   # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
-  INSTANCE_ID=$(imds /latest/meta-data/instance-id)
-  # the AWS CLI currently constructs the wrong endpoint URL on localzones (the availability zone group will be used instead of the parent region)
-  # more info: https://github.com/aws/aws-cli/issues/7043
-  REGION=$(imds /latest/meta-data/placement/region)
-  PRIVATE_DNS_NAME=$(AWS_RETRY_MODE=standard AWS_MAX_ATTEMPTS=10 aws ec2 describe-instances --region $REGION --instance-ids $INSTANCE_ID --query 'Reservations[].Instances[].PrivateDnsName' --output text)
-  KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$PRIVATE_DNS_NAME"
+  KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$(private-dns-name)"
 fi
 
 KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
@@ -557,9 +557,6 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo mkdir -p /etc/containerd
   sudo mkdir -p /etc/cni/net.d
 
-  sudo mkdir -p /etc/systemd/system/containerd.service.d
-  printf '[Service]\nSlice=runtime.slice\n' | sudo tee /etc/systemd/system/containerd.service.d/00-runtime-slice.conf
-
   if [[ -n "${CONTAINERD_CONFIG_FILE}" ]]; then
     sudo cp -v "${CONTAINERD_CONFIG_FILE}" /etc/eks/containerd/containerd-config.toml
   fi
@@ -567,8 +564,11 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
 
   echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
-  echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  ##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
+  if [[ "${USE_RESERVED_CGROUPS}" = true ]]; then
+    echo "$(jq '.systemReservedCgroup="/system"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+    echo "$(jq '.kubeReservedCgroup="/runtime"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
+  fi
 
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
@@ -655,6 +655,8 @@ if command -v nvidia-smi &> /dev/null; then
       nvidia-smi -ac 5001,1590
     elif [[ $GPUNAME == *"M60"* ]]; then
       nvidia-smi -ac 2505,1177
+    elif [[ $GPUNAME == *"H100"* ]]; then
+      nvidia-smi -ac 2619,1980
     else
       echo "unsupported gpu"
     fi

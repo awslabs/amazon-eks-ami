@@ -1,27 +1,27 @@
-<# 
+<#
     Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
     Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
 
         http://aws.amazon.com/apache2.0/
 
-    or in the "license" file accompanying this file. 
+    or in the "license" file accompanying this file.
     This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-.SYNOPSIS 
+.SYNOPSIS
     Collects EKS Logs
-.DESCRIPTION 
-    Run the script to gather basic operating system, Docker daemon, and kubelet logs. 
+.DESCRIPTION
+    Run the script to gather basic operating system, Docker daemon, and kubelet logs.
 
 .NOTES
     You need to run this script with Elevated permissions to allow for the collection of the installed applications list
-.EXAMPLE 
+.EXAMPLE
     eks-log-collector.ps1
-    Gather basic operating system, Docker daemon, and kubelet logs. 
+    Gather basic operating system, Docker daemon, and kubelet logs.
 
 #>
 
 param(
-    [Parameter(Mandatory=$False)][string]$RunMode = "Collect"   
+    [Parameter(Mandatory=$False)][string]$RunMode = "Collect"
     )
 
 # Common options
@@ -111,10 +111,10 @@ Function get_sysinfo{
         Write-Host "OK" -ForegroundColor "green"
     }
     catch {
-        Write-Error "Unable to collect system information" 
+        Write-Error "Unable to collect system information"
         Break
-    }  
-        
+    }
+
 }
 
 Function is_diskfull{
@@ -127,11 +127,11 @@ Function is_diskfull{
         Write-Host "OK" -ForegroundColor "green"
     }
     catch {
-        Write-Error "Unable to Determine Free Disk Space" 
+        Write-Error "Unable to Determine Free Disk Space"
         Break
     }
     if ($percent -lt $threshold){
-        Write-Error "C: drive only has $percent% free space, please ensure there is at least $threshold% free disk space to collect and store the log files" 
+        Write-Error "C: drive only has $percent% free space, please ensure there is at least $threshold% free disk space to collect and store the log files"
         Break
     }
 }
@@ -328,7 +328,7 @@ Function get_containerd_logs{
 
 Function get_network_info{
     try {
-        Write-Host "Collecting network Information" 
+        Write-Host "Collecting network Information"
         Get-HnsNetwork | Select Name, Type, Id, AddressPrefix > $info_system\network\hns\network.txt
         Get-hnsnetwork | Convertto-json -Depth 20 >> $info_system\network\hns\network.txt
         Get-hnsnetwork | % { Get-HnsNetwork -Id $_.ID -Detailed } | Convertto-json -Depth 20 >> $info_system\network\hns\networkdetailed.txt
@@ -373,7 +373,7 @@ Function init{
     create_working_dir
     get_sysinfo
 }
-    
+
 Function collect{
     init
     is_diskfull
@@ -395,11 +395,11 @@ Function collect{
 
 #--------------------------
 #Main-function
-Function main {   
+Function main {
     Write-Host "Running Default(Collect) Mode" -foregroundcolor "blue"
     cleanup
     collect
-    pack 
+    pack
 }
 
 #Entry point

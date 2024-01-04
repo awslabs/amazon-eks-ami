@@ -26,14 +26,22 @@ ifeq ($(call vercmp,$(kubernetes_version),gteq,1.25.0), true)
 	ami_component_description ?= (k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})
 endif
 
+AMI_VERSION ?= v$(shell date '+%Y%m%d')
+AMI_VARIANT ?= amazon-eks
+ifneq (,$(findstring al2023, $(PACKER_TEMPLATE_FILE)))
+	AMI_VARIANT := $(AMI_VARIANT)-al2023
+endif
 arch ?= x86_64
 ifeq ($(arch), arm64)
 	instance_type ?= m6g.large
-	ami_name ?= amazon-eks-arm64-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
+	AMI_VARIANT := $(AMI_VARIANT)-arm64
 else
 	instance_type ?= m5.large
-	ami_name ?= amazon-eks-node-$(K8S_VERSION_MINOR)-v$(shell date +'%Y%m%d%H%M%S')
 endif
+ifeq ($(enable_fips), true)
+	AMI_VARIANT := $(AMI_VARIANT)-fips
+endif
+ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
 
 ifeq ($(aws_region), cn-northwest-1)
 	source_ami_owners ?= 141808717104
@@ -48,8 +56,12 @@ T_GREEN := \e[0;32m
 T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
-.PHONY: latest
-latest: 1.27 ## Build EKS Optimized AL2 AMI with the latest supported version of Kubernetes
+# default to the latest supported Kubernetes version
+k8s=1.28
+
+.PHONY: build
+build: ## Build EKS Optimized AL2 AMI
+	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s))
 
 # ensure that these flags are equivalent to the rules in the .editorconfig
 SHFMT_FLAGS := --list \
@@ -74,10 +86,17 @@ ifeq (, $(SHELLCHECK_COMMAND))
 endif
 SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
 
+.PHONY: transform-al2-to-al2023
+transform-al2-to-al2023:
+	PACKER_TEMPLATE_FILE=$(PACKER_TEMPLATE_FILE) \
+	PACKER_DEFAULT_VARIABLE_FILE=$(PACKER_DEFAULT_VARIABLE_FILE) \
+		hack/transform-al2-to-al2023.sh
+
 .PHONY: lint
-lint: ## Check the source files for syntax and format issues
+lint: lint-docs ## Check the source files for syntax and format issues
 	$(SHFMT_COMMAND) $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
 	$(SHELLCHECK_COMMAND) --format gcc --severity error $(SHELL_FILES)
+	hack/lint-space-errors.sh
 
 .PHONY: test
 test: ## run the test-harness
@@ -98,31 +117,33 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 	@echo "$(T_GREEN)Building AMI for version $(T_YELLOW)$(kubernetes_version)$(T_GREEN) on $(T_YELLOW)$(arch)$(T_RESET)"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_VAR_FLAGS) $(PACKER_TEMPLATE_FILE)
 
-# Build dates and versions taken from https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
-
-.PHONY: 1.22
-1.22: ## Build EKS Optimized AL2 AMI - K8s 1.22
-	$(MAKE) k8s kubernetes_version=1.22.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
-
 .PHONY: 1.23
 1.23: ## Build EKS Optimized AL2 AMI - K8s 1.23
-	$(MAKE) k8s kubernetes_version=1.23.17 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.23)
 
 .PHONY: 1.24
 1.24: ## Build EKS Optimized AL2 AMI - K8s 1.24
-	$(MAKE) k8s kubernetes_version=1.24.13 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.24)
 
 .PHONY: 1.25
 1.25: ## Build EKS Optimized AL2 AMI - K8s 1.25
-	$(MAKE) k8s kubernetes_version=1.25.9 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.25)
 
 .PHONY: 1.26
 1.26: ## Build EKS Optimized AL2 AMI - K8s 1.26
-	$(MAKE) k8s kubernetes_version=1.26.4 kubernetes_build_date=2023-05-11 pull_cni_from_github=true
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.26)
 
 .PHONY: 1.27
 1.27: ## Build EKS Optimized AL2 AMI - K8s 1.27
-	$(MAKE) k8s kubernetes_version=1.27.1 kubernetes_build_date=2023-04-19 pull_cni_from_github=true
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.27)
+
+.PHONY: 1.28
+1.28: ## Build EKS Optimized AL2 AMI - K8s 1.28
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.28)
+
+.PHONY: lint-docs
+lint-docs: ## Lint the docs
+	hack/lint-docs.sh
 
 .PHONY: clean
 clean:

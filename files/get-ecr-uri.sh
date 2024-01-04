@@ -39,14 +39,14 @@ else
     af-south-1)
       acct="877085696533"
       ;;
-    eu-south-1)
-      acct="590381155156"
-      ;;
     ap-southeast-3)
       acct="296578399912"
       ;;
     me-central-1)
       acct="759879836304"
+      ;;
+    eu-south-1)
+      acct="590381155156"
       ;;
     eu-south-2)
       acct="455263428931"
@@ -63,10 +63,65 @@ else
     il-central-1)
       acct="066635153087"
       ;;
-    *)
+    ca-west-1)
+      acct="761377655185"
+      ;;
+    # This sections includes all commercial non-opt-in regions, which use
+    # the same account for ECR pause container images, but still have in-region
+    # registries.
+    ap-northeast-1 | \
+      ap-northeast-2 | \
+      ap-northeast-3 | \
+      ap-south-1 | \
+      ap-southeast-1 | \
+      ap-southeast-2 | \
+      ca-central-1 | \
+      eu-central-1 | \
+      eu-north-1 | \
+      eu-west-1 | \
+      eu-west-2 | \
+      eu-west-3 | \
+      sa-east-1 | \
+      us-east-1 | \
+      us-east-2 | \
+      us-west-1 | \
+      us-west-2)
       acct="602401143452"
       ;;
-  esac
+    # If the region is not mapped to an account, let's try to choose another region
+    # in that partition.
+    us-gov-*)
+      acct="013241004608"
+      region="us-gov-west-1"
+      ;;
+    cn-*)
+      acct="961992271922"
+      region="cn-northwest-1"
+      ;;
+    us-iso-*)
+      acct="725322719131"
+      region="us-iso-east-1"
+      ;;
+    us-isob-*)
+      acct="187977181151"
+      region="us-isob-east-1"
+      ;;
+    *)
+      acct="602401143452"
+      region="us-west-2"
+      ;;
+  esac # end region check
 fi
 
-echo "${acct}.dkr.ecr.${region}.${aws_domain}"
+ECR_DOMAIN="${acct}.dkr.ecr.${region}.${aws_domain}"
+
+# if FIPS is enabled on the machine, use the FIPS endpoint if it's available
+if [[ "$(sysctl -n crypto.fips_enabled)" == 1 ]]; then
+  ECR_FIPS_DOMAIN="${acct}.dkr.ecr-fips.${region}.${aws_domain}"
+  if [ $(getent hosts "$ECR_FIPS_DOMAIN" | wc -l) -gt 0 ]; then
+    echo "$ECR_FIPS_DOMAIN"
+    exit 0
+  fi
+fi
+
+echo "$ECR_DOMAIN"

@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.5"
+readonly PROGRAM_VERSION="0.7.6"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -50,6 +50,7 @@ REQUIRED_UTILS=(
 
 COMMON_DIRECTORIES=(
   kernel
+  modinfo
   system
   docker
   containerd
@@ -263,6 +264,7 @@ collect() {
   get_region
   get_common_logs
   get_kernel_info
+  get_modinfo
   get_mounts_info
   get_selinux_info
   get_iptables_info
@@ -276,6 +278,7 @@ collect() {
   get_sysctls_info
   get_networking_info
   get_cni_config
+  get_cni_configuration_variables
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
@@ -354,7 +357,9 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/containers/ebs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/efs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/fsx-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/containers/fsx-openzfs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/file-cache-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/containers/eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
       if [[ "${entry}" == "pods" ]]; then
@@ -364,6 +369,10 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_ebs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_efs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_fsx-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_fsx-openzfs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_file-cache-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
       cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/ 2> /dev/null
@@ -384,6 +393,12 @@ get_kernel_info() {
   uname -a > "${COLLECT_DIR}/kernel/uname.txt"
 
   ok
+}
+
+# collect modinfo on specific modules for debugging purposes
+get_modinfo() {
+  try "collect modinfo"
+  modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
 }
 
 get_docker_logs() {
@@ -522,7 +537,7 @@ get_networking_info() {
     CA_CRT=$(grep certificate-authority: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*certificate-authority: //')
     for i in $(seq 5); do
       echo -e "curling ${API_SERVER} ($i of 5) $(date --utc +%FT%T.%3N%Z)\n\n" >> ${COLLECT_DIR}"/networking/curl_api_server.txt"
-      timeout 75 curl -v --cacert "${CA_CRT}" "${API_SERVER}"/livez?verbose >> ${COLLECT_DIR}"/networking/curl_api_server.txt" 2>&1
+      timeout 75 curl -v --connect-timeout 3 --max-time 10 --noproxy '*' --cacert "${CA_CRT}" "${API_SERVER}"/livez?verbose >> ${COLLECT_DIR}"/networking/curl_api_server.txt" 2>&1
     done
   fi
 
@@ -543,6 +558,35 @@ get_cni_config() {
 
   if [[ -e "/etc/cni/net.d/" ]]; then
     cp --force --recursive --dereference /etc/cni/net.d/* "${COLLECT_DIR}"/cni/
+  fi
+
+  ok
+}
+
+get_cni_configuration_variables() {
+  # To get cni configuration variables, gather from the main container "amazon-k8s-cni"
+  # - https://github.com/aws/amazon-vpc-cni-k8s#cni-configuration-variables
+  try "collect CNI Configuration Variables from Docker"
+
+  # "docker container list" will only show "RUNNING" containers.
+  # "docker container inspect" will generate plain text output.
+  if [[ "$(pgrep -o dockerd)" -ne 0 ]]; then
+    timeout 75 docker container list | awk '/amazon-k8s-cni/{print$NF}' | xargs -n 1 docker container inspect > "${COLLECT_DIR}"/cni/cni-configuration-variables-dockerd.txt 2>&1 || echo -e "\tTimed out, ignoring \"cni configuration variables output \" "
+  else
+    warning "The Docker daemon is not running."
+  fi
+
+  try "collect CNI Configuration Variables from Containerd"
+
+  # "ctr container list" will list down all containers, including stopped ones.
+  # "ctr container info" will generate JSON format output.
+  if ! command -v ctr > /dev/null 2>&1; then
+    warning "ctr not installed"
+  else
+    # "ctr --namespace k8s.io container list" will return two containers
+    # - amazon-k8s-cni:v1.xx.yy
+    # - amazon-k8s-cni-init:v1.xx.yy
+    timeout 75 ctr --namespace k8s.io container list | awk '/amazon-k8s-cni:v/{print$1}' | xargs -n 1 ctr --namespace k8s.io container info > "${COLLECT_DIR}"/cni/cni-configuration-variables-containerd.json 2>&1 || echo -e "\tTimed out, ignoring \"cni configuration variables output \" "
   fi
 
   ok

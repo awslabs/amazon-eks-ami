@@ -1,0 +1,29 @@
+name: '[Sync] Push to CodeCommit'
+
+on:
+  schedule:
+    # twice an hour, at :00 and :30
+    - cron:  '0,30 * * * *'
+
+jobs:
+  mirror:
+    if: github.repository == 'awslabs/amazon-eks-ami'
+    runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # fetch complete history
+          fetch-depth: 0
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_TO_CODECOMMIT }}
+      - run: git config credential.helper '!aws codecommit credential-helper $@'
+      - run: git config credential.UseHttpPath true
+      - run: git remote add codecommit ${{ secrets.AWS_CODECOMMIT_REPO_URL }}
+      - run: git checkout master
+      - run: git push codecommit master
