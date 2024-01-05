@@ -22,6 +22,7 @@
     "docker_version": null,
     "encrypted": null,
     "enable_fips": null,
+    "imds_support": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -42,8 +43,7 @@
     "subnet_id": null,
     "temporary_security_group_source_cidrs": null,
     "volume_type": null,
-    "working_dir": null,
-    "imds_support": null
+    "working_dir": null
   },
   "builders": [
     {
