@@ -131,15 +131,6 @@ These binaries must be accessible using the credentials on the Packer builder EC
 
 2. Run the following command to start the build process to use your own Kubernetes binaries:
 ```bash
-# Using IMDS v2
-make k8s \
-  binary_bucket_name=my-custom-bucket \
-  binary_bucket_region=eu-west-1 \
-  kubernetes_version=1.14.9 \
-  kubernetes_build_date=2020-01-22 \
-  imds_support='v2.0'
-
-# Using IMDS v1
 make k8s \
   binary_bucket_name=my-custom-bucket \
   binary_bucket_region=eu-west-1 \
