@@ -18,6 +18,7 @@
     "docker_version": "20.10.*",
     "enable_fips": "false",
     "encrypted": "false",
+    "imds_support": "",
     "kernel_version": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "4",
@@ -35,6 +36,5 @@
     "subnet_id": "",
     "temporary_security_group_source_cidrs": "",
     "volume_type": "gp2",
-    "working_dir": "{{user `remote_folder`}}/worker",
-    "imds_support": ""
+    "working_dir": "{{user `remote_folder`}}/worker"
 }
