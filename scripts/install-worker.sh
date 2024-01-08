@@ -86,10 +86,19 @@ fi
 # packages that need special handling
 if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
   # exists in al2023 only (needed by kubelet)
-  sudo yum install -y iptables-legacy
+  sudo yum install -y iptables-nft
 
-  # Remove the amazon-ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
-  if yum list installed | grep amazon-ec2-net-utils; then sudo yum remove amazon-ec2-net-utils -y -q; fi
+  # Mask udev triggers installed by amazon-ec2-net-utils package
+  sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
+
+  # Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
+  sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
+  cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
+# Do not clobber any routes or rules added by CNI.
+[Network]
+ManageForeignRoutes=no
+ManageForeignRoutingPolicyRules=no
+EOF
 
   # Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
   sudo sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link || true
