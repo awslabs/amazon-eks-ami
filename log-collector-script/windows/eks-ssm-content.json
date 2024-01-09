@@ -22,7 +22,7 @@
           "} ",
           "try { ",
           "    Write-Host 'Downloading EKS Log collector script' ",
-          "    Invoke-WebRequest -UseBasicParsing  'https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/windows/eks-log-collector.ps1' -OutFile  eks-log-collector.ps1 ",
+          "    Invoke-WebRequest -UseBasicParsing  'https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/windows/eks-log-collector.ps1' -OutFile  eks-log-collector.ps1 ",
           "} ",
           "catch { ",
           "    Write-Host 'Uploaded to S3 failed' ",

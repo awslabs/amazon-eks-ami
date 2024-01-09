@@ -33,7 +33,7 @@ jobs:
           set -o errexit
           cd amazon-vpc-cni-k8s/
           make generate-limits
-          cp misc/eni-max-pods.txt ../amazon-eks-ami/files/eni-max-pods.txt
+          cp misc/eni-max-pods.txt ../amazon-eks-ami/src/runtime/eni-max-pods.txt
       - uses: peter-evans/create-pull-request@v4
         with:
             branch: update-eni-max-pods

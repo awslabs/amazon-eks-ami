@@ -1,5 +1,5 @@
 {
-  "_comment": "All template variables are enumerated here; and most variables have a default value defined in eks-worker-al2-variables.json",
+  "_comment": "All template variables are enumerated here; and most variables have a default value defined in a variables.json for each kubernetes minor version",
   "variables": {
     "additional_yum_repos": null,
     "ami_component_description": null,
@@ -19,15 +19,15 @@
     "cni_plugin_version": null,
     "containerd_version": null,
     "creator": null,
-    "docker_version": null,
-    "encrypted": null,
     "enable_fips": null,
+    "encrypted": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
+    "os_distro": "al2023",
     "pause_container_version": null,
     "pull_cni_from_github": null,
     "remote_folder": null,
@@ -40,6 +40,7 @@
     "ssh_username": null,
     "ssm_agent_version": null,
     "subnet_id": null,
+    "temporary_key_pair_type": "ed25519",
     "temporary_security_group_source_cidrs": null,
     "volume_type": null,
     "working_dir": null
@@ -104,7 +105,6 @@
         "build_region": "{{ .BuildRegion }}",
         "source_ami_id": "{{ .SourceAMI }}",
         "source_ami_name": "{{ .SourceAMIName }}",
-        "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
         "cni_plugin_version": "{{ user `cni_plugin_version`}}",
@@ -129,19 +129,19 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install_additional_repos.sh",
+      "script": "{{template_dir}}/../../provisioners/install_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/files/",
+      "source": "{{template_dir}}/../../runtime/",
       "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/log-collector-script/linux/",
+      "source": "{{template_dir}}/../../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
     {
@@ -155,59 +155,36 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/upgrade_kernel.sh",
+      "script": "{{template_dir}}/../../provisioners/install-worker.sh",
       "environment_vars": [
-        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "KERNEL_VERSION={{user `kernel_version`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/enable-fips.sh",
-      "environment_vars": [
-        "ENABLE_FIPS={{user `enable_fips`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "inline": ["sudo reboot"],
-      "expect_disconnect": true,
-      "pause_after": "90s"
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/install-worker.sh",
-      "environment_vars": [
-        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
-        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "DOCKER_VERSION={{user `docker_version`}}",
-        "CONTAINERD_VERSION={{user `containerd_version`}}",
-        "RUNC_VERSION={{user `runc_version`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
-        "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
-        "WORKING_DIR={{user `working_dir`}}",
-        "SSM_AGENT_VERSION={{user `ssm_agent_version`}}"
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
+        "CONTAINERD_VERSION={{user `containerd_version`}}",
+        "DOCKER_VERSION=none",
+        "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "OS_DISTRO={{user `os_distro`}}",
+        "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
+        "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
+        "RUNC_VERSION={{user `runc_version`}}",
+        "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup.sh"
+      "script": "{{template_dir}}/../../provisioners/cleanup.sh"
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/cleanup_additional_repos.sh",
+      "script": "{{template_dir}}/../../provisioners/cleanup_additional_repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
@@ -215,15 +192,16 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/validate.sh",
+      "script": "{{template_dir}}/../../provisioners/validate.sh",
       "environment_vars": [
+        "OS_DISTRO={{user `os_distro`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/scripts/generate-version-info.sh",
+      "script": "{{template_dir}}/../../provisioners/generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
       "environment_vars": [
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"

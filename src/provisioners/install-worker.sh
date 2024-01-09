@@ -22,15 +22,16 @@ validate_env_set() {
 
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
-validate_env_set DOCKER_VERSION
-validate_env_set CONTAINERD_VERSION
-validate_env_set RUNC_VERSION
-validate_env_set CNI_PLUGIN_VERSION
-validate_env_set KUBERNETES_VERSION
-validate_env_set KUBERNETES_BUILD_DATE
-validate_env_set PULL_CNI_FROM_GITHUB
-validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set CACHE_CONTAINER_IMAGES
+validate_env_set CNI_PLUGIN_VERSION
+validate_env_set CONTAINERD_VERSION
+validate_env_set DOCKER_VERSION
+validate_env_set KUBERNETES_BUILD_DATE
+validate_env_set KUBERNETES_VERSION
+validate_env_set OS_DISTRO
+validate_env_set PAUSE_CONTAINER_VERSION
+validate_env_set PULL_CNI_FROM_GITHUB
+validate_env_set RUNC_VERSION
 validate_env_set WORKING_DIR
 
 ################################################################################
@@ -78,13 +79,13 @@ sudo yum install -y \
   pigz
 
 # skip kernel version cleanup on al2023
-if ! cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if ! [ "$OS_DISTRO" == "al2023" ]; then
   # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
   sudo package-cleanup --oldkernels --count=1 -y
 fi
 
 # packages that need special handling
-if cat /etc/*release | grep "al2023" > /dev/null 2>&1; then
+if [ "$OS_DISTRO" == "al2023" ]; then
   # exists in al2023 only (needed by kubelet)
   sudo yum install -y iptables-nft
 
@@ -230,7 +231,11 @@ EOF
 sudo yum install -y device-mapper-persistent-data lvm2
 
 if [[ ! -v "INSTALL_DOCKER" ]]; then
-  INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
+  if [[ "$OS_DISTRO" == "al2" ]]; then
+    INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
+  else
+    INSTALL_DOCKER=false
+  fi
 else
   echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
 fi

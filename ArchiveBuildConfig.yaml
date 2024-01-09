@@ -7,13 +7,10 @@
 dependencies:
   source:
     dirs:
-      - src: files/
-      - src: scripts/
+      - src: src/
       - src: log-collector-script/
     files:
       - src: Makefile
-      - src: eks-worker-al2.json
-      - src: eks-worker-al2-variables.json
       - src: .git-commit
 archive:
   name: amazon-eks-ami.tar.gz
