@@ -1,0 +1,27 @@
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service sandbox-image.service
+Requires=containerd.service sandbox-image.service
+
+[Service]
+Slice=runtime.slice
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
+ExecStart=/usr/bin/kubelet \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --container-runtime-endpoint unix:///run/containerd/containerd.sock \
+    --image-credential-provider-config /etc/eks/image-credential-provider/config.json \
+    --image-credential-provider-bin-dir /etc/eks/image-credential-provider \
+    $KUBELET_ARGS \
+    $KUBELET_EXTRA_ARGS
+
+Restart=on-failure
+RestartForceExitStatus=SIGPIPE
+RestartSec=5
+KillMode=process
+CPUAccounting=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target

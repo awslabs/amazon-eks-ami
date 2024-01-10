@@ -49,7 +49,6 @@ Users have the following options for specifying their own values:
 | `kubernetes_build_date` |  |
 | `kubernetes_version` |  |
 | `launch_block_device_mappings_volume_size` |  |
-| `os_distro` |  |
 | `pause_container_version` |  |
 | `pull_cni_from_github` |  |
 | `remote_folder` | Directory path for shell provisioner scripts on the builder instance |
@@ -73,7 +72,6 @@ Users have the following options for specifying their own values:
 <!-- template-variable-table-boundary-al2023 -->
 | Variable | Description |
 | - | - |
-| `additional_yum_repos` |  |
 | `ami_component_description` |  |
 | `ami_description` |  |
 | `ami_name` |  |
@@ -94,12 +92,10 @@ Users have the following options for specifying their own values:
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
 | `encrypted` |  |
 | `instance_type` |  |
-| `kernel_version` |  |
 | `kms_key_id` |  |
 | `kubernetes_build_date` |  |
 | `kubernetes_version` |  |
 | `launch_block_device_mappings_volume_size` |  |
-| `os_distro` |  |
 | `pause_container_version` |  |
 | `pull_cni_from_github` |  |
 | `remote_folder` | Directory path for shell provisioner scripts on the builder instance |

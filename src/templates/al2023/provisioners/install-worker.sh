@@ -28,7 +28,6 @@ validate_env_set CONTAINERD_VERSION
 validate_env_set DOCKER_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set KUBERNETES_VERSION
-validate_env_set OS_DISTRO
 validate_env_set PAUSE_CONTAINER_VERSION
 validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set RUNC_VERSION
@@ -52,12 +51,7 @@ fi
 ### Packages ###################################################################
 ################################################################################
 
-sudo yum install -y \
-  yum-utils \
-  yum-plugin-versionlock
-
-# lock the version of the kernel and associated packages before we yum update
-sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r)
+sudo yum install -y yum-utils
 
 # Update the OS to begin with to catch up to the latest packages.
 sudo yum update -y
@@ -78,38 +72,23 @@ sudo yum install -y \
   mdadm \
   pigz
 
-# skip kernel version cleanup on al2023
-if ! [ "$OS_DISTRO" == "al2023" ]; then
-  # Remove any old kernel versions. `--count=1` here means "only leave 1 kernel version installed"
-  sudo package-cleanup --oldkernels --count=1 -y
-fi
+# needed by kubelet
+sudo yum install -y iptables-nft
 
-# packages that need special handling
-if [ "$OS_DISTRO" == "al2023" ]; then
-  # exists in al2023 only (needed by kubelet)
-  sudo yum install -y iptables-nft
+# Mask udev triggers installed by amazon-ec2-net-utils package
+sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
 
-  # Mask udev triggers installed by amazon-ec2-net-utils package
-  sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
-
-  # Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
-  sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
-  cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
+# Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
+sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
+cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
 # Do not clobber any routes or rules added by CNI.
 [Network]
 ManageForeignRoutes=no
 ManageForeignRoutingPolicyRules=no
 EOF
 
-  # Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-  sudo sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link || true
-else
-  # curl-minimal already exists in al2023 so install curl only on al2
-  sudo yum install -y curl
-
-  # Remove the ec2-net-utils package, if it's installed. This package interferes with the route setup on the instance.
-  if yum list installed | grep ec2-net-utils; then sudo yum remove ec2-net-utils -y -q; fi
-fi
+# Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
+sudo sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link || true
 
 sudo mkdir -p /etc/eks/
 
@@ -167,13 +146,8 @@ sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 ### Containerd setup ##########################################################
 ###############################################################################
 
-# install runc and lock version
 sudo yum install -y runc-${RUNC_VERSION}
-sudo yum versionlock runc-*
-
-# install containerd and lock version
 sudo yum install -y containerd-${CONTAINERD_VERSION}
-sudo yum versionlock containerd-*
 
 sudo mkdir -p /etc/eks/containerd
 if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
@@ -224,42 +198,8 @@ cat << EOF | sudo tee -a /etc/nerdctl/nerdctl.toml
 namespace = "k8s.io"
 EOF
 
-################################################################################
-### Docker #####################################################################
-################################################################################
-
+# TODO: are these necessary? What do they do?
 sudo yum install -y device-mapper-persistent-data lvm2
-
-if [[ ! -v "INSTALL_DOCKER" ]]; then
-  if [[ "$OS_DISTRO" == "al2" ]]; then
-    INSTALL_DOCKER=$(vercmp "$KUBERNETES_VERSION" lt "1.25.0" || true)
-  else
-    INSTALL_DOCKER=false
-  fi
-else
-  echo "WARNING: using override INSTALL_DOCKER=${INSTALL_DOCKER}. This option is deprecated and will be removed in a future release."
-fi
-
-if [[ "$INSTALL_DOCKER" == "true" ]]; then
-  sudo amazon-linux-extras enable docker
-  sudo groupadd -og 1950 docker
-  sudo useradd --gid $(getent group docker | cut -d: -f3) docker
-
-  # install docker and lock version
-  sudo yum install -y docker-${DOCKER_VERSION}*
-  sudo yum versionlock docker-*
-  sudo usermod -aG docker $USER
-
-  # Remove all options from sysconfig docker.
-  sudo sed -i '/OPTIONS/d' /etc/sysconfig/docker
-
-  sudo mkdir -p /etc/docker
-  sudo mv $WORKING_DIR/docker-daemon.json /etc/docker/daemon.json
-  sudo chown root:root /etc/docker/daemon.json
-
-  # Enable docker daemon to start on boot.
-  sudo systemctl daemon-reload
-fi
 
 ################################################################################
 ### Logrotate ##################################################################

@@ -70,11 +70,8 @@ function verify-versionlocks() {
   echo "Package versionlocks are correct!"
 }
 
-# run verify-versionlocks on al2 only, as it is not needed on al2023
-if [ "$OS_DISTRO" == "al2" ]; then
-  echo "Verifying that the package versionlocks are correct..."
-  verify-versionlocks
-fi
+echo "Verifying that the package versionlocks are correct..."
+verify-versionlocks
 
 REQUIRED_COMMANDS=(unpigz)
 
