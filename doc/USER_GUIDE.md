@@ -362,7 +362,7 @@ If `kernel_version` is not set:
 - For Kubernetes 1.23 and below, `5.4` is used.
 - For Kubernetes 1.24 and above, `5.10` is used.
 
-The [upgrade_kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/main/src/provisioners/upgrade_kernel.sh) contains the logic for updating and upgrading the kernel.
+The [upgrade-kernel.sh script](https://github.com/awslabs/amazon-eks-ami/blob/main/src/provisioners/upgrade-kernel.sh) contains the logic for updating and upgrading the kernel.
 
 ---
 
