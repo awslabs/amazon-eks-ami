@@ -70,7 +70,13 @@ test: ## run the test-harness
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= src/templates/$(os_distro)
 PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
-PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/$(K8S_VERSION_MINOR)/variables.json
+PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
+PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).json
+ifeq (,$(wildcard $(PACKER_OPTIONAL_VARIABLE_FILE)))
+	# unset the variable, no k8s-specific variable file exists
+	PACKER_OPTIONAL_K8S_VARIABLE_FILE=
+endif
+
 # extract Packer variables from the template file,
 # then store variables that are defined in the Makefile's execution context
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
@@ -80,6 +86,7 @@ PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(p
 # 2. (optional) user-specified variable file
 # 3. variables specified in the Make context
 PACKER_ARGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
+	$(if $(PACKER_OPTIONAL_K8S_VARIABLE_FILE),-var-file=$(PACKER_OPTIONAL_K8S_VARIABLE_FILE),) \
 	$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
 	$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
