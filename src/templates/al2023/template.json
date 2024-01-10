@@ -129,7 +129,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/install_additional_repos.sh",
+      "script": "{{template_dir}}/../../provisioners/install-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
@@ -184,7 +184,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/cleanup_additional_repos.sh",
+      "script": "{{template_dir}}/../../provisioners/cleanup-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
