@@ -177,6 +177,35 @@
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },
+
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "mkdir -p {{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../../nodeadm/",
+      "destination": "{{user `working_dir`}}/nodeadm/"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../../provisioners/install-nodeadm.sh",
+      "environment_vars": [
+        "NODEADM_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "sudo rm -rf {{user `working_dir`}}/nodeadm"
+      ]
+    },
+
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
