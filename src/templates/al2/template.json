@@ -28,7 +28,6 @@
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
-    "os_distro": "al2",
     "pause_container_version": null,
     "pull_cni_from_github": null,
     "remote_folder": null,
@@ -130,14 +129,19 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/install-additional-repos.sh",
+      "script": "{{template_dir}}/provisioners/install-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/../../runtime/",
+      "source": "{{template_dir}}/runtime/",
+      "destination": "{{user `working_dir`}}"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../shared/runtime/",
       "destination": "{{user `working_dir`}}"
     },
     {
@@ -156,7 +160,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/upgrade-kernel.sh",
+      "script": "{{template_dir}}/provisioners/upgrade-kernel.sh",
       "environment_vars": [
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "KERNEL_VERSION={{user `kernel_version`}}"
@@ -165,10 +169,9 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/enable-fips.sh",
+      "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
-        "ENABLE_FIPS={{user `enable_fips`}}",
-        "OS_DISTRO={{user `os_distro`}}"
+        "ENABLE_FIPS={{user `enable_fips`}}"
       ]
     },
     {
@@ -181,7 +184,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/install-worker.sh",
+      "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
@@ -194,7 +197,6 @@
         "DOCKER_VERSION={{user `docker_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "OS_DISTRO={{user `os_distro`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "RUNC_VERSION={{user `runc_version`}}",
@@ -205,12 +207,12 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/cleanup.sh"
+      "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/cleanup-additional-repos.sh",
+      "script": "{{template_dir}}/provisioners/cleanup-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
@@ -218,16 +220,15 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/validate.sh",
+      "script": "{{template_dir}}/provisioners/validate.sh",
       "environment_vars": [
-        "KERNEL_VERSION={{user `kernel_version`}}",
-        "OS_DISTRO={{user `os_distro`}}"
+        "KERNEL_VERSION={{user `kernel_version`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../../provisioners/generate-version-info.sh",
+      "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
       "environment_vars": [
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"

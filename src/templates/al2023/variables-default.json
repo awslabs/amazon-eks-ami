@@ -1,5 +1,4 @@
 {
-    "additional_yum_repos": "",
     "ami_component_description": "(k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})",
     "ami_description": "EKS-optimized Kubernetes node based on Amazon Linux 2023",
     "ami_regions": "",
@@ -17,7 +16,6 @@
     "creator": "{{env `USER`}}",
     "enable_fips": "false",
     "encrypted": "false",
-    "kernel_version": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "8",
     "pause_container_version": "3.5",
