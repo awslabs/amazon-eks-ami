@@ -1,9 +1,8 @@
-package util
+package api
 
 import (
 	"testing"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +18,10 @@ func TestClusterDNS(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		clusterDns, err := GetClusterDns(&api.ClusterDetails{
+		details := ClusterDetails{
 			CIDR: test.clusterCIDR,
-		},
-		)
+		}
+		clusterDns, err := details.GetClusterDns()
 		if err != nil {
 			t.Error(err)
 		}

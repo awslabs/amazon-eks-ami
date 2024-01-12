@@ -1,6 +1,6 @@
 # shim to help build project in a containerized fashion on kaniko
 #
-# usage: (ran inside the repository)
+# usage: (run on top of the repository)
 # ```
 # docker run \
 #   --rm \
@@ -11,10 +11,10 @@
 #   --no-push
 # ```
 
-FROM golang:1.21
+FROM public.ecr.aws/eks-distro-build-tooling/golang:1.21
 
 WORKDIR /workspace
 
 # satisfy errors: fatal: detected dubious ownership in repository at '/workspace'
 RUN git config --global --add safe.directory '/workspace'
-RUN make dist
+RUN make

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const boundary = "==MYBOUNDARY=="
+const boundary = "#"
 const nodeConfig = `---
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
@@ -22,20 +22,20 @@ spec:
 
 var (
 	sampleMIMEMultipartUserData = fmt.Sprintf(`MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="%s"
+Content-Type: multipart/mixed; boundary="#"
 
---%s
+--#
 Content-Type: text/x-shellscript; charset=us-ascii
 
 #!/bin/bash
 /usr/bin/nodeadm init
 
---%s
+--#
 Content-Type: application/node.eks.aws
 
 %s
 
---%s--`, boundary, boundary, boundary, nodeConfig, boundary)
+--#--`, nodeConfig)
 )
 
 func TestMIMEParser(t *testing.T) {

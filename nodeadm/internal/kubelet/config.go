@@ -25,7 +25,6 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const (
@@ -87,7 +86,7 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 }
 
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig, error) {
-	clusterDns, err := util.GetClusterDns(&cfg.Spec.Cluster)
+	clusterDns, err := cfg.Spec.Cluster.GetClusterDns()
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +187,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 	}
 	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
 
-	nodeIp, err := getNodeIp(cfg)
+	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 
 	// for K8s versions that suport API Priority & Fairness, increase our API server QPS
 	// in 1.27, the default is already increased to 50/100, so use the higher defaults
-	if semver.Compare(kubeletVersion, "v1.27.0") < 0 && semver.Compare(kubeletVersion, "v1.22.0") >= 0 {
+	if semver.Compare(kubeletVersion, "v1.22.0") >= 0 && semver.Compare(kubeletVersion, "v1.27.0") < 0 {
 		kubeletConfig.KubeAPIQPS = ptr.Int(10)
 		kubeletConfig.KubeAPIBurst = ptr.Int(20)
 	}
@@ -286,15 +285,14 @@ func getProviderId(availabilityZone, instanceId string) string {
 }
 
 // Get the IP of the node depending on the ipFamily configured for the cluster
-func getNodeIp(cfg *api.NodeConfig) (string, error) {
-	ipFamily, err := util.GetIpFamily(cfg.Spec.Cluster.CIDR)
+func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig) (string, error) {
+	ipFamily, err := api.GetCIDRIpFamily(cfg.Spec.Cluster.CIDR)
 	if err != nil {
 		return "", err
 	}
 	switch ipFamily {
 	case api.IPFamilyIPv4:
-		imdsClient := imds.New(imds.Options{})
-		ipv4Response, err := imdsClient.GetMetadata(context.TODO(), &imds.GetMetadataInput{
+		ipv4Response, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{
 			Path: "local-ipv4",
 		})
 		if err != nil {
@@ -306,8 +304,7 @@ func getNodeIp(cfg *api.NodeConfig) (string, error) {
 		}
 		return string(ip), nil
 	case api.IPFamilyIPv6:
-		imdsClient := imds.New(imds.Options{})
-		ipv6Response, err := imdsClient.GetMetadata(context.TODO(), &imds.GetMetadataInput{
+		ipv6Response, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{
 			Path: fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC),
 		})
 		if err != nil {

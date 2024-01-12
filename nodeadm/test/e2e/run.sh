@@ -12,7 +12,7 @@ echo "done! Test image: $TEST_IMAGE"
 
 for CASE_DIR in $(ls -d test/e2e/cases/*); do
   CASE_NAME=$(basename $CASE_DIR)
-  printf " Testing $CASE_NAME..."
+  printf "🧪 Testing $CASE_NAME..."
   CONTAINER_ID=$(docker run \
     -d \
     --rm \

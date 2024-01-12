@@ -14,11 +14,6 @@ import (
 const (
 	containerdConfigFile = "/etc/containerd/config.toml"
 	containerdConfigPerm = 0644
-	// Users can use the following import directory to add additional
-	// configuration to containerd. The imports do not behave exactly like overrides.
-	// see: https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md#format
-	containerdImportDir         = "/etc/containerd/config.d"
-	containerdImportFileMatcher = "*.toml"
 )
 
 var (
@@ -37,9 +32,6 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(containerdImportDir, containerdConfigPerm); err != nil {
-		return err
-	}
 	if err := os.MkdirAll(path.Dir(containerdConfigFile), containerdConfigPerm); err != nil {
 		return err
 	}
@@ -52,8 +44,7 @@ func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
 		return nil, err
 	}
 	configVars := containerdTemplateVars{
-		ImportPathPattern: path.Join(containerdImportDir, containerdImportFileMatcher),
-		SandboxImage:      pauseContainerImage,
+		SandboxImage: pauseContainerImage,
 	}
 	var buf bytes.Buffer
 	if err := containerdConfigTemplate.Execute(&buf, configVars); err != nil {

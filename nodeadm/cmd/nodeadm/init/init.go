@@ -1,8 +1,17 @@
 package init
 
 import (
+	"context"
+	"encoding/base64"
+	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
@@ -11,22 +20,24 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+)
+
+const (
+	configPhase = "config"
+	runPhase    = "run"
 )
 
 func NewInitCommand() cli.Command {
 	init := initCmd{}
 	init.cmd = flaggy.NewSubcommand("init")
-	init.cmd.Bool(&init.skipConfigure, "sc", "skip-configure", "skip the daemon configuration step")
-	init.cmd.Bool(&init.skipRun, "sr", "skip-run", "skip the daemon running step")
+	init.cmd.StringSlice(&init.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
 	init.cmd.Description = "Initialize this instance as a node in an EKS cluster"
 	return &init
 }
 
 type initCmd struct {
-	cmd           *flaggy.Subcommand
-	skipConfigure bool
-	skipRun       bool
+	cmd        *flaggy.Subcommand
+	skipPhases []string
 }
 
 func (c *initCmd) Flaggy() *flaggy.Subcommand {
@@ -54,12 +65,12 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Enriching configuration..")
-	if err := enrichConfig(nodeConfig); err != nil {
+	if err := enrichConfig(log, nodeConfig); err != nil {
 		return err
 	}
 
 	zap.L().Info("Validating configuration..")
-	if err := util.ValidateNodeConfig(nodeConfig); err != nil {
+	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
 	}
 
@@ -76,7 +87,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		kubelet.NewKubeletDaemon(daemonManager),
 	}
 
-	if !c.skipConfigure {
+	if !slices.Contains(c.skipPhases, configPhase) {
 		for _, daemon := range daemons {
 			nameField := zap.String("name", daemon.Name())
 
@@ -88,7 +99,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		}
 	}
 
-	if !c.skipRun {
+	if !slices.Contains(c.skipPhases, runPhase) {
 		for _, daemon := range daemons {
 			nameField := zap.String("name", daemon.Name())
 
@@ -111,21 +122,76 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 // Various initializations and verifications of the NodeConfig and
 // perform in-place updates when allowed by the user
-func enrichConfig(cfg *api.NodeConfig) error {
-	zap.L().Info("Fetching instance details..")
-	instanceDetails, err := util.FetchInstanceDetails()
+func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
+	log.Info("Fetching instance details..")
+	instanceDetails, err := api.GetIMDSInstanceDetails(context.TODO(), imds.New(imds.Options{}))
 	if err != nil {
 		return err
 	}
 	cfg.Status.Instance = *instanceDetails
-	zap.L().Info("Instance details populated", zap.Reflect("details", instanceDetails))
+	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
 
 	if featuregates.DefaultFalse(featuregates.DescribeClusterDetails, cfg.Spec.FeatureGates) {
-		zap.L().Info("Populating cluster details using a describe-cluster call..")
-		if err := featuregates.PopulateClusterDetails(cfg.Spec.Cluster.Name, cfg); err != nil {
+		log.Info("Populating cluster details using a describe-cluster call..")
+		// use instance region since cluster region isn't guarenteed to exist
+		awsConfig := aws.NewConfig().WithRegion(instanceDetails.Region)
+		eksClient := eks.New(session.Must(session.NewSession(awsConfig)))
+		if err := populateClusterDetails(eksClient, cfg.Spec.Cluster.Name, cfg); err != nil {
 			return err
 		}
 	}
+
+	return nil
+}
+
+// Discovers all cluster details using a describe call to the eks endpoint and
+// updates the value of the config's `ClusterDetails` in-place
+func populateClusterDetails(eksClient *eks.EKS, clusterName string, cfg *api.NodeConfig) error {
+	if err := eksClient.WaitUntilClusterActive(&eks.DescribeClusterInput{Name: &clusterName}); err != nil {
+		return err
+	}
+	describeResponse, err := eksClient.DescribeCluster(&eks.DescribeClusterInput{Name: &clusterName})
+	if err != nil {
+		return err
+	}
+
+	ipFamily := *describeResponse.Cluster.KubernetesNetworkConfig.IpFamily
+
+	var cidr string
+	if ipFamily == eks.IpFamilyIpv4 {
+		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv4Cidr
+	} else if ipFamily == eks.IpFamilyIpv6 {
+		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv6Cidr
+	} else {
+		return fmt.Errorf("bad ipFamily: %s", ipFamily)
+	}
+
+	isOutpost := false
+	clusterId := cfg.Spec.Cluster.ID
+	// detect whether the cluster is an aws outpost cluster depending on whether
+	// the response contains the outpost ID
+	if outpostId := describeResponse.Cluster.Id; outpostId != nil {
+		clusterId = *outpostId
+		isOutpost = true
+	}
+
+	enableOutpost := isOutpost
+	// respect the user override for enabling the outpost
+	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil {
+		enableOutpost = *enabled
+	}
+
+	caCert, err := base64.StdEncoding.DecodeString(*describeResponse.Cluster.CertificateAuthority.Data)
+	if err != nil {
+		return err
+	}
+
+	cfg.Spec.Cluster.Name = *describeResponse.Cluster.Name
+	cfg.Spec.Cluster.APIServerEndpoint = *describeResponse.Cluster.Endpoint
+	cfg.Spec.Cluster.CertificateAuthority = caCert
+	cfg.Spec.Cluster.CIDR = cidr
+	cfg.Spec.Cluster.EnableOutpost = &enableOutpost
+	cfg.Spec.Cluster.ID = clusterId
 
 	return nil
 }

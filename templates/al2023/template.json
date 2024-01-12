@@ -154,12 +154,7 @@
     {
       "type": "shell",
       "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/"
-      ]
-    },
-    {
-      "type": "shell",
-      "inline": [
+        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
         "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
       ]
     },
@@ -199,7 +194,8 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
-        "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+        "PROJECT_DIR={{user `working_dir`}}/nodeadm",
+        "KANIKO_IMAGE=gcr.io/kaniko-project/executor:latest"
       ]
     },
     {

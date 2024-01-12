@@ -26,21 +26,17 @@ var (
 )
 
 func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
+	kubeconfig, err := generateKubeconfig(cfg)
+	if err != nil {
+		return err
+	}
 	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
-		kubeconfig, err := generateKubeconfig(cfg, true)
-		if err != nil {
-			return err
-		}
 		// kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
 		//   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
 		//   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
 		k.additionalArguments["bootstrap-kubeconfig"] = kubeconfigBootstrapPath
 		return writeConfig(kubeconfigBootstrapPath, kubeconfig)
 	} else {
-		kubeconfig, err := generateKubeconfig(cfg, false)
-		if err != nil {
-			return err
-		}
 		k.additionalArguments["kubeconfig"] = kubeconfigPath
 		return writeConfig(kubeconfigPath, kubeconfig)
 	}
@@ -53,9 +49,9 @@ type kubeconfigTemplateVars struct {
 	CaCertPath        string
 }
 
-func generateKubeconfig(cfg *api.NodeConfig, isOutpost bool) ([]byte, error) {
+func generateKubeconfig(cfg *api.NodeConfig) ([]byte, error) {
 	cluster := cfg.Spec.Cluster.Name
-	if isOutpost {
+	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
 		cluster = cfg.Spec.Cluster.ID
 	}
 

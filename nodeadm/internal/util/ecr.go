@@ -2,15 +2,39 @@ package util
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 )
 
 // TODO: is dynamic?
 const pauseContainerVersion = "3.5"
+
+// Returns an authorization token string for ECR
+func GetAuthorizationToken(awsRegion string) (string, error) {
+	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))
+	if err != nil {
+		return "", err
+	}
+	ecrClient := ecr.NewFromConfig(awsConfig)
+	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", err
+	}
+
+	authData := token.AuthorizationData[0].AuthorizationToken
+	data, err := base64.StdEncoding.DecodeString(*authData)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
 
 // Get the pause container image
 func GetPauseContainer(awsRegion string) (string, error) {
