@@ -1,0 +1,96 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.0
+  name: nodeconfigs.node.eks.aws
+spec:
+  group: node.eks.aws
+  names:
+    kind: NodeConfig
+    listKind: NodeConfigList
+    plural: nodeconfigs
+    singular: nodeconfig
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: NodeConfig is the Schema for the nodeconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              cluster:
+                properties:
+                  apiServerEndpoint:
+                    type: string
+                  certificateAuthority:
+                    format: byte
+                    type: string
+                  cidr:
+                    type: string
+                  dnsAddress:
+                    type: string
+                  enableOutpost:
+                    type: boolean
+                  id:
+                    type: string
+                  ipFamily:
+                    enum:
+                    - ipv4
+                    - ipv6
+                    type: string
+                  name:
+                    type: string
+                type: object
+              containerd:
+                properties:
+                  config:
+                    properties:
+                      inline:
+                        type: string
+                      mergeWithDefaults:
+                        default: false
+                        type: boolean
+                      source:
+                        type: string
+                    type: object
+                type: object
+              featureGates:
+                additionalProperties:
+                  type: boolean
+                type: object
+              kubelet:
+                properties:
+                  additionalArguments:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  config:
+                    properties:
+                      inline:
+                        type: string
+                      mergeWithDefaults:
+                        default: false
+                        type: boolean
+                      source:
+                        type: string
+                    type: object
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true

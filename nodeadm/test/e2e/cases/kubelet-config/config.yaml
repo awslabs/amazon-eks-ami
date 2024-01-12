@@ -1,0 +1,18 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+metadata:
+  name: example
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    region: us-west-2
+  kubelet:
+    config:
+      mergeWithDefaults: true
+      inline: |
+        {
+          "foo": "bar"
+        }
