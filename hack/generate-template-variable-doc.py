@@ -57,8 +57,8 @@ def update_doc(doc: str, boundary: str, template_path: str) -> str:
 with open(doc_file_name) as doc_file:
     doc = doc_file.read()
 
-doc = update_doc(doc, al2_boundary, '../src/templates/al2/template.json')
-doc = update_doc(doc, al2023_boundary, '../src/templates/al2023/template.json')
+doc = update_doc(doc, al2_boundary, '../templates/al2/template.json')
+doc = update_doc(doc, al2023_boundary, '../templates/al2023/template.json')
 
 with open(doc_file_name, 'w') as doc_file:
     doc_file.write(doc)
