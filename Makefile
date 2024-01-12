@@ -65,7 +65,7 @@ lint: lint-docs ## Check the source files for syntax and format issues
 
 .PHONY: test
 test: ## run the test-harness
-	test/test-harness.sh
+	templates/test/test-harness.sh
 
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= src/templates/$(os_distro)
