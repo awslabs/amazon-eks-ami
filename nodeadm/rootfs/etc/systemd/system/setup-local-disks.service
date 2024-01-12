@@ -1,0 +1,8 @@
+[Unit]
+Description=Setup Local Disks in RAID-0 or separate Mounts 
+
+[Service]
+ExecStart=/usr/bin/setup-local-disks $MOUNT_TYPE
+
+[Install]
+WantedBy=multi-user.target

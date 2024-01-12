@@ -1,0 +1,33 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+metadata:
+  name: example
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    id:
+    ipFamily: ipv4
+    enableOutpost: false
+    cidr:
+    dnsAddress:
+  containerd:
+    config:
+      mergeWithDefaults: true
+      source: file://my-containerd-config.toml
+      inline: |
+        []
+  kubelet:
+    additionalArguments:
+      v: 2
+    config:
+      mergeWithDefaults: true
+      source: file://my-kubelet-config.json
+      inline: |
+        {
+          "maxPods": 123
+        }
+  featureGates:
+    computeMaxPods: true
