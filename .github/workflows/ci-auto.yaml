@@ -13,8 +13,28 @@ jobs:
     - run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
     - run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make lint
-  unit-test:
+  templates-test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - run: make test
+  nodeadm-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: cd nodeadm && make build
+  nodeadm-check-generate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: hack/nodeadm-check-generate.sh
+  nodeadm-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: cd nodeadm && make test
+  nodeadm-test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: cd nodeadm && make test-e2e
