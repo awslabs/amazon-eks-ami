@@ -1,6 +1,13 @@
 package util
 
-import "os/exec"
+import (
+	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+)
+
+const trimChars = " \n\t"
 
 func isHostPresent(host string) (bool, error) {
 	output, err := exec.Command("getent", "hosts", host).Output()
@@ -12,11 +19,21 @@ func isHostPresent(host string) (bool, error) {
 }
 
 func isFipsEnabled() (bool, error) {
-	// shell out to sysctl to check if fips has been enabled
-	fipsEnabledOutput, err := exec.Command("sysctl", "-n", "crypto.fips_enabled").Output()
+	fipsEnabledBytes, err := os.ReadFile("/proc/sys/crypto/fips_enabled")
 	if err != nil {
 		return false, err
 	}
-	fipsEnabled := string(fipsEnabledOutput) == "1"
-	return fipsEnabled, nil
+	fipsEnabledInt, err := strconv.Atoi(strings.Trim(string(fipsEnabledBytes), trimChars))
+	if err != nil {
+		return false, err
+	}
+	return fipsEnabledInt == 1, nil
+}
+
+func GetNproc() (int, error) {
+	nproc, err := exec.Command("nproc").Output()
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(strings.Trim(string(nproc), trimChars))
 }

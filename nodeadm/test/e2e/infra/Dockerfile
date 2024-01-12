@@ -17,13 +17,13 @@ RUN mv _bin/nodeadm /nodeadm
 
 FROM amazonlinux:2023
 RUN yum -y update && \
-    yum -y install systemd && \
+    yum -y install systemd containerd && \
     yum clean all
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
-COPY test/e2e/infra/imds-mock.service /usr/lib/systemd/system/imds-mock.service
+COPY test/e2e/infra/systemd/imds-mock.service /usr/lib/systemd/system/imds-mock.service
 RUN systemctl enable imds-mock.service
-COPY test/e2e/infra/kubelet.service /usr/lib/systemd/system/kubelet.service
-COPY test/e2e/infra/containerd.service /usr/lib/systemd/system/containerd.service
+COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
+COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
 COPY test/e2e/helpers.sh /helpers.sh
 ENTRYPOINT ["/usr/lib/systemd/systemd","--system"]

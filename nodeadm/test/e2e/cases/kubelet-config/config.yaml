@@ -8,11 +8,4 @@ spec:
     name: my-cluster
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
-    region: us-west-2
-  kubelet:
-    config:
-      mergeWithDefaults: true
-      inline: |
-        {
-          "foo": "bar"
-        }
+    cidr: 10.100.0.0/16

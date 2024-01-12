@@ -63,6 +63,8 @@ func GetPauseContainer(awsRegion string) (string, error) {
 		account = "491585149902"
 	case "il-central-1":
 		account = "066635153087"
+	case "ca-west-1":
+		account = "761377655185"
 	// This sections includes all commercial non-opt-in regions, which use
 	// the same account for ECR pause container images, but still have in-region
 	// registries.
@@ -106,7 +108,7 @@ func GetPauseContainer(awsRegion string) (string, error) {
 	} else if fipsEnabled {
 		ecrDomainFips := assembleEcrDomain(account, "ecr-fips", awsRegion, awsDomain)
 		if present, err := isHostPresent(ecrDomainFips); err != nil {
-			return "", nil
+			return "", err
 		} else if present {
 			ecrDomain = ecrDomainFips
 		}

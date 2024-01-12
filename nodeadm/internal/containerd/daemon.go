@@ -23,12 +23,12 @@ func (cd *containerd) Configure(c *api.NodeConfig) error {
 	return writeContainerdConfig(c)
 }
 
-func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
-	return cacheSandboxImage(c)
-}
-
 func (cd *containerd) EnsureRunning() error {
 	return cd.daemonManager.StartDaemon(ContainerdDaemonName)
+}
+
+func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
+	return cacheSandboxImage(c)
 }
 
 func (cd *containerd) Name() string {

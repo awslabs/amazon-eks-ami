@@ -13,9 +13,6 @@ import (
 type FeatureGate = string
 
 const (
-	// When this flag is enabled, override the maxPods
-	// value with a dynamic calculation of the eni limit using ec2 instance-type data
-	ComputeMaxPods = FeatureGate("computeMaxPods")
 	// When this flag is enabled, use a describe-cluster call
 	// to repopulate all config data for ClusterDetails
 	DescribeClusterDetails = FeatureGate("describeClusterDetails")
@@ -36,14 +33,14 @@ func DefaultFalse(featureGate FeatureGate, featureGates map[FeatureGate]bool) bo
 
 // Discovers all cluster details using a describe call to the eks endpoint and
 // updates the value of the config's `ClusterDetails` in-place
-func PopulateClusterDetails(cfg *api.NodeConfig) error {
+func PopulateClusterDetails(clusterName string, cfg *api.NodeConfig) error {
 	// use instance region since cluster region isn't guarenteed to exist
 	awsConfig := aws.NewConfig().WithRegion(cfg.Status.Instance.Region)
 	eksClient := eks.New(session.Must(session.NewSession(awsConfig)))
-	if err := eksClient.WaitUntilClusterActive(&eks.DescribeClusterInput{Name: &cfg.Spec.Cluster.Name}); err != nil {
+	if err := eksClient.WaitUntilClusterActive(&eks.DescribeClusterInput{Name: &clusterName}); err != nil {
 		return err
 	}
-	describeResponse, err := eksClient.DescribeCluster(&eks.DescribeClusterInput{Name: &cfg.Spec.Cluster.Name})
+	describeResponse, err := eksClient.DescribeCluster(&eks.DescribeClusterInput{Name: &clusterName})
 	if err != nil {
 		return err
 	}
@@ -79,9 +76,9 @@ func PopulateClusterDetails(cfg *api.NodeConfig) error {
 		return err
 	}
 
+	cfg.Spec.Cluster.Name = *describeResponse.Cluster.Name
 	cfg.Spec.Cluster.APIServerEndpoint = *describeResponse.Cluster.Endpoint
 	cfg.Spec.Cluster.CertificateAuthority = caCert
-	cfg.Spec.Cluster.IPFamily = api.IPFamily(ipFamily)
 	cfg.Spec.Cluster.CIDR = cidr
 	cfg.Spec.Cluster.EnableOutpost = &enableOutpost
 	cfg.Spec.Cluster.ID = clusterId

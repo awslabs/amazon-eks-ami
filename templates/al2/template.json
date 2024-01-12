@@ -136,17 +136,17 @@
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/runtime/",
-      "destination": "{{user `working_dir`}}"
-    },
-    {
-      "type": "file",
       "source": "{{template_dir}}/../shared/runtime/",
       "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/../../../log-collector-script/linux/",
+      "source": "{{template_dir}}/runtime/",
+      "destination": "{{user `working_dir`}}"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
     {
