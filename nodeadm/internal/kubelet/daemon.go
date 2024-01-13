@@ -10,39 +10,41 @@ const KubeletDaemonName = "kubelet"
 var _ daemon.Daemon = &kubelet{}
 
 type kubelet struct {
-	daemonManager daemon.DaemonManager
-	environment   map[string]string
+	daemonManager       daemon.DaemonManager
+	environment         map[string]string
+	additionalArguments map[string]string
 }
 
 func NewKubeletDaemon(daemonManager daemon.DaemonManager) daemon.Daemon {
 	return &kubelet{
-		daemonManager: daemonManager,
-		environment:   map[string]string{},
+		daemonManager:       daemonManager,
+		environment:         make(map[string]string),
+		additionalArguments: make(map[string]string),
 	}
 }
 
-func (k *kubelet) Configure(c *api.NodeConfig) error {
-	if err := k.writeKubeletConfig(c); err != nil {
+func (k *kubelet) Configure(cfg *api.NodeConfig) error {
+	if err := k.writeKubeletConfig(cfg); err != nil {
 		return err
 	}
-	if err := k.writeKubeconfig(c); err != nil {
+	if err := k.writeKubeconfig(cfg); err != nil {
 		return err
 	}
-	if err := writeClusterCaCert(c.Spec.Cluster.CertificateAuthority); err != nil {
+	if err := writeClusterCaCert(cfg.Spec.Cluster.CertificateAuthority); err != nil {
 		return err
 	}
-	if err := k.writeKubeletServiceEnvDropIn(c); err != nil {
+	if err := k.writeKubeletServiceEnvDropIn(cfg); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (k *kubelet) PostLaunch(c *api.NodeConfig) error {
 	return nil
 }
 
 func (k *kubelet) EnsureRunning() error {
 	return k.daemonManager.StartDaemon(KubeletDaemonName)
+}
+
+func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {
+	return nil
 }
 
 func (k *kubelet) Name() string {

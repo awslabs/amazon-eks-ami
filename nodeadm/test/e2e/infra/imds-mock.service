@@ -1,8 +1,0 @@
-[Unit]
-Description=Run the mock IMDS server
-
-[Service]
-ExecStart=imds-mock
-
-[Install]
-WantedBy=multi-user.target

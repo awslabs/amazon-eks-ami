@@ -2,15 +2,39 @@ package util
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 )
 
 // TODO: is dynamic?
 const pauseContainerVersion = "3.5"
+
+// Returns an authorization token string for ECR
+func GetAuthorizationToken(awsRegion string) (string, error) {
+	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))
+	if err != nil {
+		return "", err
+	}
+	ecrClient := ecr.NewFromConfig(awsConfig)
+	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", err
+	}
+
+	authData := token.AuthorizationData[0].AuthorizationToken
+	data, err := base64.StdEncoding.DecodeString(*authData)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
 
 // Get the pause container image
 func GetPauseContainer(awsRegion string) (string, error) {
@@ -63,6 +87,8 @@ func GetPauseContainer(awsRegion string) (string, error) {
 		account = "491585149902"
 	case "il-central-1":
 		account = "066635153087"
+	case "ca-west-1":
+		account = "761377655185"
 	// This sections includes all commercial non-opt-in regions, which use
 	// the same account for ECR pause container images, but still have in-region
 	// registries.
@@ -106,7 +132,7 @@ func GetPauseContainer(awsRegion string) (string, error) {
 	} else if fipsEnabled {
 		ecrDomainFips := assembleEcrDomain(account, "ecr-fips", awsRegion, awsDomain)
 		if present, err := isHostPresent(ecrDomainFips); err != nil {
-			return "", nil
+			return "", err
 		} else if present {
 			ecrDomain = ecrDomainFips
 		}

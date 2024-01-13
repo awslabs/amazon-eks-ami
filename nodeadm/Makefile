@@ -39,7 +39,6 @@ help: ## Display this help.
 
 .PHONY: clean
 clean:
-	rm -rf $(DIST_DIR)
 	rm -rf $(LOCALBIN)
 
 .PHONY: crds
@@ -64,23 +63,11 @@ test: crds generate fmt vet ## Run go test against code.
 	go test ./...
 
 .PHONY: e2e
-e2e: dist ## Run e2e tests.
+e2e: build ## Run e2e tests.
 	test/e2e/run.sh
 
 ##@ Build
-
 GOFLAGS = -ldflags="-X github.com/awslabs/amazon-eks-ami/nodeadm/cmd.Version=$(VERSION)"
-
-DIST_DIR = _dist
-$(DIST_DIR):
-	mkdir -p $(DIST_DIR)
-	mkdir -p $(DIST_DIR)
-	cp -r crds $(DIST_DIR)/
-	cp -r example $(DIST_DIR)/
-	hack/dist-bin.sh $(DIST_DIR) $(GOFLAGS)
-
-.PHONY: dist
-dist: crds $(DIST_DIR) ## Build binaries and create distribution directory.
 
 .PHONY: build
 build: crds generate fmt vet ## Build binary.
@@ -98,7 +85,6 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 ## Tool Binaries
-KUBECTL ?= kubectl
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 CONVERSION_GEN ?= $(LOCALBIN)/conversion-gen
@@ -118,7 +104,8 @@ $(KUSTOMIZE): $(LOCALBIN)
 		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
 		rm -rf $(LOCALBIN)/kustomize; \
 	fi
-	test -s $(LOCALBIN)/kustomize || GOBIN=$(LOCALBIN) GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$(KUSTOMIZE_VERSION)
+	test -s $(LOCALBIN)/kustomize || \
+	GOBIN=$(LOCALBIN) GO111MODULE=on go install sigs.k8s.io/kustomize/kustomize/v5@$(KUSTOMIZE_VERSION)
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.

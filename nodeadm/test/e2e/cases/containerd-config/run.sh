@@ -9,6 +9,6 @@ source /helpers.sh
 mock::kubelet 1.27.0
 wait::dbus-ready
 
-nodeadm init --config-source file://config.yaml
+nodeadm init --skip run --config-source file://config.yaml
 
 assert::files-equal /etc/containerd/config.toml expected-containerd-config.toml

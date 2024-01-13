@@ -2,9 +2,6 @@ root = '/var/lib/containerd'
 state = '/run/containerd'
 version = 2
 
-[foo]
-bar = 'baz'
-
 [grpc]
 address = '/run/containerd/containerd.sock'
 

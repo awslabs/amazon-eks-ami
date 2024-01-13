@@ -68,7 +68,7 @@ test: ## run the test-harness
 	templates/test/test-harness.sh
 
 PACKER_BINARY ?= packer
-PACKER_TEMPLATE_DIR ?= src/templates/$(os_distro)
+PACKER_TEMPLATE_DIR ?= templates/$(os_distro)
 PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
 PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
 PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).json

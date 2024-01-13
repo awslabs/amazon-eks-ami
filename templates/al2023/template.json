@@ -117,33 +117,45 @@
   "provisioners": [
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "mkdir -p {{user `working_dir`}}",
-        "mkdir -p {{user `working_dir`}}/log-collector-script"
+        "mkdir -p {{user `working_dir`}}/rootfs",
+        "mkdir -p {{user `working_dir`}}/shared",
+        "mkdir -p {{user `working_dir`}}/log-collector-script",
+        "mkdir -p {{user `working_dir`}}/nodeadm"
       ]
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/runtime/",
-      "destination": "{{user `working_dir`}}"
-    },
-    {
-      "type": "file",
       "source": "{{template_dir}}/../shared/runtime/",
-      "destination": "{{user `working_dir`}}"
+      "destination": "{{user `working_dir`}}/shared"
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/../../../log-collector-script/linux/",
+      "source": "{{template_dir}}/runtime/rootfs/",
+      "destination": "{{user `working_dir`}}/rootfs"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
-        "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
+        "sudo mkdir -p /etc/eks/log-collector-script/",
+        "sudo cp -v {{user `working_dir`}}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../../nodeadm/",
+      "destination": "{{user `working_dir`}}/nodeadm"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
+        "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
       ]
     },
     {
@@ -180,6 +192,15 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
+      "environment_vars": [
+        "PROJECT_DIR={{user `working_dir`}}/nodeadm",
+        "KANIKO_IMAGE=gcr.io/kaniko-project/executor:latest"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
     {
@@ -204,7 +225,6 @@
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "rm -rf {{user `working_dir`}}"
       ]

@@ -8,16 +8,16 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 )
 
-const kubeletArgsEnvName = "KUBELET_ARGS"
+const kubeletArgsEnvName = "NODEADM_KUBELET_ARGS"
 
 // Write environment variables for kubelet execution to the systemd drop-in directory
-func (k *kubelet) writeKubeletServiceEnvDropIn(c *api.NodeConfig) error {
+func (k *kubelet) writeKubeletServiceEnvDropIn(cfg *api.NodeConfig) error {
 	systemdUnitContent := "[Service]"
 
 	// transform kubelet additional arguments into a string and write them to
 	// the kubelet args environment variable
-	kubeletArgs := make([]string, len(c.Spec.Kubelet.AdditionalArguments))
-	for flag, value := range c.Spec.Kubelet.AdditionalArguments {
+	kubeletArgs := make([]string, len(k.additionalArguments))
+	for flag, value := range k.additionalArguments {
 		kubeletArgs = append(kubeletArgs, fmt.Sprintf("--%s=%s", flag, value))
 	}
 	systemdUnitContent += fmt.Sprintf("\nEnvironment='%s=%s'", kubeletArgsEnvName, strings.Join(kubeletArgs, " "))

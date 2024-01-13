@@ -16,7 +16,7 @@ func BuildConfigProvider(rawConfigSourceURL string) (ConfigProvider, error) {
 	}
 	switch parsedURL.Scheme {
 	case "imds":
-		return NewIMDSConfigProvider(), nil
+		return NewUserDataConfigProvider(), nil
 	case "file":
 		source := getURLWithoutScheme(parsedURL)
 		return NewFileConfigProvider(source), nil

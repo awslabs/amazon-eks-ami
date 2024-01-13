@@ -8,9 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"strings"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/coreos/go-systemd/dbus"
 )
 
@@ -110,21 +108,6 @@ func getServiceUnitName(name string) string {
 
 func getServiceUnitDropInDir(name string) string {
 	return fmt.Sprintf("%s.d", getServiceUnitName(name))
-}
-
-// Constructs systemd drop-in configurations related to startup dependencies and requirements
-func ConfigureDependencies(daemonName string, requiredDaemonNames ...string) error {
-	serviceNames := make([]string, len(requiredDaemonNames))
-	for i, daemon := range requiredDaemonNames {
-		serviceNames[i] = getServiceUnitName(daemon)
-	}
-	serviceList := strings.Join(serviceNames, " ")
-	fileContent := util.Dedent(fmt.Sprintf(`
-		[Unit]
-		After=%s
-		Requires=%s`,
-		serviceList, serviceList))
-	return WriteSystemdServiceUnitDropIn(daemonName, "00-dependencies.conf", fileContent, 0644)
 }
 
 const servicesRoot = "/etc/systemd/system"

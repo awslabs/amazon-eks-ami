@@ -42,53 +42,16 @@ spec:
                     type: string
                   cidr:
                     type: string
-                  dnsAddress:
-                    type: string
                   enableOutpost:
                     type: boolean
                   id:
                     type: string
-                  ipFamily:
-                    enum:
-                    - ipv4
-                    - ipv6
-                    type: string
                   name:
                     type: string
-                type: object
-              containerd:
-                properties:
-                  config:
-                    properties:
-                      inline:
-                        type: string
-                      mergeWithDefaults:
-                        default: false
-                        type: boolean
-                      source:
-                        type: string
-                    type: object
                 type: object
               featureGates:
                 additionalProperties:
                   type: boolean
-                type: object
-              kubelet:
-                properties:
-                  additionalArguments:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  config:
-                    properties:
-                      inline:
-                        type: string
-                      mergeWithDefaults:
-                        default: false
-                        type: boolean
-                      source:
-                        type: string
-                    type: object
                 type: object
             type: object
         type: object

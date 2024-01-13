@@ -8,7 +8,7 @@ spec:
     name: my-cluster
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
-    region: us-west-2
+    cidr: 10.100.0.0/16
   containerd:
     config:
       mergeWithDefaults: true

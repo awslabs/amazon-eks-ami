@@ -1,10 +1,17 @@
 package init
 
 import (
+	"context"
+	"encoding/base64"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
@@ -13,20 +20,24 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
-	localdisks "github.com/awslabs/amazon-eks-ami/nodeadm/internal/local-disks"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+)
+
+const (
+	configPhase = "config"
+	runPhase    = "run"
 )
 
 func NewInitCommand() cli.Command {
-	cmd := flaggy.NewSubcommand("init")
-	cmd.Description = "Initialize this instance as a node in an EKS cluster"
-	return &initCmd{
-		cmd: cmd,
-	}
+	init := initCmd{}
+	init.cmd = flaggy.NewSubcommand("init")
+	init.cmd.StringSlice(&init.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
+	init.cmd.Description = "Initialize this instance as a node in an EKS cluster"
+	return &init
 }
 
 type initCmd struct {
-	cmd *flaggy.Subcommand
+	cmd        *flaggy.Subcommand
+	skipPhases []string
 }
 
 func (c *initCmd) Flaggy() *flaggy.Subcommand {
@@ -34,126 +45,153 @@ func (c *initCmd) Flaggy() *flaggy.Subcommand {
 }
 
 func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+	log.Info("Checking user is root..")
 	root, err := cli.IsRunningAsRoot()
 	if err != nil {
 		return err
-	}
-	if !root {
+	} else if !root {
 		return cli.ErrMustRunAsRoot
 	}
+
 	log.Info("Loading configuration..", zap.String("configSource", opts.ConfigSource))
 	provider, err := configprovider.BuildConfigProvider(opts.ConfigSource)
 	if err != nil {
 		return err
 	}
-
-	config, err := provider.Provide()
+	nodeConfig, err := provider.Provide()
 	if err != nil {
 		return err
 	}
-	log.Info("Loaded configuration", zap.Reflect("config", config))
+	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Enriching configuration..")
-	if err := enrichConfig(log, config); err != nil {
+	if err := enrichConfig(log, nodeConfig); err != nil {
 		return err
 	}
-	log.Info("Enriched configuration")
 
+	zap.L().Info("Validating configuration..")
+	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
+		return err
+	}
+
+	log.Info("Creating daemon manager..")
 	daemonManager, err := daemon.NewDaemonManager()
 	if err != nil {
 		return err
 	}
 	defer daemonManager.Close()
 
-	daemons := createDaemonMap(
-		localdisks.NewLocalDisksDaemon(daemonManager),
+	log.Info("Setting up daemons..")
+	daemons := []daemon.Daemon{
 		containerd.NewContainerdDaemon(daemonManager),
 		kubelet.NewKubeletDaemon(daemonManager),
-	)
-
-	daemon.ConfigureDependencies(kubelet.KubeletDaemonName,
-		containerd.ContainerdDaemonName,
-	)
-
-	for _, daemon := range daemons {
-		nameField := zap.String("name", daemon.Name())
-
-		log.Info("Configuring daemon..", nameField)
-		if err := daemon.Configure(config); err != nil {
-			return err
-		}
-		log.Info("Configured daemon", nameField)
 	}
 
-	for _, daemon := range daemons {
-		nameField := zap.String("name", daemon.Name())
+	if !slices.Contains(c.skipPhases, configPhase) {
+		for _, daemon := range daemons {
+			nameField := zap.String("name", daemon.Name())
 
-		log.Info("Ensuring daemon is running..", nameField)
-		if err := daemon.EnsureRunning(); err != nil {
-			return err
+			log.Info("Configuring daemon..", nameField)
+			if err := daemon.Configure(nodeConfig); err != nil {
+				return err
+			}
+			log.Info("Configured daemon", nameField)
 		}
-		log.Info("Daemon is running", nameField)
+	}
 
-		log.Info("Running post-launch tasks..", nameField)
-		if err := daemon.PostLaunch(config); err != nil {
-			return err
+	if !slices.Contains(c.skipPhases, runPhase) {
+		for _, daemon := range daemons {
+			nameField := zap.String("name", daemon.Name())
+
+			log.Info("Ensuring daemon is running..", nameField)
+			if err := daemon.EnsureRunning(); err != nil {
+				return err
+			}
+			log.Info("Daemon is running", nameField)
+
+			log.Info("Running post-launch tasks..", nameField)
+			if err := daemon.PostLaunch(nodeConfig); err != nil {
+				return err
+			}
+			log.Info("Finished post-launch tasks", nameField)
 		}
-		log.Info("Finished post-launch tasks", nameField)
 	}
 
 	return nil
-}
-
-// Cleaner daemon definitions
-func createDaemonMap(daemons ...daemon.Daemon) map[string]daemon.Daemon {
-	daemonMap := make(map[string]daemon.Daemon, len(daemons))
-	for _, daemon := range daemons {
-		daemonMap[daemon.Name()] = daemon
-	}
-	return daemonMap
 }
 
 // Various initializations and verifications of the NodeConfig and
 // perform in-place updates when allowed by the user
 func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	log.Info("Fetching instance details..")
-	instanceDetails, err := configprovider.FetchInstanceDetails()
+	instanceDetails, err := api.GetIMDSInstanceDetails(context.TODO(), imds.New(imds.Options{}))
 	if err != nil {
 		return err
 	}
 	cfg.Status.Instance = *instanceDetails
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
 
-	log.Info("Initializing empty configurations..")
-	if cfg.Spec.Kubelet.AdditionalArguments == nil {
-		cfg.Spec.Kubelet.AdditionalArguments = make(map[string]string)
-	}
-
-	if cfg.Spec.Cluster.Name == "" {
-		return fmt.Errorf("Cluster name must be provided")
-	}
-
 	if featuregates.DefaultFalse(featuregates.DescribeClusterDetails, cfg.Spec.FeatureGates) {
 		log.Info("Populating cluster details using a describe-cluster call..")
-		if err := featuregates.PopulateClusterDetails(cfg); err != nil {
+		// use instance region since cluster region isn't guarenteed to exist
+		awsConfig := aws.NewConfig().WithRegion(instanceDetails.Region)
+		eksClient := eks.New(session.Must(session.NewSession(awsConfig)))
+		if err := populateClusterDetails(eksClient, cfg.Spec.Cluster.Name, cfg); err != nil {
 			return err
 		}
 	}
 
-	// If the user doesn't specify a cluster dns address override then
-	// it will be derived from the cluster CIDR ip range
-	if cfg.Spec.Cluster.DNSAddress == "" {
-		if cfg.Spec.Cluster.CIDR == "" {
-			return fmt.Errorf("CIDR must be provided if DNSAddress is not")
-		}
-		log.Info("Constructing Cluster DNS..")
-		clusterDns, err := util.AssembleClusterDns(cfg.Spec.Cluster.CIDR)
-		if err != nil {
-			return err
-		}
-		log.Info("Constructed Cluster DNS", zap.String("address", clusterDns))
-		cfg.Spec.Cluster.DNSAddress = clusterDns
+	return nil
+}
+
+// Discovers all cluster details using a describe call to the eks endpoint and
+// updates the value of the config's `ClusterDetails` in-place
+func populateClusterDetails(eksClient *eks.EKS, clusterName string, cfg *api.NodeConfig) error {
+	if err := eksClient.WaitUntilClusterActive(&eks.DescribeClusterInput{Name: &clusterName}); err != nil {
+		return err
 	}
+	describeResponse, err := eksClient.DescribeCluster(&eks.DescribeClusterInput{Name: &clusterName})
+	if err != nil {
+		return err
+	}
+
+	ipFamily := *describeResponse.Cluster.KubernetesNetworkConfig.IpFamily
+
+	var cidr string
+	if ipFamily == eks.IpFamilyIpv4 {
+		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv4Cidr
+	} else if ipFamily == eks.IpFamilyIpv6 {
+		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv6Cidr
+	} else {
+		return fmt.Errorf("bad ipFamily: %s", ipFamily)
+	}
+
+	isOutpost := false
+	clusterId := cfg.Spec.Cluster.ID
+	// detect whether the cluster is an aws outpost cluster depending on whether
+	// the response contains the outpost ID
+	if outpostId := describeResponse.Cluster.Id; outpostId != nil {
+		clusterId = *outpostId
+		isOutpost = true
+	}
+
+	enableOutpost := isOutpost
+	// respect the user override for enabling the outpost
+	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil {
+		enableOutpost = *enabled
+	}
+
+	caCert, err := base64.StdEncoding.DecodeString(*describeResponse.Cluster.CertificateAuthority.Data)
+	if err != nil {
+		return err
+	}
+
+	cfg.Spec.Cluster.Name = *describeResponse.Cluster.Name
+	cfg.Spec.Cluster.APIServerEndpoint = *describeResponse.Cluster.Endpoint
+	cfg.Spec.Cluster.CertificateAuthority = caCert
+	cfg.Spec.Cluster.CIDR = cidr
+	cfg.Spec.Cluster.EnableOutpost = &enableOutpost
+	cfg.Spec.Cluster.ID = clusterId
 
 	return nil
 }
