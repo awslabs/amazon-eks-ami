@@ -60,8 +60,8 @@ vet: ## Run go vet against code.
 test: crds generate fmt vet ## Run go test against code.
 	go test ./...
 
-.PHONY: e2e
-e2e: build ## Run e2e tests.
+.PHONY: test-e2e
+test-e2e: build ## Run e2e tests.
 	test/e2e/run.sh
 
 ##@ Build

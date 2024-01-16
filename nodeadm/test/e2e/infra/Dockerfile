@@ -10,9 +10,8 @@ COPY go.mod .
 COPY go.sum .
 RUN go mod download
 COPY Makefile .
-RUN make tools
 COPY . .
-RUN make
+RUN make build
 RUN mv _bin/nodeadm /nodeadm
 
 FROM amazonlinux:2023
