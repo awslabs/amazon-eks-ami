@@ -7,8 +7,9 @@
 dependencies:
   source:
     dirs:
-      - src: src/
       - src: log-collector-script/
+      - src: nodeadm/
+      - src: templates/
     files:
       - src: Makefile
       - src: .git-commit
