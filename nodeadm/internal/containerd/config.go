@@ -2,11 +2,13 @@ package containerd
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"os"
 	"path"
 	"text/template"
 
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
@@ -23,8 +25,7 @@ var (
 )
 
 type containerdTemplateVars struct {
-	SandboxImage      string
-	ImportPathPattern string
+	SandboxImage string
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
@@ -39,7 +40,19 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
-	pauseContainerImage, err := util.GetPauseContainer(cfg.Status.Instance.Region)
+	awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
+	if err != nil {
+		return nil, err
+	}
+	ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
+		Region:    cfg.Status.Instance.Region,
+		Domain:    awsDomain,
+		AllowFips: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	pauseContainerImage, err := util.GetPauseContainer(ecrUri)
 	if err != nil {
 		return nil, err
 	}

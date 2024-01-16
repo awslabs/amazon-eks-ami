@@ -49,7 +49,7 @@ func (details *ClusterDetails) GetClusterDns() (string, error) {
 		dnsAddress := fmt.Sprintf("%s.10", details.CIDR[:strings.LastIndex(details.CIDR, ".")])
 		return dnsAddress, nil
 	case IPFamilyIPv6:
-		dnsAddress := fmt.Sprintf("%sa", details.CIDR[:strings.LastIndex(details.CIDR, "/")])
+		dnsAddress := fmt.Sprintf("%sa", strings.Split(details.CIDR, "/")[0])
 		return dnsAddress, nil
 	default:
 		return "", fmt.Errorf("%s was not a valid IP family", ipFamily)
