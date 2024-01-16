@@ -194,8 +194,7 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
-        "PROJECT_DIR={{user `working_dir`}}/nodeadm",
-        "KANIKO_IMAGE=gcr.io/kaniko-project/executor:latest"
+        "PROJECT_DIR={{user `working_dir`}}/nodeadm"
       ]
     },
     {
@@ -226,7 +225,7 @@
     {
       "type": "shell",
       "inline": [
-        "rm -rf {{user `working_dir`}}"
+        "sudo rm -rf {{user `working_dir`}}"
       ]
     }
   ],
