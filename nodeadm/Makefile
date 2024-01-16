@@ -1,5 +1,3 @@
-VERSION ?= $(shell hack/version.sh)
-
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.27.1
 
@@ -16,7 +14,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: build
+all: crds generate fmt vet build
 
 ##@ General
 
@@ -67,11 +65,10 @@ e2e: build ## Run e2e tests.
 	test/e2e/run.sh
 
 ##@ Build
-GOFLAGS = -ldflags="-X github.com/awslabs/amazon-eks-ami/nodeadm/cmd.Version=$(VERSION)"
 
 .PHONY: build
-build: crds generate fmt vet ## Build binary.
-	go build $(GOFLAGS) -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+build: ## Build binary.
+	go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
 
 .PHONY: run
 run: build ## Run binary
