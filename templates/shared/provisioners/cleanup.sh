@@ -19,6 +19,7 @@ sudo rm -rf \
   /var/lib/dhclient/* \
   /var/lib/dhcp/dhclient.* \
   /var/lib/yum/history \
+  /var/lib/dnf/history* \
   /var/log/cloud-init-output.log \
   /var/log/cloud-init.log \
   /var/log/secure \

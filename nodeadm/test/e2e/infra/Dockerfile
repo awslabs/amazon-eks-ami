@@ -15,9 +15,9 @@ RUN make build
 RUN mv _bin/nodeadm /nodeadm
 
 FROM amazonlinux:2023
-RUN yum -y update && \
-    yum -y install systemd containerd && \
-    yum clean all
+RUN dnf -y update && \
+    dnf -y install systemd containerd && \
+    dnf clean all
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
 COPY test/e2e/infra/systemd/imds-mock.service /usr/lib/systemd/system/imds-mock.service
