@@ -51,13 +51,11 @@ fi
 ### Packages ###################################################################
 ################################################################################
 
-sudo yum install -y yum-utils
-
 # Update the OS to begin with to catch up to the latest packages.
-sudo yum update -y
+sudo dnf update -y
 
 # Install necessary packages
-sudo yum install -y \
+sudo dnf install -y \
   aws-cfn-bootstrap \
   chrony \
   conntrack \
@@ -77,7 +75,7 @@ sudo yum install -y \
 ################################################################################
 
 # needed by kubelet
-sudo yum install -y iptables-nft
+sudo dnf install -y iptables-nft
 
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
@@ -113,7 +111,7 @@ sudo systemctl restart sshd.service
 ### awscli #####################################################################
 ################################################################################
 
-### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
+### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
 ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1}"
 if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -130,24 +128,24 @@ if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/ --update
 else
   echo "Installing awscli package"
-  sudo yum install -y awscli
+  sudo dnf install -y awscli
 fi
 
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
 
-sudo yum install -y runc-${RUNC_VERSION}
-sudo yum install -y containerd-${CONTAINERD_VERSION}
+sudo dnf install -y runc-${RUNC_VERSION}
+sudo dnf install -y containerd-${CONTAINERD_VERSION}
 
 ###############################################################################
 ### Nerdctl setup #############################################################
 ###############################################################################
 
-sudo yum install -y nerdctl
+sudo dnf install -y nerdctl
 
 # TODO: are these necessary? What do they do?
-sudo yum install -y device-mapper-persistent-data lvm2
+sudo dnf install -y device-mapper-persistent-data lvm2
 
 ################################################################################
 ### Kubernetes #################################################################
@@ -276,15 +274,15 @@ EOF
 ### SSM Agent ##################################################################
 ################################################################################
 
-if yum list installed | grep amazon-ssm-agent; then
+if dnf list installed | grep amazon-ssm-agent; then
   echo "amazon-ssm-agent already present - skipping install"
 else
   if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
     echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
-    sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+    sudo dnf install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
     echo "Installing amazon-ssm-agent from AL core repository"
-    sudo yum install -y amazon-ssm-agent
+    sudo dnf install -y amazon-ssm-agent
   fi
 fi
 
@@ -302,7 +300,7 @@ EOF
 sudo chown -R root:root /etc/eks
 
 ################################################################################
-### Remove Yum Update from cloud-init config ###################################
+### Remove Update from cloud-init config #######################################
 ################################################################################
 
 sudo sed -i \
