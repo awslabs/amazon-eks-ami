@@ -32,7 +32,7 @@ spec:
     cidr: 10.100.0.0/16
 ```
 
-Typically, you'll provide this configuration in your EC2 instance's user data, within a MIME multi-part document:
+You'll typically provide this configuration in your EC2 instance's user data, either as-is or embedded within a MIME multi-part document:
 ```
 Content-Type: multipart/mixed; boundary="BOUNDARY"
 MIME-Version: 1.0
