@@ -85,13 +85,8 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 	}
 }
 
-func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig, error) {
-	clusterDns, err := cfg.Spec.Cluster.GetClusterDns()
-	if err != nil {
-		return nil, err
-	}
-
-	kubeletConfig := kubeletSubConfig{
+func defaultKubeletSubConfig() kubeletSubConfig {
+	return kubeletSubConfig{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "KubeletConfiguration",
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
@@ -141,91 +136,102 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 			"TLS_RSA_WITH_AES_128_GCM_SHA256",
 			"TLS_RSA_WITH_AES_256_GCM_SHA384",
 		},
-		ClusterDNS: []string{clusterDns},
 	}
 
-	// To support worker nodes to continue to communicate and connect to local cluster even when the Outpost
-	// is disconnected from the parent AWS Region, the following specific setup are required:
-	//    - append entries to /etc/hosts with the mappings of control plane host IP address and API server
-	//      domain name. So that the domain name can be resolved to IP addresses locally.
-	//    - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client
-	//      X.509 certificate and generate kubelet kubeconfig file which uses the client cert. So that the
-	//      worker node can be authentiacated through X.509 certificate which works for both connected and
-	//      disconnected state.
+}
+
+func (ksc *kubeletSubConfig) withClusterDns(cluster *api.ClusterDetails) error {
+	clusterDns, err := cluster.GetClusterDns()
+	if err != nil {
+		return err
+	}
+	ksc.ClusterDNS = []string{clusterDns}
+	return nil
+}
+
+// To support worker nodes to continue to communicate and connect to local cluster even when the Outpost
+// is disconnected from the parent AWS Region, the following specific setup are required:
+//   - append entries to /etc/hosts with the mappings of control plane host IP address and API server
+//     domain name. So that the domain name can be resolved to IP addresses locally.
+//   - use aws-iam-authenticator as bootstrap auth for kubelet TLS bootstrapping which downloads client
+//     X.509 certificate and generate kubelet kubeconfig file which uses the client cert. So that the
+//     worker node can be authentiacated through X.509 certificate which works for both connected and
+//     disconnected state.
+func (ksc *kubeletSubConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
 		zap.L().Info("Setting up outpost..")
 
 		if cfg.Spec.Cluster.ID == "" {
-			return nil, fmt.Errorf("clusterId cannot be empty when outpost is enabled.")
+			return fmt.Errorf("clusterId cannot be empty when outpost is enabled.")
 		}
 		apiUrl, err := url.Parse(cfg.Spec.Cluster.APIServerEndpoint)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// TODO: cleanup
 		output, err := exec.Command("getent", "hosts", apiUrl.Host).Output()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
 		f, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, kubeletConfigPerm)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer f.Close()
 		if _, err := f.Write(output); err != nil {
-			return nil, err
+			return err
 		}
 	}
+	return nil
+}
 
-	// Get the kubelet/kubernetes version to help conditionally enable features
-	kubeletVersion, err := GetKubeletVersion()
-	if err != nil {
-		return nil, err
-	}
-	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
-
+func (ksc *kubeletSubConfig) withNodeIp(cfg *api.NodeConfig, kubeletArguments map[string]string) error {
 	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	k.additionalArguments["node-ip"] = nodeIp
+	kubeletArguments["node-ip"] = nodeIp
 	zap.L().Info("Setup IP for node", zap.String("ip", nodeIp))
+	return nil
+}
 
+func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletArguments map[string]string) {
 	// TODO: remove when 1.26 is EOL
 	// --container-runtime flag is gone in 1.27+
 	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
-		k.additionalArguments["container-runtime"] = "remote"
+		kubeletArguments["container-runtime"] = "remote"
 	}
 
 	// TODO: Remove this during 1.27 EOL
 	// Enable Feature Gate for KubeletCredentialProviders in versions less than 1.28 since this feature flag was removed in 1.28.
 	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
-		kubeletConfig.FeatureGates["KubeletCredentialProviders"] = true
+		ksc.FeatureGates["KubeletCredentialProviders"] = true
 	}
 
 	// for K8s versions that suport API Priority & Fairness, increase our API server QPS
 	// in 1.27, the default is already increased to 50/100, so use the higher defaults
 	if semver.Compare(kubeletVersion, "v1.22.0") >= 0 && semver.Compare(kubeletVersion, "v1.27.0") < 0 {
-		kubeletConfig.KubeAPIQPS = ptr.Int(10)
-		kubeletConfig.KubeAPIBurst = ptr.Int(20)
+		ksc.KubeAPIQPS = ptr.Int(10)
+		ksc.KubeAPIBurst = ptr.Int(20)
 	}
+}
 
-	// configure cloud provider
+func (ksc *kubeletSubConfig) withCloudProvider(kubeletVersion string, cfg *api.NodeConfig, kubeletArguments map[string]string) {
 	if semver.Compare(kubeletVersion, "v1.26.0") < 0 {
 		// TODO: remove when 1.25 is EOL
-		k.additionalArguments["cloud-provider"] = "aws"
+		kubeletArguments["cloud-provider"] = "aws"
 	} else {
 		// ref: https://github.com/kubernetes/kubernetes/pull/121367
-		k.additionalArguments["cloud-provider"] = "external"
+		kubeletArguments["cloud-provider"] = "external"
 
 		// provider ID needs to be specified when the cloud provider is
 		// external. evaluate if this can be done within the cloud controller.
 		// since the values are coming from IMDS this might not be feasible
 		providerId := getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID)
-		kubeletConfig.ProviderID = &providerId
+		ksc.ProviderID = &providerId
 
 		// When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
 		// If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
@@ -234,12 +240,39 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 
 		// k.additionalArguments["hostname-override"] = cfg.Status.Instance.ID
 	}
+}
 
-	// When the DefaultReservedResources flag is enabled, override the kubelet
-	// config with reserved cgroup values on behalf of the user
+// When the DefaultReservedResources flag is enabled, override the kubelet
+// config with reserved cgroup values on behalf of the user
+func (ksc *kubeletSubConfig) withDefaultReservedResources() {
+	ksc.SystemReservedCgroup = ptr.String("/system")
+	ksc.KubeReservedCgroup = ptr.String("/runtime")
+}
+
+func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig, error) {
+	// Get the kubelet/kubernetes version to help conditionally enable features
+	kubeletVersion, err := GetKubeletVersion()
+	if err != nil {
+		return nil, err
+	}
+	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
+
+	kubeletConfig := defaultKubeletSubConfig()
+	if err := kubeletConfig.withClusterDns(&cfg.Spec.Cluster); err != nil {
+		return nil, err
+	}
+	if err := kubeletConfig.withOutpostSetup(cfg); err != nil {
+		return nil, err
+	}
+	if err := kubeletConfig.withNodeIp(cfg, k.additionalArguments); err != nil {
+		return nil, err
+	}
+
+	kubeletConfig.withVersionToggles(kubeletVersion, k.additionalArguments)
+	kubeletConfig.withCloudProvider(kubeletVersion, cfg, k.additionalArguments)
+
 	if featuregates.DefaultTrue(featuregates.DefaultReservedResources, cfg.Spec.FeatureGates) {
-		kubeletConfig.SystemReservedCgroup = ptr.String("/system")
-		kubeletConfig.KubeReservedCgroup = ptr.String("/runtime")
+		kubeletConfig.withDefaultReservedResources()
 	}
 
 	return &kubeletConfig, nil

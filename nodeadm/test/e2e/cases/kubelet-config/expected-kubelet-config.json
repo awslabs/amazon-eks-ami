@@ -26,6 +26,7 @@
     "clusterDomain": "cluster.local",
     "containerRuntimeEndpoint": "unix:///run/containerd/containerd.sock",
     "featureGates": {
+        "KubeletCredentialProviders": true,
         "RotateKubeletServerCertificate": true
     },
     "hairpinMode": "hairpin-veth",
