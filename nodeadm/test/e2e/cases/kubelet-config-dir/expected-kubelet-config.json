@@ -24,22 +24,38 @@
     "clusterDomain": "cluster.local",
     "hairpinMode": "hairpin-veth",
     "readOnlyPort": 0,
-    "cgroupDriver": "cgroupfs",
+    "cgroupDriver": "systemd",
     "cgroupRoot": "/",
     "featureGates": {
         "RotateKubeletServerCertificate": true
     },
+    "clusterDNS": [
+        "10.100.0.10"
+    ],
+    "containerRuntimeEndpoint": "unix:///run/containerd/containerd.sock",
+    "providerID": "aws:///us-west-2f/i-1234567890abcdef0",
+    "systemReservedCgroup": "/system",
     "protectKernelDefaults": true,
     "serializeImagePulls": false,
     "serverTLSBootstrap": true,
+    "kubeReservedCgroup": "/runtime",
+    "logging": {
+        "flushFrequency": 0,
+        "options": {
+            "json": {
+                "infoBufferSize": "0"
+            }
+        },
+        "verbosity": 2
+    },
     "tlsCipherSuites": [
         "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
         "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+        "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
         "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
         "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-        "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-        "TLS_RSA_WITH_AES_256_GCM_SHA384",
-        "TLS_RSA_WITH_AES_128_GCM_SHA256"
+        "TLS_RSA_WITH_AES_128_GCM_SHA256",
+        "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ]
 }

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"strconv"
@@ -18,22 +19,19 @@ func isHostPresent(host string) (bool, error) {
 	return present, nil
 }
 
-func isFipsEnabled() (bool, error) {
+// Returns whether FIPS module is both installed an enabled on the system
+//
+//	ipsInstalled, fipsEnabled, err := getFipsInfo()
+func getFipsInfo() (bool, bool, error) {
 	fipsEnabledBytes, err := os.ReadFile("/proc/sys/crypto/fips_enabled")
-	if err != nil {
-		return false, err
+	if errors.Is(err, os.ErrNotExist) {
+		return false, false, nil
+	} else if err != nil {
+		return false, false, err
 	}
 	fipsEnabledInt, err := strconv.Atoi(strings.Trim(string(fipsEnabledBytes), trimChars))
 	if err != nil {
-		return false, err
+		return true, false, err
 	}
-	return fipsEnabledInt == 1, nil
-}
-
-func GetNproc() (int, error) {
-	nproc, err := exec.Command("nproc").Output()
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(strings.Trim(string(nproc), trimChars))
+	return true, fipsEnabledInt == 1, nil
 }

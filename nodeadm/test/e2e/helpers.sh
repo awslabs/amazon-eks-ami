@@ -17,6 +17,19 @@ function assert::files-equal() {
   fi
 }
 
+function assert::json-files-equal() {
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: assert::json-files-equal FILE1 FILE2"
+    exit 1
+  fi
+  local FILE1=$1
+  local FILE2=$2
+  if ! diff <(jq -S . $FILE1) <(jq -S . $FILE2); then
+    echo "Files $FILE1 and $FILE2 are not equal"
+    exit 1
+  fi
+}
+
 function mock::kubelet() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: mock::kubelet VERSION"
@@ -47,4 +60,10 @@ function wait::path-exists() {
 
 function wait::dbus-ready() {
   wait::path-exists /run/systemd/private
+}
+
+function mock::imds() {
+  local CONFIG_PATH=${1:-/etc/aemm-default-config.json}
+  imds-mock --config-file $CONFIG_PATH &
+  export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338
 }

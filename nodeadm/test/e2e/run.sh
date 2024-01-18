@@ -19,7 +19,6 @@ for CASE_DIR in $(ls -d test/e2e/cases/*); do
     -d \
     --rm \
     --privileged \
-    -v /sys/fs/cgroup:/sys/fs/cgroup \
     -v $PWD/$CASE_DIR:/test-case \
     $TEST_IMAGE)
   LOG_FILE=$(mktemp)
