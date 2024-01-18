@@ -14,14 +14,13 @@ COPY . .
 RUN make build
 RUN mv _bin/nodeadm /nodeadm
 
-FROM amazonlinux:2023
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 RUN dnf -y update && \
-    dnf -y install systemd containerd && \
+    dnf -y install systemd containerd jq && \
     dnf clean all
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
+COPY test/e2e/infra/aemm-default-config.json /etc/aemm-default-config.json
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
-COPY test/e2e/infra/systemd/imds-mock.service /usr/lib/systemd/system/imds-mock.service
-RUN systemctl enable imds-mock.service
 COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
 COPY test/e2e/helpers.sh /helpers.sh

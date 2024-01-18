@@ -140,9 +140,11 @@ func GetEcrUri(r GetEcrUriRequest) (string, error) {
 	ecrUri := buildEcrUri(r.Account, "ecr", r.Region, r.Domain)
 
 	if r.AllowFips {
-		if fipsEnabled, err := isFipsEnabled(); err != nil {
+		fipsInstalled, fipsEnabled, err := getFipsInfo()
+		if err != nil {
 			return "", err
-		} else if fipsEnabled {
+		}
+		if fipsInstalled && fipsEnabled {
 			ecrUriFips := buildEcrUri(r.Account, "ecr-fips", r.Region, r.Domain)
 			if present, err := isHostPresent(ecrUriFips); err != nil {
 				return "", err
