@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 )
@@ -48,10 +49,7 @@ func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error 
 	k.additionalArguments["image-credential-provider-bin-dir"] = path.Dir(ecrCredentialProviderBinPath)
 	k.additionalArguments["image-credential-provider-config"] = imageCredentialProviderConfigPath
 
-	if err := os.MkdirAll(imageCredentialProviderRoot, imageCredentialProviderPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(imageCredentialProviderConfigPath, config, imageCredentialProviderPerm)
+	return util.WriteFileWithDir(imageCredentialProviderConfigPath, config, imageCredentialProviderPerm)
 }
 
 type imageCredentialProviderTemplateVars struct {
