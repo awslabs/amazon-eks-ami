@@ -6,6 +6,7 @@ Requires=containerd.service
 
 [Service]
 Slice=runtime.slice
+EnvironmentFile=/etc/eks/kubelet/environment
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet $NODEADM_KUBELET_ARGS
 

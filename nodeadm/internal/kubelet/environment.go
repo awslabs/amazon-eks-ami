@@ -5,29 +5,30 @@ import (
 	"strings"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
-const kubeletArgsEnvName = "NODEADM_KUBELET_ARGS"
+const (
+	kubeletEnvironmentFilePath = "/etc/eks/kubelet/environment"
+	kubeletArgsEnvironmentName = "NODEADM_KUBELET_ARGS"
+)
 
-// Write environment variables for kubelet execution to the systemd drop-in directory
-func (k *kubelet) writeKubeletServiceEnvDropIn(cfg *api.NodeConfig) error {
-	systemdUnitContent := "[Service]"
-
+// Write environment variables for kubelet execution
+func (k *kubelet) writeKubeletEnvironment(cfg *api.NodeConfig) error {
 	// transform kubelet additional arguments into a string and write them to
 	// the kubelet args environment variable
 	kubeletArgs := make([]string, len(k.additionalArguments))
 	for flag, value := range k.additionalArguments {
 		kubeletArgs = append(kubeletArgs, fmt.Sprintf("--%s=%s", flag, value))
 	}
-	systemdUnitContent += fmt.Sprintf("\nEnvironment='%s=%s'", kubeletArgsEnvName, strings.Join(kubeletArgs, " "))
-
+	kubeletEnvironment := []string{
+		fmt.Sprintf("%s=%s", kubeletArgsEnvironmentName, strings.Join(kubeletArgs, " ")),
+	}
 	// write additional environment variables
 	for eKey, eValue := range k.environment {
-		systemdUnitContent += fmt.Sprintf("\nEnvironment='%s=%s'", eKey, eValue)
+		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf("%s=%s", eKey, eValue))
 	}
-
-	return daemon.WriteSystemdServiceUnitDropIn(KubeletDaemonName, "00-environment.conf", systemdUnitContent, kubeletConfigPerm)
+	return util.WriteFileWithDir(kubeletEnvironmentFilePath, []byte(strings.Join(kubeletEnvironment, "\n")), kubeletConfigPerm)
 }
 
 // Add values to the environment variables map in a terse manner
