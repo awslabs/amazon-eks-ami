@@ -224,12 +224,11 @@ rm "${CNI_PLUGIN_FILENAME}.tgz"
 sudo rm ./*.sha256
 
 ################################################################################
-### ECR CREDENTIAL PROVIDER ####################################################
+### ECR Credential Provider Binary #############################################
 ################################################################################
 
-sudo mkdir -p /etc/eks/image-credential-provider
-
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
+
 if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
   echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
   aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
@@ -237,38 +236,10 @@ else
   echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
   sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
+
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
+sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
-
-cat << EOF | sudo tee /etc/eks/image-credential-provider/config.json
-{
-  "apiVersion": "kubelet.config.k8s.io/v1",
-  "kind": "CredentialProviderConfig",
-  "providers": [
-    {
-      "name": "ecr-credential-provider",
-      "matchImages": [
-        "*.dkr.ecr.*.amazonaws.com",
-        "*.dkr.ecr.*.amazonaws.com.cn",
-        "*.dkr.ecr-fips.*.amazonaws.com",
-        "*.dkr.ecr.*.c2s.ic.gov",
-        "*.dkr.ecr.*.sc2s.sgov.gov"
-      ],
-      "defaultCacheDuration": "12h",
-      "apiVersion": "credentialprovider.kubelet.k8s.io/v1"
-    }
-  ]
-}
-EOF
-
-sudo mkdir -p /etc/systemd/system/kubelet.d
-
-cat << EOF | sudo tee /etc/systemd/system/kubelet.d/10-image-credential-provider-args.conf
-[Service]
-Environment=IMAGE_CREDENTIAL_PROVIDER_ARGS=\
-  --image-credential-provider-config /etc/eks/image-credential-provider/config.json \
-  --image-credential-provider-bin-dir /etc/eks/image-credential-provider
-EOF
 
 ################################################################################
 ### SSM Agent ##################################################################

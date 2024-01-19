@@ -7,10 +7,7 @@ Requires=containerd.service
 [Service]
 Slice=runtime.slice
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
-ExecStart=/usr/bin/kubelet \
-    --image-credential-provider-config /etc/eks/image-credential-provider/config.json \
-    --image-credential-provider-bin-dir /etc/eks/image-credential-provider \
-    $NODEADM_KUBELET_ARGS
+ExecStart=/usr/bin/kubelet $NODEADM_KUBELET_ARGS
 
 Restart=on-failure
 RestartForceExitStatus=SIGPIPE

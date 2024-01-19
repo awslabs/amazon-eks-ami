@@ -24,4 +24,8 @@ COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
 COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
 COPY test/e2e/helpers.sh /helpers.sh
+
+RUN mkdir -p /etc/eks/image-credential-provider/
+RUN touch /etc/eks/image-credential-provider/ecr-credential-provider
+
 ENTRYPOINT ["/usr/lib/systemd/systemd","--system"]

@@ -30,15 +30,18 @@ func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
+	if err := os.MkdirAll(kubeconfigRoot, kubeconfigPerm); err != nil {
+		return err
+	}
 	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
 		// kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
 		//   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
 		//   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
 		k.additionalArguments["bootstrap-kubeconfig"] = kubeconfigBootstrapPath
-		return writeConfig(kubeconfigBootstrapPath, kubeconfig)
+		return os.WriteFile(kubeconfigBootstrapPath, kubeconfig, kubeconfigPerm)
 	} else {
 		k.additionalArguments["kubeconfig"] = kubeconfigPath
-		return writeConfig(kubeconfigPath, kubeconfig)
+		return os.WriteFile(kubeconfigPath, kubeconfig, kubeconfigPerm)
 	}
 }
 
@@ -67,11 +70,4 @@ func generateKubeconfig(cfg *api.NodeConfig) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func writeConfig(path string, data []byte) error {
-	if err := os.MkdirAll(kubeconfigRoot, kubeconfigPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, kubeconfigPerm)
 }
