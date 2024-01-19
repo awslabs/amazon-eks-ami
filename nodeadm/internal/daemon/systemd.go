@@ -6,9 +6,9 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"os"
 	"path"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/coreos/go-systemd/dbus"
 )
 
@@ -114,13 +114,10 @@ const servicesRoot = "/etc/systemd/system"
 
 func WriteSystemdServiceUnitDropIn(serviceName, fileName, fileContent string, filePerms fs.FileMode) error {
 	dropInPath := path.Join(servicesRoot, getServiceUnitDropInDir(serviceName), fileName)
-	if err := os.MkdirAll(path.Dir(dropInPath), filePerms); err != nil {
-		return err
-	}
-	return os.WriteFile(dropInPath, []byte(fileContent), filePerms)
+	return util.WriteFileWithDir(dropInPath, []byte(fileContent), filePerms)
 }
 
 func WriteSystemdServiceUnit(serviceName, unitContent string, filePerms fs.FileMode) error {
 	serviceUnitPath := path.Join(servicesRoot, getServiceUnitName(serviceName))
-	return os.WriteFile(serviceUnitPath, []byte(unitContent), filePerms)
+	return util.WriteFileWithDir(serviceUnitPath, []byte(unitContent), filePerms)
 }

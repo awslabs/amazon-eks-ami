@@ -23,7 +23,9 @@ function assert::json-files-equal() {
     exit 1
   fi
   local FILE1=$1
+  stat $FILE1
   local FILE2=$2
+  stat $FILE2
   if ! diff <(jq -S . $FILE1) <(jq -S . $FILE2); then
     echo "Files $FILE1 and $FILE2 are not equal"
     exit 1

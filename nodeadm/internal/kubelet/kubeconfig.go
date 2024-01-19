@@ -3,11 +3,11 @@ package kubelet
 import (
 	"bytes"
 	_ "embed"
-	"os"
 	"path"
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const (
@@ -35,10 +35,10 @@ func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 		//   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
 		//   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
 		k.additionalArguments["bootstrap-kubeconfig"] = kubeconfigBootstrapPath
-		return writeConfig(kubeconfigBootstrapPath, kubeconfig)
+		return util.WriteFileWithDir(kubeconfigBootstrapPath, kubeconfig, kubeconfigPerm)
 	} else {
 		k.additionalArguments["kubeconfig"] = kubeconfigPath
-		return writeConfig(kubeconfigPath, kubeconfig)
+		return util.WriteFileWithDir(kubeconfigPath, kubeconfig, kubeconfigPerm)
 	}
 }
 
@@ -67,11 +67,4 @@ func generateKubeconfig(cfg *api.NodeConfig) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func writeConfig(path string, data []byte) error {
-	if err := os.MkdirAll(kubeconfigRoot, kubeconfigPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, kubeconfigPerm)
 }

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"os"
-	"path"
 	"text/template"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
@@ -33,10 +31,7 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(path.Dir(containerdConfigFile), containerdConfigPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(containerdConfigFile, containerdConfig, containerdConfigPerm)
+	return util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {

@@ -25,6 +25,7 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const (
@@ -284,14 +285,10 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 //   - kubeletConfigOverrides should be passed in the order of application
 func (k *kubelet) writeKubeletConfigToFile(kubeletConfig []byte) error {
 	configPath := path.Join(kubeletConfigRoot, kubeletConfigFile)
-	if err := os.MkdirAll(path.Dir(configPath), kubeletConfigPerm); err != nil {
-		return err
-	}
-
 	k.additionalArguments["config"] = configPath
 
 	zap.L().Info("Writing kubelet config to file..", zap.String("path", configPath))
-	return os.WriteFile(configPath, kubeletConfig, kubeletConfigPerm)
+	return util.WriteFileWithDir(configPath, kubeletConfig, kubeletConfigPerm)
 }
 
 // WriteKubeletConfigToDir writes the kubelet config to a directory for drop-in
@@ -299,10 +296,6 @@ func (k *kubelet) writeKubeletConfigToFile(kubeletConfig []byte) error {
 // see: https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
 func (k *kubelet) writeKubeletConfigToDir(kubeletConfig []byte) error {
 	dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
-	if err := os.MkdirAll(dirPath, kubeletConfigPerm); err != nil {
-		return err
-	}
-
 	k.additionalArguments["config-dir"] = dirPath
 
 	zap.L().Info("Enabling kubelet config drop-in dir..")
@@ -310,7 +303,7 @@ func (k *kubelet) writeKubeletConfigToDir(kubeletConfig []byte) error {
 
 	filePath := path.Join(dirPath, "10-defaults.conf")
 	zap.L().Info("Writing kubelet config to drop-in file..", zap.String("path", filePath))
-	return os.WriteFile(filePath, kubeletConfig, kubeletConfigPerm)
+	return util.WriteFileWithDir(filePath, kubeletConfig, kubeletConfigPerm)
 }
 
 func getProviderId(availabilityZone, instanceId string) string {
