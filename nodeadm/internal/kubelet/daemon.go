@@ -36,7 +36,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	if err := writeClusterCaCert(cfg.Spec.Cluster.CertificateAuthority); err != nil {
 		return err
 	}
-	if err := k.writeKubeletServiceEnvDropIn(cfg); err != nil {
+	if err := k.writeKubeletEnvironment(cfg); err != nil {
 		return err
 	}
 	return nil
