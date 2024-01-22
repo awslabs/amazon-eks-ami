@@ -31,13 +31,15 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 }
 
 func TestContainerRuntime(t *testing.T) {
+
+	expectedContainerRuntimeEndpoint := "unix:///run/containerd/containerd.sock"
 	var tests = []struct {
-		kubeletVersion string
-		expectedValue  *string
+		kubeletVersion           string
+		expectedContainerRuntime *string
 	}{
-		{kubeletVersion: "v1.26.0", expectedValue: ptr.String("remote")},
-		{kubeletVersion: "v1.27.0", expectedValue: nil},
-		{kubeletVersion: "v1.28.0", expectedValue: nil},
+		{kubeletVersion: "v1.26.0", expectedContainerRuntime: ptr.String("remote")},
+		{kubeletVersion: "v1.27.0", expectedContainerRuntime: nil},
+		{kubeletVersion: "v1.28.0", expectedContainerRuntime: nil},
 	}
 
 	for _, test := range tests {
@@ -45,11 +47,20 @@ func TestContainerRuntime(t *testing.T) {
 		kubetConfig := defaultKubeletSubConfig()
 		kubetConfig.withVersionToggles(test.kubeletVersion, kubeletAruments)
 		containerRuntime, present := kubeletAruments["container-runtime"]
-		if test.expectedValue == nil && present {
-			t.Errorf("container-runtime shouldn't be set for versions %s", test.kubeletVersion)
-		} else if test.expectedValue != nil && *test.expectedValue != containerRuntime {
-			t.Errorf("expected %v but got %s for container-runtime", *test.expectedValue, containerRuntime)
+		if test.expectedContainerRuntime == nil {
+			if present {
+				t.Errorf("container-runtime shouldn't be set for versions %s", test.kubeletVersion)
+			} else {
+				assert.Equal(t, expectedContainerRuntimeEndpoint, kubetConfig.ContainerRuntimeEndpoint)
+			}
+		} else if test.expectedContainerRuntime != nil {
+			if *test.expectedContainerRuntime != containerRuntime {
+				t.Errorf("expected %v but got %s for container-runtime", *test.expectedContainerRuntime, containerRuntime)
+			} else {
+				assert.Equal(t, expectedContainerRuntimeEndpoint, kubeletAruments["container-runtime-endpoint"])
+			}
 		}
+
 	}
 }
 
@@ -80,8 +91,8 @@ func TestProviderID(t *testing.T) {
 		kubeletVersion        string
 		expectedCloudProvider string
 	}{
-		{kubeletVersion: "v1.23.0", expectedCloudProvider: "aws"},
-		{kubeletVersion: "v1.25.0", expectedCloudProvider: "aws"},
+		{kubeletVersion: "v1.23.0", expectedCloudProvider: "external"},
+		{kubeletVersion: "v1.25.0", expectedCloudProvider: "external"},
 		{kubeletVersion: "v1.26.0", expectedCloudProvider: "external"},
 		{kubeletVersion: "v1.27.0", expectedCloudProvider: "external"},
 	}
@@ -99,7 +110,7 @@ func TestProviderID(t *testing.T) {
 	for _, test := range tests {
 		kubeletAruments := make(map[string]string)
 		kubetConfig := defaultKubeletSubConfig()
-		kubetConfig.withCloudProvider(test.kubeletVersion, &nodeConfig, kubeletAruments)
+		kubetConfig.withCloudProvider(&nodeConfig, kubeletAruments)
 		assert.Equal(t, test.expectedCloudProvider, kubeletAruments["cloud-provider"])
 		if kubeletAruments["cloud-provider"] == "external" {
 			assert.Equal(t, *kubetConfig.ProviderID, providerId)
