@@ -205,6 +205,7 @@ func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletAr
 		// --container-runtime flag is gone in 1.27+
 		kubeletArguments["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
+		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
 		kubeletArguments["container-runtime-endpoint"] = "unix:///run/containerd/containerd.sock"
 	}
 
