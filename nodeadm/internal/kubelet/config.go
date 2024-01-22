@@ -201,9 +201,12 @@ func (ksc *kubeletSubConfig) withNodeIp(cfg *api.NodeConfig, kubeletArguments ma
 
 func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletArguments map[string]string) {
 	// TODO: remove when 1.26 is EOL
-	// --container-runtime flag is gone in 1.27+
 	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
+		// --container-runtime flag is gone in 1.27+
 		kubeletArguments["container-runtime"] = "remote"
+		// --container-runtime-endpoint moved to kubelet config start from 1.27
+		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
+		kubeletArguments["container-runtime-endpoint"] = "unix:///run/containerd/containerd.sock"
 	}
 
 	// TODO: Remove this during 1.27 EOL
@@ -220,27 +223,16 @@ func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletAr
 	}
 }
 
-func (ksc *kubeletSubConfig) withCloudProvider(kubeletVersion string, cfg *api.NodeConfig, kubeletArguments map[string]string) {
-	if semver.Compare(kubeletVersion, "v1.26.0") < 0 {
-		// TODO: remove when 1.25 is EOL
-		kubeletArguments["cloud-provider"] = "aws"
-	} else {
-		// ref: https://github.com/kubernetes/kubernetes/pull/121367
-		kubeletArguments["cloud-provider"] = "external"
+func (ksc *kubeletSubConfig) withCloudProvider(cfg *api.NodeConfig, kubeletArguments map[string]string) {
+	// ref: https://github.com/kubernetes/kubernetes/pull/121367
+	kubeletArguments["cloud-provider"] = "external"
 
-		// provider ID needs to be specified when the cloud provider is
-		// external. evaluate if this can be done within the cloud controller.
-		// since the values are coming from IMDS this might not be feasible
-		providerId := getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID)
-		ksc.ProviderID = &providerId
-
-		// When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
-		// If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
-		// then /etc/hostname is not the same as EC2's PrivateDnsName.
-		// The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
-
-		// k.additionalArguments["hostname-override"] = cfg.Status.Instance.ID
-	}
+	// provider ID needs to be specified when the cloud provider is
+	// external. evaluate if this can be done within the cloud controller.
+	// since the values are coming from IMDS this might not be feasible
+	providerId := getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID)
+	ksc.ProviderID = &providerId
+	kubeletArguments["hostname-override"] = cfg.Status.Instance.ID
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
@@ -270,7 +262,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 	}
 
 	kubeletConfig.withVersionToggles(kubeletVersion, k.additionalArguments)
-	kubeletConfig.withCloudProvider(kubeletVersion, cfg, k.additionalArguments)
+	kubeletConfig.withCloudProvider(cfg, k.additionalArguments)
 
 	if featuregates.DefaultTrue(featuregates.DefaultReservedResources, cfg.Spec.FeatureGates) {
 		kubeletConfig.withDefaultReservedResources()
