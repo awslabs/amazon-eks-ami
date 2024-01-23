@@ -32,6 +32,36 @@ function assert::json-files-equal() {
   fi
 }
 
+function assert::file-contains() {
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: assert::file-contains FILE PATTERN"
+    exit 1
+  fi
+  local FILE=$1
+  local PATTERN=$2
+  if ! grep -e "$PATTERN" $FILE; then
+    echo "File $FILE does not contain pattern '$PATTERN'"
+    cat $FILE
+    echo ""
+    exit 1
+  fi
+}
+
+function assert::file-not-contains() {
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: assert::file-not-contains FILE PATTERN"
+    exit 1
+  fi
+  local FILE=$1
+  local PATTERN=$2
+  if grep -e "$PATTERN" $FILE; then
+    echo "File $FILE contains pattern '$PATTERN'"
+    cat $FILE
+    echo ""
+    exit 1
+  fi
+}
+
 function mock::kubelet() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: mock::kubelet VERSION"
