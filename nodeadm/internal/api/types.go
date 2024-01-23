@@ -2,7 +2,10 @@
 // +groupName=node.eks.aws
 package api
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +kubebuilder:skipversion
 // +kubebuilder:object:root=true
@@ -28,6 +31,7 @@ type NodeConfigList struct {
 
 type NodeConfigSpec struct {
 	Cluster      ClusterDetails  `json:"cluster,omitempty"`
+	Kubelet      KubeletOptions  `json:"kubelet,omitempty"`
 	FeatureGates map[string]bool `json:"featureGates,omitempty"`
 }
 
@@ -50,6 +54,11 @@ type ClusterDetails struct {
 	CIDR                 string `json:"cidr,omitempty"`
 	EnableOutpost        *bool  `json:"enableOutpost,omitempty"`
 	ID                   string `json:"id,omitempty"`
+}
+
+type KubeletOptions struct {
+	Labels map[string]string `json:"labels,omitempty"`
+	Taints []v1.Taint        `json:"taints,omitempty"`
 }
 
 type IPFamily string

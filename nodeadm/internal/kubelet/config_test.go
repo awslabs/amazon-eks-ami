@@ -60,7 +60,6 @@ func TestContainerRuntime(t *testing.T) {
 				assert.Equal(t, expectedContainerRuntimeEndpoint, kubeletAruments["container-runtime-endpoint"])
 			}
 		}
-
 	}
 }
 

@@ -13,6 +13,3 @@ spec:
     labels:
       foo: bar
       foo2: baz
-    taints:
-      - key: foo
-        effect: NoSchedule

@@ -10,9 +10,9 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    labels:
-      foo: bar
-      foo2: baz
     taints:
       - key: foo
+        effect: NoSchedule
+      - key: foo2
+        value: baz
         effect: NoSchedule

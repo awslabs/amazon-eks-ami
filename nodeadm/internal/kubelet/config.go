@@ -138,7 +138,6 @@ func defaultKubeletSubConfig() kubeletSubConfig {
 			"TLS_RSA_WITH_AES_256_GCM_SHA384",
 		},
 	}
-
 }
 
 func (ksc *kubeletSubConfig) withClusterDns(cluster *api.ClusterDetails) error {
@@ -266,6 +265,21 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 
 	if featuregates.DefaultTrue(featuregates.DefaultReservedResources, cfg.Spec.FeatureGates) {
 		kubeletConfig.withDefaultReservedResources()
+	}
+
+	if len(cfg.Spec.Kubelet.Labels) > 0 {
+		var labelStrings []string
+		for labelKey, label := range cfg.Spec.Kubelet.Labels {
+			labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", labelKey, label))
+		}
+		k.additionalArguments["node-labels"] = strings.Join(labelStrings, ",")
+	}
+	if len(cfg.Spec.Kubelet.Taints) > 0 {
+		var taintStrings []string
+		for _, taint := range cfg.Spec.Kubelet.Taints {
+			taintStrings = append(taintStrings, fmt.Sprintf("%s=%s:%s", taint.Key, taint.Value, taint.Effect))
+		}
+		k.additionalArguments["register-with-taints"] = strings.Join(taintStrings, ",")
 	}
 
 	return &kubeletConfig, nil

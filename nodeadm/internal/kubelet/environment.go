@@ -13,17 +13,18 @@ const (
 	kubeletArgsEnvironmentName = "NODEADM_KUBELET_ARGS"
 )
 
-// Write environment variables for kubelet execution
+// Write environment variables needed for kubelet runtime. This should be
+// the last method called on the kubelet object so that environment side
+// effects of other methods are properly recored
 func (k *kubelet) writeKubeletEnvironment(cfg *api.NodeConfig) error {
 	// transform kubelet additional arguments into a string and write them to
 	// the kubelet args environment variable
-	kubeletArgs := make([]string, len(k.additionalArguments))
+	var kubeletArgs []string
 	for flag, value := range k.additionalArguments {
 		kubeletArgs = append(kubeletArgs, fmt.Sprintf("--%s=%s", flag, value))
 	}
-	kubeletEnvironment := []string{
-		fmt.Sprintf("%s=%s", kubeletArgsEnvironmentName, strings.Join(kubeletArgs, " ")),
-	}
+	var kubeletEnvironment []string
+	kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf("%s=%s", kubeletArgsEnvironmentName, strings.Join(kubeletArgs, " ")))
 	// write additional environment variables
 	for eKey, eValue := range k.environment {
 		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf("%s=%s", eKey, eValue))
