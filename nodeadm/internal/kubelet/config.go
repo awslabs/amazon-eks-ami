@@ -23,6 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/smithy-go/ptr"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -35,31 +36,34 @@ const (
 	kubeletConfigPerm = 0644
 )
 
+// kubeletSubConfig is an internal-only representation of the kubelet
+// configuration that will be get written to disk. It is a subset of the
+// upstream KubeletConfiguration types, and inherits the subset of parameters
+// passed through NodeConfig KubeletConfiguration.
+// https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletSubConfig struct {
-	v1.TypeMeta              `json:",inline"`
-	Address                  string                           `json:"address"`
-	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
-	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
-	CgroupDriver             string                           `json:"cgroupDriver"`
-	CgroupRoot               string                           `json:"cgroupRoot"`
-	ClusterDomain            string                           `json:"clusterDomain"`
-	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
-	FeatureGates             map[string]bool                  `json:"featureGates"`
-	HairpinMode              string                           `json:"hairpinMode"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
-	Logging                  logsapi.LoggingConfiguration     `json:"logging"`
-	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
-	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
-
-	SystemReservedCgroup *string `json:"systemReservedCgroup,omitempty"`
-	KubeReservedCgroup   *string `json:"kubeReservedCgroup,omitempty"`
-	ProviderID           *string `json:"providerID,omitempty"`
-	KubeAPIQPS           *int    `json:"kubeAPIQPS,omitempty"`
-	KubeAPIBurst         *int    `json:"kubeAPIBurst,omitempty"`
-	MaxPods              *int    `json:"maxPods,omitempty"`
+	v1.TypeMeta                   `json:",inline"`
+	v1alpha1.KubeletConfiguration `json:",inline"`
+	Address                       string                           `json:"address"`
+	Authentication                k8skubelet.KubeletAuthentication `json:"authentication"`
+	Authorization                 k8skubelet.KubeletAuthorization  `json:"authorization"`
+	CgroupDriver                  string                           `json:"cgroupDriver"`
+	CgroupRoot                    string                           `json:"cgroupRoot"`
+	ClusterDomain                 string                           `json:"clusterDomain"`
+	ContainerRuntimeEndpoint      string                           `json:"containerRuntimeEndpoint"`
+	FeatureGates                  map[string]bool                  `json:"featureGates"`
+	HairpinMode                   string                           `json:"hairpinMode"`
+	ProtectKernelDefaults         bool                             `json:"protectKernelDefaults"`
+	ReadOnlyPort                  int                              `json:"readOnlyPort"`
+	Logging                       logsapi.LoggingConfiguration     `json:"logging"`
+	SerializeImagePulls           bool                             `json:"serializeImagePulls"`
+	ServerTLSBootstrap            bool                             `json:"serverTLSBootstrap"`
+	TLSCipherSuites               []string                         `json:"tlsCipherSuites"`
+	SystemReservedCgroup          *string                          `json:"systemReservedCgroup,omitempty"`
+	KubeReservedCgroup            *string                          `json:"kubeReservedCgroup,omitempty"`
+	ProviderID                    *string                          `json:"providerID,omitempty"`
+	KubeAPIQPS                    *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeAPIBurst                  *int                             `json:"kubeAPIBurst,omitempty"`
 }
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
@@ -86,13 +90,16 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 	}
 }
 
-func defaultKubeletSubConfig() kubeletSubConfig {
+// Creates an internal kubelet configuration from the public facing bootstrap
+// kubelet configuration with additional sane defaults.
+func defaultKubeletSubConfig(kubeletConfifuration *v1alpha1.KubeletConfiguration) kubeletSubConfig {
 	return kubeletSubConfig{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "KubeletConfiguration",
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
 		},
-		Address: "0.0.0.0",
+		KubeletConfiguration: *kubeletConfifuration,
+		Address:              "0.0.0.0",
 		Authentication: k8skubelet.KubeletAuthentication{
 			Anonymous: k8skubelet.KubeletAnonymousAuthentication{
 				Enabled: ptr.Bool(false),
@@ -140,8 +147,10 @@ func defaultKubeletSubConfig() kubeletSubConfig {
 	}
 }
 
-func (ksc *kubeletSubConfig) withClusterDns(cluster *api.ClusterDetails) error {
-	clusterDns, err := cluster.GetClusterDns()
+// Update the ClusterDNS of the internal kubelet config using a heuristic based
+// on the cluster service IP CIDR address.
+func (ksc *kubeletSubConfig) withFallbackClusterDns(cluster *v1alpha1.ClusterDetails) error {
+	clusterDns, err := api.GetClusterDns(cluster)
 	if err != nil {
 		return err
 	}
@@ -205,7 +214,7 @@ func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletAr
 		kubeletArguments["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
 		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
-		kubeletArguments["container-runtime-endpoint"] = "unix:///run/containerd/containerd.sock"
+		kubeletArguments["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
 	}
 
 	// TODO: Remove this during 1.27 EOL
@@ -229,8 +238,10 @@ func (ksc *kubeletSubConfig) withCloudProvider(cfg *api.NodeConfig, kubeletArgum
 	// provider ID needs to be specified when the cloud provider is
 	// external. evaluate if this can be done within the cloud controller.
 	// since the values are coming from IMDS this might not be feasible
-	providerId := getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID)
-	ksc.ProviderID = &providerId
+	ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
+
+	// use ec2 instance-id as node hostname which is unique, stable, and incurs
+	// no additional requests
 	kubeletArguments["hostname-override"] = cfg.Status.Instance.ID
 }
 
@@ -249,9 +260,14 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 	}
 	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
 
-	kubeletConfig := defaultKubeletSubConfig()
-	if err := kubeletConfig.withClusterDns(&cfg.Spec.Cluster); err != nil {
-		return nil, err
+	kubeletConfig := defaultKubeletSubConfig(&cfg.Spec.Kubelet.Config)
+
+	// If ClusterDNS is not provided in the KubeletConfiguration, generate a
+	// default value using the cluster service IP CIDR address.
+	if len(kubeletConfig.ClusterDNS) == 0 {
+		if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
+			return nil, err
+		}
 	}
 	if err := kubeletConfig.withOutpostSetup(cfg); err != nil {
 		return nil, err
@@ -274,12 +290,16 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 		}
 		k.additionalArguments["node-labels"] = strings.Join(labelStrings, ",")
 	}
-	if len(cfg.Spec.Kubelet.Taints) > 0 {
-		var taintStrings []string
-		for _, taint := range cfg.Spec.Kubelet.Taints {
-			taintStrings = append(taintStrings, fmt.Sprintf("%s=%s:%s", taint.Key, taint.Value, taint.Effect))
+	if len(cfg.Spec.Kubelet.Config.RegisterWithTaints) > 0 {
+		// kubelet versions less than 1.23 cannot pass the register-with-taints
+		// field cannot via the kubelet configuration.
+		if semver.Compare(kubeletVersion, "v1.23.0") < 0 {
+			var taintStrings []string
+			for _, taint := range cfg.Spec.Kubelet.Config.RegisterWithTaints {
+				taintStrings = append(taintStrings, fmt.Sprintf("%s=%s:%s", taint.Key, taint.Value, taint.Effect))
+			}
+			k.additionalArguments["register-with-taints"] = strings.Join(taintStrings, ",")
 		}
-		k.additionalArguments["register-with-taints"] = strings.Join(taintStrings, ",")
 	}
 
 	return &kubeletConfig, nil

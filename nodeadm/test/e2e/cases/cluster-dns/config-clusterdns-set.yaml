@@ -10,10 +10,7 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    labels:
-      foo: bar
-      foo2: baz
     config:
-      registerWithTaints:
-        - key: foo
-          effect: NoSchedule
+      clusterDNS:
+        - 0.0.0.0
+        - 1.1.1.1
