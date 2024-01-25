@@ -10,6 +10,5 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    labels:
-      foo: bar
-      foo2: baz
+    flags:
+      node-labels: foo=bar,foo2=baz

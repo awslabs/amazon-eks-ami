@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,10 +50,4 @@ type KubeletOptions struct {
 	// leading dashes. These arguments override any of generated defaults
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	Flags map[string]string `json:"flags,omitempty"`
-	// Labels is a map of labels to apply to the node when the kubelet
-	// registers itself
-	Labels map[string]string `json:"labels,omitempty"`
-	// Labels is a map of labels to apply to the node when the kubelet
-	// registers itself
-	Taints []v1.Taint `json:"taints,omitempty"`
 }

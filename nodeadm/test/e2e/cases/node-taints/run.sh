@@ -18,4 +18,8 @@ assert::file-contains /etc/eks/kubelet/environment "--register-with-taints=foo=:
 
 mock::kubelet 1.23.0
 nodeadm init --skip run --config-source file://config.yaml
-assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
+assert::file-contains /etc/eks/kubelet/environment "--register-with-taints=foo=:NoSchedule,foo2=baz:NoSchedule"
+
+mock::kubelet 1.28.0
+nodeadm init --skip run --config-source file://config.yaml
+assert::file-contains /etc/eks/kubelet/environment "--register-with-taints=foo=:NoSchedule,foo2=baz:NoSchedule"

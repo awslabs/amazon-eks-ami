@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"sort"
 	"strings"
 	"time"
 
@@ -264,29 +263,6 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withVersionToggles(kubeletVersion, k.additionalArguments)
 	kubeletConfig.withCloudProvider(cfg, k.additionalArguments)
 	kubeletConfig.withDefaultReservedResources()
-
-	if len(cfg.Spec.Kubelet.Labels) > 0 {
-		var labelStrings []string
-		for labelKey, label := range cfg.Spec.Kubelet.Labels {
-			labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", labelKey, label))
-		}
-		labelStrings = sort.StringSlice(labelStrings)
-		k.additionalArguments["node-labels"] = strings.Join(labelStrings, ",")
-	}
-	if len(cfg.Spec.Kubelet.Taints) > 0 {
-		// kubelet versions less than 1.23 cannot pass the register-with-taints
-		// field cannot via the kubelet configuration.
-		if semver.Compare(kubeletVersion, "v1.23.0") < 0 {
-			var taintStrings []string
-			for _, taint := range cfg.Spec.Kubelet.Taints {
-				taintStrings = append(taintStrings, fmt.Sprintf("%s=%s:%s", taint.Key, taint.Value, taint.Effect))
-			}
-			taintStrings = sort.StringSlice(taintStrings)
-			k.additionalArguments["register-with-taints"] = strings.Join(taintStrings, ",")
-		} else {
-			kubeletConfig.RegisterWithTaints = cfg.Spec.Kubelet.Taints
-		}
-	}
 
 	return &kubeletConfig, nil
 }
