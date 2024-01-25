@@ -27,12 +27,12 @@ func (k *kubelet) writeKubeletEnvironment(cfg *api.NodeConfig) error {
 	for flag, value := range k.additionalArguments {
 		kubeletFlags = append(kubeletFlags, fmt.Sprintf("--%s=%s", flag, value))
 	}
+	k.environment[kubeletArgsEnvironmentName] = strings.Join(kubeletFlags, " ")
 
-	var kubeletEnvironment []string
-	kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf("%s=%s", kubeletArgsEnvironmentName, strings.Join(kubeletFlags, " ")))
 	// write additional environment variables
+	var kubeletEnvironment []string
 	for eKey, eValue := range k.environment {
-		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf("%s=%s", eKey, eValue))
+		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf(`%s="%s"`, eKey, eValue))
 	}
 
 	return util.WriteFileWithDir(kubeletEnvironmentFilePath, []byte(strings.Join(kubeletEnvironment, "\n")), kubeletConfigPerm)

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 )
 
 // Fetch information about the ec2 instance using IMDS data.
@@ -40,7 +39,7 @@ func GetIMDSInstanceDetails(ctx context.Context, imdsClient *imds.Client) (*Inst
 }
 
 // Derive the default ClusterIP of the kube-dns service from EKS built-in CoreDNS addon
-func GetClusterDns(details *v1alpha1.ClusterDetails) (string, error) {
+func (details *ClusterDetails) GetClusterDns() (string, error) {
 	ipFamily, err := GetCIDRIpFamily(details.CIDR)
 	if err != nil {
 		return "", err

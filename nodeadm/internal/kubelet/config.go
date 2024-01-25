@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/smithy-go/ptr"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
@@ -138,8 +137,8 @@ func defaultKubeletSubConfig() kubeletConfig {
 
 // Update the ClusterDNS of the internal kubelet config using a heuristic based
 // on the cluster service IP CIDR address.
-func (ksc *kubeletConfig) withFallbackClusterDns(cluster *v1alpha1.ClusterDetails) error {
-	clusterDns, err := api.GetClusterDns(cluster)
+func (ksc *kubeletConfig) withFallbackClusterDns(cluster *api.ClusterDetails) error {
+	clusterDns, err := cluster.GetClusterDns()
 	if err != nil {
 		return err
 	}

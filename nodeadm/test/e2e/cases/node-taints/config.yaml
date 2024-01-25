@@ -1,8 +1,6 @@
 ---
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
-metadata:
-  name: example
 spec:
   cluster:
     name: my-cluster
