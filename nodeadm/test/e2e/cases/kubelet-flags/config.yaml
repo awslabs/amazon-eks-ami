@@ -10,7 +10,5 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    config:
-      clusterDNS:
-        - 0.0.0.0
-        - 1.1.1.1
+    flags:
+      verbosity: '5'

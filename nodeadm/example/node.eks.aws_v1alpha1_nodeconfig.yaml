@@ -13,7 +13,18 @@ spec:
     labels:
       foo: bar
       foo2: baz
-    config:
-      registerWithTaints:
-        - key: foo
-          effect: NoSchedule
+    taints:
+      - key: foo
+        effect: NoSchedule
+    inline: |
+      {
+        "kind": "KubeletConfiguration",
+        "apiVersion": "kubelet.config.k8s.io/v1beta1",
+        "maxPods": 42,
+        "clusterDNS": [
+          "0.0.0.0",
+          "1.1.1.1"
+        ]
+      }
+    flags:
+      verbosity: '5'

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +19,7 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		kubetConfig := defaultKubeletSubConfig(&v1alpha1.KubeletConfiguration{})
+		kubetConfig := defaultKubeletSubConfig()
 		kubetConfig.withVersionToggles(test.kubeletVersion, make(map[string]string))
 		kubeletCredentialProviders, present := kubetConfig.FeatureGates["KubeletCredentialProviders"]
 		if test.expectedValue == nil && present {
@@ -45,7 +44,7 @@ func TestContainerRuntime(t *testing.T) {
 
 	for _, test := range tests {
 		kubeletAruments := make(map[string]string)
-		kubetConfig := defaultKubeletSubConfig(&v1alpha1.KubeletConfiguration{})
+		kubetConfig := defaultKubeletSubConfig()
 		kubetConfig.withVersionToggles(test.kubeletVersion, kubeletAruments)
 		containerRuntime, present := kubeletAruments["container-runtime"]
 		if test.expectedContainerRuntime == nil {
@@ -79,7 +78,7 @@ func TestKubeAPILimits(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		kubetConfig := defaultKubeletSubConfig(&v1alpha1.KubeletConfiguration{})
+		kubetConfig := defaultKubeletSubConfig()
 		kubetConfig.withVersionToggles(test.kubeletVersion, make(map[string]string))
 		assert.Equal(t, test.expectedKubeAPIQS, kubetConfig.KubeAPIQPS)
 		assert.Equal(t, test.expectedKubeAPIBurst, kubetConfig.KubeAPIBurst)
@@ -109,7 +108,7 @@ func TestProviderID(t *testing.T) {
 
 	for _, test := range tests {
 		kubeletAruments := make(map[string]string)
-		kubetConfig := defaultKubeletSubConfig(&nodeConfig.Spec.Kubelet.Config)
+		kubetConfig := defaultKubeletSubConfig()
 		kubetConfig.withCloudProvider(&nodeConfig, kubeletAruments)
 		assert.Equal(t, test.expectedCloudProvider, kubeletAruments["cloud-provider"])
 		if kubeletAruments["cloud-provider"] == "external" {
