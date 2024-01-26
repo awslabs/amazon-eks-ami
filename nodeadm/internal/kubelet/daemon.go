@@ -10,16 +10,18 @@ const KubeletDaemonName = "kubelet"
 var _ daemon.Daemon = &kubelet{}
 
 type kubelet struct {
-	daemonManager       daemon.DaemonManager
-	environment         map[string]string
-	additionalArguments map[string]string
+	daemonManager daemon.DaemonManager
+	// environment variables to write for kubelet
+	environment map[string]string
+	// kubelet config flags without leading dashes
+	flags map[string]string
 }
 
 func NewKubeletDaemon(daemonManager daemon.DaemonManager) daemon.Daemon {
 	return &kubelet{
-		daemonManager:       daemonManager,
-		environment:         make(map[string]string),
-		additionalArguments: make(map[string]string),
+		daemonManager: daemonManager,
+		environment:   make(map[string]string),
+		flags:         make(map[string]string),
 	}
 }
 

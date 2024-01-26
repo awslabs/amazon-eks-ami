@@ -52,16 +52,16 @@ spec:
               kubelet:
                 properties:
                   flags:
-                    additionalProperties:
+                    description: Flags is a list of command-line kubelet arguments.
+                      These arguments are amended to the generated defaults, and therefore
+                      will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+                    items:
                       type: string
-                    description: Flags is a string map that takes command-line kubelet
-                      arguments without leading dashes. These arguments override any
-                      of generated defaults https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
-                    type: object
+                    type: array
                   inline:
                     description: InlineConfig is a raw document of a kubelet config
                       that can be provided by the user to override default generated
-                      configurations
+                      configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
                     type: string
                 type: object
             type: object

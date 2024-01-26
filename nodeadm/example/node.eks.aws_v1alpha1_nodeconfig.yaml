@@ -21,4 +21,6 @@ spec:
         ]
       }
     flags:
-      verbosity: '5'
+      - --v=2
+      - --register-with-taints=foo=bar:NoSchedule
+      - --node-labels=foo=bar

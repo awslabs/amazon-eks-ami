@@ -54,10 +54,8 @@ func (in *KubeletOptions) DeepCopyInto(out *KubeletOptions) {
 	*out = *in
 	if in.Flags != nil {
 		in, out := &in.Flags, &out.Flags
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 }
 

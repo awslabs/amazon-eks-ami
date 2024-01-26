@@ -9,4 +9,6 @@ spec:
     cidr: 10.100.0.0/16
   kubelet:
     flags:
-      verbosity: '5'
+      - --v=5
+      - --node-labels=foo=bar,foo2=baz
+      - --register-with-taints=foo=bar:NoSchedule

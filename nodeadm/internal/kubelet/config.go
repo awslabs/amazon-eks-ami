@@ -185,24 +185,24 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, kubeletArguments map[string]string) error {
+func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
 	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
 	if err != nil {
 		return err
 	}
-	kubeletArguments["node-ip"] = nodeIp
+	flags["node-ip"] = nodeIp
 	zap.L().Info("Setup IP for node", zap.String("ip", nodeIp))
 	return nil
 }
 
-func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, kubeletArguments map[string]string) {
+func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[string]string) {
 	// TODO: remove when 1.26 is EOL
 	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
 		// --container-runtime flag is gone in 1.27+
-		kubeletArguments["container-runtime"] = "remote"
+		flags["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
 		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
-		kubeletArguments["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
+		flags["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
 	}
 
 	// TODO: Remove this during 1.27 EOL
@@ -219,9 +219,9 @@ func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, kubeletArgum
 	}
 }
 
-func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, kubeletArguments map[string]string) {
+func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
 	// ref: https://github.com/kubernetes/kubernetes/pull/121367
-	kubeletArguments["cloud-provider"] = "external"
+	flags["cloud-provider"] = "external"
 
 	// provider ID needs to be specified when the cloud provider is external.
 	// evaluate if this can be done within the cloud controller. since the
@@ -230,7 +230,7 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, kubeletArgument
 
 	// use ec2 instance-id as node hostname which is unique, stable, and incurs
 	// no additional requests
-	kubeletArguments["hostname-override"] = cfg.Status.Instance.ID
+	flags["hostname-override"] = cfg.Status.Instance.ID
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
@@ -255,12 +255,12 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	if err := kubeletConfig.withOutpostSetup(cfg); err != nil {
 		return nil, err
 	}
-	if err := kubeletConfig.withNodeIp(cfg, k.additionalArguments); err != nil {
+	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
 		return nil, err
 	}
 
-	kubeletConfig.withVersionToggles(kubeletVersion, k.additionalArguments)
-	kubeletConfig.withCloudProvider(cfg, k.additionalArguments)
+	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
+	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources()
 
 	return &kubeletConfig, nil
@@ -298,7 +298,7 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfi
 	}
 
 	configPath := path.Join(kubeletConfigRoot, kubeletConfigFile)
-	k.additionalArguments["config"] = configPath
+	k.flags["config"] = configPath
 
 	zap.L().Info("Writing kubelet config to file..", zap.String("path", configPath))
 	return util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm)
@@ -318,7 +318,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig
 	}
 
 	dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
-	k.additionalArguments["config-dir"] = dirPath
+	k.flags["config-dir"] = dirPath
 
 	zap.L().Info("Enabling kubelet config drop-in dir..")
 	k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")

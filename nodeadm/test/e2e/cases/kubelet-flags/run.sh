@@ -12,4 +12,4 @@ wait::dbus-ready
 
 nodeadm init --skip run --config-source file://config.yaml
 
-assert::file-contains /etc/eks/kubelet/environment '--verbosity=5'
+assert::file-contains /etc/eks/kubelet/environment '--v=5 --node-labels=foo=bar,foo2=baz --register-with-taints=foo=bar:NoSchedule"$'
