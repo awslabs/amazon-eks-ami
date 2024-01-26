@@ -10,7 +10,7 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    inline: |
+    config: |
       {
         "kind": "KubeletConfiguration",
         "apiVersion": "kubelet.config.k8s.io/v1beta1",

@@ -105,7 +105,7 @@ func Convert_api_ClusterDetails_To_v1alpha1_ClusterDetails(in *api.ClusterDetail
 }
 
 func autoConvert_v1alpha1_KubeletOptions_To_api_KubeletOptions(in *v1alpha1.KubeletOptions, out *api.KubeletOptions, s conversion.Scope) error {
-	out.InlineConfig = in.InlineConfig
+	out.Config = in.Config
 	out.Flags = *(*[]string)(unsafe.Pointer(&in.Flags))
 	return nil
 }
@@ -116,7 +116,7 @@ func Convert_v1alpha1_KubeletOptions_To_api_KubeletOptions(in *v1alpha1.KubeletO
 }
 
 func autoConvert_api_KubeletOptions_To_v1alpha1_KubeletOptions(in *api.KubeletOptions, out *v1alpha1.KubeletOptions, s conversion.Scope) error {
-	out.InlineConfig = in.InlineConfig
+	out.Config = in.Config
 	out.Flags = *(*[]string)(unsafe.Pointer(&in.Flags))
 	return nil
 }

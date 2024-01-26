@@ -51,6 +51,11 @@ spec:
                 type: object
               kubelet:
                 properties:
+                  config:
+                    description: Config is a raw document of a kubelet config that
+                      can be provided by the user to override default generated configurations
+                      https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+                    type: string
                   flags:
                     description: Flags is a list of command-line kubelet arguments.
                       These arguments are amended to the generated defaults, and therefore
@@ -58,11 +63,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  inline:
-                    description: InlineConfig is a raw document of a kubelet config
-                      that can be provided by the user to override default generated
-                      configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
-                    type: string
                 type: object
             type: object
         type: object

@@ -53,10 +53,10 @@ type ClusterDetails struct {
 }
 
 type KubeletOptions struct {
-	// InlineConfig is a raw document of a kubelet config that can be provided
+	// Config is a raw document of a kubelet config that can be provided
 	// by the user to override default generated configurations
 	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
-	InlineConfig string `json:"inline,omitempty"`
+	Config string `json:"config,omitempty"`
 	// Flags is a list of command-line kubelet arguments. These arguments are
 	// amended to the generated defaults, and therefore will act as overrides
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/

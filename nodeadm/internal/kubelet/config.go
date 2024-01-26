@@ -43,9 +43,9 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 		return err
 	}
 	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
-		return k.writeKubeletConfigToFile(cfg, []byte(cfg.Spec.Kubelet.InlineConfig))
+		return k.writeKubeletConfigToFile(cfg, []byte(cfg.Spec.Kubelet.Config))
 	} else {
-		return k.writeKubeletConfigToDir(cfg, []byte(cfg.Spec.Kubelet.InlineConfig))
+		return k.writeKubeletConfigToDir(cfg, []byte(cfg.Spec.Kubelet.Config))
 	}
 }
 
