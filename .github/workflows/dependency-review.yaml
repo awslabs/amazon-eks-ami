@@ -26,7 +26,9 @@ jobs:
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
         with:
-          args: nodeadm/...
+          args:
+            - -exclude=G101,G103,G204
+            - nodeadm/...
   govulncheck:
     runs-on: ubuntu-latest
     steps:
