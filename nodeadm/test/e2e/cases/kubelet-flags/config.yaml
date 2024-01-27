@@ -8,12 +8,7 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
   kubelet:
-    config: |
-      {
-        "kind": "KubeletConfiguration",
-        "apiVersion": "kubelet.config.k8s.io/v1beta1",
-        "clusterDNS": [
-          "0.0.0.0",
-          "1.1.1.1"
-        ]
-      }
+    flags:
+      - --v=5
+      - --node-labels=foo=bar,foo2=baz
+      - --register-with-taints=foo=bar:NoSchedule

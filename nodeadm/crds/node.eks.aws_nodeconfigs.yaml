@@ -49,9 +49,20 @@ spec:
                   name:
                     type: string
                 type: object
-              featureGates:
-                additionalProperties:
-                  type: boolean
+              kubelet:
+                properties:
+                  config:
+                    description: Config is a raw document of a kubelet config that
+                      can be provided by the user to override default generated configurations
+                      https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+                    type: string
+                  flags:
+                    description: Flags is a list of command-line kubelet arguments.
+                      These arguments are amended to the generated defaults, and therefore
+                      will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+                    items:
+                      type: string
+                    type: array
                 type: object
             type: object
         type: object

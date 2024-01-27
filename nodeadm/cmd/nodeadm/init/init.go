@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -18,7 +16,6 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
-	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
 )
 
@@ -130,17 +127,6 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	}
 	cfg.Status.Instance = *instanceDetails
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
-
-	if featuregates.DefaultFalse(featuregates.DescribeClusterDetails, cfg.Spec.FeatureGates) {
-		log.Info("Populating cluster details using a describe-cluster call..")
-		// use instance region since cluster region isn't guarenteed to exist
-		awsConfig := aws.NewConfig().WithRegion(instanceDetails.Region)
-		eksClient := eks.New(session.Must(session.NewSession(awsConfig)))
-		if err := populateClusterDetails(eksClient, cfg.Spec.Cluster.Name, cfg); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

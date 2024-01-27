@@ -12,4 +12,4 @@ wait::dbus-ready
 
 nodeadm init --skip run --config-source file://config.yaml
 
-assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
+assert::file-contains /etc/eks/kubelet/environment '--v=5 --node-labels=foo=bar,foo2=baz --register-with-taints=foo=bar:NoSchedule"$'

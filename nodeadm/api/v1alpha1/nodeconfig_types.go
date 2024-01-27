@@ -29,19 +29,26 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster      ClusterDetails  `json:"cluster,omitempty"`
-	FeatureGates map[string]bool `json:"featureGates,omitempty"`
+	Cluster ClusterDetails `json:"cluster,omitempty"`
+	Kubelet KubeletOptions `json:"kubelet,omitempty"`
 }
 
 type ClusterDetails struct {
-	// +kubebuilder:validation:Required
-	Name string `json:"name,omitempty"`
-	// +kubebuilder:validation:Required
-	APIServerEndpoint string `json:"apiServerEndpoint,omitempty"`
-	// +kubebuilder:validation:Required
+	Name                 string `json:"name,omitempty"`
+	APIServerEndpoint    string `json:"apiServerEndpoint,omitempty"`
 	CertificateAuthority []byte `json:"certificateAuthority,omitempty"`
-	// +kubebuilder:validation:Required
-	CIDR          string `json:"cidr,omitempty"`
-	EnableOutpost *bool  `json:"enableOutpost,omitempty"`
-	ID            string `json:"id,omitempty"`
+	CIDR                 string `json:"cidr,omitempty"`
+	EnableOutpost        *bool  `json:"enableOutpost,omitempty"`
+	ID                   string `json:"id,omitempty"`
+}
+
+type KubeletOptions struct {
+	// Config is a raw document of a kubelet config that can be provided
+	// by the user to override default generated configurations
+	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+	Config string `json:"config,omitempty"`
+	// Flags is a list of command-line kubelet arguments. These arguments are
+	// amended to the generated defaults, and therefore will act as overrides
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+	Flags []string `json:"flags,omitempty"`
 }

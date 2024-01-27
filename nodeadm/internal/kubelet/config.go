@@ -13,10 +13,13 @@ import (
 	"strings"
 	"time"
 
+	"dario.cat/mergo"
+
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	logsapi "k8s.io/component-base/logs/api/v1"
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
@@ -24,7 +27,6 @@ import (
 	"github.com/aws/smithy-go/ptr"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	featuregates "github.com/awslabs/amazon-eks-ami/nodeadm/internal/feature-gates"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
@@ -35,8 +37,24 @@ const (
 	kubeletConfigPerm = 0644
 )
 
-type kubeletSubConfig struct {
-	v1.TypeMeta              `json:",inline"`
+func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
+	kubeletVersion, err := GetKubeletVersion()
+	if err != nil {
+		return err
+	}
+	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
+		return k.writeKubeletConfigToFile(cfg, []byte(cfg.Spec.Kubelet.Config))
+	} else {
+		return k.writeKubeletConfigToDir(cfg, []byte(cfg.Spec.Kubelet.Config))
+	}
+}
+
+// kubeletConfig is an internal-only representation of the kubelet configuration
+// that is generated using sane defaults for EKS. It is a subset of the upstream
+// KubeletConfiguration types:
+// https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
+type kubeletConfig struct {
+	metav1.TypeMeta          `json:",inline"`
 	Address                  string                           `json:"address"`
 	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
 	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
@@ -53,42 +71,19 @@ type kubeletSubConfig struct {
 	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
 	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
 	ClusterDNS               []string                         `json:"clusterDNS"`
-
-	SystemReservedCgroup *string `json:"systemReservedCgroup,omitempty"`
-	KubeReservedCgroup   *string `json:"kubeReservedCgroup,omitempty"`
-	ProviderID           *string `json:"providerID,omitempty"`
-	KubeAPIQPS           *int    `json:"kubeAPIQPS,omitempty"`
-	KubeAPIBurst         *int    `json:"kubeAPIBurst,omitempty"`
-	MaxPods              *int    `json:"maxPods,omitempty"`
+	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
+	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
+	ProviderID               *string                          `json:"providerID,omitempty"`
+	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
+	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
 }
 
-func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
-	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
-	if err != nil {
-		return err
-	}
-	kubeletConfigData, err := json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4))
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(kubeletConfigRoot, kubeletConfigPerm); err != nil {
-		return err
-	}
-
-	kubeletVersion, err := GetKubeletVersion()
-	if err != nil {
-		return err
-	}
-	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
-		return k.writeKubeletConfigToFile(kubeletConfigData)
-	} else {
-		return k.writeKubeletConfigToDir(kubeletConfigData)
-	}
-}
-
-func defaultKubeletSubConfig() kubeletSubConfig {
-	return kubeletSubConfig{
-		TypeMeta: v1.TypeMeta{
+// Creates an internal kubelet configuration from the public facing bootstrap
+// kubelet configuration with additional sane defaults.
+func defaultKubeletSubConfig() kubeletConfig {
+	return kubeletConfig{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeletConfiguration",
 			APIVersion: "kubelet.config.k8s.io/v1beta1",
 		},
@@ -99,7 +94,7 @@ func defaultKubeletSubConfig() kubeletSubConfig {
 			},
 			Webhook: k8skubelet.KubeletWebhookAuthentication{
 				Enabled:  ptr.Bool(true),
-				CacheTTL: v1.Duration{Duration: time.Minute * 2},
+				CacheTTL: metav1.Duration{Duration: time.Minute * 2},
 			},
 			X509: k8skubelet.KubeletX509Authentication{
 				ClientCAFile: caCertificatePath,
@@ -108,8 +103,8 @@ func defaultKubeletSubConfig() kubeletSubConfig {
 		Authorization: k8skubelet.KubeletAuthorization{
 			Mode: "Webhook",
 			Webhook: k8skubelet.KubeletWebhookAuthorization{
-				CacheAuthorizedTTL:   v1.Duration{Duration: time.Minute * 5},
-				CacheUnauthorizedTTL: v1.Duration{Duration: time.Second * 30},
+				CacheAuthorizedTTL:   metav1.Duration{Duration: time.Minute * 5},
+				CacheUnauthorizedTTL: metav1.Duration{Duration: time.Second * 30},
 			},
 		},
 		CgroupDriver:             "systemd",
@@ -138,10 +133,11 @@ func defaultKubeletSubConfig() kubeletSubConfig {
 			"TLS_RSA_WITH_AES_256_GCM_SHA384",
 		},
 	}
-
 }
 
-func (ksc *kubeletSubConfig) withClusterDns(cluster *api.ClusterDetails) error {
+// Update the ClusterDNS of the internal kubelet config using a heuristic based
+// on the cluster service IP CIDR address.
+func (ksc *kubeletConfig) withFallbackClusterDns(cluster *api.ClusterDetails) error {
 	clusterDns, err := cluster.GetClusterDns()
 	if err != nil {
 		return err
@@ -158,7 +154,7 @@ func (ksc *kubeletSubConfig) withClusterDns(cluster *api.ClusterDetails) error {
 //     X.509 certificate and generate kubelet kubeconfig file which uses the client cert. So that the
 //     worker node can be authentiacated through X.509 certificate which works for both connected and
 //     disconnected state.
-func (ksc *kubeletSubConfig) withOutpostSetup(cfg *api.NodeConfig) error {
+func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
 		zap.L().Info("Setting up outpost..")
 
@@ -189,24 +185,24 @@ func (ksc *kubeletSubConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func (ksc *kubeletSubConfig) withNodeIp(cfg *api.NodeConfig, kubeletArguments map[string]string) error {
+func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
 	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
 	if err != nil {
 		return err
 	}
-	kubeletArguments["node-ip"] = nodeIp
+	flags["node-ip"] = nodeIp
 	zap.L().Info("Setup IP for node", zap.String("ip", nodeIp))
 	return nil
 }
 
-func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletArguments map[string]string) {
+func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[string]string) {
 	// TODO: remove when 1.26 is EOL
 	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
 		// --container-runtime flag is gone in 1.27+
-		kubeletArguments["container-runtime"] = "remote"
+		flags["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
 		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
-		kubeletArguments["container-runtime-endpoint"] = "unix:///run/containerd/containerd.sock"
+		flags["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
 	}
 
 	// TODO: Remove this during 1.27 EOL
@@ -223,26 +219,28 @@ func (ksc *kubeletSubConfig) withVersionToggles(kubeletVersion string, kubeletAr
 	}
 }
 
-func (ksc *kubeletSubConfig) withCloudProvider(cfg *api.NodeConfig, kubeletArguments map[string]string) {
+func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
 	// ref: https://github.com/kubernetes/kubernetes/pull/121367
-	kubeletArguments["cloud-provider"] = "external"
+	flags["cloud-provider"] = "external"
 
-	// provider ID needs to be specified when the cloud provider is
-	// external. evaluate if this can be done within the cloud controller.
-	// since the values are coming from IMDS this might not be feasible
-	providerId := getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID)
-	ksc.ProviderID = &providerId
-	kubeletArguments["hostname-override"] = cfg.Status.Instance.ID
+	// provider ID needs to be specified when the cloud provider is external.
+	// evaluate if this can be done within the cloud controller. since the
+	// values are coming from IMDS this might not be feasible
+	ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
+
+	// use ec2 instance-id as node hostname which is unique, stable, and incurs
+	// no additional requests
+	flags["hostname-override"] = cfg.Status.Instance.ID
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletSubConfig) withDefaultReservedResources() {
+func (ksc *kubeletConfig) withDefaultReservedResources() {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
 }
 
-func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig, error) {
+func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	// Get the kubelet/kubernetes version to help conditionally enable features
 	kubeletVersion, err := GetKubeletVersion()
 	if err != nil {
@@ -251,51 +249,95 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletSubConfig,
 	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
 
 	kubeletConfig := defaultKubeletSubConfig()
-	if err := kubeletConfig.withClusterDns(&cfg.Spec.Cluster); err != nil {
+	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
 		return nil, err
 	}
 	if err := kubeletConfig.withOutpostSetup(cfg); err != nil {
 		return nil, err
 	}
-	if err := kubeletConfig.withNodeIp(cfg, k.additionalArguments); err != nil {
+	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
 		return nil, err
 	}
 
-	kubeletConfig.withVersionToggles(kubeletVersion, k.additionalArguments)
-	kubeletConfig.withCloudProvider(cfg, k.additionalArguments)
-
-	if featuregates.DefaultTrue(featuregates.DefaultReservedResources, cfg.Spec.FeatureGates) {
-		kubeletConfig.withDefaultReservedResources()
-	}
+	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
+	kubeletConfig.withCloudProvider(cfg, k.flags)
+	kubeletConfig.withDefaultReservedResources()
 
 	return &kubeletConfig, nil
 }
 
 // WriteConfig writes the kubelet config to a file.
 // This should only be used for kubelet versions < 1.28.
-// Comments:
-//   - kubeletConfigOverrides should be passed in the order of application
-func (k *kubelet) writeKubeletConfigToFile(kubeletConfig []byte) error {
+func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfig []byte) error {
+	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
+	if err != nil {
+		return err
+	}
+	kubeletConfigBytes, err := json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4))
+	if err != nil {
+		return err
+	}
+
+	if userKubeletConfig != nil && len(userKubeletConfig) > 0 {
+		var err error
+		var kubeletConfigMap, userKubeletConfigMap map[string]interface{}
+
+		if err = json.Unmarshal(kubeletConfigBytes, &kubeletConfigMap); err != nil {
+			return err
+		}
+		if err = json.Unmarshal(userKubeletConfig, &userKubeletConfigMap); err != nil {
+			return err
+		}
+		if err = mergo.Merge(&kubeletConfigMap, &userKubeletConfigMap, mergo.WithOverride); err != nil {
+			return err
+		}
+		kubeletConfigBytes, err = json.MarshalIndent(kubeletConfigMap, "", strings.Repeat(" ", 4))
+		if err != nil {
+			return err
+		}
+	}
+
 	configPath := path.Join(kubeletConfigRoot, kubeletConfigFile)
-	k.additionalArguments["config"] = configPath
+	k.flags["config"] = configPath
 
 	zap.L().Info("Writing kubelet config to file..", zap.String("path", configPath))
-	return util.WriteFileWithDir(configPath, kubeletConfig, kubeletConfigPerm)
+	return util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm)
 }
 
 // WriteKubeletConfigToDir writes the kubelet config to a directory for drop-in
 // directory support. This is only supported on kubelet versions >= 1.28.
 // see: https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
-func (k *kubelet) writeKubeletConfigToDir(kubeletConfig []byte) error {
+func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig []byte) error {
+	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
+	if err != nil {
+		return err
+	}
+	kubeletConfigBytes, err := json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4))
+	if err != nil {
+		return err
+	}
+
 	dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
-	k.additionalArguments["config-dir"] = dirPath
+	k.flags["config-dir"] = dirPath
 
 	zap.L().Info("Enabling kubelet config drop-in dir..")
 	k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")
 
-	filePath := path.Join(dirPath, "10-defaults.conf")
+	filePath := path.Join(dirPath, "99-defaults.conf")
 	zap.L().Info("Writing kubelet config to drop-in file..", zap.String("path", filePath))
-	return util.WriteFileWithDir(filePath, kubeletConfig, kubeletConfigPerm)
+	if err := util.WriteFileWithDir(filePath, kubeletConfigBytes, kubeletConfigPerm); err != nil {
+		return err
+	}
+
+	if userKubeletConfig != nil && len(userKubeletConfig) > 0 {
+		filePath = path.Join(dirPath, "00-overrides.conf")
+		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
+		if err := util.WriteFileWithDir(filePath, userKubeletConfig, kubeletConfigPerm); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getProviderId(availabilityZone, instanceId string) string {
