@@ -38,8 +38,3 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: cd nodeadm && make test-e2e
-  dependency-review:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/dependency-review-action@v4

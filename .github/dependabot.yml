@@ -1,6 +1,6 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/"
+    directory: "/nodeadm"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
