@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/setup-go@4.0.0
         with:
-          go-version: 1.21.6
+          go-version: '1.21.5'
       - uses: actions/checkout@v4
       - name: Update Dependencies
         id: update_deps
