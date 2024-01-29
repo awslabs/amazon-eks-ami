@@ -19,18 +19,6 @@
 set -o errexit
 set -o pipefail
 
-# The first argument is the path, defaulting to the current directory if not provided
-TARGET_DIR="${1:-.}"
-
-# Update the main project dependencies
-cd "${TARGET_DIR}"
 go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all)
 go mod tidy
 
-# Update dependencies in the e2e test directory
-if [ -d "${TARGET_DIR}/test/e2e" ]; then
-  cd "${TARGET_DIR}/test/e2e"
-  go mod tidy
-else
-  echo "e2e test directory does not exist"
-fi

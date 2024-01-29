@@ -119,4 +119,4 @@ $(CONVERSION_GEN): $(LOCALBIN)
 
 .PHONY: update-deps
 update-deps:
-	../hack/update-deps.sh ${PWD}
+	../hack/update-deps.sh
