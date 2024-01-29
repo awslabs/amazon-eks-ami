@@ -119,4 +119,4 @@ $(CONVERSION_GEN): $(LOCALBIN)
 
 .PHONY: update-deps
 update-deps:
-	./hack/update-deps.sh
+	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all) && go mod tidy
