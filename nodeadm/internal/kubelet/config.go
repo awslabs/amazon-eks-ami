@@ -246,26 +246,24 @@ func (ksc *kubeletConfig) withDefaultReservedResources() {
 //     image pinning CRI support: https://github.com/kubernetes/kubernetes/pull/118544
 //   - update to containerd 2.0, which reworks the abstraction and no longer
 //     requires sandbox image
-func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, kubeletVersion string, flags map[string]string) error {
-	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
-		awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
-		if err != nil {
-			return err
-		}
-		ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
-			Region:    cfg.Status.Instance.Region,
-			Domain:    awsDomain,
-			AllowFips: true,
-		})
-		if err != nil {
-			return err
-		}
-		pauseContainerImage, err := util.GetPauseContainer(ecrUri)
-		if err != nil {
-			return err
-		}
-		flags["pod-infra-container-image"] = pauseContainerImage
+func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags map[string]string) error {
+	awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
+	if err != nil {
+		return err
 	}
+	ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
+		Region:    cfg.Status.Instance.Region,
+		Domain:    awsDomain,
+		AllowFips: true,
+	})
+	if err != nil {
+		return err
+	}
+	pauseContainerImage, err := util.GetPauseContainer(ecrUri)
+	if err != nil {
+		return err
+	}
+	flags["pod-infra-container-image"] = pauseContainerImage
 	return nil
 }
 
@@ -288,7 +286,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
 		return nil, err
 	}
-	if err := kubeletConfig.withPodInfraContainerImage(cfg, kubeletVersion, k.flags); err != nil {
+	if err := kubeletConfig.withPodInfraContainerImage(cfg, k.flags); err != nil {
 		return nil, err
 	}
 
