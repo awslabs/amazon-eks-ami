@@ -46,8 +46,8 @@ func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error 
 		return err
 	}
 
-	k.additionalArguments["image-credential-provider-bin-dir"] = path.Dir(ecrCredentialProviderBinPath)
-	k.additionalArguments["image-credential-provider-config"] = imageCredentialProviderConfigPath
+	k.flags["image-credential-provider-bin-dir"] = path.Dir(ecrCredentialProviderBinPath)
+	k.flags["image-credential-provider-config"] = imageCredentialProviderConfigPath
 
 	return util.WriteFileWithDir(imageCredentialProviderConfigPath, config, imageCredentialProviderPerm)
 }

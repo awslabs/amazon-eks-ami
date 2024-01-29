@@ -2,7 +2,9 @@
 // +groupName=node.eks.aws
 package api
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +kubebuilder:skipversion
 // +kubebuilder:object:root=true
@@ -10,15 +12,13 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type NodeConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec NodeConfigSpec `json:"spec,omitempty"`
+	Spec              NodeConfigSpec `json:"spec,omitempty"`
 	// +k8s:conversion-gen=false
 	Status NodeConfigStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// NodeConfigList contains a list of NodeConfig
 type NodeConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -27,8 +27,8 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster      ClusterDetails  `json:"cluster,omitempty"`
-	FeatureGates map[string]bool `json:"featureGates,omitempty"`
+	Cluster ClusterDetails `json:"cluster,omitempty"`
+	Kubelet KubeletOptions `json:"kubelet,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -50,6 +50,17 @@ type ClusterDetails struct {
 	CIDR                 string `json:"cidr,omitempty"`
 	EnableOutpost        *bool  `json:"enableOutpost,omitempty"`
 	ID                   string `json:"id,omitempty"`
+}
+
+type KubeletOptions struct {
+	// Config is a raw document of a kubelet config that can be provided
+	// by the user to override default generated configurations
+	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+	Config string `json:"config,omitempty"`
+	// Flags is a list of command-line kubelet arguments. These arguments are
+	// amended to the generated defaults, and therefore will act as overrides
+	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+	Flags []string `json:"flags,omitempty"`
 }
 
 type IPFamily string
