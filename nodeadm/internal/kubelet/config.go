@@ -240,6 +240,35 @@ func (ksc *kubeletConfig) withDefaultReservedResources() {
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
 }
 
+// The '--pod-infra-container-image' flags is added so that the sandbox image is
+// not garbage collected. There are several way in which we could remove this:
+//   - wait until a minimum supported version of kubernetes which implements the
+//     image pinning CRI support: https://github.com/kubernetes/kubernetes/pull/118544
+//   - update to containerd 2.0, which reworks the abstraction and no longer
+//     requires sandbox image
+func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, kubeletVersion string, flags map[string]string) error {
+	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
+		awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
+		if err != nil {
+			return err
+		}
+		ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
+			Region:    cfg.Status.Instance.Region,
+			Domain:    awsDomain,
+			AllowFips: true,
+		})
+		if err != nil {
+			return err
+		}
+		pauseContainerImage, err := util.GetPauseContainer(ecrUri)
+		if err != nil {
+			return err
+		}
+		flags["pod-infra-container-image"] = pauseContainerImage
+	}
+	return nil
+}
+
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	// Get the kubelet/kubernetes version to help conditionally enable features
 	kubeletVersion, err := GetKubeletVersion()
@@ -249,6 +278,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
 
 	kubeletConfig := defaultKubeletSubConfig()
+
 	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
 		return nil, err
 	}
@@ -256,6 +286,9 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 		return nil, err
 	}
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
+		return nil, err
+	}
+	if err := kubeletConfig.withPodInfraContainerImage(cfg, kubeletVersion, k.flags); err != nil {
 		return nil, err
 	}
 
