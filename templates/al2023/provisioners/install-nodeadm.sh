@@ -13,6 +13,10 @@ sudo nerdctl run \
   public.ecr.aws/eks-distro-build-tooling/golang:1.21 \
   make build
 
+# cleanup images and networks used for nerdctl
+sudo nerdctl image prune --all --force
+sudo nerdctl network rm $(sudo nerdctl network list -q)
+
 # move the nodeadm binary into bin folder
 sudo chmod a+x $PROJECT_DIR/_bin/nodeadm
 sudo mv $PROJECT_DIR/_bin/nodeadm /usr/bin/
