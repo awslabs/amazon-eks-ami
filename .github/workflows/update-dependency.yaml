@@ -19,11 +19,12 @@ jobs:
     steps:
       - uses: actions/setup-go@4.0.0
         with:
-          go-version: '1.21.5'
+          go-version: '1.21.6'
       - uses: actions/checkout@v4
-      - name: Update Dependencies
+      - name: Update Nodeadm Dependencies
         id: update_deps
         run: |
+          cd nodeadm
           make update-deps
           echo 'changes<<EOF' >> $GITHUB_OUTPUT
           git status --porcelain >> $GITHUB_OUTPUT

@@ -115,3 +115,8 @@ conversion-gen: $(CONVERSION_GEN) ## Download conversion-gen locally if necessar
 $(CONVERSION_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/conversion-gen || \
 	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/conversion-gen@$(CODE_GENERATOR_VERSION)
+
+
+.PHONY: update-deps
+update-deps:
+	../hack/update-deps.sh ${PWD}

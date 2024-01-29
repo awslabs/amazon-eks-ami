@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/coreos/go-systemd/dbus"
+	"github.com/coreos/go-systemd/v22/dbus"
 )
 
 var _ DaemonManager = &systemdDaemonManager{}
