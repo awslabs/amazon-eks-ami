@@ -33,7 +33,7 @@ following command in the root of this repository:
 make
 
 # build an AMI with a specific Kubernetes version
-make 1.25
+make k8s=1.29
 ```
 
 The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
