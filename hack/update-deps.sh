@@ -29,8 +29,8 @@ go mod tidy
 
 # Update dependencies in the e2e test directory
 if [ -d "${TARGET_DIR}/test/e2e" ]; then
-    cd "${TARGET_DIR}/test/e2e"
-    go mod tidy
+  cd "${TARGET_DIR}/test/e2e"
+  go mod tidy
 else
-    echo "e2e test directory does not exist"
+  echo "e2e test directory does not exist"
 fi
