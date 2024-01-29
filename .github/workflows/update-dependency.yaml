@@ -42,7 +42,6 @@ jobs:
           base: master
           delete-branch: true
           labels: |
-            ok-to-test
-            release-note-none
+            changelog/exclude
           body: |
             Updating go.mod with latest dependencies.
