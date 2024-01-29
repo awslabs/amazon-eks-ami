@@ -20,5 +20,5 @@ set -o errexit
 set -o pipefail
 
 go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all)
-go mod tidy
 
+go mod tidy
