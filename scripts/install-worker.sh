@@ -184,6 +184,7 @@ fi
 
 sudo mv $WORKING_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
 sudo mv $WORKING_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
+sudo mv $WORKING_DIR/sandbox-image.timer /etc/eks/containerd/sandbox-image.timer
 sudo mv $WORKING_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
 sudo mv $WORKING_DIR/pull-image.sh /etc/eks/containerd/pull-image.sh
 sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
@@ -413,10 +414,12 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   cat /etc/eks/containerd/containerd-config.toml | sed s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g | sudo tee /etc/eks/containerd/containerd-cached-pause-config.toml
   sudo cp -v /etc/eks/containerd/containerd-cached-pause-config.toml /etc/containerd/config.toml
   sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+  sudo cp -v /etc/eks/containerd/sandbox-image.timer /etc/systemd/system/sandbox-image.timer
   sudo chown root:root /etc/systemd/system/sandbox-image.service
+  sudo chown root:root /etc/systemd/system/sandbox-image.timer
   sudo systemctl daemon-reload
   sudo systemctl start containerd
-  sudo systemctl enable containerd sandbox-image
+  sudo systemctl enable containerd sandbox-image sandbox-image.timer
 
   K8S_MINOR_VERSION=$(echo "${KUBERNETES_VERSION}" | cut -d'.' -f1-2)
 
