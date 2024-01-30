@@ -230,7 +230,7 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 
 	// use ec2 instance-id as node hostname which is unique, stable, and incurs
 	// no additional requests
-	flags["hostname-override"] = cfg.Status.Instance.ID
+	// flags["hostname-override"] = cfg.Status.Instance.ID
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
