@@ -40,12 +40,6 @@
     "serverTLSBootstrap": true,
     "kubeReservedCgroup": "/runtime",
     "logging": {
-        "flushFrequency": 0,
-        "options": {
-            "json": {
-                "infoBufferSize": "0"
-            }
-        },
         "verbosity": 2
     },
     "tlsCipherSuites": [

@@ -33,13 +33,7 @@
     "protectKernelDefaults": true,
     "readOnlyPort": 0,
     "logging": {
-        "flushFrequency": 0,
-        "verbosity": 2,
-        "options": {
-            "json": {
-                "infoBufferSize": "0"
-            }
-        }
+        "verbosity": 2
     },
     "serializeImagePulls": false,
     "serverTLSBootstrap": true,
