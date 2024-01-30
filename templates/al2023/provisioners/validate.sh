@@ -52,3 +52,12 @@ if [ ${FREE_MEBIBYTES} -lt ${REQUIRED_FREE_MEBIBYTES} ]; then
 else
   echo "Disk space requirements were met."
 fi
+
+################################
+### network ####################
+################################
+
+if sudo ip link | grep nerdctl0; then
+  echo "nerdctl0 interface should be removed."
+  exit 1
+fi
