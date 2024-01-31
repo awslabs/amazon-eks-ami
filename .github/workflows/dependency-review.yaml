@@ -12,6 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/dependency-review-action@v4
+  gosec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: cd nodeadm
+      - uses: securego/gosec@master
+        with:
+          args: -exclude=G101,G103,G204 ./...
   govulncheck:
     runs-on: ubuntu-latest
     steps:
