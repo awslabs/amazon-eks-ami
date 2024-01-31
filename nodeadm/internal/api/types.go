@@ -4,7 +4,6 @@ package api
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +kubebuilder:skipversion
@@ -66,7 +65,7 @@ type KubeletOptions struct {
 
 // InlineDocument is an alias to a dynamically typed map. This allows using
 // embedded YAML and JSON types within the parent yaml config.
-type InlineDocument map[string]runtime.RawExtension
+type InlineDocument map[string]interface{}
 
 type IPFamily string
 

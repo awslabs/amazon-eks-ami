@@ -33,7 +33,7 @@
     "protectKernelDefaults": true,
     "readOnlyPort": 0,
     "logging": {
-        "verbosity": 2
+        "verbosity": 5
     },
     "serializeImagePulls": false,
     "serverTLSBootstrap": true,

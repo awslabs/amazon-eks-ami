@@ -89,8 +89,8 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
-CONTROLLER_TOOLS_VERSION ?= v0.12.0
-CODE_GENERATOR_VERSION ?= v0.28.1
+CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CODE_GENERATOR_VERSION ?= v0.29.1
 
 tools: kustomize controller-gen conversion-gen## Install the toolchain.
 

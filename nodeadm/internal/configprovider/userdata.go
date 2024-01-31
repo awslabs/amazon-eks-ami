@@ -16,7 +16,12 @@ import (
 	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 )
 
-const nodeConfigMediaType = "application/" + api.GroupName
+const (
+	contentTypeHeader          = "Content-Type"
+	mimeBoundaryParam          = "boundary"
+	multipartContentTypePrefix = "multipart/"
+	nodeConfigMediaType        = "application/" + api.GroupName
+)
 
 type userDataConfigProvider struct {
 	imdsClient *imds.Client
@@ -63,18 +68,18 @@ func getMIMEMultipartReader(data []byte) (*multipart.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	mediaType, params, err := mime.ParseMediaType(msg.Header.Get("Content-Type"))
+	mediaType, params, err := mime.ParseMediaType(msg.Header.Get(contentTypeHeader))
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(mediaType, "multipart/") {
+	if !strings.HasPrefix(mediaType, multipartContentTypePrefix) {
 		return nil, fmt.Errorf("MIME type is not multipart")
 	}
-	return multipart.NewReader(msg.Body, params["boundary"]), nil
+	return multipart.NewReader(msg.Body, params[mimeBoundaryParam]), nil
 }
 
 func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, error) {
-	var config *internalapi.NodeConfig
+	var nodeConfigs []*internalapi.NodeConfig
 	for {
 		part, err := userDataReader.NextPart()
 		if err == io.EOF {
@@ -83,29 +88,33 @@ func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 		if err != nil {
 			return nil, err
 		}
-		if partHeader := part.Header.Get("Content-Type"); partHeader != "" {
+		if partHeader := part.Header.Get(contentTypeHeader); len(partHeader) > 0 {
 			mediaType, _, err := mime.ParseMediaType(partHeader)
 			if err != nil {
 				return nil, err
 			}
 			if mediaType == nodeConfigMediaType {
-				if config != nil {
-					return nil, fmt.Errorf("Found multiple node bootstrap configurations in the UserData")
-				}
 				nodeConfigPart, err := io.ReadAll(part)
 				if err != nil {
 					return nil, err
 				}
-				config, err = apibridge.DecodeNodeConfig(nodeConfigPart)
+				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart)
 				if err != nil {
 					return nil, err
 				}
+				nodeConfigs = append(nodeConfigs, decodedConfig)
 			}
 		}
 	}
-	if config != nil {
+	if len(nodeConfigs) > 0 {
+		var config = nodeConfigs[0]
+		for _, nodeConfig := range nodeConfigs[1:] {
+			if err := config.Merge(nodeConfig); err != nil {
+				return nil, err
+			}
+		}
 		return config, nil
 	} else {
-		return nil, fmt.Errorf("Could not find node bootstrap config within the UserData")
+		return nil, fmt.Errorf("Could not find NodeConfig within UserData")
 	}
 }
