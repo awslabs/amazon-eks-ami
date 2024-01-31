@@ -575,10 +575,13 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   if ! cmp -s /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml; then
     sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
     sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    sudo cp -v /etc/eks/containerd/sandbox-image.timer /etc/systemd/system/sandbox-image.timer
     sudo chown root:root /etc/systemd/system/sandbox-image.service
+    sudo chown root:root /etc/systemd/system/sandbox-image.timer
     systemctl daemon-reload
     systemctl enable containerd sandbox-image
     systemctl restart sandbox-image containerd
+    systemctl enable --now sandbox-image.timer
   fi
   sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
   sudo chown root:root /etc/systemd/system/kubelet.service
