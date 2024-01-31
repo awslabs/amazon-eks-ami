@@ -174,6 +174,9 @@ sudo yum versionlock runc-*
 sudo yum install -y containerd-${CONTAINERD_VERSION}
 sudo yum versionlock containerd-*
 
+# install cri-tools for crictl, needed to interact with containerd's CRI server
+sudo yum install -y cri-tools
+
 sudo mkdir -p /etc/eks/containerd
 if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
