@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: cd nodeadm
       - uses: securego/gosec@master
         with:
           args: -exclude=G101,G103,G204 ./...
+        working-directory: nodeadm
   govulncheck:
     runs-on: ubuntu-latest
     steps:
