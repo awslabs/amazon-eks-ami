@@ -86,7 +86,6 @@ Users have the following options for specifying their own values:
 | `binary_bucket_name` |  |
 | `binary_bucket_region` |  |
 | `cache_container_images` |  |
-| `cni_plugin_version` |  |
 | `containerd_version` |  |
 | `creator` |  |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |

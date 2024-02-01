@@ -23,13 +23,11 @@ validate_env_set() {
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
 validate_env_set CACHE_CONTAINER_IMAGES
-validate_env_set CNI_PLUGIN_VERSION
 validate_env_set CONTAINERD_VERSION
 validate_env_set DOCKER_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set KUBERNETES_VERSION
 validate_env_set PAUSE_CONTAINER_VERSION
-validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set RUNC_VERSION
 validate_env_set WORKING_DIR
 

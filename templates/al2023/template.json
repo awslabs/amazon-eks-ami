@@ -15,7 +15,6 @@
     "binary_bucket_name": null,
     "binary_bucket_region": null,
     "cache_container_images": null,
-    "cni_plugin_version": null,
     "containerd_version": null,
     "creator": null,
     "enable_fips": null,
@@ -103,7 +102,6 @@
         "source_ami_name": "{{ .SourceAMIName }}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-        "cni_plugin_version": "{{ user `cni_plugin_version`}}",
         "ssm_agent_version": "{{ user `ssm_agent_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
@@ -176,7 +174,6 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
-        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
         "DOCKER_VERSION=none",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
