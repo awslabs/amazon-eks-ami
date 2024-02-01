@@ -307,9 +307,10 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfi
 	return util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm)
 }
 
-// WriteKubeletConfigToDir writes the kubelet config to a directory for drop-in
-// directory support. This is only supported on kubelet versions >= 1.28.
-// see: https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
+// WriteKubeletConfigToDir writes nodeadm's generated kubelet config to the
+// standard config file and writes the user's provided config to a directory for
+// drop-in support. This is only supported on kubelet versions >= 1.28. see:
+// https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
 func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig []byte) error {
 	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
 	if err != nil {
