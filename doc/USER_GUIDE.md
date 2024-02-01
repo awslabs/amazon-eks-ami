@@ -97,7 +97,6 @@ Users have the following options for specifying their own values:
 | `kubernetes_version` |  |
 | `launch_block_device_mappings_volume_size` |  |
 | `pause_container_version` |  |
-| `pull_cni_from_github` |  |
 | `remote_folder` | Directory path for shell provisioner scripts on the builder instance |
 | `runc_version` |  |
 | `security_group_id` |  |
