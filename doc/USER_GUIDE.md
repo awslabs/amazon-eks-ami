@@ -86,7 +86,6 @@ Users have the following options for specifying their own values:
 | `binary_bucket_name` |  |
 | `binary_bucket_region` |  |
 | `cache_container_images` |  |
-| `cni_plugin_version` |  |
 | `containerd_version` |  |
 | `creator` |  |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
@@ -97,7 +96,6 @@ Users have the following options for specifying their own values:
 | `kubernetes_version` |  |
 | `launch_block_device_mappings_volume_size` |  |
 | `pause_container_version` |  |
-| `pull_cni_from_github` |  |
 | `remote_folder` | Directory path for shell provisioner scripts on the builder instance |
 | `runc_version` |  |
 | `security_group_id` |  |

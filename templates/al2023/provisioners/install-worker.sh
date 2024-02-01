@@ -23,13 +23,11 @@ validate_env_set() {
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
 validate_env_set CACHE_CONTAINER_IMAGES
-validate_env_set CNI_PLUGIN_VERSION
 validate_env_set CONTAINERD_VERSION
 validate_env_set DOCKER_VERSION
 validate_env_set KUBERNETES_BUILD_DATE
 validate_env_set KUBERNETES_VERSION
 validate_env_set PAUSE_CONTAINER_VERSION
-validate_env_set PULL_CNI_FROM_GITHUB
 validate_env_set RUNC_VERSION
 validate_env_set WORKING_DIR
 
@@ -185,30 +183,6 @@ for binary in ${BINARIES[*]}; do
   sudo chmod +x $binary
   sudo mv $binary /usr/bin/
 done
-
-# Since CNI 0.7.0, all releases are done in the plugins repo.
-CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
-
-if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
-  echo "Downloading CNI plugins from Github"
-  wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz"
-  wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz.sha512"
-  sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
-  rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
-else
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
-  else
-    echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
-    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
-    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
-  fi
-  sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
-fi
-sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
-rm "${CNI_PLUGIN_FILENAME}.tgz"
 
 sudo rm ./*.sha256
 
