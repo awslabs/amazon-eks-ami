@@ -1,9 +1,0 @@
-[Unit]
-Description=Pulls the containerd sandbox image periodically
-
-[Timer]
-OnUnitActiveSec=60
-Persistent=true
-
-[Install]
-WantedBy=timers.target

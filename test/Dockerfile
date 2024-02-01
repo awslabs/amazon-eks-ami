@@ -10,7 +10,7 @@ COPY --from=aemm /ec2-metadata-mock /sbin/ec2-metadata-mock
 RUN mkdir -p /etc/systemd/system
 RUN mkdir -p /etc/eks/containerd
 COPY files/ /etc/eks/
-COPY files/containerd-config.toml files/kubelet-containerd.service files/pull-sandbox-image.sh files/sandbox-image.service files/sandbox-image.timer /etc/eks/containerd/
+COPY files/containerd-config.toml files/kubelet-containerd.service files/pull-sandbox-image.sh files/sandbox-image.service /etc/eks/containerd/
 COPY files/kubelet-config.json /etc/kubernetes/kubelet/kubelet-config.json
 COPY files/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 COPY files/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
