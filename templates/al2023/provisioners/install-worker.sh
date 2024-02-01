@@ -170,7 +170,6 @@ S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin
 
 BINARIES=(
   kubelet
-  aws-iam-authenticator
 )
 for binary in ${BINARIES[*]}; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
@@ -186,16 +185,6 @@ for binary in ${BINARIES[*]}; do
   sudo chmod +x $binary
   sudo mv $binary /usr/bin/
 done
-
-# Verify that the aws-iam-authenticator is at last v0.5.9 or greater. Otherwise, nodes will be
-# unable to join clusters due to upgrading to client.authentication.k8s.io/v1beta1
-iam_auth_version=$(sudo /usr/bin/aws-iam-authenticator version | jq -r .Version)
-if vercmp "$iam_auth_version" lt "v0.5.9"; then
-  # To resolve this issue, you need to update the aws-iam-authenticator binary. Using binaries distributed by EKS
-  # with kubernetes_build_date 2022-10-31 or later include v0.5.10 or greater.
-  echo "❌ The aws-iam-authenticator should be on version v0.5.9 or later. Found $iam_auth_version"
-  exit 1
-fi
 
 # Since CNI 0.7.0, all releases are done in the plugins repo.
 CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
