@@ -20,7 +20,6 @@ import (
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	logsapi "k8s.io/component-base/logs/api/v1"
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
@@ -66,7 +65,7 @@ type kubeletConfig struct {
 	HairpinMode              string                           `json:"hairpinMode"`
 	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
 	ReadOnlyPort             int                              `json:"readOnlyPort"`
-	Logging                  logsapi.LoggingConfiguration     `json:"logging"`
+	Logging                  loggingConfiguration             `json:"logging"`
 	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
 	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
 	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
@@ -77,6 +76,10 @@ type kubeletConfig struct {
 	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
 	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
 	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
+}
+
+type loggingConfiguration struct {
+	Verbosity int `json:"verbosity"`
 }
 
 // Creates an internal kubelet configuration from the public facing bootstrap
@@ -117,7 +120,7 @@ func defaultKubeletSubConfig() kubeletConfig {
 		HairpinMode:           "hairpin-veth",
 		ProtectKernelDefaults: true,
 		ReadOnlyPort:          0,
-		Logging: logsapi.LoggingConfiguration{
+		Logging: loggingConfiguration{
 			Verbosity: 2,
 		},
 		SerializeImagePulls: false,
@@ -304,9 +307,10 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfi
 	return util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm)
 }
 
-// WriteKubeletConfigToDir writes the kubelet config to a directory for drop-in
-// directory support. This is only supported on kubelet versions >= 1.28.
-// see: https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
+// WriteKubeletConfigToDir writes nodeadm's generated kubelet config to the
+// standard config file and writes the user's provided config to a directory for
+// drop-in support. This is only supported on kubelet versions >= 1.28. see:
+// https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
 func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig []byte) error {
 	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
 	if err != nil {
@@ -317,20 +321,22 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig
 		return err
 	}
 
-	dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
-	k.flags["config-dir"] = dirPath
+	configPath := path.Join(kubeletConfigRoot, kubeletConfigFile)
+	k.flags["config"] = configPath
 
-	zap.L().Info("Enabling kubelet config drop-in dir..")
-	k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")
-
-	filePath := path.Join(dirPath, "99-defaults.conf")
-	zap.L().Info("Writing kubelet config to drop-in file..", zap.String("path", filePath))
-	if err := util.WriteFileWithDir(filePath, kubeletConfigBytes, kubeletConfigPerm); err != nil {
+	zap.L().Info("Writing kubelet config to file..", zap.String("path", configPath))
+	if err := util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm); err != nil {
 		return err
 	}
 
 	if userKubeletConfig != nil && len(userKubeletConfig) > 0 {
-		filePath = path.Join(dirPath, "00-overrides.conf")
+		dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
+		k.flags["config-dir"] = dirPath
+
+		zap.L().Info("Enabling kubelet config drop-in dir..")
+		k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")
+
+		filePath := path.Join(dirPath, "00-nodeadm.conf")
 		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
 		if err := util.WriteFileWithDir(filePath, userKubeletConfig, kubeletConfigPerm); err != nil {
 			return err

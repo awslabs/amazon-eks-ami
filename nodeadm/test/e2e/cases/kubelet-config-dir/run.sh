@@ -12,5 +12,5 @@ wait::dbus-ready
 
 nodeadm init --skip run --config-source file://config.yaml
 
-assert::json-files-equal /etc/kubernetes/kubelet/config.json.d/99-defaults.conf expected-kubelet-config.json
-assert::json-files-equal /etc/kubernetes/kubelet/config.json.d/00-overrides.conf expected-kubelet-config-drop-in.json
+assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
+assert::json-files-equal /etc/kubernetes/kubelet/config.json.d/00-nodeadm.conf expected-kubelet-config-drop-in.json
