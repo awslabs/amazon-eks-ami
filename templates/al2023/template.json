@@ -26,7 +26,6 @@
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
     "pause_container_version": null,
-    "pull_cni_from_github": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -183,7 +182,6 @@
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
-        "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
