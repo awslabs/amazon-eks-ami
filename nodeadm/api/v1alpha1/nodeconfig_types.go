@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func init() {
@@ -43,10 +44,10 @@ type ClusterDetails struct {
 }
 
 type KubeletOptions struct {
-	// Config is a raw document of a kubelet config that can be provided
-	// by the user to override default generated configurations
+	// Config is a kubelet config that can be provided by the user to override
+	// default generated configurations
 	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
-	Config string `json:"config,omitempty"`
+	Config map[string]runtime.RawExtension `json:"config,omitempty"`
 	// Flags is a list of command-line kubelet arguments. These arguments are
 	// amended to the generated defaults, and therefore will act as overrides
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/

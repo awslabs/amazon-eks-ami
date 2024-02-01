@@ -52,10 +52,12 @@ spec:
               kubelet:
                 properties:
                   config:
-                    description: Config is a raw document of a kubelet config that
-                      can be provided by the user to override default generated configurations
-                      https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
-                    type: string
+                    additionalProperties:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    description: Config is a kubelet config that can be provided by
+                      the user to override default generated configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+                    type: object
                   flags:
                     description: Flags is a list of command-line kubelet arguments.
                       These arguments are amended to the generated defaults, and therefore

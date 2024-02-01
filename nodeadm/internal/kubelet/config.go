@@ -42,9 +42,9 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 		return err
 	}
 	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
-		return k.writeKubeletConfigToFile(cfg, []byte(cfg.Spec.Kubelet.Config))
+		return k.writeKubeletConfigToFile(cfg, cfg.Spec.Kubelet.Config)
 	} else {
-		return k.writeKubeletConfigToDir(cfg, []byte(cfg.Spec.Kubelet.Config))
+		return k.writeKubeletConfigToDir(cfg, cfg.Spec.Kubelet.Config)
 	}
 }
 
@@ -271,7 +271,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 // WriteConfig writes the kubelet config to a file.
 // This should only be used for kubelet versions < 1.28.
-func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfig []byte) error {
+func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfig api.InlineDocument) error {
 	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
 	if err != nil {
 		return err
@@ -282,15 +282,22 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfi
 	}
 
 	if userKubeletConfig != nil && len(userKubeletConfig) > 0 {
+		// TODO: spruce this up, it's difficult to work with the inline
+		// documents without having them in `map[string]interface{}` format.
 		var err error
 		var kubeletConfigMap, userKubeletConfigMap map[string]interface{}
 
+		userKubeletConfigBytes, err := json.Marshal(userKubeletConfig)
+		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(userKubeletConfigBytes, &userKubeletConfigMap); err != nil {
+			return err
+		}
 		if err = json.Unmarshal(kubeletConfigBytes, &kubeletConfigMap); err != nil {
 			return err
 		}
-		if err = json.Unmarshal(userKubeletConfig, &userKubeletConfigMap); err != nil {
-			return err
-		}
+
 		if err = mergo.Merge(&kubeletConfigMap, &userKubeletConfigMap, mergo.WithOverride); err != nil {
 			return err
 		}
@@ -311,7 +318,7 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig, userKubeletConfi
 // standard config file and writes the user's provided config to a directory for
 // drop-in support. This is only supported on kubelet versions >= 1.28. see:
 // https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
-func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig []byte) error {
+func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig api.InlineDocument) error {
 	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
 	if err != nil {
 		return err
@@ -338,7 +345,11 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig, userKubeletConfig
 
 		filePath := path.Join(dirPath, "00-nodeadm.conf")
 		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
-		if err := util.WriteFileWithDir(filePath, userKubeletConfig, kubeletConfigPerm); err != nil {
+		userKubeletConfigBytes, err := json.MarshalIndent(userKubeletConfig, "", strings.Repeat(" ", 4))
+		if err != nil {
+			return err
+		}
+		if err := util.WriteFileWithDir(filePath, userKubeletConfigBytes, kubeletConfigPerm); err != nil {
 			return err
 		}
 	}
