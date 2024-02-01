@@ -243,6 +243,38 @@ func (ksc *kubeletConfig) withDefaultReservedResources() {
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
 }
 
+// withPodInfraContainerImage determines whether to add the
+// '--pod-infra-container-image' flag, which is used to ensure the sandbox image
+// is not garbage collected.
+//
+// TODO: revisit once the minimum supportted version catches up or the container
+// runtime is moved to containerd 2.0
+func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, kubeletVersion string, flags map[string]string) error {
+	// the flag is a noop on 1.29+, since the behavior was changed to use the
+	// CRI image pinning behavior and no longer considers the flag value.
+	// see: https://github.com/kubernetes/kubernetes/pull/118544
+	if semver.Compare(kubeletVersion, "v1.29.0") < 0 {
+		awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
+		if err != nil {
+			return err
+		}
+		ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
+			Region:    cfg.Status.Instance.Region,
+			Domain:    awsDomain,
+			AllowFips: true,
+		})
+		if err != nil {
+			return err
+		}
+		pauseContainerImage, err := util.GetPauseContainer(ecrUri)
+		if err != nil {
+			return err
+		}
+		flags["pod-infra-container-image"] = pauseContainerImage
+	}
+	return nil
+}
+
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	// Get the kubelet/kubernetes version to help conditionally enable features
 	kubeletVersion, err := GetKubeletVersion()
@@ -252,6 +284,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
 
 	kubeletConfig := defaultKubeletSubConfig()
+
 	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
 		return nil, err
 	}
@@ -259,6 +292,9 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 		return nil, err
 	}
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
+		return nil, err
+	}
+	if err := kubeletConfig.withPodInfraContainerImage(cfg, kubeletVersion, k.flags); err != nil {
 		return nil, err
 	}
 
