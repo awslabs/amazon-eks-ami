@@ -342,7 +342,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
 		k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")
-		filePath := path.Join(dirPath, "00-overrides.conf")
+		filePath := path.Join(dirPath, "00-nodeadm.conf")
 
 		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
 		userKubeletConfigBytes, err := json.MarshalIndent(cfg.Spec.Kubelet.Config, "", strings.Repeat(" ", 4))
