@@ -313,33 +313,19 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	kubeletConfigBytes, err := json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4))
-	if err != nil {
-		return err
-	}
 
+	var kubeletConfigBytes []byte
 	if cfg.Spec.Kubelet.Config != nil && len(cfg.Spec.Kubelet.Config) > 0 {
-		// TODO: spruce this up, it's difficult to work with the inline
-		// documents without having them in `map[string]interface{}` format.
+		mergedMap, err := util.DocumentMerge(kubeletConfig, cfg.Spec.Kubelet.Config, mergo.WithOverride)
+		if err != nil {
+			return err
+		}
+		if kubeletConfigBytes, err = json.MarshalIndent(mergedMap, "", strings.Repeat(" ", 4)); err != nil {
+			return err
+		}
+	} else {
 		var err error
-		var kubeletConfigMap, userKubeletConfigMap map[string]interface{}
-
-		userKubeletConfigBytes, err := json.Marshal(cfg.Spec.Kubelet.Config)
-		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(userKubeletConfigBytes, &userKubeletConfigMap); err != nil {
-			return err
-		}
-		if err = json.Unmarshal(kubeletConfigBytes, &kubeletConfigMap); err != nil {
-			return err
-		}
-
-		if err = mergo.Merge(&kubeletConfigMap, &userKubeletConfigMap, mergo.WithOverride); err != nil {
-			return err
-		}
-		kubeletConfigBytes, err = json.MarshalIndent(kubeletConfigMap, "", strings.Repeat(" ", 4))
-		if err != nil {
+		if kubeletConfigBytes, err = json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4)); err != nil {
 			return err
 		}
 	}
