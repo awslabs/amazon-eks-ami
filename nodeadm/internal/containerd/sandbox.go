@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
-	"strings"
+	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"github.com/containerd/containerd/integration/remote"
+	"github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 var containerdSandboxImageRegex = regexp.MustCompile(`sandbox_image = "(.*)"`)
@@ -28,30 +32,28 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	sandboxImage := string(matches[1])
 	zap.L().Info("Found sandbox image", zap.String("image", sandboxImage))
 
-	zap.L().Info("Checking if sandbox image is cached..")
-	imageList, err := exec.Command("ctr", "--namespace", "k8s.io", "image", "ls").Output()
-	if err != nil {
-		return err
-	}
-	// exit early if the image already exists
-	if strings.Contains(string(imageList), sandboxImage) {
-		zap.L().Info("Sandbox image already exists.", zap.String("image", sandboxImage))
-		return nil
-	}
-
 	zap.L().Info("Fetching ECR authorization token..")
 	ecrUserToken, err := util.GetAuthorizationToken(cfg.Status.Instance.Region)
 	if err != nil {
 		return err
 	}
-	fetchCommand := exec.Command("ctr", "--namespace", "k8s.io", "content", "fetch", sandboxImage, "--user", ecrUserToken)
 
-	// TODO: use a retry policy
 	zap.L().Info("Pulling sandbox image..", zap.String("image", sandboxImage))
-	if _, err := fetchCommand.Output(); err != nil {
+	client, err := remote.NewImageService(ContainerRuntimeEndpoint, 3*time.Second)
+	if err != nil {
+		return err
+	}
+	imageSpec := &v1.ImageSpec{Image: sandboxImage}
+	authConfig := &v1.AuthConfig{Auth: ecrUserToken}
+	callOptions := []grpc.CallOption{
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(5*time.Second, 0.2)),
+	}
+	imageRef, err := client.PullImage(imageSpec, authConfig, nil, callOptions...)
+	if err != nil {
 		return err
 	}
 
-	zap.L().Info("Finished pulling sandbox image", zap.String("image", sandboxImage))
+	zap.L().Info("Finished pulling sandbox image", zap.String("image-ref", imageRef))
 	return nil
 }
