@@ -26,6 +26,7 @@ import (
 	"github.com/aws/smithy-go/ptr"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
@@ -113,7 +114,7 @@ func defaultKubeletSubConfig() kubeletConfig {
 		CgroupDriver:             "systemd",
 		CgroupRoot:               "/",
 		ClusterDomain:            "cluster.local",
-		ContainerRuntimeEndpoint: "unix:///run/containerd/containerd.sock",
+		ContainerRuntimeEndpoint: containerd.ContainerRuntimeEndpoint,
 		FeatureGates: map[string]bool{
 			"RotateKubeletServerCertificate": true,
 		},
