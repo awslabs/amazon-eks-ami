@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: '1.21.6'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - run: gosec -exclude=G103 ./...
+      - run: gosec -exclude-generated ./...
         working-directory: nodeadm
   govulncheck:
     runs-on: ubuntu-latest
