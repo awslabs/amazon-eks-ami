@@ -48,7 +48,8 @@
         "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ],
     "clusterDNS": [
-        "10.100.0.10"
+        "0.0.0.0",
+        "1.1.1.1"
     ],
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",

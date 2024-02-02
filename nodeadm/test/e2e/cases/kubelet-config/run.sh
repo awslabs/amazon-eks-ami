@@ -10,6 +10,7 @@ mock::imds
 mock::kubelet 1.27.0
 wait::dbus-ready
 
-nodeadm init --skip run --config-source file://config.yaml
-
-assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
+for config in config.*; do
+  nodeadm init --skip run --config-source file://${config}
+  assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
+done
