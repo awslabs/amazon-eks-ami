@@ -113,7 +113,8 @@
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
       "metadata_options": {
-        "http_tokens": "required"
+        "http_tokens": "required",
+        "http_put_response_hop_limit": 1
       }
     }
   ],
