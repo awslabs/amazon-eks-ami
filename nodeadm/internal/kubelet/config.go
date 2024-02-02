@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -171,7 +171,17 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		}
 
 		// TODO: cleanup
-		output, err := exec.Command("getent", "hosts", apiUrl.Host).Output()
+		ipAddresses, err := net.LookupHost(apiUrl.Host)
+		if err != nil {
+			return err
+		}
+		var ipHostMappings []string
+		for _, ip := range ipAddresses {
+			ipHostMappings = append(ipHostMappings, fmt.Sprintf("%s\t%s", ip, apiUrl.Host))
+		}
+		output := strings.Join(ipHostMappings, "\n") + "\n"
+		zap.L().Info(fmt.Sprintf("Log returned ipAddress: %v", output))
+
 		if err != nil {
 			return err
 		}
@@ -182,7 +192,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 			return err
 		}
 		defer f.Close()
-		if _, err := f.Write(output); err != nil {
+		if _, err := f.WriteString(output); err != nil {
 			return err
 		}
 	}
