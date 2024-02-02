@@ -170,6 +170,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		}
 
 		// TODO: cleanup
+		// #nosec G204
 		output, err := exec.Command("getent", "hosts", apiUrl.Host).Output()
 		if err != nil {
 			return err

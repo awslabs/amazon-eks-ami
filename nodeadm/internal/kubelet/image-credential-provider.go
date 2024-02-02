@@ -1,3 +1,5 @@
+// #nosec G101
+
 package kubelet
 
 import (

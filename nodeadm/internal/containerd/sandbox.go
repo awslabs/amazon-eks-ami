@@ -2,13 +2,12 @@ package containerd
 
 import (
 	"fmt"
-	"os/exec"
-	"regexp"
-	"strings"
-
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
+	"os/exec"
+	"regexp"
+	"strings"
 )
 
 var containerdSandboxImageRegex = regexp.MustCompile(`sandbox_image = "(.*)"`)
@@ -44,6 +43,7 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
+	// #nosec G204
 	fetchCommand := exec.Command("ctr", "--namespace", "k8s.io", "content", "fetch", sandboxImage, "--user", ecrUserToken)
 
 	// TODO: use a retry policy
