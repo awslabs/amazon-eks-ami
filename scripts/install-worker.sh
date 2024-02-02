@@ -514,6 +514,13 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
       fi
     done
   done
+
+  # exclude cached pause images from kubelet garbage collection
+  for IMAGE in $(sudo ctr -n k8s.io images ls --quiet); do
+    if [[ "${IMAGE}" == *"eks/pause"* ]]; then
+      sudo ctr -n k8s.io image label "${IMAGE}" "io.cri-containerd.pinned=pinned"
+    fi
+  done
 fi
 
 ################################################################################
