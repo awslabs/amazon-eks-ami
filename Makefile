@@ -16,14 +16,15 @@ AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
 os_distro ?= al2
 arch ?= x86_64
-instance_type ?= m5.large
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
 ifeq ($(arch), arm64)
-	instance_type = m6g.large
+	instance_type ?= m6g.large
 	AMI_VARIANT := $(AMI_VARIANT)-arm64
+else
+	instance_type ?= m5.large
 endif
 ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
