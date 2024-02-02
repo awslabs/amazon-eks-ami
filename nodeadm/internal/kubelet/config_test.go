@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/smithy-go/ptr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +32,6 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 }
 
 func TestContainerRuntime(t *testing.T) {
-
-	expectedContainerRuntimeEndpoint := "unix:///run/containerd/containerd.sock"
 	var tests = []struct {
 		kubeletVersion           string
 		expectedContainerRuntime *string
@@ -51,13 +50,13 @@ func TestContainerRuntime(t *testing.T) {
 			if present {
 				t.Errorf("container-runtime shouldn't be set for versions %s", test.kubeletVersion)
 			} else {
-				assert.Equal(t, expectedContainerRuntimeEndpoint, kubetConfig.ContainerRuntimeEndpoint)
+				assert.Equal(t, containerd.ContainerRuntimeEndpoint, kubetConfig.ContainerRuntimeEndpoint)
 			}
 		} else if test.expectedContainerRuntime != nil {
 			if *test.expectedContainerRuntime != containerRuntime {
 				t.Errorf("expected %v but got %s for container-runtime", *test.expectedContainerRuntime, containerRuntime)
 			} else {
-				assert.Equal(t, expectedContainerRuntimeEndpoint, kubeletAruments["container-runtime-endpoint"])
+				assert.Equal(t, containerd.ContainerRuntimeEndpoint, kubeletAruments["container-runtime-endpoint"])
 			}
 		}
 	}

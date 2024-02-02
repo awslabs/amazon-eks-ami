@@ -11,6 +11,8 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
+const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
+
 const (
 	containerdConfigFile = "/etc/containerd/config.toml"
 	containerdConfigPerm = 0644

@@ -11,7 +11,8 @@ To initialize a node:
 nodeadm init
 ```
 
-**Note** that this happens automatically, via a `systemd` service, on AL2023-based EKS AMI's.
+> [!NOTE]
+> This happens automatically, via a `systemd` service, on AL2023-based EKS AMI's.
 
 ---
 
@@ -34,12 +35,11 @@ spec:
 
 You'll typically provide this configuration in your EC2 instance's user data, either as-is or embedded within a MIME multi-part document:
 ```
-Content-Type: multipart/mixed; boundary="BOUNDARY"
 MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
 
 --BOUNDARY
 Content-Type: application/node.eks.aws
-MIME-Version: 1.0
 
 ---
 apiVersion: node.eks.aws/v1alpha1

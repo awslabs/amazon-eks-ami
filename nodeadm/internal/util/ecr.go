@@ -2,7 +2,6 @@ package util
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
@@ -15,7 +14,7 @@ import (
 // TODO: is dynamic?
 const pauseContainerVersion = "3.5"
 
-// Returns an authorization token string for ECR
+// Returns the base64 encoded authorization token string for ECR of the format "AWS:XXXXX"
 func GetAuthorizationToken(awsRegion string) (string, error) {
 	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))
 	if err != nil {
@@ -27,11 +26,7 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 		return "", err
 	}
 	authData := token.AuthorizationData[0].AuthorizationToken
-	data, err := base64.StdEncoding.DecodeString(*authData)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+	return *authData, nil
 }
 
 func GetAwsDomain(ctx context.Context, imdsClient *imds.Client) (string, error) {
