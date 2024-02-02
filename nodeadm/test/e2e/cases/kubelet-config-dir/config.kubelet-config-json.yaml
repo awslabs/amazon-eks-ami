@@ -9,8 +9,6 @@ spec:
     cidr: 10.100.0.0/16
   kubelet:
     config: {
-      "kind": "KubeletConfiguration",
-      "apiVersion": "kubelet.config.k8s.io/v1beta1",
       "logging": {
         "verbosity": 5
       },
