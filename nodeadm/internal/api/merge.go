@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"dario.cat/mergo"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -43,14 +44,14 @@ func (k kubeletTransformer) Transformer(typ reflect.Type) func(dst, src reflect.
 
 func (k kubeletTransformer) transformFlags(dst, src reflect.Value) {
 	if dst.CanSet() {
-		// due to the nature of how kubelet flags are parsed, if src flags come
-		// after dst flags then they will have higher precedence. For
-		// single-value flags this is equivalent to a replacement, but for flags
+		// kubelet flags are parsed using https://github.com/spf13/pflag, where
+		// flag order determines precedence. For single-value flags this is
+		// equivalent to latter values overriding former ones, but for flags
 		// with multiple values like `--node-labels`, the values from every
 		// instance will be merged with precedence based on order.
 		//
-		// Based on this behavior, we choose to explicitly appending slice for
-		// this field and no others.
+		// Based on this behavior, we choose to explicitly append slices for
+		// this field and no other slices.
 		dst.Set(reflect.AppendSlice(dst, src))
 	}
 }
@@ -58,35 +59,33 @@ func (k kubeletTransformer) transformFlags(dst, src reflect.Value) {
 func (k kubeletTransformer) transformConfig(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		if dst.Len() <= 0 {
-			// if the destination is empty, then just use the incoming data
+			// if the destination is empty just use the source data
 			dst.Set(src)
 		} else if src.Len() > 0 {
 			// kubelet config in an inline document here, so we explicitly
 			// perform a merge with dst and src data.
-			dstConfigBytes, err := json.Marshal(dst.Interface())
+			mergedMap, err := util.DocumentMerge(dst.Interface(), src.Interface(), mergo.WithOverride)
 			if err != nil {
 				return err
 			}
-			srcConfigBytes, err := json.Marshal(src.Interface())
+			rawMap, err := toInlineDocument(mergedMap)
 			if err != nil {
 				return err
 			}
-			var dstConfigMap, srcConfigMap map[string]interface{}
-			if err := json.Unmarshal(dstConfigBytes, &dstConfigMap); err != nil {
-				return err
-			}
-			if err := json.Unmarshal(srcConfigBytes, &srcConfigMap); err != nil {
-				return err
-			}
-			if err := mergo.Merge(&dstConfigMap, &srcConfigMap, mergo.WithOverride); err != nil {
-				return err
-			}
-			_, err = json.MarshalIndent(dstConfigMap, "", "    ")
-			if err != nil {
-				return err
-			}
-			dst.Set(reflect.ValueOf(map[string]runtime.RawExtension{}))
+			dst.Set(reflect.ValueOf(rawMap))
 		}
 	}
 	return nil
+}
+
+func toInlineDocument(m map[string]interface{}) (InlineDocument, error) {
+	var rawMap = make(InlineDocument)
+	for key, value := range m {
+		rawBytes, err := json.Marshal(value)
+		if err != nil {
+			return nil, err
+		}
+		rawMap[key] = runtime.RawExtension{Raw: rawBytes}
+	}
+	return rawMap, nil
 }

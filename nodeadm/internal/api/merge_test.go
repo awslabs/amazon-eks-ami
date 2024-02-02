@@ -1,22 +1,16 @@
 package api
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 )
 
-func indent(in string) string {
-	var mid interface{}
-	err := json.Unmarshal([]byte(in), &mid)
+func toInlineDocumentMust(m map[string]interface{}) InlineDocument {
+	d, err := toInlineDocument(m)
 	if err != nil {
 		panic(err)
 	}
-	out, err := json.MarshalIndent(&mid, "", "    ")
-	if err != nil {
-		panic(err)
-	}
-	return string(out)
+	return d
 }
 
 func TestMerge(t *testing.T) {
@@ -60,7 +54,12 @@ func TestMerge(t *testing.T) {
 					CIDR:                 "10.0.0.0/16",
 				},
 				Kubelet: KubeletOptions{
-					// Config: indent(`{"logging":{"verbosity":5},"podsPerCore":20}`),
+					Config: toInlineDocumentMust(map[string]interface{}{
+						"logging": map[string]interface{}{
+							"verbosity": 5,
+						},
+						"podsPerCore": 20,
+					}),
 					Flags: []string{
 						"--node-labels=nodegroup=example",
 						"--register-with-taints=the=taint:NoSchedule",
@@ -69,7 +68,12 @@ func TestMerge(t *testing.T) {
 			},
 			patchSpec: NodeConfigSpec{
 				Kubelet: KubeletOptions{
-					// Config: indent(`{"maxPods":150,"logging":{"verbosity":2}}`),
+					Config: toInlineDocumentMust(map[string]interface{}{
+						"logging": map[string]interface{}{
+							"verbosity": 2,
+						},
+						"maxPods": 150,
+					}),
 					Flags: []string{
 						"--node-labels=nodegroup=user-set",
 					},
@@ -83,7 +87,13 @@ func TestMerge(t *testing.T) {
 					CIDR:                 "10.0.0.0/16",
 				},
 				Kubelet: KubeletOptions{
-					// Config: indent(`{"logging":{"verbosity":2},"podsPerCore":20,"maxPods":150}`),
+					Config: toInlineDocumentMust(map[string]interface{}{
+						"logging": map[string]interface{}{
+							"verbosity": 2,
+						},
+						"maxPods":     150,
+						"podsPerCore": 20,
+					}),
 					Flags: []string{
 						"--node-labels=nodegroup=example",
 						"--register-with-taints=the=taint:NoSchedule",

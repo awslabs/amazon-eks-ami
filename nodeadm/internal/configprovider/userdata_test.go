@@ -126,6 +126,6 @@ func TestMergeNodeConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(config, &completeMergedWithPartial) {
-		t.Errorf("\nexpected: %+v\n\ngot:       %+v", &completeMergedWithPartial, config)
+		t.Errorf("\nexpected: %+v\n\ngot:      %+v", &completeMergedWithPartial, config)
 	}
 }

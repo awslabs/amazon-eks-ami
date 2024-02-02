@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.14.0
+    controller-gen.kubebuilder.io/version: v0.12.0
   name: nodeconfigs.node.eks.aws
 spec:
   group: node.eks.aws
@@ -20,19 +20,14 @@ spec:
         description: NodeConfig is the Schema for the nodeconfigs API
         properties:
           apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
@@ -60,16 +55,13 @@ spec:
                     additionalProperties:
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
-                    description: |-
-                      Config is a kubelet config that can be provided by the user to override
-                      default generated configurations
-                      https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+                    description: Config is a kubelet config that can be provided by
+                      the user to override default generated configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
                     type: object
                   flags:
-                    description: |-
-                      Flags is a list of command-line kubelet arguments. These arguments are
-                      amended to the generated defaults, and therefore will act as overrides
-                      https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+                    description: Flags is a list of command-line kubelet arguments.
+                      These arguments are amended to the generated defaults, and therefore
+                      will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
                     items:
                       type: string
                     type: array
