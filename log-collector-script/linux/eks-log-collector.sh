@@ -399,6 +399,8 @@ get_kernel_info() {
 get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
+
+  ok
 }
 
 get_docker_logs() {
