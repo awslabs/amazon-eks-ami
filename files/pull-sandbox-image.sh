@@ -8,6 +8,10 @@ if [[ "$(sudo ctr --namespace k8s.io image ls | grep $sandbox_image)" != "" ]]; 
   exit 0
 fi
 
+# use the region that the sandbox image comes from for the ecr authentication,
+# also mitigating the localzone isse: https://github.com/aws/aws-cli/issues/7043
+region=$(echo "${sandbox_image}" | cut -f4 -d ".")
+
 MAX_RETRIES=3
 
 function retry() {
@@ -25,7 +29,7 @@ function retry() {
   done
 }
 
-ecr_password=$(retry aws ecr get-login-password)
+ecr_password=$(retry aws ecr get-login-password --region $region)
 if [[ -z ${ecr_password} ]]; then
   echo >&2 "Unable to retrieve the ECR password."
   exit 1
