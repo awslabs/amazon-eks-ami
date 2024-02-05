@@ -10,7 +10,6 @@ require (
 	github.com/aws/smithy-go v1.19.0
 	github.com/containerd/containerd v1.7.13
 	github.com/coreos/go-systemd/v22 v22.5.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/integrii/flaggy v1.5.2
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0

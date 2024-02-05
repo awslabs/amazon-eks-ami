@@ -9,9 +9,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/containerd/containerd/integration/remote"
-	"github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -38,22 +36,20 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 		return err
 	}
 
-	zap.L().Info("Pulling sandbox image..", zap.String("image", sandboxImage))
-	client, err := remote.NewImageService(ContainerRuntimeEndpoint, 3*time.Second)
+	client, err := remote.NewImageService(ContainerRuntimeEndpoint, 5*time.Second)
 	if err != nil {
 		return err
 	}
 	imageSpec := &v1.ImageSpec{Image: sandboxImage}
 	authConfig := &v1.AuthConfig{Auth: ecrUserToken}
-	callOptions := []grpc.CallOption{
-		grpc_retry.WithMax(3),
-		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(5*time.Second, 0.2)),
-	}
-	imageRef, err := client.PullImage(imageSpec, authConfig, nil, callOptions...)
-	if err != nil {
-		return err
-	}
 
-	zap.L().Info("Finished pulling sandbox image", zap.String("image-ref", imageRef))
-	return nil
+	return util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+		zap.L().Info("Pulling sandbox image..", zap.String("image", sandboxImage))
+		imageRef, err := client.PullImage(imageSpec, authConfig, nil)
+		if err != nil {
+			return err
+		}
+		zap.L().Info("Finished pulling sandbox image", zap.String("image-ref", imageRef))
+		return nil
+	})
 }
