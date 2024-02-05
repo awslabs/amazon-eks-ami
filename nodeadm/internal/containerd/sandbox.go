@@ -9,7 +9,6 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/containerd/containerd/integration/remote"
-	"github.com/eapache/go-resiliency/retrier"
 	"go.uber.org/zap"
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
@@ -44,8 +43,7 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	imageSpec := &v1.ImageSpec{Image: sandboxImage}
 	authConfig := &v1.AuthConfig{Auth: ecrUserToken}
 
-	r := retrier.New(retrier.ExponentialBackoff(3, 2*time.Second), nil)
-	return r.Run(func() error {
+	return util.RetryExponentialBackoff(3, 2*time.Second, func() error {
 		zap.L().Info("Pulling sandbox image..", zap.String("image", sandboxImage))
 		imageRef, err := client.PullImage(imageSpec, authConfig, nil)
 		if err != nil {
