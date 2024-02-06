@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,6 +79,8 @@ type kubeletConfig struct {
 	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
 	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
 	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
+	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
+	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
 }
 
 type loggingConfiguration struct {
@@ -115,6 +119,11 @@ func defaultKubeletSubConfig() kubeletConfig {
 		CgroupRoot:               "/",
 		ClusterDomain:            "cluster.local",
 		ContainerRuntimeEndpoint: containerd.ContainerRuntimeEndpoint,
+		EvictionHard: map[string]string{
+			"memory.available":  "100Mi",
+			"nodefs.available":  "10%",
+			"nodefs.inodesFree": "5%",
+		},
 		FeatureGates: map[string]bool{
 			"RotateKubeletServerCertificate": true,
 		},
@@ -249,9 +258,18 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources() {
+func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
+	maxPods, ok := getMaxPod(cfg.Status.Instance.Type)
+	if !ok {
+		return
+	}
+	ksc.KubeReserved = map[string]string{
+		"cpu":               strconv.Itoa(getCPUMillicoresToReserve()),
+		"ephemeral-storage": "1Gi",
+		"memory":            strconv.Itoa(getMemoryMebibytesToReserve(maxPods)),
+	}
 }
 
 // withPodInfraContainerImage determines whether to add the
@@ -311,7 +329,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources()
+	kubeletConfig.withDefaultReservedResources(cfg)
 
 	return &kubeletConfig, nil
 }
@@ -436,4 +454,39 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 	default:
 		return "", fmt.Errorf("invalid ip-family. %s is not one of %v", ipFamily, []api.IPFamily{api.IPFamilyIPv4, api.IPFamilyIPv6})
 	}
+}
+
+func getCPUMillicoresToReserve() int {
+	totalCPUMillicores := runtime.NumCPU() * 1000
+	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
+	cpuPercentageReservedForRanges := []int{600, 100, 50, 25}
+	cpuToReserve := 0
+
+	for i, percentageToReserveForRange := range cpuPercentageReservedForRanges {
+		startRange := cpuRanges[i]
+		endRange := cpuRanges[i+1]
+		cpuToReserve += getResourceToReserveInRange(totalCPUMillicores, startRange, endRange, percentageToReserveForRange)
+	}
+
+	return cpuToReserve
+}
+
+// getResourceToReserveInRange calculates the CPU resources to reserve for a given range.
+func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int) int {
+	if totalCPU > startRange {
+		if totalCPU < endRange {
+			return (totalCPU - startRange) * percentage / 10000
+		}
+		return (endRange - startRange) * percentage / 10000
+	}
+	return 0
+}
+
+func getMemoryMebibytesToReserve(maxPods int) int {
+	return 11*maxPods + 255
+}
+
+func getMaxPod(instanceType string) (int, bool) {
+	maxPod, ok := util.Instance_types_map[instanceType]
+	return maxPod, ok
 }

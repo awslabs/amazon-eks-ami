@@ -51,6 +51,16 @@
         "0.0.0.0",
         "1.1.1.1"
     ],
+    "evictionHard": {
+        "memory.available": "100Mi",
+        "nodefs.available": "10%",
+        "nodefs.inodesFree": "5%"
+    },
+    "kubeReserved": {
+        "cpu": "90",
+        "ephemeral-storage": "1Gi",
+        "memory": "893"
+    },
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",
     "providerID": "aws:///us-west-2f/i-1234567890abcdef0"

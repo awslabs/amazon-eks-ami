@@ -42,6 +42,16 @@
     "logging": {
         "verbosity": 2
     },
+    "evictionHard": {
+        "memory.available": "100Mi",
+        "nodefs.available": "10%",
+        "nodefs.inodesFree": "5%"
+    },
+    "kubeReserved": {
+        "cpu": "90",
+        "ephemeral-storage": "1Gi",
+        "memory": "893"
+    },
     "tlsCipherSuites": [
         "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
         "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
