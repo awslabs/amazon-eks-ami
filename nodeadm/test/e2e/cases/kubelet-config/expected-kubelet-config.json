@@ -57,7 +57,7 @@
         "nodefs.inodesFree": "5%"
     },
     "kubeReserved": {
-        "cpu": "90",
+        "cpu": "80",
         "ephemeral-storage": "1Gi",
         "memory": "893"
     },
