@@ -5,8 +5,8 @@ outputFile=$2
 
 echo "package util" > $outputFile
 echo "" >> $outputFile
-echo "// Instance_types_map generated from eni-max-pods.txt DO NOT EDIT" >> $outputFile
-echo "var Instance_types_map = map[string]int{" >> $outputFile
+echo "// InstanceTypeMaxPods generated from eni-max-pods.txt DO NOT EDIT" >> $outputFile
+echo "var InstanceTypeMaxPods = map[string]int{" >> $outputFile
 
 # - Skip lines starting with '#'
 # - Format remaining lines into Go map entries

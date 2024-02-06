@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -266,9 +265,9 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 		return
 	}
 	ksc.KubeReserved = map[string]string{
-		"cpu":               strconv.Itoa(getCPUMillicoresToReserve()),
+		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            strconv.Itoa(getMemoryMebibytesToReserve(maxPods)),
+		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(maxPods)),
 	}
 }
 
@@ -487,6 +486,6 @@ func getMemoryMebibytesToReserve(maxPods int) int {
 }
 
 func getMaxPod(instanceType string) (int, bool) {
-	maxPod, ok := util.Instance_types_map[instanceType]
+	maxPod, ok := util.InstanceTypeMaxPods[instanceType]
 	return maxPod, ok
 }

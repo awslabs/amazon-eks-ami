@@ -1,7 +1,7 @@
 package util
 
-// Instance_types_map generated from eni-max-pods.txt DO NOT EDIT
-var Instance_types_map = map[string]int{
+// InstanceTypeMaxPods generated from eni-max-pods.txt DO NOT EDIT
+var InstanceTypeMaxPods = map[string]int{
 	"a1.2xlarge":		58,
 	"a1.4xlarge":		234,
 	"a1.large":		29,
