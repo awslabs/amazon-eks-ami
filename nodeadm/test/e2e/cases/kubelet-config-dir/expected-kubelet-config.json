@@ -48,9 +48,9 @@
         "nodefs.inodesFree": "5%"
     },
     "kubeReserved": {
-        "cpu": "80",
+        "cpu": "80m",
         "ephemeral-storage": "1Gi",
-        "memory": "893"
+        "memory": "893Mi"
     },
     "tlsCipherSuites": [
         "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",

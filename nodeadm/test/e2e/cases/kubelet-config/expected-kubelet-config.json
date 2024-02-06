@@ -57,9 +57,9 @@
         "nodefs.inodesFree": "5%"
     },
     "kubeReserved": {
-        "cpu": "80",
+        "cpu": "80m",
         "ephemeral-storage": "1Gi",
-        "memory": "893"
+        "memory": "893Mi"
     },
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",
