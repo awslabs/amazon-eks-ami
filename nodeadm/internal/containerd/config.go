@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"path/filepath"
 	"text/template"
 
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
@@ -14,8 +15,9 @@ import (
 const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 
 const (
-	containerdConfigFile = "/etc/containerd/config.toml"
-	containerdConfigPerm = 0644
+	containerdConfigFile      = "/etc/containerd/config.toml"
+	containerdConfigImportDir = "/etc/containerd/config.d"
+	containerdConfigPerm      = 0644
 )
 
 var (
@@ -29,11 +31,17 @@ type containerdTemplateVars struct {
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
+	// write nodeadm's generated containerd config to the default path
 	containerdConfig, err := generateContainerdConfig(cfg)
 	if err != nil {
 		return err
 	}
-	return util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
+	if util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
+		return err
+	}
+	// write the user-provided containerd config toml to the import directory
+	containerConfigImportPath := filepath.Join(containerdConfigImportDir, "00-overrides.toml")
+	return util.WriteFileWithDir(containerConfigImportPath, []byte(cfg.Spec.Containerd.Config), containerdConfigPerm)
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
