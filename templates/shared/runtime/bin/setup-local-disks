@@ -4,6 +4,11 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+if [ "$(id --user)" -ne 0 ]; then
+  echo "Must be run as root"
+  exit 1
+fi
+
 err_report() {
   echo "Exited with error on line $1"
 }
@@ -193,16 +198,16 @@ if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "mount" ]]; then
   exit 1
 fi
 
-disks=($(find -L /dev/disk/by-id/ -xtype l -name '*NVMe_Instance_Storage_*'))
-## Bail early if there are no ephemeral disks to setup
-if [[ "${#disks[@]}" -eq 0 ]]; then
-  echo "no ephemeral disks found, skipping disk setup"
+if [ ! -d /dev/disk/by-id/ ]; then
+  echo "no ephemeral disks found!"
   exit 0
 fi
 
-if [ "$(id --user)" -ne 0 ]; then
-  echo "Must be run as root"
-  exit 1
+disks=($(find -L /dev/disk/by-id/ -xtype l -name '*NVMe_Instance_Storage_*'))
+## Bail early if there are no ephemeral disks to setup
+if [[ "${#disks[@]}" -eq 0 ]]; then
+  echo "no NVMe instance storage disks found!"
+  exit 0
 fi
 
 ## Get devices of NVMe instance storage ephemeral disks

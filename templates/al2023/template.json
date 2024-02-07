@@ -151,8 +151,14 @@
     {
       "type": "shell",
       "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
         "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
+        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/"
       ]
     },
     {
