@@ -105,6 +105,7 @@ func getCPUsPaths(cpusPath string) ([]string, error) {
 
 func getCPUPhysicalPackageID(cpuPath string) (string, error) {
 	packageIDFilePath := fmt.Sprintf("%s%s", cpuPath, packageIDFilePath)
+	// #nosec G304 // This cpuPath essentially come from getCPUsPaths and it should be a system path
 	packageID, err := os.ReadFile(packageIDFilePath)
 	if err != nil {
 		return "", err
@@ -187,6 +188,7 @@ func getMatchedInt(rgx *regexp.Regexp, str string) (int, error) {
 
 func getCoreID(cpuPath string) (string, error) {
 	coreIDFilePath := fmt.Sprintf("%s%s", cpuPath, coreIDFilePath)
+	// #nosec G304 // This cpuPath essentially come from getCPUsPaths and it should be a system path
 	coreID, err := os.ReadFile(coreIDFilePath)
 	if err != nil {
 		return "", err
@@ -195,7 +197,7 @@ func getCoreID(cpuPath string) (string, error) {
 }
 
 func isCPUOnline(cpuPath string) bool {
-	cpuOnlinePath, err := filepath.Abs("/sys/devices/system/cpu/online")
+	cpuOnlinePath, err := filepath.Abs(cpusPath + "online")
 	if err != nil {
 		zap.L().Info(fmt.Sprintf("Unable to get absolute path for %s", cpuPath))
 		return false
@@ -216,7 +218,7 @@ func isCPUOnline(cpuPath string) bool {
 		return false
 	}
 
-	isOnline, err := _isCPUOnline(cpuOnlinePath, cpuID)
+	isOnline, err := isCpuIDOnline(cpuOnlinePath, cpuID)
 	if err != nil {
 		zap.L().Info(fmt.Sprintf("Unable to get online CPUs list: %s", err))
 		return false
@@ -237,7 +239,8 @@ func getCPUID(dir string) (uint16, error) {
 	return 0, fmt.Errorf("can't get CPU ID from %s", dir)
 }
 
-func _isCPUOnline(path string, cpuID uint16) (bool, error) {
+func isCpuIDOnline(path string, cpuID uint16) (bool, error) {
+	// #nosec G304 // This path is cpuOnlinePath from isCPUOnline
 	fileContent, err := os.ReadFile(path)
 	if err != nil {
 		return false, err
