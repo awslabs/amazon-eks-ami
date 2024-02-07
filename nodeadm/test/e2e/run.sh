@@ -18,7 +18,6 @@ for CASE_DIR in $(ls -d test/e2e/cases/*); do
   CONTAINER_ID=$(docker run \
     -d \
     --rm \
-    --cpus "4" \
     --privileged \
     -v $PWD/$CASE_DIR:/test-case \
     $TEST_IMAGE)

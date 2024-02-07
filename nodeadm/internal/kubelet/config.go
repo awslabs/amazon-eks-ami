@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -55,31 +54,32 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletConfig struct {
-	metav1.TypeMeta          `json:",inline"`
 	Address                  string                           `json:"address"`
 	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
 	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
 	CgroupDriver             string                           `json:"cgroupDriver"`
 	CgroupRoot               string                           `json:"cgroupRoot"`
+	ClusterDNS               []string                         `json:"clusterDNS"`
 	ClusterDomain            string                           `json:"clusterDomain"`
 	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
+	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
 	FeatureGates             map[string]bool                  `json:"featureGates"`
 	HairpinMode              string                           `json:"hairpinMode"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
+	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
+	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
+	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
 	Logging                  loggingConfiguration             `json:"logging"`
+	MaxPods                  int32                            `json:"maxPods,omitempty"`
+	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
+	ProviderID               *string                          `json:"providerID,omitempty"`
+	ReadOnlyPort             int                              `json:"readOnlyPort"`
+	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
 	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
 	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
 	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
-	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
-	ProviderID               *string                          `json:"providerID,omitempty"`
-	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
-	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
-	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
-	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
-	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
+	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
+	metav1.TypeMeta          `json:",inline"`
 }
 
 type loggingConfiguration struct {
@@ -264,6 +264,7 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	if !ok {
 		return
 	}
+	ksc.MaxPods = int32(maxPods)
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
@@ -456,7 +457,11 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 }
 
 func getCPUMillicoresToReserve() int {
-	totalCPUMillicores := runtime.NumCPU() * 1000
+	totalCPUMillicores, err := util.GetMilliNumCores()
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("Error found when GetMilliNumCores: %v", err))
+		return 0
+	}
 	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
 	cpuPercentageReservedForRanges := []int{600, 100, 50, 25}
 	cpuToReserve := 0
@@ -486,6 +491,6 @@ func getMemoryMebibytesToReserve(maxPods int) int {
 }
 
 func getMaxPod(instanceType string) (int, bool) {
-	maxPod, ok := util.InstanceTypeMaxPods[instanceType]
+	maxPod, ok := MaxPodsPerInstanceType[instanceType]
 	return maxPod, ok
 }

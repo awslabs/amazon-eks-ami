@@ -42,13 +42,14 @@
     "logging": {
         "verbosity": 2
     },
+    "maxPods": 58,
     "evictionHard": {
         "memory.available": "100Mi",
         "nodefs.available": "10%",
         "nodefs.inodesFree": "5%"
     },
     "kubeReserved": {
-        "cpu": "80m",
+        "cpu": "70m",
         "ephemeral-storage": "1Gi",
         "memory": "893Mi"
     },
