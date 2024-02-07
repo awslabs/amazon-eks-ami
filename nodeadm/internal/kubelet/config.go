@@ -35,6 +35,9 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
+	// default value from kubelet
+	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
+	defaultMaxPods = 110
 )
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
@@ -54,29 +57,32 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletConfig struct {
-	metav1.TypeMeta          `json:",inline"`
 	Address                  string                           `json:"address"`
 	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
 	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
 	CgroupDriver             string                           `json:"cgroupDriver"`
 	CgroupRoot               string                           `json:"cgroupRoot"`
+	ClusterDNS               []string                         `json:"clusterDNS"`
 	ClusterDomain            string                           `json:"clusterDomain"`
 	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
+	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
 	FeatureGates             map[string]bool                  `json:"featureGates"`
 	HairpinMode              string                           `json:"hairpinMode"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
+	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
+	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
+	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
 	Logging                  loggingConfiguration             `json:"logging"`
+	MaxPods                  int32                            `json:"maxPods,omitempty"`
+	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
+	ProviderID               *string                          `json:"providerID,omitempty"`
+	ReadOnlyPort             int                              `json:"readOnlyPort"`
+	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
 	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
 	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
 	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
-	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
-	ProviderID               *string                          `json:"providerID,omitempty"`
-	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
-	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
-	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
+	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
+	metav1.TypeMeta          `json:",inline"`
 }
 
 type loggingConfiguration struct {
@@ -115,6 +121,11 @@ func defaultKubeletSubConfig() kubeletConfig {
 		CgroupRoot:               "/",
 		ClusterDomain:            "cluster.local",
 		ContainerRuntimeEndpoint: containerd.ContainerRuntimeEndpoint,
+		EvictionHard: map[string]string{
+			"memory.available":  "100Mi",
+			"nodefs.available":  "10%",
+			"nodefs.inodesFree": "5%",
+		},
 		FeatureGates: map[string]bool{
 			"RotateKubeletServerCertificate": true,
 		},
@@ -249,9 +260,20 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources() {
+func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
+	memoryReservation := getMemoryMebibytesToReserve(defaultMaxPods)
+	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
+	if ok {
+		ksc.MaxPods = int32(maxPods)
+		memoryReservation = getMemoryMebibytesToReserve(maxPods)
+	}
+	ksc.KubeReserved = map[string]string{
+		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
+		"ephemeral-storage": "1Gi",
+		"memory":            fmt.Sprintf("%dMi", memoryReservation),
+	}
 }
 
 // withPodInfraContainerImage determines whether to add the
@@ -311,7 +333,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources()
+	kubeletConfig.withDefaultReservedResources(cfg)
 
 	return &kubeletConfig, nil
 }
@@ -436,4 +458,39 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 	default:
 		return "", fmt.Errorf("invalid ip-family. %s is not one of %v", ipFamily, []api.IPFamily{api.IPFamilyIPv4, api.IPFamilyIPv6})
 	}
+}
+
+func getCPUMillicoresToReserve() int {
+	totalCPUMillicores, err := util.GetMilliNumCores()
+	if err != nil {
+		zap.L().Error(fmt.Sprintf("Error found when GetMilliNumCores: %v", err))
+		return 0
+	}
+	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
+	cpuPercentageReservedForRanges := []int{600, 100, 50, 25}
+	cpuToReserve := 0
+
+	for i, percentageToReserveForRange := range cpuPercentageReservedForRanges {
+		startRange := cpuRanges[i]
+		endRange := cpuRanges[i+1]
+		cpuToReserve += getResourceToReserveInRange(totalCPUMillicores, startRange, endRange, percentageToReserveForRange)
+	}
+
+	return cpuToReserve
+}
+
+// getResourceToReserveInRange calculates the CPU resources to reserve for a given range.
+func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int) int {
+	if totalCPU <= startRange {
+		return 0
+	}
+	reserved := totalCPU
+	if reserved > endRange {
+		reserved = endRange
+	}
+	return (reserved - startRange) * percentage / 10000
+}
+
+func getMemoryMebibytesToReserve(maxPods int) int {
+	return 11*maxPods + 255
 }

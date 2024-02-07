@@ -51,6 +51,17 @@
         "0.0.0.0",
         "1.1.1.1"
     ],
+    "maxPods": 58,
+    "evictionHard": {
+        "memory.available": "100Mi",
+        "nodefs.available": "10%",
+        "nodefs.inodesFree": "5%"
+    },
+    "kubeReserved": {
+        "cpu": "70m",
+        "ephemeral-storage": "1Gi",
+        "memory": "893Mi"
+    },
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",
     "providerID": "aws:///us-west-2f/i-1234567890abcdef0"

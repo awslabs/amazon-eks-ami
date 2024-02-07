@@ -23,9 +23,12 @@ COPY test/e2e/infra/aemm-default-config.json /etc/aemm-default-config.json
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
 COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
+COPY test/e2e/infra/mock/ /sys_devices_system_mock/
 COPY test/e2e/helpers.sh /helpers.sh
 
 RUN mkdir -p /etc/eks/image-credential-provider/
 RUN touch /etc/eks/image-credential-provider/ecr-credential-provider
+ENV CPU_DIR /sys_devices_system_mock/cpu
+ENV NODE_DIR /sys_devices_system_mock/node
 
 ENTRYPOINT ["/usr/lib/systemd/systemd","--system"]
