@@ -28,6 +28,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: hack/nodeadm-check-generate.sh
+  nodeadm-check-vendor:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: hack/nodeadm-check-vendor.sh
   nodeadm-test:
     runs-on: ubuntu-latest
     steps:
