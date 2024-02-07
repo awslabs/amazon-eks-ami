@@ -260,7 +260,7 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	maxPods, ok := getMaxPod(cfg.Status.Instance.Type)
+	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
 	if !ok {
 		return
 	}
@@ -477,20 +477,16 @@ func getCPUMillicoresToReserve() int {
 
 // getResourceToReserveInRange calculates the CPU resources to reserve for a given range.
 func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int) int {
-	if totalCPU > startRange {
-		if totalCPU < endRange {
-			return (totalCPU - startRange) * percentage / 10000
-		}
-		return (endRange - startRange) * percentage / 10000
+	if totalCPU <= startRange {
+		return 0
 	}
-	return 0
+	reserved := totalCPU
+	if reserved > endRange {
+		reserved = endRange
+	}
+	return (reserved - startRange) * percentage / 10000
 }
 
 func getMemoryMebibytesToReserve(maxPods int) int {
 	return 11*maxPods + 255
-}
-
-func getMaxPod(instanceType string) (int, bool) {
-	maxPod, ok := MaxPodsPerInstanceType[instanceType]
-	return maxPod, ok
 }
