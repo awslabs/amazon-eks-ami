@@ -35,6 +35,9 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
+	// default value from kubelet
+	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
+	defaultMaxPods = 110
 )
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
@@ -260,15 +263,16 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
+	memoryReservation := getMemoryMebibytesToReserve(defaultMaxPods)
 	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if !ok {
-		return
+	if ok {
+		ksc.MaxPods = int32(maxPods)
+		memoryReservation = getMemoryMebibytesToReserve(maxPods)
 	}
-	ksc.MaxPods = int32(maxPods)
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(maxPods)),
+		"memory":            fmt.Sprintf("%dMi", memoryReservation),
 	}
 }
 

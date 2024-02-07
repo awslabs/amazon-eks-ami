@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	cpuDirRegExp = regexp.MustCompile(`cpu(\d+)`)
+	cpuDirRegExp = regexp.MustCompile(`/cpu(\d+)`)
 	nodeDir      = "/sys/devices/system/node"
 	cpusPath     = "/sys/devices/system/cpu"
 )
@@ -116,7 +116,7 @@ func getCPUPhysicalPackageID(cpuPath string) (string, error) {
 func getCoresInfo(cpuDirs []string) ([]Core, error) {
 	cores := make([]Core, 0, len(cpuDirs))
 	for _, cpuDir := range cpuDirs {
-		cpuID, err := getMatchedInt(cpuDir)
+		cpuID, err := getCPUID(cpuDir)
 		if err != nil {
 			return nil, fmt.Errorf("unexpected format of CPU directory, cpuDirRegExp %s, cpuDir: %s", cpuDirRegExp, cpuDir)
 		}
@@ -174,7 +174,7 @@ func getCoresInfo(cpuDirs []string) ([]Core, error) {
 	return cores, nil
 }
 
-func getMatchedInt(str string) (int, error) {
+func getCPUID(str string) (int, error) {
 	matches := cpuDirRegExp.FindStringSubmatch(str)
 	if len(matches) != 2 {
 		return 0, fmt.Errorf("failed to match regexp, str: %s", str)
