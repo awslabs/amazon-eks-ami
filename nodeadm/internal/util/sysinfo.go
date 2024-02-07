@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	cpuDirRegExp = regexp.MustCompile(`/cpu(\d+)`)
+	cpuDirRegExp = regexp.MustCompile(`cpu(\d+)`)
 	nodeDir      = "/sys/devices/system/node"
 	cpusPath     = "/sys/devices/system/cpu"
 )
@@ -116,11 +116,11 @@ func getCPUPhysicalPackageID(cpuPath string) (string, error) {
 func getCoresInfo(cpuDirs []string) ([]Core, error) {
 	cores := make([]Core, 0, len(cpuDirs))
 	for _, cpuDir := range cpuDirs {
-		cpuID, err := getMatchedInt(cpuDirRegExp, cpuDir)
+		cpuID, err := getMatchedInt(cpuDir)
 		if err != nil {
 			return nil, fmt.Errorf("unexpected format of CPU directory, cpuDirRegExp %s, cpuDir: %s", cpuDirRegExp, cpuDir)
 		}
-		if !isCPUOnline(cpuDir) {
+		if !IsCPUOnline(cpuID) {
 			continue
 		}
 
@@ -174,8 +174,8 @@ func getCoresInfo(cpuDirs []string) ([]Core, error) {
 	return cores, nil
 }
 
-func getMatchedInt(rgx *regexp.Regexp, str string) (int, error) {
-	matches := rgx.FindStringSubmatch(str)
+func getMatchedInt(str string) (int, error) {
+	matches := cpuDirRegExp.FindStringSubmatch(str)
 	if len(matches) != 2 {
 		return 0, fmt.Errorf("failed to match regexp, str: %s", str)
 	}
@@ -196,10 +196,10 @@ func getCoreID(cpuPath string) (string, error) {
 	return strings.TrimSpace(string(coreID)), err
 }
 
-func isCPUOnline(cpuPath string) bool {
-	cpuOnlinePath, err := filepath.Abs(cpusPath + "online")
+func IsCPUOnline(cpuID int) bool {
+	cpuOnlinePath, err := filepath.Abs(cpusPath + "/online")
 	if err != nil {
-		zap.L().Info(fmt.Sprintf("Unable to get absolute path for %s", cpuPath))
+		zap.L().Info(fmt.Sprintf("Unable to get absolute path for %s/online", cpusPath))
 		return false
 	}
 
@@ -212,13 +212,7 @@ func isCPUOnline(cpuPath string) bool {
 		zap.L().Info(fmt.Sprintf("Unable to stat %s: %s", cpuOnlinePath, err))
 	}
 
-	cpuID, err := getCPUID(cpuPath)
-	if err != nil {
-		zap.L().Info(fmt.Sprintf("Unable to get CPU ID from path %s: %s", cpuPath, err))
-		return false
-	}
-
-	isOnline, err := isCpuIDOnline(cpuOnlinePath, cpuID)
+	isOnline, err := isCpuOnline(cpuOnlinePath, uint16(cpuID))
 	if err != nil {
 		zap.L().Info(fmt.Sprintf("Unable to get online CPUs list: %s", err))
 		return false
@@ -226,20 +220,7 @@ func isCPUOnline(cpuPath string) bool {
 	return isOnline
 }
 
-func getCPUID(dir string) (uint16, error) {
-	regex := regexp.MustCompile("cpu([0-9]+)")
-	matches := regex.FindStringSubmatch(dir)
-	if len(matches) == 2 {
-		id, err := strconv.Atoi(matches[1])
-		if err != nil {
-			return 0, err
-		}
-		return uint16(id), nil
-	}
-	return 0, fmt.Errorf("can't get CPU ID from %s", dir)
-}
-
-func isCpuIDOnline(path string, cpuID uint16) (bool, error) {
+func isCpuOnline(path string, cpuID uint16) (bool, error) {
 	// #nosec G304 // This path is cpuOnlinePath from isCPUOnline
 	fileContent, err := os.ReadFile(path)
 	if err != nil {

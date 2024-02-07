@@ -29,6 +29,6 @@ COPY test/e2e/helpers.sh /helpers.sh
 RUN mkdir -p /etc/eks/image-credential-provider/
 RUN touch /etc/eks/image-credential-provider/ecr-credential-provider
 ENV CPU_DIR /sys_devices_system_mock/cpu
-ENV NODE_DIR //sys_devices_system_mock/node
+ENV NODE_DIR /sys_devices_system_mock/node
 
 ENTRYPOINT ["/usr/lib/systemd/systemd","--system"]
