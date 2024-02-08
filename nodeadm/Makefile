@@ -46,8 +46,8 @@ crds: controller-gen ## Generate CustomResourceDefinition objects.
 .PHONY: generate
 generate: generate-code generate-doc ## Generate code and documentation.
 
-.PHONY: generate
-generate: controller-gen conversion-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+.PHONY: generate-code
+generate-code: controller-gen conversion-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object paths="./..."
 	$(CONVERSION_GEN) --input-dirs="./internal/api/bridge" --output-file-base=zz_generated.conversion --go-header-file=/dev/null -v0
 
