@@ -55,7 +55,8 @@ generate-code: controller-gen conversion-gen ## Generate code containing DeepCop
 generate-doc: crd-ref-docs
 	$(CRD_REF_DOCS) --config=doc/config.yaml --source-path=api/ --renderer=markdown --templates-dir=doc/templates --output-path=doc/api.md
 	cat -s doc/api.md > doc/api.md.tmp
-	mv doc/api.md.tmp doc/api.md
+	sed '$$ d' doc/api.md.tmp > doc/api.md
+	rm doc/api.md.tmp
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
