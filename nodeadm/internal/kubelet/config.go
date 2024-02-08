@@ -35,9 +35,6 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
-	// default value from kubelet
-	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
-	defaultMaxPods = 110
 )
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
@@ -263,16 +260,17 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	memoryReservation := getMemoryMebibytesToReserve(defaultMaxPods)
+	zap.L().Info(fmt.Sprintf("calculate the max pod for instance type: %s", cfg.Status.Instance.Type))
 	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if ok {
+	if !ok {
+		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+	} else {
 		ksc.MaxPods = int32(maxPods)
-		memoryReservation = getMemoryMebibytesToReserve(maxPods)
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", memoryReservation),
+		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
 	}
 }
 
@@ -491,6 +489,6 @@ func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int)
 	return (reserved - startRange) * percentage / 10000
 }
 
-func getMemoryMebibytesToReserve(maxPods int) int {
+func getMemoryMebibytesToReserve(maxPods int32) int32 {
 	return 11*maxPods + 255
 }
