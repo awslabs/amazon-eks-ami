@@ -14,6 +14,9 @@ nav:
     - 'Overview': usage/overview.md
     - 'Amazon Linux 2': usage/al2.md
     - 'Amazon Linux 2023': usage/al2023.md
+  - 'nodeadm':
+    - 'Overview': nodeadm/README.md
+    - 'API': nodeadm/api.md
 
 theme:
   name: material
