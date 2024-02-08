@@ -54,3 +54,4 @@ _Appears in:_
 | --- | --- |
 | `cluster` _[ClusterDetails](#clusterdetails)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+
