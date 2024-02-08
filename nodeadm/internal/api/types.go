@@ -28,8 +28,8 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster    ClusterDetails `json:"cluster,omitempty"`
-	Kubelet    KubeletOptions `json:"kubelet,omitempty"`
+	Cluster    ClusterDetails    `json:"cluster,omitempty"`
+	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 }
 

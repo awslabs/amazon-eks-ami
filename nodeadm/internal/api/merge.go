@@ -11,41 +11,38 @@ import (
 
 // Merges two NodeConfigs with custom collision handling
 func (dst *NodeConfig) Merge(src *NodeConfig) error {
-	return mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(nodeConfigTransformer{}))
+	return mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(kubeletTransformer{}))
 }
 
 const (
-	kubeletFlagsName     = "Flags"
-	kubeletConfigName    = "Config"
-	containerdConfigName = "Config"
+	kubeletFlagsName  = "Flags"
+	kubeletConfigName = "Config"
 )
 
-type nodeConfigTransformer struct{}
+type kubeletTransformer struct{}
 
-func (k nodeConfigTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+func (k kubeletTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
 	if typ == reflect.TypeOf(KubeletOptions{}) {
 		return func(dst, src reflect.Value) error {
-			transformKubeletFlags(
+			k.transformFlags(
 				dst.FieldByName(kubeletFlagsName),
 				src.FieldByName(kubeletFlagsName),
 			)
-			return transformKubeletConfig(
+
+			if err := k.transformConfig(
 				dst.FieldByName(kubeletConfigName),
 				src.FieldByName(kubeletConfigName),
-			)
-		}
-	} else if typ == reflect.TypeOf(ContainerdOptions{}) {
-		return func(dst, src reflect.Value) error {
-			return transformContainerdConfig(
-				dst.FieldByName(containerdConfigName),
-				src.FieldByName(containerdConfigName),
-			)
+			); err != nil {
+				return err
+			}
+
+			return nil
 		}
 	}
 	return nil
 }
 
-func transformKubeletFlags(dst, src reflect.Value) {
+func (k kubeletTransformer) transformFlags(dst, src reflect.Value) {
 	if dst.CanSet() {
 		// kubelet flags are parsed using https://github.com/spf13/pflag, where
 		// flag order determines precedence. For single-value flags this is
@@ -59,7 +56,7 @@ func transformKubeletFlags(dst, src reflect.Value) {
 	}
 }
 
-func transformKubeletConfig(dst, src reflect.Value) error {
+func (k kubeletTransformer) transformConfig(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		if dst.Len() <= 0 {
 			// if the destination is empty just use the source data
@@ -91,18 +88,4 @@ func toInlineDocument(m map[string]interface{}) (InlineDocument, error) {
 		rawMap[key] = runtime.RawExtension{Raw: rawBytes}
 	}
 	return rawMap, nil
-}
-
-func transformContainerdConfig(dst, src reflect.Value) error {
-	if dst.CanSet() {
-		if dst.Len() <= 0 {
-			// if the destination is empty just use the source data
-			dst.Set(src)
-		} else if src.Len() > 0 {
-			// TODO
-			mergedToml := ""
-			dst.SetString(mergedToml)
-		}
-	}
-	return nil
 }

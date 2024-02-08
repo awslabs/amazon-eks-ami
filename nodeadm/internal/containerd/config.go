@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"go.uber.org/zap"
 )
 
 const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
@@ -36,12 +37,16 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	if util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
+	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
+	if err:= util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
 		return err
 	}
-	// write the user-provided containerd config toml to the import directory
-	containerConfigImportPath := filepath.Join(containerdConfigImportDir, "00-overrides.toml")
-	return util.WriteFileWithDir(containerConfigImportPath, []byte(cfg.Spec.Containerd.Config), containerdConfigPerm)
+	if len(cfg.Spec.Containerd.Config) > 0 {
+		containerConfigImportPath := filepath.Join(containerdConfigImportDir, "00-nodeadm.toml")
+		zap.L().Info("Writing user containerd config to drop-in file..", zap.String("path", containerConfigImportPath))
+		return util.WriteFileWithDir(containerConfigImportPath, []byte(cfg.Spec.Containerd.Config), containerdConfigPerm)
+	}
+	return nil
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
