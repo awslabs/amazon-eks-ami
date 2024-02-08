@@ -188,7 +188,6 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 			ipHostMappings = append(ipHostMappings, fmt.Sprintf("%s\t%s", ip, apiUrl.Host))
 		}
 		output := strings.Join(ipHostMappings, "\n") + "\n"
-		zap.L().Info(fmt.Sprintf("Log returned ipAddress: %v", output))
 
 		if err != nil {
 			return err
@@ -260,7 +259,6 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	zap.L().Info(fmt.Sprintf("calculate the max pod for instance type: %s", cfg.Status.Instance.Type))
 	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
 	if !ok {
 		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
@@ -461,7 +459,7 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 func getCPUMillicoresToReserve() int {
 	totalCPUMillicores, err := util.GetMilliNumCores()
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("Error found when GetMilliNumCores: %v", err))
+		zap.L().Error("Error found when GetMilliNumCores", zap.Error(err))
 		return 0
 	}
 	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
