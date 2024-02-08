@@ -7,11 +7,9 @@ import re
 whereami = os.path.abspath(__file__)
 os.chdir(os.path.dirname(whereami))
 
-doc_file_name = '../doc/USER_GUIDE.md'
-al2_boundary = '<!-- template-variable-table-boundary-al2 -->'
-al2023_boundary = '<!-- template-variable-table-boundary-al2023 -->'
+boundary = '<!-- template-variable-table-boundary -->'
 
-def update_doc(doc: str, boundary: str, template_path: str) -> str:
+def update_doc(doc: str, template_path: str) -> str:
     with open(template_path) as template_file:
         template = json.load(template_file)
 
@@ -53,12 +51,10 @@ def update_doc(doc: str, boundary: str, template_path: str) -> str:
     new_doc = re.sub(table_pattern, "\n".join([boundary, *new_table_lines, boundary]), doc)
     return new_doc
 
-
-with open(doc_file_name) as doc_file:
-    doc = doc_file.read()
-
-doc = update_doc(doc, al2_boundary, '../templates/al2/template.json')
-doc = update_doc(doc, al2023_boundary, '../templates/al2023/template.json')
-
-with open(doc_file_name, 'w') as doc_file:
-    doc_file.write(doc)
+for template in ['al2', 'al2023']:
+    doc_file_name = f'../doc/usage/{template}.md'
+    with open(doc_file_name) as doc_file:
+        doc = doc_file.read()
+        doc = update_doc(doc, f'../templates/{template}/template.json')
+    with open(doc_file_name, 'w') as doc_file:
+        doc_file.write(doc)

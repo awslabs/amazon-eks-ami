@@ -5,6 +5,10 @@ custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
 the same configuration that Amazon EKS uses to create the official Amazon
 EKS-optimized AMI.
 
+**Check out the [📖 documentation](https://awslabs.github.io/amazon-eks-ami/) to learn more.**
+
+---
+
 ## 🚀 Getting started
 
 If you are new to Amazon EKS, we recommend that you follow
@@ -41,10 +45,6 @@ The Makefile chooses a particular kubelet binary to use per Kubernetes version w
 > **Note**
 > The default instance type to build this AMI does not qualify for the AWS free tier.
 > You are charged for any instances created when building this AMI.
-
-## 👩‍💻 Using the AMI
-
-The [AMI user guide](https://awslabs.github.io/amazon-eks-ami/USER_GUIDE/) has details about the AMI's internals, and the [EKS user guide](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html#launch-template-custom-ami) explains how to use a custom AMI in a managed node group.
 
 ## 🔒 Security
 
