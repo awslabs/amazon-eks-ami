@@ -3,20 +3,12 @@
 ## Packages
 - [node.eks.aws/v1alpha1](#nodeeksawsv1alpha1)
 
-
 ## node.eks.aws/v1alpha1
-
 
 ### Resource Types
 - [NodeConfig](#nodeconfig)
 
-
-
 #### ClusterDetails
-
-
-
-
 
 _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
@@ -30,12 +22,7 @@ _Appears in:_
 | `enableOutpost` _boolean_ |  |
 | `id` _string_ |  |
 
-
 #### KubeletOptions
-
-
-
-
 
 _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
@@ -45,14 +32,9 @@ _Appears in:_
 | `config` _object (keys:string, values:RawExtension)_ | Config is a kubelet config that can be provided by the user to override default generated configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/ |
 | `flags` _string array_ | Flags is a list of command-line kubelet arguments. These arguments are amended to the generated defaults, and therefore will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/ |
 
-
 #### NodeConfig
 
-
-
 NodeConfig is the Schema for the nodeconfigs API
-
-
 
 | Field | Description |
 | --- | --- |
@@ -63,12 +45,7 @@ NodeConfig is the Schema for the nodeconfigs API
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |
 | `spec` _[NodeConfigSpec](#nodeconfigspec)_ |  |
 
-
 #### NodeConfigSpec
-
-
-
-
 
 _Appears in:_
 - [NodeConfig](#nodeconfig)
@@ -77,5 +54,3 @@ _Appears in:_
 | --- | --- |
 | `cluster` _[ClusterDetails](#clusterdetails)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
-
-
