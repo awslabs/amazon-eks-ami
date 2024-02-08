@@ -55,17 +55,13 @@ func CalcMaxPods(awsRegion string, instanceType string) int32 {
 	zap.L().Info("calculate the max pod for instance type", zap.String("instanceType", instanceType))
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))
 	if err != nil {
-		zap.L().Warn("error loading AWS SDK config when calculating the max pod, setting it to default value",
-			zap.Int("defaultMaxPods", defaultMaxPods),
-			zap.Error(err))
+		zap.L().Warn("error loading AWS SDK config when calculating the max pod, setting it to default value", zap.Error(err))
 		return defaultMaxPods
 	}
 	ec2Client := &util.EC2Client{Client: ec2.NewFromConfig(cfg)}
 	eniInfo, err := util.GetEniInfoForInstanceType(ec2Client, instanceType)
 	if err != nil {
-		zap.L().Warn("cannot find the max pod for input instance type, setting it to default value",
-			zap.String("instanceType", instanceType),
-			zap.Int("defaultMaxPods", defaultMaxPods))
+		zap.L().Warn("cannot find the max pod for input instance type, setting it to default value")
 		return defaultMaxPods
 	}
 	return eniInfo.EniCount*(eniInfo.PodsPerEniCount-1) + 2
