@@ -171,4 +171,3 @@ ECR credentials should now be obtained via a plugin, the `ecr-credential-provide
 Additional image credential provider plugins may be appended to `/etc/eks/image-credential-provider/config.json`. In Kubernetes versions 1.26 and below, all plugins in this file must support `credentialprovider.kubelet.k8s.io/v1alpha1`. In Kubernetes versions 1.27 and above, they must support `credentialprovider.kubelet.k8s.io/v1`.
 
 For more information about image credential provider plugins, refer to the [Kubernetes documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-credential-provider/).
-

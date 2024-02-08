@@ -53,7 +53,7 @@ generate-code: controller-gen conversion-gen ## Generate code containing DeepCop
 
 .PHONY: generate-doc
 generate-doc: crd-ref-docs
-	$(CRD_REF_DOCS) --config=doc/config.yaml --source-path=api/ --renderer=markdown --output-path=doc/api.md
+	$(CRD_REF_DOCS) --config=doc/config.yaml --source-path=api/ --renderer=markdown --templates-dir=doc/templates --output-path=doc/api.md
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
