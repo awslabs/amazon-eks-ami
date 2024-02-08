@@ -46,22 +46,14 @@ k8s=1.28
 build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
 	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s))
 
-# ensure that these flags are equivalent to the rules in the .editorconfig
-SHFMT_FLAGS := --list \
---language-dialect auto \
---indent 2 \
---binary-next-line \
---case-indent \
---space-redirects
-
 .PHONY: fmt
 fmt: ## Format the source files
-	hack/shfmt $(SHFMT_FLAGS) --write $(MAKEFILE_DIR)
+	hack/shfmt --write
 
 .PHONY: lint
 lint: lint-docs ## Check the source files for syntax and format issues
-	hack/shfmt $(SHFMT_FLAGS) --diff $(MAKEFILE_DIR)
-	hack/shellcheck --format gcc --severity error $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
+	hack/shfmt --diff
+	hack/shellcheck --format gcc --severity error $(shell find $(MAKEFILE_DIR) -type f -name '*.sh' -not -path '*/nodeadm/vendor/*')
 	hack/lint-space-errors.sh
 
 .PHONY: test
