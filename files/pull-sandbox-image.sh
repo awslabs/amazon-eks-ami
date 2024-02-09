@@ -14,12 +14,9 @@ if [[ -n $(sudo ctr --namespace k8s.io image ls | grep "${sandbox_image}") ]]; t
   exit 0
 fi
 
-# if the sandbox image is provided by the bootstrap script, then the region is
-# guaranteed to come from this data source.
-# see: https://github.com/awslabs/amazon-eks-ami/blob/baef6f0860f60dbec366de30853e47418e3fb430/files/bootstrap.sh#L320-L338
-# if the image is customer provided, then this is just a sane default for the
-# region when attempting to get ecr credentials.
-region=$(imds 'latest/dynamic/instance-identity/document' | jq .region -r)
+# use the region that the sandbox image comes from for the ecr authentication,
+# also mitigating the localzone isse: https://github.com/aws/aws-cli/issues/7043
+region=$(echo "${sandbox_image}" | cut -f4 -d ".")
 
 MAX_RETRIES=3
 
