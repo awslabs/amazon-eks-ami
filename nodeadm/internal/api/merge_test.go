@@ -65,6 +65,9 @@ func TestMerge(t *testing.T) {
 						"--register-with-taints=the=taint:NoSchedule",
 					},
 				},
+				Containerd: ContainerdOptions{
+					Config: "base",
+				},
 			},
 			patchSpec: NodeConfigSpec{
 				Kubelet: KubeletOptions{
@@ -77,6 +80,9 @@ func TestMerge(t *testing.T) {
 					Flags: []string{
 						"--node-labels=nodegroup=user-set",
 					},
+				},
+				Containerd: ContainerdOptions{
+					Config: "patch",
 				},
 			},
 			expectedSpec: NodeConfigSpec{
@@ -99,6 +105,9 @@ func TestMerge(t *testing.T) {
 						"--register-with-taints=the=taint:NoSchedule",
 						"--node-labels=nodegroup=user-set",
 					},
+				},
+				Containerd: ContainerdOptions{
+					Config: "patch",
 				},
 			},
 		},

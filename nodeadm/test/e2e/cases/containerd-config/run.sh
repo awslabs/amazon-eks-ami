@@ -13,3 +13,4 @@ wait::dbus-ready
 nodeadm init --skip run --config-source file://config.yaml
 
 assert::files-equal /etc/containerd/config.toml expected-containerd-config.toml
+assert::files-equal /etc/containerd/config.d/00-nodeadm.toml expected-user-containerd-config.toml

@@ -49,6 +49,14 @@ spec:
                   name:
                     type: string
                 type: object
+              containerd:
+                properties:
+                  config:
+                    description: Config is an inline containerd config toml document
+                      that can be provided by the user to override default generated
+                      configurations https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+                    type: string
+                type: object
               kubelet:
                 properties:
                   config:

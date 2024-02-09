@@ -28,8 +28,9 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster ClusterDetails `json:"cluster,omitempty"`
-	Kubelet KubeletOptions `json:"kubelet,omitempty"`
+	Cluster    ClusterDetails    `json:"cluster,omitempty"`
+	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Containerd ContainerdOptions `json:"containerd,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -67,6 +68,13 @@ type KubeletOptions struct {
 // InlineDocument is an alias to a dynamically typed map. This allows using
 // embedded YAML and JSON types within the parent yaml config.
 type InlineDocument map[string]runtime.RawExtension
+
+type ContainerdOptions struct {
+	// Config is an inline containerd config toml document that can be provided
+	// by the user to override default generated configurations
+	// https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+	Config string `json:"config,omitempty"`
+}
 
 type IPFamily string
 

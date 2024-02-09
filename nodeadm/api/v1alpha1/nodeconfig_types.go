@@ -30,8 +30,9 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster ClusterDetails `json:"cluster,omitempty"`
-	Kubelet KubeletOptions `json:"kubelet,omitempty"`
+	Cluster    ClusterDetails    `json:"cluster,omitempty"`
+	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Containerd ContainerdOptions `json:"containerd,omitempty"`
 }
 
 type ClusterDetails struct {
@@ -52,4 +53,11 @@ type KubeletOptions struct {
 	// amended to the generated defaults, and therefore will act as overrides
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	Flags []string `json:"flags,omitempty"`
+}
+
+type ContainerdOptions struct {
+	// Config is an inline containerd config toml document that can be provided
+	// by the user to override default generated configurations
+	// https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+	Config string `json:"config,omitempty"`
 }

@@ -7,3 +7,9 @@ spec:
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
+  containerd:
+    config: |
+      version = 2
+
+      [grpc]
+      address = "/run/containerd/containerd.sock"
