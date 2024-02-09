@@ -5,11 +5,6 @@ RUN mv /bin/cmd /imds-mock
 
 FROM golang:1.21 AS nodeadm-build
 WORKDIR /go/src/github.com/awslabs/amazon-eks-ami/nodeadm
-RUN go env -w GOPROXY=direct
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-COPY Makefile .
 COPY . .
 RUN make build
 RUN mv _bin/nodeadm /nodeadm

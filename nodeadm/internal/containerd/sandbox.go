@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/containerd/containerd/integration/remote"
 	"go.uber.org/zap"
@@ -31,7 +32,7 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	zap.L().Info("Found sandbox image", zap.String("image", sandboxImage))
 
 	zap.L().Info("Fetching ECR authorization token..")
-	ecrUserToken, err := util.GetAuthorizationToken(cfg.Status.Instance.Region)
+	ecrUserToken, err := ecr.GetAuthorizationToken(cfg.Status.Instance.Region)
 	if err != nil {
 		return err
 	}

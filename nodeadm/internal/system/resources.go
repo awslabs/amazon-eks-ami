@@ -1,13 +1,14 @@
-package util
+package system
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -25,7 +26,7 @@ const (
 	packageIDFilePath = sysFsCPUTopology + "/physical_package_id"
 )
 
-type Core struct {
+type core struct {
 	Id       int   `json:"core_id"`
 	Threads  []int `json:"thread_ids"`
 	SocketID int   `json:"socket_id"`
@@ -113,8 +114,8 @@ func getCPUPhysicalPackageID(cpuPath string) (string, error) {
 	return strings.TrimSpace(string(packageID)), err
 }
 
-func getCoresInfo(cpuDirs []string) ([]Core, error) {
-	cores := make([]Core, 0, len(cpuDirs))
+func getCoresInfo(cpuDirs []string) ([]core, error) {
+	cores := make([]core, 0, len(cpuDirs))
 	for _, cpuDir := range cpuDirs {
 		cpuID, err := getCPUID(cpuDir)
 		if err != nil {
@@ -158,7 +159,7 @@ func getCoresInfo(cpuDirs []string) ([]Core, error) {
 			}
 		}
 		if coreIDx == -1 {
-			cores = append(cores, Core{})
+			cores = append(cores, core{})
 			coreIDx = len(cores) - 1
 		}
 		desiredCore := &cores[coreIDx]
