@@ -3,14 +3,25 @@ set -euo pipefail
 
 source <(grep "sandbox_image" /etc/containerd/config.toml | tr -d ' ')
 
+### skip if we don't have a sandbox_image set in config.toml
+if [[ -z ${sandbox_image:-} ]]; then
+  echo >&2 "Skipping ... missing sandbox_image from /etc/containerd/config.toml"
+  exit 0
+fi
+
 ### Short-circuit fetching sandbox image if its already present
-if [[ "$(sudo ctr --namespace k8s.io image ls | grep $sandbox_image)" != "" ]]; then
+if [[ $(sudo ctr --namespace k8s.io image ls | grep "${sandbox_image}") != "" ]]; then
   exit 0
 fi
 
 # use the region that the sandbox image comes from for the ecr authentication,
 # also mitigating the localzone isse: https://github.com/aws/aws-cli/issues/7043
 region=$(echo "${sandbox_image}" | cut -f4 -d ".")
+### skip if we don't find a region in the sandbox image
+if [[ -z ${region:-} ]]; then
+  echo >&2 "Skipping ... missing region in sandbox_image"
+  exit 0
+fi
 
 MAX_RETRIES=3
 
@@ -29,7 +40,7 @@ function retry() {
   done
 }
 
-ecr_password=$(retry aws ecr get-login-password --region $region)
+ecr_password=$(retry aws ecr get-login-password --region "${region}")
 if [[ -z ${ecr_password} ]]; then
   echo >&2 "Unable to retrieve the ECR password."
   exit 1
