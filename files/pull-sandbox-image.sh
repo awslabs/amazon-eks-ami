@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 source <(grep "sandbox_image" /etc/containerd/config.toml | tr -d ' ')
 
