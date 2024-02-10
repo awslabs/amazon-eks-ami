@@ -38,7 +38,7 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 		return err
 	}
 	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
-	if err:= util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
+	if err := util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
 		return err
 	}
 	if len(cfg.Spec.Containerd.Config) > 0 {

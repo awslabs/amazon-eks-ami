@@ -89,8 +89,8 @@ func TestProviderID(t *testing.T) {
 		kubeletVersion        string
 		expectedCloudProvider string
 	}{
-		{kubeletVersion: "v1.23.0", expectedCloudProvider: "external"},
-		{kubeletVersion: "v1.25.0", expectedCloudProvider: "external"},
+		{kubeletVersion: "v1.23.0", expectedCloudProvider: "aws"},
+		{kubeletVersion: "v1.25.0", expectedCloudProvider: "aws"},
 		{kubeletVersion: "v1.26.0", expectedCloudProvider: "external"},
 		{kubeletVersion: "v1.27.0", expectedCloudProvider: "external"},
 	}
@@ -108,10 +108,11 @@ func TestProviderID(t *testing.T) {
 	for _, test := range tests {
 		kubeletAruments := make(map[string]string)
 		kubetConfig := defaultKubeletSubConfig()
-		kubetConfig.withCloudProvider(&nodeConfig, kubeletAruments)
+		kubetConfig.withCloudProvider(test.kubeletVersion, &nodeConfig, kubeletAruments)
 		assert.Equal(t, test.expectedCloudProvider, kubeletAruments["cloud-provider"])
 		if kubeletAruments["cloud-provider"] == "external" {
 			assert.Equal(t, *kubetConfig.ProviderID, providerId)
+			// TODO assert that the --hostname-override == PrivateDnsName
 		}
 	}
 }

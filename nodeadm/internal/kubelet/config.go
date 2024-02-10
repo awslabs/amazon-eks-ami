@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
@@ -244,18 +244,16 @@ func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[st
 	}
 }
 
-func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
-	// ref: https://github.com/kubernetes/kubernetes/pull/121367
-	flags["cloud-provider"] = "external"
-
-	// provider ID needs to be specified when the cloud provider is external.
-	// evaluate if this can be done within the cloud controller. since the
-	// values are coming from IMDS this might not be feasible
-	ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
-
-	// use ec2 instance-id as node hostname which is unique, stable, and incurs
-	// no additional requests
-	// flags["hostname-override"] = cfg.Status.Instance.ID
+func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.NodeConfig, flags map[string]string) {
+	if semver.Compare(kubeletVersion, "v1.26.0") >= 0 {
+		// ref: https://github.com/kubernetes/kubernetes/pull/121367
+		flags["cloud-provider"] = "external"
+		// provider ID needs to be specified when the cloud provider is external
+		ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
+		// TODO set the --hostname-override equal to the EC2 PrivateDnsName
+	} else {
+		flags["cloud-provider"] = "aws"
+	}
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
@@ -332,7 +330,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	}
 
 	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
-	kubeletConfig.withCloudProvider(cfg, k.flags)
+	kubeletConfig.withCloudProvider(kubeletVersion, cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg)
 
 	return &kubeletConfig, nil
