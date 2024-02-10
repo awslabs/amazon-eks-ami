@@ -22,6 +22,15 @@ _Appears in:_
 | `enableOutpost` _boolean_ |  |
 | `id` _string_ |  |
 
+#### ContainerdOptions
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `config` _string_ | Config is an inline containerd config toml document that can be provided by the user to override default generated configurations https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md |
+
 #### KubeletOptions
 
 _Appears in:_
@@ -54,3 +63,4 @@ _Appears in:_
 | --- | --- |
 | `cluster` _[ClusterDetails](#clusterdetails)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
