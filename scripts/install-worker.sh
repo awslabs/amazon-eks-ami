@@ -174,6 +174,9 @@ sudo yum versionlock runc-*
 sudo yum install -y containerd-${CONTAINERD_VERSION}
 sudo yum versionlock containerd-*
 
+# install cri-tools for crictl, needed to interact with containerd's CRI server
+sudo yum install -y cri-tools
+
 sudo mkdir -p /etc/eks/containerd
 if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
@@ -409,14 +412,9 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
   ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
 
-  PAUSE_CONTAINER="${ECR_URI}/eks/pause:${PAUSE_CONTAINER_VERSION}"
-  cat /etc/eks/containerd/containerd-config.toml | sed s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g | sudo tee /etc/eks/containerd/containerd-cached-pause-config.toml
-  sudo cp -v /etc/eks/containerd/containerd-cached-pause-config.toml /etc/containerd/config.toml
-  sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
-  sudo chown root:root /etc/systemd/system/sandbox-image.service
   sudo systemctl daemon-reload
   sudo systemctl start containerd
-  sudo systemctl enable containerd sandbox-image
+  sudo systemctl enable containerd
 
   K8S_MINOR_VERSION=$(echo "${KUBERNETES_VERSION}" | cut -d'.' -f1-2)
 
@@ -464,7 +462,6 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   fi
 
   CACHE_IMGS=(
-    "${PAUSE_CONTAINER}"
     ${KUBE_PROXY_IMGS[@]+"${KUBE_PROXY_IMGS[@]}"}
     ${VPC_CNI_IMGS[@]+"${VPC_CNI_IMGS[@]}"}
   )
