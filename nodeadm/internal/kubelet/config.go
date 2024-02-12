@@ -27,6 +27,7 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
@@ -281,23 +282,7 @@ func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, kubele
 	// CRI image pinning behavior and no longer considers the flag value.
 	// see: https://github.com/kubernetes/kubernetes/pull/118544
 	if semver.Compare(kubeletVersion, "v1.29.0") < 0 {
-		awsDomain, err := util.GetAwsDomain(context.TODO(), imds.New(imds.Options{}))
-		if err != nil {
-			return err
-		}
-		ecrUri, err := util.GetEcrUri(util.GetEcrUriRequest{
-			Region:    cfg.Status.Instance.Region,
-			Domain:    awsDomain,
-			AllowFips: true,
-		})
-		if err != nil {
-			return err
-		}
-		pauseContainerImage, err := util.GetPauseContainer(ecrUri)
-		if err != nil {
-			return err
-		}
-		flags["pod-infra-container-image"] = pauseContainerImage
+		flags["pod-infra-container-image"] = cfg.Status.Defaults.SandboxImage
 	}
 	return nil
 }
@@ -455,7 +440,7 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 }
 
 func getCPUMillicoresToReserve() int {
-	totalCPUMillicores, err := util.GetMilliNumCores()
+	totalCPUMillicores, err := system.GetMilliNumCores()
 	if err != nil {
 		zap.L().Error("Error found when GetMilliNumCores", zap.Error(err))
 		return 0

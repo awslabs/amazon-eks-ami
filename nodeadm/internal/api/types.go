@@ -35,6 +35,7 @@ type NodeConfigSpec struct {
 
 type NodeConfigStatus struct {
 	Instance InstanceDetails `json:"instance,omitempty"`
+	Defaults DefaultOptions  `json:"default,omitempty"`
 }
 
 type InstanceDetails struct {
@@ -43,6 +44,10 @@ type InstanceDetails struct {
 	Type             string `json:"type,omitempty"`
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 	MAC              string `json:"mac,omitempty"`
+}
+
+type DefaultOptions struct {
+	SandboxImage string `json:"sandboxImage,omitempty"`
 }
 
 type ClusterDetails struct {
