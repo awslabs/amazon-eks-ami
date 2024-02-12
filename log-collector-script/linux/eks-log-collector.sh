@@ -483,12 +483,16 @@ get_ipamd_info() {
     echo "Ignoring IPAM introspection stats as mentioned" | tee -a "${COLLECT_DIR}"/ipamd/ipam_introspection_ignore.txt
   fi
 
+  ok
+
   if [[ "${ignore_metrics}" == "false" ]]; then
     try "collect L-IPAMD prometheus metrics"
     curl --max-time 3 --silent http://localhost:61678/metrics > "${COLLECT_DIR}"/ipamd/metrics.json 2>&1
   else
     echo "Ignoring Prometheus Metrics collection as mentioned" | tee -a "${COLLECT_DIR}"/ipamd/ipam_metrics_ignore.txt
   fi
+
+  ok
 
   try "collect L-IPAMD checkpoint"
   cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
