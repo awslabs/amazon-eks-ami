@@ -9,3 +9,6 @@ switch_case_indent = true
 space_redirects    = true
 keep_padding       = false
 function_next_line = false
+
+[nodeadm/vendor/**]
+ignore = true
