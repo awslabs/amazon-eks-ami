@@ -635,7 +635,7 @@ get_system_services() {
       service --status-all >> "${COLLECT_DIR}"/system/services.txt 2>&1
       ;;
     *)
-      warning "Unable to search active services."
+      warning "Unable to determine active services."
       ;;
   esac
 
