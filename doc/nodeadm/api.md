@@ -1,1 +1,0 @@
-../../nodeadm/doc/api.md
