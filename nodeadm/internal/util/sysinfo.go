@@ -61,10 +61,10 @@ func GetMilliNumCores() (int, error) {
 		return cpuCount * 1000, nil
 	}
 
-	for _, nodeDir := range nodesDirs {
-		cpuDirs, err := getCPUsPaths(nodeDir)
+	for _, dir := range nodesDirs {
+		cpuDirs, err := getCPUsPaths(dir)
 		if len(cpuDirs) == 0 {
-			zap.L().Warn(fmt.Sprintf("Found node without any CPU, nodeDir: %s, number of cpuDirs %d, err: %v", nodeDir, len(cpuDirs), err))
+			zap.L().Error("Found node without any CPU", zap.String("dir", dir), zap.Error(err))
 		} else {
 			cores, err := getCoresInfo(cpuDirs)
 			if err != nil {
@@ -126,7 +126,8 @@ func getCoresInfo(cpuDirs []string) ([]Core, error) {
 
 		rawPhysicalID, err := getCoreID(cpuDir)
 		if os.IsNotExist(err) {
-			zap.L().Warn(fmt.Sprintf("Cannot read core id for %s, core_id file does not exist, err: %s", cpuDir, err))
+			zap.L().Warn("Cannot read core id for input cpuDir, core_id file does not exist",
+				zap.String("cpuDir", cpuDir), zap.Error(err))
 			continue
 		} else if err != nil {
 			return nil, err
@@ -138,7 +139,8 @@ func getCoresInfo(cpuDirs []string) ([]Core, error) {
 
 		rawPhysicalPackageID, err := getCPUPhysicalPackageID(cpuDir)
 		if os.IsNotExist(err) {
-			zap.L().Warn(fmt.Sprintf("Cannot read physical package id for %s, physical_package_id file does not exist, err: %s", cpuDir, err))
+			zap.L().Warn("Cannot read physical package id for input cpuDir, physical_package_id file does not exist",
+				zap.String("cpuDir", cpuDir), zap.Error(err))
 			continue
 		} else if err != nil {
 			return nil, err
@@ -199,7 +201,7 @@ func getCoreID(cpuPath string) (string, error) {
 func IsCPUOnline(cpuID int) bool {
 	cpuOnlinePath, err := filepath.Abs(cpusPath + "/online")
 	if err != nil {
-		zap.L().Info(fmt.Sprintf("Unable to get absolute path for %s/online", cpusPath))
+		zap.L().Info("Unable to get absolute path", zap.String("absolutPath", cpusPath+"/online"))
 		return false
 	}
 
@@ -209,12 +211,14 @@ func IsCPUOnline(cpuID int) bool {
 		return true
 	}
 	if err != nil {
-		zap.L().Info(fmt.Sprintf("Unable to stat %s: %s", cpuOnlinePath, err))
+		zap.L().Warn("Unable to stat cpuOnlinePath",
+			zap.String("cpuOnlinePath", cpuOnlinePath),
+			zap.Error(err))
 	}
 
 	isOnline, err := isCpuOnline(cpuOnlinePath, uint16(cpuID))
 	if err != nil {
-		zap.L().Info(fmt.Sprintf("Unable to get online CPUs list: %s", err))
+		zap.L().Error("Unable to get online CPUs list", zap.Error(err))
 		return false
 	}
 	return isOnline

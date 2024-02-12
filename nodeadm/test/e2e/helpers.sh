@@ -99,3 +99,12 @@ function mock::imds() {
   imds-mock --config-file $CONFIG_PATH &
   export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338
 }
+
+function mock::instance-type() {
+  cat /etc/aemm-default-config.json | jq '.metadata.values."instance-type" = "mock-type.large" | .dynamic.values."instance-identity-document".instanceType = "mock-type.large"' | tee /etc/aemm-default-config.json
+}
+
+function revert::mock::instance-type() {
+  cat /etc/aemm-default-config.json | jq '.metadata.values."instance-type" = "m4.xlarge" | .dynamic.values."instance-identity-document".instanceType = "m4.xlarge"' | tee /etc/aemm-default-config.json
+
+}

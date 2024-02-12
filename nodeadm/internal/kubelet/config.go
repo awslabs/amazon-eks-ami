@@ -35,9 +35,6 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
-	// default value from kubelet
-	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
-	defaultMaxPods = 110
 )
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
@@ -191,7 +188,6 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 			ipHostMappings = append(ipHostMappings, fmt.Sprintf("%s\t%s", ip, apiUrl.Host))
 		}
 		output := strings.Join(ipHostMappings, "\n") + "\n"
-		zap.L().Info(fmt.Sprintf("Log returned ipAddress: %v", output))
 
 		if err != nil {
 			return err
@@ -261,16 +257,16 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	memoryReservation := getMemoryMebibytesToReserve(defaultMaxPods)
 	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if ok {
+	if !ok {
+		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+	} else {
 		ksc.MaxPods = int32(maxPods)
-		memoryReservation = getMemoryMebibytesToReserve(maxPods)
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", memoryReservation),
+		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
 	}
 }
 
@@ -461,7 +457,7 @@ func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig
 func getCPUMillicoresToReserve() int {
 	totalCPUMillicores, err := util.GetMilliNumCores()
 	if err != nil {
-		zap.L().Error(fmt.Sprintf("Error found when GetMilliNumCores: %v", err))
+		zap.L().Error("Error found when GetMilliNumCores", zap.Error(err))
 		return 0
 	}
 	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
@@ -489,6 +485,6 @@ func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int)
 	return (reserved - startRange) * percentage / 10000
 }
 
-func getMemoryMebibytesToReserve(maxPods int) int {
+func getMemoryMebibytesToReserve(maxPods int32) int32 {
 	return 11*maxPods + 255
 }
