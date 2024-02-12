@@ -27,3 +27,5 @@ jobs:
       - run: git remote add codecommit ${{ secrets.AWS_CODECOMMIT_REPO_URL }}
       - run: git checkout master
       - run: git push codecommit master
+      - run: git checkout al2023
+      - run: git push codecommit al2023
