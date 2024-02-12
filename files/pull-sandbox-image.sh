@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
 source <(grep "sandbox_image" /etc/containerd/config.toml | tr -d ' ')
 
+### skip if we don't have a sandbox_image set in config.toml
+if [[ -z ${sandbox_image:-} ]]; then
+  echo >&2 "Skipping ... missing sandbox_image from /etc/containerd/config.toml"
+  exit 0
+fi
+
 ### Short-circuit fetching sandbox image if its already present
-if [[ "$(sudo ctr --namespace k8s.io image ls | grep $sandbox_image)" != "" ]]; then
+if [[ -n $(sudo ctr --namespace k8s.io image ls | grep "${sandbox_image}") ]]; then
+  echo >&2 "Skipping ... sandbox_image '${sandbox_image}' is already present"
   exit 0
 fi
 
@@ -29,9 +35,9 @@ function retry() {
   done
 }
 
-ecr_password=$(retry aws ecr get-login-password --region $region)
+# for public, non-ecr repositories even if this fails to get ECR credentials the image will pull
+ecr_password=$(retry aws ecr get-login-password --region "${region}")
 if [[ -z ${ecr_password} ]]; then
-  echo >&2 "Unable to retrieve the ECR password."
-  exit 1
+  echo >&2 "Unable to retrieve the ECR password. Image pull may not be properly authenticated."
 fi
 retry sudo crictl pull --creds "AWS:${ecr_password}" "${sandbox_image}"
