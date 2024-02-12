@@ -15,8 +15,7 @@ There are three levels of stability and support:
 ### Beta
 - Example: `v3beta4`.
 - The software is well-tested, and production use is considered safe.
-- Support for a beta API will remain for at least one release following deprecation. That is, support for two successive beta API versions will overlap by at least one release.
-- Features will not be dropped, though the details may change.
+- Support for a beta API will remain for at least one release following its deprecation.
 - Subsequent beta or stable API versions may include incompatible changes, and migration instructions will be provided.
 
 ### Stable
