@@ -2,8 +2,7 @@ name: "Dependency Review"
 on:
   pull_request:
     branches:
-      - "master"
-      - "al2023"
+      - "main"
 permissions:
   contents: read
 jobs:
