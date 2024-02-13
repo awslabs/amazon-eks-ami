@@ -7,17 +7,15 @@ The API types for `nodeadm` (the `node.eks.aws` API group) are versioned in a si
 There are three levels of stability and support:
 
 ### Alpha
-- Example: `v1alpha2.`
-- The software may contain bugs.
+- Example: `v1alpha2`.
 - Support for an alpha API may be removed at any time.
 - Subsequent alpha API versions may include incompatible changes, and migration instructions may not be provided.
 
 ### Beta
 - Example: `v3beta4`.
-- The software is well-tested, and production use is considered safe.
 - Support for a beta API will remain for at least one release following its deprecation.
 - Subsequent beta or stable API versions may include incompatible changes, and migration instructions will be provided.
 
 ### Stable
-- Example: `v5`
-- Support for a stable API will remain at least until the release of the next major version of Amazon Linux.
+- Example: `v5`.
+- Support for a stable API will align with the support of a major version of Amazon Linux.
