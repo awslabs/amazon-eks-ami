@@ -57,7 +57,7 @@ T_YELLOW := \e[0;33m
 T_RESET := \e[0m
 
 # default to the latest supported Kubernetes version
-k8s=1.28
+k8s=1.29
 
 .PHONY: build
 build: ## Build EKS Optimized AL2 AMI
@@ -140,6 +140,10 @@ k8s: validate ## Build default K8s version of EKS Optimized AL2 AMI
 .PHONY: 1.28
 1.28: ## Build EKS Optimized AL2 AMI - K8s 1.28
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.28)
+
+.PHONY: 1.29
+1.29: ## Build EKS Optimized AL2 AMI - K8s 1.28
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.29)
 
 .PHONY: lint-docs
 lint-docs: ## Lint the docs
