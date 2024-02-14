@@ -10,17 +10,19 @@
 
 #### ClusterDetails
 
+ClusterDetails contains the coordinates of your EKS cluster. These details can be found using the [DescribeCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeCluster.html).
+
 _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 | Field | Description |
 | --- | --- |
-| `name` _string_ |  |
-| `apiServerEndpoint` _string_ |  |
-| `certificateAuthority` _[byte](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#byte-v1-meta) array_ |  |
-| `cidr` _string_ |  |
-| `enableOutpost` _boolean_ |  |
-| `id` _string_ |  |
+| `name` _string_ | Name is the name of your EKS cluster |
+| `apiServerEndpoint` _string_ | APIServerEndpoint is the URL of your EKS cluster's kube-apiserver. |
+| `certificateAuthority` _[byte](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#byte-v1-meta) array_ | CertificateAuthority is a base64-encoded string of your cluster's certificate authority chain. |
+| `cidr` _string_ | CIDR is your cluster's Pod IP CIDR. This value is used to infer your cluster's DNS address. |
+| `enableOutpost` _boolean_ | EnableOutpost determines how your node is configured when running on an AWS Outpost. |
+| `id` _string_ | ID is an identifier for your cluster; this is only used when your node is running on an AWS Outpost. |
 
 #### ContainerdOptions
 
@@ -43,7 +45,7 @@ _Appears in:_
 
 #### NodeConfig
 
-NodeConfig is the Schema for the nodeconfigs API
+NodeConfig is the primary configuration object for `nodeadm`.
 
 | Field | Description |
 | --- | --- |
