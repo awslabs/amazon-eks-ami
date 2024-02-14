@@ -16,7 +16,9 @@ nav:
     - 'Amazon Linux 2023': usage/al2023.md
   - 'nodeadm':
     - 'Overview': nodeadm/README.md
-    - 'API': nodeadm/api.md
+    - 'API':
+      - 'Concepts': nodeadm/doc/api-concepts.md
+      - 'Reference': nodeadm/doc/api.md
 
 theme:
   name: material
