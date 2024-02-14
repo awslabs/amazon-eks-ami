@@ -22,7 +22,6 @@ type NodeConfig struct {
 
 // +kubebuilder:object:root=true
 
-// NodeConfigList contains a list of NodeConfig
 type NodeConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -57,21 +56,21 @@ type ClusterDetails struct {
 	ID string `json:"id,omitempty"`
 }
 
+// KubeletOptions are additional parameters passed to `kubelet`.
 type KubeletOptions struct {
-	// Config is a kubelet config that can be provided by the user to override
-	// default generated configurations
-	// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+	// Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/)
+	// that will be merged with the defaults.
 	Config map[string]runtime.RawExtension `json:"config,omitempty"`
 
-	// Flags is a list of command-line kubelet arguments. These arguments are
-	// amended to the generated defaults, and therefore will act as overrides
-	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+	// Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
+	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
 }
 
+// ContainerdOptions are additional parameters passed to `containerd`.
 type ContainerdOptions struct {
-	// Config is an inline containerd config toml document that can be provided
-	// by the user to override default generated configurations
-	// https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+	// Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)
+	// that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154)
+	// by the default configuration file.
 	Config string `json:"config,omitempty"`
 }

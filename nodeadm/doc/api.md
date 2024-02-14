@@ -26,22 +26,26 @@ _Appears in:_
 
 #### ContainerdOptions
 
+ContainerdOptions are additional parameters passed to `containerd`.
+
 _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 | Field | Description |
 | --- | --- |
-| `config` _string_ | Config is an inline containerd config toml document that can be provided by the user to override default generated configurations https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md |
+| `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
 
 #### KubeletOptions
 
+KubeletOptions are additional parameters passed to `kubelet`.
+
 _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 | Field | Description |
 | --- | --- |
-| `config` _object (keys:string, values:RawExtension)_ | Config is a kubelet config that can be provided by the user to override default generated configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/ |
-| `flags` _string array_ | Flags is a list of command-line kubelet arguments. These arguments are amended to the generated defaults, and therefore will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/ |
+| `config` _object (keys:string, values:RawExtension)_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/) that will be merged with the defaults. |
+| `flags` _string array_ | Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). that will be appended to the defaults. |
 
 #### NodeConfig
 
