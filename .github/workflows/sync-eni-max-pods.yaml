@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: awslabs/amazon-eks-ami
-          ref: refs/heads/master
+          ref: refs/heads/main
           path: amazon-eks-ami/
       - uses: actions/checkout@v3
         with:
@@ -39,6 +39,7 @@ jobs:
         with:
           branch: update-eni-max-pods
           path: amazon-eks-ami/
+          base: main
           add-paths: |
             templates/shared/runtime/eni-max-pods.txt
             nodeadm/internal/kubelet/eni-max-pods.txt
