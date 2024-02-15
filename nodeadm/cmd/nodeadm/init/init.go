@@ -28,6 +28,7 @@ const (
 func NewInitCommand() cli.Command {
 	init := initCmd{}
 	init.cmd = flaggy.NewSubcommand("init")
+	init.cmd.StringSlice(&init.daemons, "d", "daemon", "specify one or more of `containerd` and `kubelet`. This is intended for testing and should not be used in a production environment.")
 	init.cmd.StringSlice(&init.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
 	init.cmd.Description = "Initialize this instance as a node in an EKS cluster"
 	return &init
@@ -36,6 +37,7 @@ func NewInitCommand() cli.Command {
 type initCmd struct {
 	cmd        *flaggy.Subcommand
 	skipPhases []string
+	daemons    []string
 }
 
 func (c *initCmd) Flaggy() *flaggy.Subcommand {
@@ -87,6 +89,9 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	if !slices.Contains(c.skipPhases, configPhase) {
 		for _, daemon := range daemons {
+			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
+				continue
+			}
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Configuring daemon..", nameField)
@@ -99,6 +104,10 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	if !slices.Contains(c.skipPhases, runPhase) {
 		for _, daemon := range daemons {
+			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
+				continue
+			}
+
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Ensuring daemon is running..", nameField)
