@@ -426,7 +426,7 @@ get_docker_logs() {
 get_k8s_info() {
   try "collect kubelet information"
 
-  search_kubeconfig() {
+  find_kubeconfig() {
     if [[ -n "${KUBECONFIG:-}" ]]; then
       echo "${KUBECONFIG}"
     elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
@@ -440,7 +440,7 @@ get_k8s_info() {
     fi
   }
 
-  KUBECONFIG_PATH=$(search_kubeconfig)
+  KUBECONFIG_PATH=$(find_kubeconfig)
 
   if [[ -n "${KUBECONFIG_PATH}" ]]; then
     command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG_PATH}" svc > "${COLLECT_DIR}"/kubelet/svc.log
