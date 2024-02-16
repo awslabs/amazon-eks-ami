@@ -7,7 +7,7 @@ set -o pipefail
 source /helpers.sh
 
 mock::imds
-mock::kubelet 1.28.0
+mock::kubelet 1.29.0
 wait::dbus-ready
 
 for config in config.*; do
