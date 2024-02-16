@@ -43,7 +43,9 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
+	// tracking: https://github.com/kubernetes/enhancements/issues/3983
+	// for enabling drop-in configuration
+	if semver.Compare(kubeletVersion, "v1.29.0") < 0 {
 		return k.writeKubeletConfigToFile(cfg)
 	} else {
 		return k.writeKubeletConfigToDir(cfg)
