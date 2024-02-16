@@ -1,5 +1,3 @@
-// #nosec G101
-
 package kubelet
 
 import (
@@ -18,10 +16,12 @@ import (
 )
 
 const (
-	imageCredentialProviderRoot   = "/etc/eks/image-credential-provider"
+	// #nosec G101 //constant path, not credential
+	imageCredentialProviderRoot = "/etc/eks/image-credential-provider"
+	// #nosec G101 //constant path, not credential
 	imageCredentialProviderConfig = "config.json"
 	imageCredentialProviderPerm   = 0644
-
+	// #nosec G101 //constant path, not credential
 	ecrCredentialProviderBinPathEnvironmentName = "ECR_CREDENTIAL_PROVIDER_BIN_PATH"
 )
 

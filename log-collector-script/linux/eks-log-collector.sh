@@ -459,6 +459,9 @@ get_k8s_info() {
       timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
 
       systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
+
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
@@ -486,10 +489,7 @@ get_nodeadm_info() {
       warning "The current operating system is not supported."
       ;;
   esac
-  mkdir -p "${COLLECT_DIR}/nodeadm/kubelet"
 
-  cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/nodeadm/kubelet/config.json 2> /dev/null
-  cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/nodeadm/kubelet/config.json.d 2> /dev/null
   ok
 }
 
