@@ -61,6 +61,7 @@ COMMON_DIRECTORIES=(
   ipamd         # eks
   sysctls       # eks
   kubelet       # eks
+  nodeadm       # eks
   cni           # eks
 )
 
@@ -273,6 +274,7 @@ collect() {
   get_containerd_info
   get_docker_info
   get_k8s_info
+  get_nodeadm_info
   get_ipamd_info
   get_multus_info
   get_sysctls_info
@@ -468,6 +470,26 @@ get_k8s_info() {
       ;;
   esac
 
+  ok
+}
+
+get_nodeadm_info() {
+  try "collect nodeadm information"
+  case "${INIT_TYPE}" in
+    systemd)
+      timeout 75 journalctl --unit=nodeadm-config --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-config.log
+
+      timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
+
+      ;;
+    *)
+      warning "The current operating system is not supported."
+      ;;
+  esac
+  mkdir -p "${COLLECT_DIR}/nodeadm/kubelet"
+
+  cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/nodeadm/kubelet/config.json 2> /dev/null
+  cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/nodeadm/kubelet/config.json.d 2> /dev/null
   ok
 }
 
