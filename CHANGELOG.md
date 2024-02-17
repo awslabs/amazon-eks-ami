@@ -5,7 +5,7 @@
 # AMI Release v20240202
 <!-- Release notes generated using configuration in .github/release.yaml at 41dfa2217582a624a3cd582e5f0a93c25f951cad -->
 
-> [!NOTE]  
+> [!NOTE]
 > This release addresses an issue with Kubernetes 1.29 that allowed the sandbox container image used by `containerd` to be garbage-collected by `kubelet`. More information is available in #1597.
 
 ## What's Changed

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# shellcheck wrapper
+
+set -o nounset
+
+WORKDIR=$(realpath .)
+SHELLCHECK_COMMAND=$(which shellcheck 2> /dev/null)
+if [ -z "$SHELLCHECK_COMMAND" ]; then
+  SHELLCHECK_COMMAND="docker run --rm -v $WORKDIR:$WORKDIR -w $WORKDIR koalaman/shellcheck:stable"
+fi
+$SHELLCHECK_COMMAND $@

@@ -1,0 +1,10 @@
+[Unit]
+Description=Setup local instance storage for use by kubelet, containerd
+Before=containerd.service kubelet.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/setup-local-disks raid0
+
+[Install]
+WantedBy=multi-user.target
