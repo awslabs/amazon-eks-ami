@@ -22,6 +22,7 @@
     "docker_version": null,
     "enable_fips": null,
     "encrypted": null,
+    "iam_instance_profile": null,
     "instance_type": null,
     "kernel_version": null,
     "kms_key_id": null,
@@ -86,6 +87,7 @@
         "max_attempts": 90
       },
       "ami_regions": "{{user `ami_regions`}}",
+      "iam_instance_profile": "{{user `iam_instance_profile`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
