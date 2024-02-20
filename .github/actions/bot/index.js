@@ -198,7 +198,7 @@ class CICommand {
             owner: this.repository_owner,
             repo: this.repository_name,
             workflow_id: 'ci-manual.yaml',
-            ref: 'master',
+            ref: 'main',
             inputs: inputs
         });
         return null;

@@ -24,7 +24,6 @@ on:
         default: "test"
         options:
           - "build"
-          - "launch"
           - "test"
       build_arguments:
         required: false
@@ -66,7 +65,7 @@ jobs:
             });
   kubernetes-versions:
     runs-on: ubuntu-latest
-    name: ${{ matrix.k8s_version }}
+    name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
     needs:
       - setup
       - notify-start
@@ -78,10 +77,11 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
+        os_distro: [al2, al2023]
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: 'master'
+          ref: 'main'
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ${{ secrets.AWS_REGION }}
@@ -94,23 +94,19 @@ jobs:
         with:
           git_sha: ${{ inputs.git_sha }}
           k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           additional_arguments: ${{ inputs.build_arguments }}
-      - if: ${{ inputs.goal == 'launch' || inputs.goal == 'test' }}
-        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Launch"
-        id: launch
-        uses: ./.github/actions/ci/launch
+      - if: ${{ inputs.goal == 'test' }}
+        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
+        id: test
+        uses: ./.github/actions/ci/kubetest2
         with:
           ami_id: ${{ steps.build.outputs.ami_id }}
           k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           aws_region: ${{ secrets.AWS_REGION }}
-      - if: ${{ inputs.goal == 'test' }}
-        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
-        id: sonobuoy
-        uses: ./.github/actions/ci/sonobuoy
-        with:
-          cluster_name: ${{ steps.launch.outputs.cluster_name }}
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -133,18 +129,17 @@ jobs:
               "cancelled": "🚮"
             };
             const uniqueStepNames = new Set();
-            const stepConclusionsByK8sVersion = new Map();
+            const stepConclusionsByJob = new Map();
             const ciStepNamePrefix = "${{ needs.setup.outputs.ci_step_name_prefix }}";
             for (const job of data.jobs) {
-              if (/\d+\.\d+/.test(job.name)) {
-                const k8sVersion = job.name;
+              if (/^\d+\.\d+/.test(job.name)) {
                 for (const step of job.steps) {
                   if (step.name.startsWith(ciStepNamePrefix)) {
                     const stepName = step.name.substring(ciStepNamePrefix.length).trim();
-                    let stepConclusions = stepConclusionsByK8sVersion.get(k8sVersion);
+                    let stepConclusions = stepConclusionsByJob.get(job.name);
                     if (!stepConclusions) {
                       stepConclusions = new Map();
-                      stepConclusionsByK8sVersion.set(k8sVersion, stepConclusions);
+                      stepConclusionsByJob.set(job.name, stepConclusions);
                     }
                     stepConclusions.set(stepName, step.conclusion);
                     uniqueStepNames.add(stepName);
@@ -153,7 +148,7 @@ jobs:
               }
             }
             const headers = [{
-              data: 'Kubernetes version',
+              data: 'AMI variant',
               header: true
             }];
             for (const stepName of uniqueStepNames.values()) {
@@ -163,10 +158,10 @@ jobs:
               });
             }
             const rows = [];
-            for (const stepConclusionsForK8sVersion of [...stepConclusionsByK8sVersion.entries()].sort()) {
-              const k8sVersion = stepConclusionsForK8sVersion[0];
-              const row = [k8sVersion];
-              for (const step of stepConclusionsForK8sVersion[1].entries()) {
+            for (const stepConclusionsForJob of [...stepConclusionsByJob.entries()].sort()) {
+              const job = stepConclusionsForJob[0];
+              const row = [job];
+              for (const step of stepConclusionsForJob[1].entries()) {
                   row.push(`${step[1]} ${conclusionEmojis[step[1]]}`);
               }
               rows.push(row);
