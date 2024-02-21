@@ -17,4 +17,3 @@ spec:
       allowedUnsafeSysctls:
         - "kernel.msg*"
         - "net.core.somaxconn"
-
