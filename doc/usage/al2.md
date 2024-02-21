@@ -132,6 +132,28 @@ $ curl -sSL "http://localhost:8001/api/v1/nodes/ip-192-168-92-220.us-east-2.comp
 
 ---
 
+## Customizing Containerd Config
+
+The EKS defaults for `containerd` will be written to `/etc/containerd/config.toml`.
+Additional configuration files placed in the `/etc/containerd/config.d/` directory will be imported and override defaults as described in the [`containerd` documentation](https://github.com/containerd/containerd/blob/release/1.7/docs/man/containerd-config.toml.5.md).
+
+> **NOTE**: If you create an additional configuration file after `containerd`
+> has already started (i.e. `bootstrap.sh` has already executed), you'll need to
+> restart `containerd` to pick up the latest configuration.
+
+> **CAUTION**: Making direct edits to the EKS default `containerd` configuration file is not recommended.
+
+**View active containerd config**
+
+To see the final configuration that is produced and consumed by containerd, you
+can use the containerd cli:
+```
+$ containerd config dump
+...
+```
+
+---
+
 ## Ephemeral Storage
 
 Some instance types launch with ephemeral NVMe instance storage (i3, i4i, c5d, c6id, etc). There are two main ways of utilizing this storage within Kubernetes: a single RAID-0 array for use by kubelet and containerd or mounting the individual disks for pod usage.

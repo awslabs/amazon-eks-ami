@@ -555,6 +555,7 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   fi
 
   sudo mkdir -p /etc/containerd
+  sudo mkdir -p /etc/containerd/config.d
   sudo mkdir -p /etc/cni/net.d
 
   if [[ -n "${CONTAINERD_CONFIG_FILE}" ]]; then
