@@ -20,6 +20,7 @@ function print_help {
   echo ""
   echo "-h,--help print this help"
   echo
+  echo "--allowed-unsafe-sysctls To set allowedUnsafeSysctls for kubelet"
   echo "--apiserver-endpoint The EKS cluster API Server endpoint. Only valid when used with --b64-cluster-ca. Bypasses calling \"aws eks describe-cluster\""
   echo "--aws-api-retry-attempts Number of retry attempts for AWS API call (DescribeCluster) (default: 3)"
   echo "--b64-cluster-ca The base64 encoded cluster CA content. Only valid when used with --apiserver-endpoint. Bypasses calling \"aws eks describe-cluster\""
@@ -163,6 +164,12 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --allowed-unsafe-sysctls)
+      ALLOWED_UNSAFE_SYSCTLS=$2
+      log "INFO: --allowed-unsafe-sysctls='${ALLOWED_UNSAFE_SYSCTLS}'"
+      shift
+      shift
+      ;;
     *)                   # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift              # past argument
@@ -221,6 +228,7 @@ SERVICE_IPV6_CIDR="${SERVICE_IPV6_CIDR:-}"
 ENABLE_LOCAL_OUTPOST="${ENABLE_LOCAL_OUTPOST:-}"
 CLUSTER_ID="${CLUSTER_ID:-}"
 LOCAL_DISKS="${LOCAL_DISKS:-}"
+ALLOWED_UNSAFE_SYSCTLS="${ALLOWED_UNSAFE_SYSCTLS:-}"
 
 ##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
 USE_RESERVED_CGROUPS=true
@@ -481,6 +489,10 @@ fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+
+if [[ ! -z ${ALLOWED_UNSAFE_SYSCTLS} ]]; then
+  echo "$(jq --arg sysctls "$ALLOWED_UNSAFE_SYSCTLS" '.allowedUnsafeSysctls = ($sysctls | split(","))' $KUBELET_CONFIG)" > $KUBELET_CONFIG
+fi
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')

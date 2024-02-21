@@ -17,7 +17,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: NodeConfig is the Schema for the nodeconfigs API
+        description: NodeConfig is the primary configuration object for `nodeadm`.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,42 +34,57 @@ spec:
           spec:
             properties:
               cluster:
+                description: ClusterDetails contains the coordinates of your EKS cluster.
+                  These details can be found using the [DescribeCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeCluster.html).
                 properties:
                   apiServerEndpoint:
+                    description: APIServerEndpoint is the URL of your EKS cluster's
+                      kube-apiserver.
                     type: string
                   certificateAuthority:
+                    description: CertificateAuthority is a base64-encoded string of
+                      your cluster's certificate authority chain.
                     format: byte
                     type: string
                   cidr:
+                    description: CIDR is your cluster's Pod IP CIDR. This value is
+                      used to infer your cluster's DNS address.
                     type: string
                   enableOutpost:
+                    description: EnableOutpost determines how your node is configured
+                      when running on an AWS Outpost.
                     type: boolean
                   id:
+                    description: ID is an identifier for your cluster; this is only
+                      used when your node is running on an AWS Outpost.
                     type: string
                   name:
+                    description: Name is the name of your EKS cluster
                     type: string
                 type: object
               containerd:
+                description: ContainerdOptions are additional parameters passed to
+                  `containerd`.
                 properties:
                   config:
-                    description: Config is an inline containerd config toml document
-                      that can be provided by the user to override default generated
-                      configurations https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
+                    description: Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)
+                      that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154)
+                      by the default configuration file.
                     type: string
                 type: object
               kubelet:
+                description: KubeletOptions are additional parameters passed to `kubelet`.
                 properties:
                   config:
                     additionalProperties:
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
-                    description: Config is a kubelet config that can be provided by
-                      the user to override default generated configurations https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/
+                    description: Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/)
+                      that will be merged with the defaults.
                     type: object
                   flags:
-                    description: Flags is a list of command-line kubelet arguments.
-                      These arguments are amended to the generated defaults, and therefore
-                      will act as overrides https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+                    description: Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
+                      that will be appended to the defaults.
                     items:
                       type: string
                     type: array
