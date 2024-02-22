@@ -65,7 +65,7 @@ PACKER_TEMPLATE_DIR ?= templates/$(os_distro)
 PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
 PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
 PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).json
-ifeq (,$(wildcard $(PACKER_OPTIONAL_VARIABLE_FILE)))
+ifeq (,$(wildcard $(PACKER_OPTIONAL_K8S_VARIABLE_FILE)))
 	# unset the variable, no k8s-specific variable file exists
 	PACKER_OPTIONAL_K8S_VARIABLE_FILE=
 endif
