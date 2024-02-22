@@ -33,7 +33,7 @@ echo $(jq ".binaries.awscli = \"$CLI_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
 # cached images
 if systemctl is-active --quiet containerd; then
   echo $(jq ".images = [ $(sudo ctr -n k8s.io image ls -q | cut -d'/' -f2- | sort | uniq | grep -v 'sha256' | xargs -r printf "\"%s\"," | sed 's/,$//') ]" $OUTPUT_FILE) > $OUTPUT_FILE
-elif [ "${CACHE_CONTAINER_IMAGES}" = "true" ]; then
+elif [ "${CACHE_CONTAINER_IMAGES:-}" = "true" ]; then
   echo "containerd must be active to generate version info for cached images"
   exit 1
 fi

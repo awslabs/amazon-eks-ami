@@ -14,7 +14,6 @@
     "aws_session_token": null,
     "binary_bucket_name": null,
     "binary_bucket_region": null,
-    "cache_container_images": null,
     "containerd_version": null,
     "creator": null,
     "enable_fips": null,
@@ -24,7 +23,6 @@
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
-    "pause_container_version": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -179,12 +177,9 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
-        "DOCKER_VERSION=none",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
-        "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
@@ -212,10 +207,7 @@
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
-      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
-      "environment_vars": [
-        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
-      ]
+      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json"
     },
     {
       "type": "file",
