@@ -49,7 +49,7 @@ generate: generate-code generate-doc ## Generate code and documentation.
 .PHONY: generate-code
 generate-code: controller-gen conversion-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object paths="./..."
-	$(CONVERSION_GEN) --input-dirs="./internal/api/bridge" --output-file-base=zz_generated.conversion --go-header-file=/dev/null -v0
+	$(CONVERSION_GEN) --input-dirs="./internal/api/bridge" --output-file-base=zz_generated.conversion --output-base="./" --go-header-file=/dev/null -v0
 
 .PHONY: generate-doc
 generate-doc: crd-ref-docs
@@ -129,7 +129,7 @@ $(CONVERSION_GEN): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/conversion-gen@$(CODE_GENERATOR_VERSION)
 
 .PHONY: crd-ref-docs
-crd-ref-docs: $(CRD_REF_DOCS) ## Download conversion-gen locally if necessary.
+crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	test -s $(LOCALBIN)/crd-ref-docs || \
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(CRD_REF_DOCS_VERSION)
