@@ -265,7 +265,7 @@ g5g.4xlarge 234
 g5g.8xlarge 234
 g5g.metal 737
 g5g.xlarge 58
-h1.16xlarge 737
+h1.16xlarge 394
 h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
