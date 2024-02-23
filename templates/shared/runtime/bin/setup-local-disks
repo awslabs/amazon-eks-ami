@@ -15,7 +15,7 @@ err_report() {
 trap 'err_report $LINENO' ERR
 
 print_help() {
-  echo "usage: $0 <raid0 | mount>"
+  echo "usage: $0 <raid0 | mount | none>"
   echo "Sets up Amazon EC2 Instance Store NVMe disks"
   echo ""
   echo "-d, --dir directory to mount the filesystem(s) (default: /mnt/k8s-disks/)"
@@ -193,9 +193,14 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 DISK_SETUP="$1"
 set -u
 
-if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "mount" ]]; then
-  echo "Valid disk setup options are: raid0 or mount"
+if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "mount" && "${DISK_SETUP}" != "none" ]]; then
+  echo "Valid disk setup options are: raid0, mount, or none"
   exit 1
+fi
+
+if [ "${DISK_SETUP}" = "none" ]; then
+  "disk setup is 'none', nothing to do!"
+  exit 0
 fi
 
 if [ ! -d /dev/disk/by-id/ ]; then
