@@ -4,7 +4,8 @@ Before=containerd.service kubelet.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/setup-local-disks raid0
+Environment=LOCAL_DISK_STRATEGY=none
+ExecStart=/usr/bin/setup-local-disks $LOCAL_DISK_STRATEGY
 
 [Install]
 WantedBy=multi-user.target
