@@ -35,6 +35,17 @@ _Appears in:_
 | --- | --- |
 | `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
 
+#### InstanceOptions
+
+InstanceOptions determines how the node's operating system and devices are configured.
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+
 #### KubeletOptions
 
 KubeletOptions are additional parameters passed to `kubelet`.
@@ -46,6 +57,26 @@ _Appears in:_
 | --- | --- |
 | `config` _object (keys:string, values:RawExtension)_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/) that will be merged with the defaults. |
 | `flags` _string array_ | Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). that will be appended to the defaults. |
+
+#### LocalStorageOptions
+
+LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html) are used when available.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
+| Field | Description |
+| --- | --- |
+| `strategy` _[LocalStorageStrategy](#localstoragestrategy)_ |  |
+
+#### LocalStorageStrategy
+
+_Underlying type:_ _string_
+
+LocalStorageStrategy specifies how to handle an instance's local storage devices.
+
+_Appears in:_
+- [LocalStorageOptions](#localstorageoptions)
 
 #### NodeConfig
 
@@ -68,5 +99,6 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `cluster` _[ClusterDetails](#clusterdetails)_ |  |
-| `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
+| `instance` _[InstanceOptions](#instanceoptions)_ |  |
+| `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
