@@ -35,6 +35,7 @@
     "subnet_id": null,
     "temporary_key_pair_type": "ed25519",
     "temporary_security_group_source_cidrs": null,
+    "user_data_file": null,
     "volume_type": null,
     "working_dir": null
   },
@@ -106,7 +107,8 @@
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
       "metadata_options": {
         "http_tokens": "required"
-      }
+      },
+      "user_data_file": "{{user `user_data_file`}}"
     }
   ],
   "provisioners": [
