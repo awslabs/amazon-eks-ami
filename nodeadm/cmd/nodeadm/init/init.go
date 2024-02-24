@@ -80,7 +80,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		system.NewLocalDiskAspect(),
 	}
 	for _, aspect := range aspects {
-		nameField := zap.String("aspect", aspect.Name())
+		nameField := zap.String("name", aspect.Name())
 		log.Info("Configuring system aspect..", nameField)
 		if err := aspect.Configure(nodeConfig); err != nil {
 			return err

@@ -6,6 +6,7 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"go.uber.org/zap"
 )
 
 const localDiskAspectName = "LocalDisk"
@@ -27,6 +28,7 @@ Environment=LOCAL_DISK_STRATEGY=%s`
 
 func (a *localDiskAspect) Configure(cfg *api.NodeConfig) error {
 	if cfg.Spec.Instance.LocalStorage.Strategy == "" {
+		zap.L().Info("Not configuring local disks!")
 		return nil
 	}
 	strategy := strings.ToLower(string(cfg.Spec.Instance.LocalStorage.Strategy))
