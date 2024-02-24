@@ -102,7 +102,7 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 KUSTOMIZE_VERSION ?= v5.0.1
 CONTROLLER_TOOLS_VERSION ?= v0.12.0
 CODE_GENERATOR_VERSION ?= v0.28.1
-CRD_REF_DOCS_VERSION ?= v0.0.10
+CRD_REF_DOCS_VERSION ?= cf959ab94ea543cb8efd25dc35081880b7ca6a81
 
 tools: kustomize controller-gen conversion-gen crd-ref-docs ## Install the toolchain.
 

@@ -78,6 +78,9 @@ LocalStorageStrategy specifies how to handle an instance's local storage devices
 _Appears in:_
 - [LocalStorageOptions](#localstorageoptions)
 
+.Validation:
+- Enum: [RAID0 Mount]
+
 #### NodeConfig
 
 NodeConfig is the primary configuration object for `nodeadm`.

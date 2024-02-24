@@ -1,5 +1,6 @@
 // +kubebuilder:object:generate=true
 // +groupName=node.eks.aws
+// +kubebuilder:validation:Optional
 package v1alpha1
 
 import (

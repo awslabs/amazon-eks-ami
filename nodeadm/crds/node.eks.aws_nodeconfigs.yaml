@@ -83,12 +83,11 @@ spec:
                       strategy:
                         description: LocalStorageStrategy specifies how to handle
                           an instance's local storage devices.
+                        enum:
+                        - RAID0
+                        - Mount
                         type: string
-                    required:
-                    - strategy
                     type: object
-                required:
-                - localStorage
                 type: object
               kubelet:
                 description: KubeletOptions are additional parameters passed to `kubelet`.

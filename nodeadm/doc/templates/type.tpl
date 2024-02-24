@@ -15,6 +15,13 @@ _Appears in:_
 {{- end }}
 {{- end }}
 
+{{ if $type.Validation -}}
+.Validation:
+{{- range $type.Validation }}
+- {{ . }}
+{{- end }}
+{{- end }}
+
 {{ if $type.Members -}}
 | Field | Description |
 | --- | --- |

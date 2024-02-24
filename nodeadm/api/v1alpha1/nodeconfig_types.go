@@ -78,16 +78,17 @@ type ContainerdOptions struct {
 
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
-	LocalStorage LocalStorageOptions `json:"localStorage,omitEmpty"`
+	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
 }
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
 // are used when available.
 type LocalStorageOptions struct {
-	Strategy LocalStorageStrategy `json:"strategy,omitEmpty"`
+	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
 }
 
 // LocalStorageStrategy specifies how to handle an instance's local storage devices.
+// +kubebuilder:validation:Enum={RAID0, Mount}
 type LocalStorageStrategy string
 
 const (
