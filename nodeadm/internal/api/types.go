@@ -90,11 +90,11 @@ const (
 )
 
 type InstanceOptions struct {
-	LocalStorage LocalStorageOptions `json:"localStorage,omitEmpty"`
+	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
 }
 
 type LocalStorageOptions struct {
-	Strategy LocalStorageStrategy `json:"strategy,omitEmpty"`
+	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
 }
 
 type LocalStorageStrategy string
