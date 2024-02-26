@@ -4,5 +4,5 @@ import "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 
 type SystemAspect interface {
 	Name() string
-	Configure(*api.NodeConfig) error
+	Setup(*api.NodeConfig) error
 }

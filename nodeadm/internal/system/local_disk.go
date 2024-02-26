@@ -1,15 +1,15 @@
 package system
 
 import (
-	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 )
 
-const localDiskAspectName = "LocalDisk"
+const localDiskAspectName = "local-disk"
 
 func NewLocalDiskAspect() SystemAspect {
 	return &localDiskAspect{}
@@ -21,17 +21,14 @@ func (a *localDiskAspect) Name() string {
 	return localDiskAspectName
 }
 
-const localDiskServiceDropinPath = "/etc/systemd/system/setup-local-disks.service.d/00-strategy.conf"
-
-const localDiskServiceDropin = `[Service]
-Environment=LOCAL_DISK_STRATEGY=%s`
-
-func (a *localDiskAspect) Configure(cfg *api.NodeConfig) error {
+func (a *localDiskAspect) Setup(cfg *api.NodeConfig) error {
 	if cfg.Spec.Instance.LocalStorage.Strategy == "" {
 		zap.L().Info("Not configuring local disks!")
 		return nil
 	}
 	strategy := strings.ToLower(string(cfg.Spec.Instance.LocalStorage.Strategy))
-	dropinConf := fmt.Sprintf(localDiskServiceDropin, strategy)
-	return util.WriteFileWithDir(localDiskServiceDropinPath, []byte(dropinConf), 0644)
+	cmd := exec.Command("setup-local-disks", strategy)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

@@ -10,6 +10,8 @@ mock::imds
 wait::dbus-ready
 mock::kubelet 1.29.0
 
-nodeadm init --skip run --config-source file://config.yaml
+mock::setup-local-disks
 
-assert::file-contains /etc/systemd/system/setup-local-disks.service.d/00-strategy.conf 'Environment=LOCAL_DISK_STRATEGY=raid0'
+nodeadm init --daemon="" --config-source file://config.yaml
+
+assert::file-contains /var/log/setup-local-disks.log 'raid0'
