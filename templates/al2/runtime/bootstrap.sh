@@ -480,7 +480,7 @@ else
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo $(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP"  '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG) > $KUBELET_CONFIG
+echo $(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG) > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
