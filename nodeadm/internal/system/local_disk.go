@@ -27,6 +27,7 @@ func (a *localDiskAspect) Setup(cfg *api.NodeConfig) error {
 		return nil
 	}
 	strategy := strings.ToLower(string(cfg.Spec.Instance.LocalStorage.Strategy))
+	// #nosec G204 Subprocess launched with variable
 	cmd := exec.Command("setup-local-disks", strategy)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
