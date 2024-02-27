@@ -29,8 +29,9 @@ type NodeConfigList struct {
 
 type NodeConfigSpec struct {
 	Cluster    ClusterDetails    `json:"cluster,omitempty"`
-	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
+	Instance   InstanceOptions   `json:"instance,omitempty"`
+	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -86,4 +87,19 @@ type IPFamily string
 const (
 	IPFamilyIPv4 IPFamily = "ipv4"
 	IPFamilyIPv6 IPFamily = "ipv6"
+)
+
+type InstanceOptions struct {
+	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+}
+
+type LocalStorageOptions struct {
+	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
+}
+
+type LocalStorageStrategy string
+
+const (
+	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
+	LocalStorageMount LocalStorageStrategy = "Mount"
 )

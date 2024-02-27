@@ -18,6 +18,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
 
 const (
@@ -81,20 +82,24 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	defer daemonManager.Close()
 
-	log.Info("Setting up daemons..")
+	aspects := []system.SystemAspect{
+		system.NewLocalDiskAspect(),
+	}
+
 	daemons := []daemon.Daemon{
 		containerd.NewContainerdDaemon(daemonManager),
 		kubelet.NewKubeletDaemon(daemonManager),
 	}
 
 	if !slices.Contains(c.skipPhases, configPhase) {
+		log.Info("Configuring daemons...")
 		for _, daemon := range daemons {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 				continue
 			}
 			nameField := zap.String("name", daemon.Name())
 
-			log.Info("Configuring daemon..", nameField)
+			log.Info("Configuring daemon...", nameField)
 			if err := daemon.Configure(nodeConfig); err != nil {
 				return err
 			}
@@ -103,6 +108,15 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
+		log.Info("Setting up system aspects...")
+		for _, aspect := range aspects {
+			nameField := zap.String("name", aspect.Name())
+			log.Info("Setting up system aspect..", nameField)
+			if err := aspect.Setup(nodeConfig); err != nil {
+				return err
+			}
+			log.Info("Set up system aspect", nameField)
+		}
 		for _, daemon := range daemons {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 				continue

@@ -71,6 +71,12 @@ function mock::kubelet() {
   chmod +x /usr/bin/kubelet
 }
 
+function mock::setup-local-disks() {
+  mkdir -p /var/log
+  printf '#!/usr/bin/env bash\necho "$1" >> /var/log/setup-local-disks.log' > /usr/bin/setup-local-disks
+  chmod +x /usr/bin/setup-local-disks
+}
+
 function wait::path-exists() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: wait::path-exists TARGET_PATH"

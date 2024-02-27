@@ -30,8 +30,9 @@ type NodeConfigList struct {
 
 type NodeConfigSpec struct {
 	Cluster    ClusterDetails    `json:"cluster,omitempty"`
-	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
+	Instance   InstanceOptions   `json:"instance,omitempty"`
+	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 }
 
 // ClusterDetails contains the coordinates of your EKS cluster.
@@ -74,3 +75,26 @@ type ContainerdOptions struct {
 	// by the default configuration file.
 	Config string `json:"config,omitempty"`
 }
+
+// InstanceOptions determines how the node's operating system and devices are configured.
+type InstanceOptions struct {
+	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+}
+
+// LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
+// are used when available.
+type LocalStorageOptions struct {
+	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
+}
+
+// LocalStorageStrategy specifies how to handle an instance's local storage devices.
+// +kubebuilder:validation:Enum={RAID0, Mount}
+type LocalStorageStrategy string
+
+const (
+	// LocalStorageRAID0 will create a single raid0 volume from any local disks
+	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
+
+	// LocalStorageMount will mount each local disk individually
+	LocalStorageMount LocalStorageStrategy = "Mount"
+)
