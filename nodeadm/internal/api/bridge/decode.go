@@ -28,6 +28,9 @@ func DecodeNodeConfig(data []byte) (*internalapi.NodeConfig, error) {
 	if gvk.Group != api.GroupName {
 		return nil, fmt.Errorf("failed to decode %q, unexpected group: %s", gvk.Kind, gvk.Group)
 	}
+	if err := ValidateExternalType(obj, *gvk); err != nil {
+		return nil, err
+	}
 	if internalConfig, ok := obj.(*internalapi.NodeConfig); ok {
 		return internalConfig, nil
 	}
