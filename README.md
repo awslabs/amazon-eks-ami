@@ -1,8 +1,8 @@
 # Amazon EKS AMI Build Specification
 
-## ⚠️ The default branch of this repository is changing!
+## This branch will be deleted on **March 30, 2024**!
 
-Development will continue on `main`. The default branch of this repository will be changed to `main` on **February 29, 2024**. The `master` branch will be deleted on **March 30, 2024**.
+The default branch of this repository has changed to `main`.
 
 This change coincides with a reorganization of the project sources. You may continue using the `master` branch as you update your downstream dependencies, but you'll need to explicitly check out the `master` branch after February 29, 2024.
 
