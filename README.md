@@ -33,14 +33,17 @@ invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
 ```bash
-# build an AL2 AMI with the latest Kubernetes version
+# build an AMI with the latest Kubernetes version and the default OS distro
 make
 
-# build an AL2 AMI with a specific Kubernetes version
+# build an AMI with a specific Kubernetes version and the default OS distro
 make k8s=1.29
 
-# build an AL2023 AMI with a specific Kubernetes version
+# build an AMI with a specific Kubernetes version and a specific OS distro
 make k8s=1.29 os_distro=al2023
+
+# check default value and options in help doc
+make help
 ```
 
 The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
