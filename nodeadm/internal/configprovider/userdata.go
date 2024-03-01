@@ -9,7 +9,9 @@ import (
 	"mime/multipart"
 	"net/mail"
 	"strings"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/api"
 	internalapi "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -29,7 +31,12 @@ type userDataConfigProvider struct {
 
 func NewUserDataConfigProvider() ConfigProvider {
 	return &userDataConfigProvider{
-		imdsClient: imds.New(imds.Options{}),
+		imdsClient: imds.New(imds.Options{
+			Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
+				so.MaxAttempts = 15
+				so.MaxBackoff = 1 * time.Second
+			}),
+		}),
 	}
 }
 
