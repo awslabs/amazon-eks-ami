@@ -16,6 +16,7 @@
     "enable_fips": "false",
     "encrypted": "false",
     "kms_key_id": "",
+    "iam_instance_profile": "",
     "launch_block_device_mappings_volume_size": "20",
     "pause_container_version": "3.5",
     "remote_folder": "/tmp",
