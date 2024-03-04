@@ -45,6 +45,7 @@
 | `ssm_agent_version` | Version of the SSM agent to install from the S3 bucket provided by the SSM agent project, such as ```latest```. If empty, the latest version of the SSM agent available in the Amazon Linux core repositories will be installed. |
 | `subnet_id` |  |
 | `temporary_security_group_source_cidrs` |  |
+| `user_data_file` | Path to a file that will be used for the user data when launching the instance. |
 | `volume_type` |  |
 | `working_dir` | Directory path for ephemeral resources on the builder instance |
 <!-- template-variable-table-boundary -->
