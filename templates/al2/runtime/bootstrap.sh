@@ -26,7 +26,7 @@ function print_help {
   echo "--cluster-id Specify the id of EKS cluster"
   echo "--container-runtime Specify a container runtime. For Kubernetes 1.23 and below, possible values are [dockerd, containerd] and the default value is dockerd. For Kubernetes 1.24 and above, containerd is the only valid value. This flag is deprecated and will be removed in a future release."
   echo "--containerd-config-file File containing the containerd configuration to be used in place of AMI defaults."
-  echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface"
+  echo "--dns-cluster-ip Overrides the IP address to use for DNS queries within the cluster. Defaults to 10.100.0.10 or 172.20.0.10 based on the IP address of the primary interface. (comma separated list)"
   echo "--docker-config-json The contents of the /etc/docker/daemon.json file. Useful if you want a custom config differing from the default one in the AMI"
   echo "--enable-docker-bridge Restores the docker default bridge network. (default: false)"
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
@@ -480,7 +480,7 @@ else
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+echo $(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG) > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
