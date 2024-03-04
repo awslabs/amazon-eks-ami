@@ -333,10 +333,15 @@ get_iptables_info() {
   else
     try "collect iptables information"
     iptables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/iptables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-mangle.txt
+    ip6tables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/ip6tables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-mangle.txt
     iptables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/iptables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-filter.txt
+    ip6tables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/ip6tables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-filter.txt
     iptables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/iptables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-nat.txt
+    ip6tables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/ip6tables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-nat.txt
     iptables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/iptables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables.txt
+    ip6tables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/ip6tables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables.txt
     iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
+    ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
   ok
@@ -539,13 +544,19 @@ get_networking_info() {
   timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
   echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
   timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
+  echo "*** Output of conntrack -L -f ipv6 ***" >> "${COLLECT_DIR}"/networking/conntrack6.txt
+  timeout 75 conntrack -L -f ipv6 >> "${COLLECT_DIR}"/networking/conntrack6.txt
 
   # ifconfig
   timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
 
   # ip rule show
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
+  timeout 75 ip -6 rule show > "${COLLECT_DIR}"/networking/ip6rule.txt
+
+  # ip route show
   timeout 75 ip route show table all >> "${COLLECT_DIR}"/networking/iproute.txt
+  timeout 75 ip -6 route show table all >> "${COLLECT_DIR}"/networking/ip6route.txt
 
   # configure-multicard-interfaces
   timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
