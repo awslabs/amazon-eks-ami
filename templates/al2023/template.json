@@ -18,6 +18,7 @@
     "creator": null,
     "enable_fips": null,
     "encrypted": null,
+    "iam_instance_profile": null,
     "instance_type": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
