@@ -433,31 +433,33 @@ get_docker_logs() {
 get_k8s_info() {
   try "collect kubelet information"
 
-  if [[ -n "${KUBECONFIG:-}" ]]; then
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  find_kubeconfig() {
+    if [[ -n "${KUBECONFIG:-}" ]]; then
+      echo "${KUBECONFIG}"
+    elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
+      echo "/etc/eksctl/kubeconfig.yaml"
+    elif [[ -f /etc/systemd/system/kubelet.service ]]; then
+      echo $(grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}')
+    elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
+      echo "/var/lib/kubelet/kubeconfig"
+    else
+      echo ""
+    fi
+  }
 
-  elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
-    KUBECONFIG="/etc/eksctl/kubeconfig.yaml"
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  KUBECONFIG_PATH=$(find_kubeconfig)
 
-  elif [[ -f /etc/systemd/system/kubelet.service ]]; then
-    KUBECONFIG=$(grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}')
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
-
-  elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
-    KUBECONFIG="/var/lib/kubelet/kubeconfig"
-    command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
-
+  if [[ -n "${KUBECONFIG_PATH}" ]]; then
+    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG_PATH}" svc > "${COLLECT_DIR}"/kubelet/svc.log
+    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG_PATH}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
   else
     echo "======== Unable to find KUBECONFIG, IGNORING POD DATA =========" >> "${COLLECT_DIR}"/kubelet/svc.log
   fi
 
   # Try to copy the kubeconfig file if kubectl command doesn't exist
-  [[ (! -f "${COLLECT_DIR}/kubelet/kubeconfig.yaml") && (-n ${KUBECONFIG}) ]] && cp ${KUBECONFIG} "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  if [[ ! -f "${COLLECT_DIR}/kubelet/kubeconfig.yaml" && -n "${KUBECONFIG_PATH}" ]]; then
+    cp "${KUBECONFIG_PATH}" "${COLLECT_DIR}/kubelet/kubeconfig.yaml"
+  fi
 
   case "${INIT_TYPE}" in
     systemd)
