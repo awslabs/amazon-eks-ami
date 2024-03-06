@@ -482,6 +482,11 @@ fi
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
 echo "$(jq ".clusterDNS=[\"$DNS_CLUSTER_IP\"]" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
+if vercmp "$KUBELET_VERSION" gteq "1.29.0"; then
+  echo "$(jq ".shutdownGracePeriod=\"45s\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+  echo "$(jq ".shutdownGracePeriodCriticalPods=\"15s\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+fi
+
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
 else
