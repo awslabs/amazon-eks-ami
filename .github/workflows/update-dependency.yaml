@@ -39,7 +39,7 @@ jobs:
           author: github-actions <actions@github.com>
           branch: dependencies/update
           branch-suffix: timestamp
-          base: master
+          base: main
           delete-branch: true
           labels: |
             changelog/exclude
