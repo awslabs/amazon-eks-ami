@@ -72,6 +72,29 @@ spec:
                       by the default configuration file.
                     type: string
                 type: object
+              hybrid:
+                properties:
+                  anywhere:
+                    properties:
+                      anchorArn:
+                        type: string
+                      profileArn:
+                        type: string
+                    type: object
+                  ip:
+                    type: string
+                  maxPods:
+                    format: int32
+                    type: integer
+                  nodeName:
+                    type: string
+                  region:
+                    type: string
+                  roleArn:
+                    type: string
+                  ssm:
+                    type: object
+                type: object
               instance:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.

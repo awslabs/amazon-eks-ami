@@ -35,6 +35,31 @@ _Appears in:_
 | --- | --- |
 | `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
 
+#### HybridOptions
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `nodeName` _string_ |  |
+| `ip` _string_ |  |
+| `region` _string_ |  |
+| `maxPods` _integer_ |  |
+| `roleArn` _string_ |  |
+| `anywhere` _[IAMRolesAnywhere](#iamrolesanywhere)_ |  |
+| `ssm` _[SSM](#ssm)_ |  |
+
+#### IAMRolesAnywhere
+
+_Appears in:_
+- [HybridOptions](#hybridoptions)
+
+| Field | Description |
+| --- | --- |
+| `anchorArn` _string_ |  |
+| `profileArn` _string_ |  |
+
 #### InstanceOptions
 
 InstanceOptions determines how the node's operating system and devices are configured.
@@ -105,3 +130,9 @@ _Appears in:_
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `hybrid` _[HybridOptions](#hybridoptions)_ |  |
+
+#### SSM
+
+_Appears in:_
+- [HybridOptions](#hybridoptions)

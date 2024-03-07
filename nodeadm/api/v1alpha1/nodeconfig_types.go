@@ -33,6 +33,7 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Hybrid     *HybridOptions    `json:"hybrid,omitempty"`
 }
 
 // ClusterDetails contains the coordinates of your EKS cluster.
@@ -98,3 +99,24 @@ const (
 	// LocalStorageMount will mount each local disk individually
 	LocalStorageMount LocalStorageStrategy = "Mount"
 )
+
+type HybridOptions struct {
+	NodeName string            `json:"nodeName,omitempty"`
+	IP       string            `json:"ip,omitempty"`
+	Region   string            `json:"region,omitempty"`
+	MaxPods  int32             `json:"maxPods,omitempty"`
+	RoleARN  string            `json:"roleArn,omitempty"`
+	Anywhere *IAMRolesAnywhere `json:"anywhere,omitempty"`
+	SSM      *SSM              `json:"ssm,omitempty"`
+}
+
+func (nc NodeConfig) IsHybridNode() bool {
+	return nc.Spec.Hybrid != nil
+}
+
+type IAMRolesAnywhere struct {
+	AnchorARN  string `json:"anchorArn,omitempty"`
+	ProfileARN string `json:"profileArn,omitempty"`
+}
+
+type SSM struct{}

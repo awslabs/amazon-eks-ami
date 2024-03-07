@@ -32,7 +32,7 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
-	Hybrid     *HybridOptions    `json:"hybrid, omitempty"`
+	Hybrid     *HybridOptions    `json:"hybrid,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -120,8 +120,8 @@ func (nc NodeConfig) IsHybridNode() bool {
 }
 
 type IAMRolesAnywhere struct {
-	AnchorARN  string
-	ProfileARN string
+	AnchorARN  string `json:"anchorArn,omitempty"`
+	ProfileARN string `json:"profileArn,omitempty"`
 }
 
 type SSM struct{}
