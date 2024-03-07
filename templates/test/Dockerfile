@@ -1,4 +1,4 @@
-FROM public.ecr.aws/aws-ec2/amazon-ec2-metadata-mock:v1.11.2 as aemm
+FROM public.ecr.aws/aws-ec2/amazon-ec2-metadata-mock:v1.11.2 AS aemm
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 RUN amazon-linux-extras enable docker && \
     yum install -y jq containerd wget which && \
