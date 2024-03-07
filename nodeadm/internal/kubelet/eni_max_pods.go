@@ -49,7 +49,6 @@ func init() {
 // The behavior should align with AL2, which essentially is:
 //
 //	# of ENI * (# of IPv4 per ENI - 1) + 2
-//
 func CalcMaxPods(awsRegion string, instanceType string) int32 {
 	zap.L().Info("calculate the max pod for instance type", zap.String("instanceType", instanceType))
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))

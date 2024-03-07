@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -192,10 +193,6 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		}
 		output := strings.Join(ipHostMappings, "\n") + "\n"
 
-		if err != nil {
-			return err
-		}
-
 		// append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
 		f, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, kubeletConfigPerm)
 		if err != nil {
@@ -255,21 +252,59 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 	}
 }
 
-// When the DefaultReservedResources flag is enabled, override the kubelet
-// config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
+// withMaxPods populates the value of maxPods for the generated kubelet config
+// using several possible data sources and a fallback to a dynamic calculation.
+//
+// current behavior first takes into consideration user provided max pods from
+// both kubelet config and kubelet command line flags, and if both are missing
+// then either pulls a precomputed value based on instance type or dynamically
+// calculates the value. The order of priority goes:
+//  1. kubelet config `maxPods`
+//  2. kubelet flag `--max-pods`
+//  3. procomputed instance type default
+//  4. dynamic calculation using ec2 api
+func (ksc *kubeletConfig) withMaxPods(cfg *api.NodeConfig) {
+	if rawMaxPodStr, ok := cfg.Spec.Kubelet.Config["maxPods"]; ok {
+		maxPodsStr := string(rawMaxPodStr.Raw)
+		zap.L().Info("attempting to populate maxPods from user-provided kubelet config", zap.String("maxPods", maxPodsStr))
+		maxPods, err := strconv.ParseInt(maxPodsStr, 10, 32)
+		if err != nil {
+			zap.L().Warn("encountered error parsing maxPods from kubelet config", zap.Error(err))
+		} else {
+			ksc.MaxPods = int32(maxPods)
+			return
+		}
+	}
+	for _, flag := range cfg.Spec.Kubelet.Flags {
+		if strings.HasPrefix(flag, "--max-pods") {
+			maxPodsStr := strings.Trim(strings.ReplaceAll(flag, "--max-pods", ""), "= ")
+			zap.L().Info("attempting to populate maxPods from user-provided kubelet flag", zap.String("--max-pods", maxPodsStr))
+			maxPods, err := strconv.ParseInt(maxPodsStr, 10, 32)
+			if err != nil {
+				zap.L().Warn("encountered error parsing maxPods from kubelet flag", zap.Error(err))
+			} else {
+				ksc.MaxPods = int32(maxPods)
+				return
+			}
+		}
+	}
+
+	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
+		zap.L().Info("using precomputed maxPods value")
+		ksc.MaxPods = int32(maxPods)
+	} else {
+		zap.L().Info("falling back to dynamic calculation for maxPods")
+		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+	}
+}
+
+func (ksc *kubeletConfig) withDefaultReservedResources(maxPods int32) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if !ok {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
-	} else {
-		ksc.MaxPods = int32(maxPods)
-	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
+		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(maxPods)),
 	}
 }
 
@@ -314,7 +349,8 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
 	kubeletConfig.withCloudProvider(kubeletVersion, cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources(cfg)
+	kubeletConfig.withMaxPods(cfg)
+	kubeletConfig.withDefaultReservedResources(kubeletConfig.MaxPods)
 
 	return &kubeletConfig, nil
 }

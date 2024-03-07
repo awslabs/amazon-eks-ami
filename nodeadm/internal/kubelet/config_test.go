@@ -7,7 +7,52 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime"
 )
+
+func TestKubeReservedMemoryWithUserMaxPods(t *testing.T) {
+	var tests = []struct {
+		kubeletOptions             api.KubeletOptions
+		expectedKubeReservedMemory string
+	}{
+		{
+			kubeletOptions: api.KubeletOptions{
+				Config: api.InlineDocument{"maxPods": runtime.RawExtension{Raw: []byte("100")}},
+			},
+			expectedKubeReservedMemory: "1355Mi",
+		},
+		{
+			kubeletOptions: api.KubeletOptions{
+				Flags: []string{"--max-pods=100"},
+			},
+			expectedKubeReservedMemory: "1355Mi",
+		},
+		{
+			kubeletOptions: api.KubeletOptions{
+				Flags: []string{"--max-pods 100"},
+			},
+			expectedKubeReservedMemory: "1355Mi",
+		},
+		{
+			kubeletOptions: api.KubeletOptions{
+				Config: api.InlineDocument{"maxPods": runtime.RawExtension{Raw: []byte("100")}},
+				Flags:  []string{"--max-pods=200"},
+			},
+			expectedKubeReservedMemory: "1355Mi",
+		},
+	}
+
+	for _, test := range tests {
+		nodeConfig := api.NodeConfig{Spec: api.NodeConfigSpec{
+			Kubelet: test.kubeletOptions,
+		}}
+		kubeletConfig := defaultKubeletSubConfig()
+		kubeletConfig.withMaxPods(&nodeConfig)
+		kubeletConfig.withDefaultReservedResources(kubeletConfig.MaxPods)
+
+		assert.Equal(t, test.expectedKubeReservedMemory, kubeletConfig.KubeReserved["memory"])
+	}
+}
 
 func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 	var tests = []struct {

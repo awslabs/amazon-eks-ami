@@ -112,5 +112,4 @@ function mock::instance-type() {
 
 function revert::mock::instance-type() {
   cat /etc/aemm-default-config.json | jq '.metadata.values."instance-type" = "m4.xlarge" | .dynamic.values."instance-identity-document".instanceType = "m4.xlarge"' | tee /etc/aemm-default-config.json
-
 }
