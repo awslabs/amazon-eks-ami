@@ -26,6 +26,7 @@
     "pull_cni_from_github": "true",
     "remote_folder": "/tmp",
     "runc_version": "1.1.*",
+    "aws_endpoint_url_s3": "{{env `AWS_ENDPOINT_URL_S3`}}",
     "security_group_id": "",
     "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
     "source_ami_id": "",

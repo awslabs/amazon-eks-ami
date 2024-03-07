@@ -33,6 +33,7 @@
     "pull_cni_from_github": null,
     "remote_folder": null,
     "runc_version": null,
+    "aws_endpoint_url_s3": null,
     "security_group_id": null,
     "source_ami_filter_name": null,
     "source_ami_id": null,
@@ -191,6 +192,7 @@
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+	"AWS_ENDPOINT_URL_S3={{ user `aws_endpoint_url_s3`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
