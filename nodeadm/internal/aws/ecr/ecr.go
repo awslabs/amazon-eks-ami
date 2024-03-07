@@ -52,6 +52,11 @@ func GetEKSRegistry(region string) (ECRRegistry, error) {
 	return ECRRegistry(getRegistry(account, "ecr", region, servicesDomain)), nil
 }
 
+func GetHybridRegistry(region string) ECRRegistry {
+	account, region := getEKSRegistryCoordinates(region)
+	return ECRRegistry(getRegistry(account, "ecr", region, "amazonaws.com"))
+}
+
 type ECRRegistry string
 
 func (r *ECRRegistry) String() string {

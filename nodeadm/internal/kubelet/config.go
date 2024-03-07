@@ -210,12 +210,17 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 }
 
 func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
-	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
-	if err != nil {
-		return err
+	if cfg.IsHybridNode() {
+		flags["node-ip"] = cfg.Spec.Hybrid.IP
+	} else {
+		ip, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
+		if err != nil {
+			return err
+		}
+		flags["node-ip"] = ip
 	}
-	flags["node-ip"] = nodeIp
-	zap.L().Info("Setup IP for node", zap.String("ip", nodeIp))
+
+	zap.L().Info("Setup IP for node", zap.String("ip", flags["node-ip"]))
 	return nil
 }
 
@@ -244,6 +249,13 @@ func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[st
 }
 
 func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.NodeConfig, flags map[string]string) {
+	if cfg.IsHybridNode() {
+		// ref: https://github.com/kubernetes/kubernetes/pull/121367
+		flags["cloud-provider"] = "external"
+		// provider ID needs to be specified when the cloud provider is external
+		ksc.ProviderID = ptr.String(fmt.Sprintf("hybrid://%s", cfg.Spec.Hybrid.NodeName))
+		return
+	}
 	if semver.Compare(kubeletVersion, "v1.26.0") >= 0 {
 		// ref: https://github.com/kubernetes/kubernetes/pull/121367
 		flags["cloud-provider"] = "external"
@@ -260,11 +272,15 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if !ok {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+	if cfg.IsHybridNode() {
+		ksc.MaxPods = cfg.Spec.Hybrid.MaxPods
 	} else {
-		ksc.MaxPods = int32(maxPods)
+		maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
+		if !ok {
+			ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+		} else {
+			ksc.MaxPods = int32(maxPods)
+		}
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),

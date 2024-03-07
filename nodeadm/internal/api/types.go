@@ -32,6 +32,7 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Hybrid     *HybridOptions    `json:"hybrid, omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -103,3 +104,24 @@ const (
 	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
 	LocalStorageMount LocalStorageStrategy = "Mount"
 )
+
+type HybridOptions struct {
+	NodeName string            `json:"nodeName,omitempty"`
+	IP       string            `json:"ip,omitempty"`
+	Region   string            `json:"region,omitempty"`
+	MaxPods  int32             `json:"maxPods,omitempty"`
+	RoleARN  string            `json:"roleArn,omitempty"`
+	Anywhere *IAMRolesAnywhere `json:"anywhere,omitempty"`
+	SSM      *SSM              `json:"ssm,omitempty"`
+}
+
+func (nc NodeConfig) IsHybridNode() bool {
+	return nc.Spec.Hybrid != nil
+}
+
+type IAMRolesAnywhere struct {
+	AnchorARN  string
+	ProfileARN string
+}
+
+type SSM struct{}

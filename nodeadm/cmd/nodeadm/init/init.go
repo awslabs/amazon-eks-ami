@@ -144,22 +144,38 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 // Various initializations and verifications of the NodeConfig and
 // perform in-place updates when allowed by the user
 func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
-	log.Info("Fetching instance details..")
-	instanceDetails, err := api.GetIMDSInstanceDetails(context.TODO(), imds.New(imds.Options{}))
-	if err != nil {
-		return err
+	var instanceDetails *api.InstanceDetails
+	if cfg.IsHybridNode() {
+		instanceDetails = &api.InstanceDetails{
+			Region: cfg.Spec.Hybrid.Region,
+		}
+	} else {
+		log.Info("Fetching instance details..")
+		id, err := api.GetIMDSInstanceDetails(context.TODO(), imds.New(imds.Options{}))
+		if err != nil {
+			return err
+		}
+		instanceDetails = id
 	}
 	cfg.Status.Instance = *instanceDetails
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
-	log.Info("Fetching default options...")
-	eksRegistry, err := ecr.GetEKSRegistry(instanceDetails.Region)
-	if err != nil {
-		return err
+
+	if cfg.IsHybridNode() {
+		registry := ecr.GetHybridRegistry(instanceDetails.Region)
+		cfg.Status.Defaults = api.DefaultOptions{
+			SandboxImage: registry.GetSandboxImage(),
+		}
+	} else {
+		log.Info("Fetching default options...")
+		eksRegistry, err := ecr.GetEKSRegistry(instanceDetails.Region)
+		if err != nil {
+			return err
+		}
+		cfg.Status.Defaults = api.DefaultOptions{
+			SandboxImage: eksRegistry.GetSandboxImage(),
+		}
+		log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	}
-	cfg.Status.Defaults = api.DefaultOptions{
-		SandboxImage: eksRegistry.GetSandboxImage(),
-	}
-	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil
 }
 
