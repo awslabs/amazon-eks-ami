@@ -38,7 +38,7 @@ def update_doc(doc: str, template_path: str) -> str:
     for var, val in all_vars.items():
         if val is not None:
             if val == "":
-                val = f"`\"\"`"
+                val = "`\"\"`"
             else:
                 val = f"```{val}```"
         else:
