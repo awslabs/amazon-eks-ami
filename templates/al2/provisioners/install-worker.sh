@@ -164,8 +164,8 @@ sudo mv $WORKING_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-cont
 sudo mv $WORKING_DIR/sandbox-image.service /etc/eks/containerd/sandbox-image.service
 sudo mv $WORKING_DIR/pull-sandbox-image.sh /etc/eks/containerd/pull-sandbox-image.sh
 sudo mv $WORKING_DIR/pull-image.sh /etc/eks/containerd/pull-image.sh
-sudo chmod +x /etc/eks/containerd/pull-sandbox-image.sh
-sudo chmod +x /etc/eks/containerd/pull-image.sh
+sudo chmod 755 /etc/eks/containerd/pull-sandbox-image.sh
+sudo chmod 755 /etc/eks/containerd/pull-image.sh
 sudo mkdir -p /etc/systemd/system/containerd.service.d
 CONFIGURE_CONTAINERD_SLICE=$(vercmp "$KUBERNETES_VERSION" gteq "1.24.0" || true)
 if [ "$CONFIGURE_CONTAINERD_SLICE" == "true" ]; then
@@ -282,7 +282,7 @@ for binary in ${BINARIES[*]}; do
     sudo wget $S3_URL_BASE/$binary.sha256
   fi
   sudo sha256sum -c $binary.sha256
-  sudo chmod +x $binary
+  sudo chmod 755 $binary
   sudo mv $binary /usr/bin/
 done
 
@@ -356,12 +356,12 @@ sudo systemctl disable kubelet
 
 sudo mkdir -p /etc/eks
 sudo mv $WORKING_DIR/get-ecr-uri.sh /etc/eks/get-ecr-uri.sh
-sudo chmod +x /etc/eks/get-ecr-uri.sh
+sudo chmod 755 /etc/eks/get-ecr-uri.sh
 sudo mv $WORKING_DIR/eni-max-pods.txt /etc/eks/eni-max-pods.txt
 sudo mv $WORKING_DIR/bootstrap.sh /etc/eks/bootstrap.sh
-sudo chmod +x /etc/eks/bootstrap.sh
+sudo chmod 755 /etc/eks/bootstrap.sh
 sudo mv $WORKING_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
-sudo chmod +x /etc/eks/max-pods-calculator.sh
+sudo chmod 755 /etc/eks/max-pods-calculator.sh
 
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
@@ -374,7 +374,7 @@ else
   echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
   sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
-sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
+sudo chmod 755 $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 sudo mv $WORKING_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
