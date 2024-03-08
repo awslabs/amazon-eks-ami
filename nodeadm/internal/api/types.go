@@ -45,6 +45,7 @@ type InstanceDetails struct {
 	Type             string `json:"type,omitempty"`
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 	MAC              string `json:"mac,omitempty"`
+	PrivateDNSName   string `json:"privateDnsName,omitempty"`
 }
 
 type DefaultOptions struct {

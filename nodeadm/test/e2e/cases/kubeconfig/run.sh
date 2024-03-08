@@ -6,7 +6,7 @@ set -o pipefail
 
 source /helpers.sh
 
-mock::imds
+mock::aws
 wait::dbus-ready
 
 mock::kubelet 1.23.0
