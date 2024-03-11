@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: awslabs/amazon-eks-ami
-          ref: refs/heads/master
+          ref: refs/heads/main
           path: amazon-eks-ami/
       - uses: actions/github-script@v6
         with:

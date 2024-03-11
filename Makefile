@@ -94,28 +94,31 @@ k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
+# DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28
+# Use the `k8s` variable to specify a minor version instead
+
 .PHONY: 1.23
-1.23: ## Build EKS Optimized AMI - K8s 1.23
+1.23: ## Build EKS Optimized AMI - K8s 1.23 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.23)
 
 .PHONY: 1.24
-1.24: ## Build EKS Optimized AMI - K8s 1.24
+1.24: ## Build EKS Optimized AMI - K8s 1.24 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.24)
 
 .PHONY: 1.25
-1.25: ## Build EKS Optimized AMI - K8s 1.25
+1.25: ## Build EKS Optimized AMI - K8s 1.25 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.25)
 
 .PHONY: 1.26
-1.26: ## Build EKS Optimized AMI - K8s 1.26
+1.26: ## Build EKS Optimized AMI - K8s 1.26 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.26)
 
 .PHONY: 1.27
-1.27: ## Build EKS Optimized AMI - K8s 1.27
+1.27: ## Build EKS Optimized AMI - K8s 1.27 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.27)
 
 .PHONY: 1.28
-1.28: ## Build EKS Optimized AMI - K8s 1.28
+1.28: ## Build EKS Optimized AMI - K8s 1.28 - DEPRECATED: use the `k8s` variable instead
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.28)
 
 .PHONY: lint-docs

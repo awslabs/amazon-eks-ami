@@ -26,6 +26,7 @@
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
 | `encrypted` |  |
+| `iam_instance_profile` | The name of an IAM instance profile to launch the EC2 instance with. |
 | `instance_type` |  |
 | `kernel_version` |  |
 | `kms_key_id` |  |
@@ -40,7 +41,7 @@
 | `source_ami_filter_name` |  |
 | `source_ami_id` |  |
 | `source_ami_owners` |  |
-| `ssh_interface` |  |
+| `ssh_interface` | If using ```session_manager```, you need to specify a non-minimal ami as the minimal version does not have the SSM agent installed. |
 | `ssh_username` |  |
 | `ssm_agent_version` | Version of the SSM agent to install from the S3 bucket provided by the SSM agent project, such as ```latest```. If empty, the latest version of the SSM agent available in the Amazon Linux core repositories will be installed. |
 | `subnet_id` |  |
