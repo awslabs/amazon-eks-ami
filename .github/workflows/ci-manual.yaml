@@ -25,9 +25,18 @@ on:
         options:
           - "build"
           - "test"
+      os_distro:
+        description: 'Operating System Distributions (comma-separated, e.g., al2,al2023)'
+        required: false
+        type: string
+      kubernetes_versions:
+        description: 'Kubernetes Versions (comma-separated, e.g., 1.21,1.22)'
+        required: false
+        type: string
       build_arguments:
         required: false
         type: string
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -37,17 +46,16 @@ jobs:
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       build_id: ${{ steps.variables.outputs.build_id }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
+      os_distro: ${{ steps.variables.outputs.os_distro }}
     steps:
     - id: variables
       run: |
         echo "git_sha_short=$(echo ${{ inputs.git_sha }} | rev | cut -c-7 | rev)" >> $GITHUB_OUTPUT
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-        # grab supported versions directly from eksctl
-        wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
-        tar xzf eksctl.tar.gz && chmod +x ./eksctl
-        echo "kubernetes_versions=$(./eksctl version --output json | jq -c .EKSServerSupportedVersions)" >> $GITHUB_OUTPUT
         echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
+        echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.kubernetes_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+        echo "os_distro=$(jq -Rn --arg input '${{ inputs.os_distro }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
 
   notify-start:
     runs-on: ubuntu-latest
@@ -77,7 +85,12 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
-        os_distro: [al2, al2023]
+        os_distro: ${{ fromJson(needs.setup.outputs.os_distro) }}
+        exclude:
+          - os_distro: al2023
+            k8s_version: 1.21
+          - os_distro: al2023
+            k8s_version: 1.22
     steps:
       - uses: actions/checkout@v3
         with:

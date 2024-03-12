@@ -137,6 +137,31 @@ function parseNamedArguments(line) {
     return null;
 }
 
+function parseGoal(args) {
+    const goalMatch = args.match(/^(test|build)/);
+    if (goalMatch) {
+        return goalMatch[0];
+    }
+    // "test" goal, which executes all CI stages, is the default when no goal is specified
+    return "test"
+}
+
+function parseArgument(args, key) {
+    const match = args.match(new RegExp(`${key}=([^\\s]+)`));
+    if (match) {
+        return match[1];
+    }
+    if (key === "os_distro") {
+        // default to all variants
+        return "al2,al2023";
+    }
+    if (key === "k8s_versions") {
+        // default to all versions
+        return "1.21,1.22,1.23,1.24,1.25,1.26,1.27,1.28,1.29";
+    }
+    return null;
+}
+
 class EchoCommand {
     constructor(uuid, payload, args) {
         this.phrase = args ? args : "echo";
@@ -155,11 +180,15 @@ class CICommand {
         this.comment_url = payload.comment.html_url;
         this.uuid = uuid;
         this.goal = "test";
-        // "test" goal, which executes all CI stages, is the default when no goal is specified
-        if (args != null && args != "") {
-            this.goal = args;
-        }
+        this.os_distro = null;
+        this.kubernetes_versions = null;
         this.goal_args = {};
+        if (args != null && args !== "") {
+            this.goal = parseGoal(args)
+            this.os_distro = parseArgument(args, "os_distro")
+            this.kubernetes_versions = parseArgument(args, "k8s_versions")
+            console.log(`after parsing, goal=${this.goal}, os_distro=${this.os_distro}, kubernetes_versions=${this.kubernetes_versions}`)
+        }
     }
 
     addNamedArguments(goal, args) {
@@ -188,7 +217,9 @@ class CICommand {
             git_sha: pr.data.merge_commit_sha,
             goal: this.goal,
             requester: author,
-            comment_url: this.comment_url
+            comment_url: this.comment_url,
+            os_distro: this.os_distro,
+            kubernetes_versions: this.kubernetes_versions
         };
         for (const [goal, args] of Object.entries(this.goal_args)) {
             inputs[`${goal}_arguments`] = args;
