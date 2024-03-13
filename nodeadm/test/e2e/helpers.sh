@@ -100,10 +100,19 @@ function wait::dbus-ready() {
   wait::path-exists /run/systemd/private
 }
 
-function mock::imds() {
+function mock::aws() {
   local CONFIG_PATH=${1:-/etc/aemm-default-config.json}
   imds-mock --config-file $CONFIG_PATH &
   export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338
+  $HOME/.local/bin/moto_server -p5000 &
+  export AWS_ACCESS_KEY_ID='testing'
+  export AWS_SECRET_ACCESS_KEY='testing'
+  export AWS_SECURITY_TOKEN='testing'
+  export AWS_SESSION_TOKEN='testing'
+  export AWS_REGION=us-east-1
+  export AWS_ENDPOINT_URL=http://localhost:5000
+  # ensure that our instance exists in the API
+  aws ec2 run-instances
 }
 
 function mock::instance-type() {

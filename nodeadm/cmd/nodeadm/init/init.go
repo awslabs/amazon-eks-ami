@@ -2,11 +2,11 @@ package init
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 	"k8s.io/utils/strings/slices"
@@ -145,7 +145,14 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 // perform in-place updates when allowed by the user
 func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	log.Info("Fetching instance details..")
-	instanceDetails, err := api.GetIMDSInstanceDetails(context.TODO(), imds.New(imds.Options{}))
+	imdsClient := imds.New(imds.Options{})
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(), config.WithClientLogMode(aws.LogRetries), config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
+		o.Client = imdsClient
+	}))
+	if err != nil {
+		return err
+	}
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), imdsClient, ec2.NewFromConfig(awsConfig))
 	if err != nil {
 		return err
 	}
@@ -160,57 +167,5 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 		SandboxImage: eksRegistry.GetSandboxImage(),
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
-	return nil
-}
-
-// Discovers all cluster details using a describe call to the eks endpoint and
-// updates the value of the config's `ClusterDetails` in-place
-func populateClusterDetails(eksClient *eks.EKS, clusterName string, cfg *api.NodeConfig) error {
-	if err := eksClient.WaitUntilClusterActive(&eks.DescribeClusterInput{Name: &clusterName}); err != nil {
-		return err
-	}
-	describeResponse, err := eksClient.DescribeCluster(&eks.DescribeClusterInput{Name: &clusterName})
-	if err != nil {
-		return err
-	}
-
-	ipFamily := *describeResponse.Cluster.KubernetesNetworkConfig.IpFamily
-
-	var cidr string
-	if ipFamily == eks.IpFamilyIpv4 {
-		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv4Cidr
-	} else if ipFamily == eks.IpFamilyIpv6 {
-		cidr = *describeResponse.Cluster.KubernetesNetworkConfig.ServiceIpv6Cidr
-	} else {
-		return fmt.Errorf("bad ipFamily: %s", ipFamily)
-	}
-
-	isOutpost := false
-	clusterId := cfg.Spec.Cluster.ID
-	// detect whether the cluster is an aws outpost cluster depending on whether
-	// the response contains the outpost ID
-	if outpostId := describeResponse.Cluster.Id; outpostId != nil {
-		clusterId = *outpostId
-		isOutpost = true
-	}
-
-	enableOutpost := isOutpost
-	// respect the user override for enabling the outpost
-	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil {
-		enableOutpost = *enabled
-	}
-
-	caCert, err := base64.StdEncoding.DecodeString(*describeResponse.Cluster.CertificateAuthority.Data)
-	if err != nil {
-		return err
-	}
-
-	cfg.Spec.Cluster.Name = *describeResponse.Cluster.Name
-	cfg.Spec.Cluster.APIServerEndpoint = *describeResponse.Cluster.Endpoint
-	cfg.Spec.Cluster.CertificateAuthority = caCert
-	cfg.Spec.Cluster.CIDR = cidr
-	cfg.Spec.Cluster.EnableOutpost = &enableOutpost
-	cfg.Spec.Cluster.ID = clusterId
-
 	return nil
 }

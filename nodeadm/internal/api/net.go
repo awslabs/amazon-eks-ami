@@ -1,42 +1,10 @@
 package api
 
 import (
-	"context"
 	"fmt"
-	"io"
 	"net"
 	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
-
-// Fetch information about the ec2 instance using IMDS data.
-// This information is stored into the internal config to avoid redundant calls
-// to IMDS when looking for instance metadata
-func GetIMDSInstanceDetails(ctx context.Context, imdsClient *imds.Client) (*InstanceDetails, error) {
-	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
-	if err != nil {
-		return nil, err
-	}
-
-	macResponse, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{Path: "mac"})
-	if err != nil {
-		return nil, err
-	}
-	mac, err := io.ReadAll(macResponse.Content)
-	if err != nil {
-		return nil, err
-	}
-
-	instanceDetails := InstanceDetails{
-		ID:               instanceIdenitityDocument.InstanceID,
-		Region:           instanceIdenitityDocument.Region,
-		Type:             instanceIdenitityDocument.InstanceType,
-		AvailabilityZone: instanceIdenitityDocument.AvailabilityZone,
-		MAC:              string(mac),
-	}
-	return &instanceDetails, nil
-}
 
 // Derive the default ClusterIP of the kube-dns service from EKS built-in CoreDNS addon
 func (details *ClusterDetails) GetClusterDns() (string, error) {
