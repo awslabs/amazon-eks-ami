@@ -92,6 +92,17 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		kubelet.NewKubeletDaemon(daemonManager),
 	}
 
+	// if nodeConfig.IsHybridNode() {
+	// 	err = hybrid.WriteAWSConfig(hybrid.AWSConfig{
+	// 		TrustAnchorARN: nodeConfig.Spec.Hybrid.Anywhere.AnchorARN,
+	// 		ProfileARN:     nodeConfig.Spec.Hybrid.Anywhere.AnchorARN,
+	// 		Region:         nodeConfig.Spec.Hybrid.Region,
+	// 	})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	if !slices.Contains(c.skipPhases, configPhase) {
 		log.Info("Configuring daemons...")
 		for _, daemon := range daemons {

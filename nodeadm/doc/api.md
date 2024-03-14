@@ -35,6 +35,34 @@ _Appears in:_
 | --- | --- |
 | `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
 
+#### HybridOptions
+
+HybridOptions defines the options specific to hybrid node enrollment.
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `nodeName` _string_ | NodeName is the name the node will adopt. |
+| `region` _string_ | Region is an AWS region (e.g. us-east-1) used to retrieve regional artifacts. |
+| `maxPods` _integer_ | MaxPods defines the maximum pods that can be hosted on the node. |
+| `iamRolesAnywhere` _[IAMRolesAnywhere](#iamrolesanywhere)_ | IAMRolesAnywhere includes IAM Roles Anywhere specific configuration and is mutually exclusive with SSM. |
+| `ssm` _[SSM](#ssm)_ | SSM includes Systems Manager specific configuration and is mutually exclusive with IAMRolesAnywhere. |
+
+#### IAMRolesAnywhere
+
+IAMRolesAnywhere defines IAM Roles Anywhere specific configuration.
+
+_Appears in:_
+- [HybridOptions](#hybridoptions)
+
+| Field | Description |
+| --- | --- |
+| `anchorArn` _string_ | AnchorARN is the ARN of the trust anchor. |
+| `profileArn` _string_ | ProfileARN is the ARN of the profile linked with the Hybrid IAM Role. |
+| `roleArn` _string_ | RoleARN is the role to assume when retrieving temporary credentials. |
+
 #### InstanceOptions
 
 InstanceOptions determines how the node's operating system and devices are configured.
@@ -105,3 +133,16 @@ _Appears in:_
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `hybrid` _[HybridOptions](#hybridoptions)_ |  |
+
+#### SSM
+
+SSM defines Systems MAnager specific configuration.
+
+_Appears in:_
+- [HybridOptions](#hybridoptions)
+
+| Field | Description |
+| --- | --- |
+| `activationToken` _string_ | ActivationToken is the token generated when creating an SSM activation. |
+| `activationId` _string_ | ActivationToken is the ID generated when creating an SSM activation. |

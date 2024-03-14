@@ -25,6 +25,12 @@ var (
 	kubeconfigBootstrapPath = path.Join(kubeconfigRoot, kubeconfigBootstrapFile)
 )
 
+var (
+	//go:embed kubeconfig-hybrid.yaml.tpl
+	kubeconfigHybridTplRaw string
+	kubeconfigHybridTpl    = template.Must(template.New("").Parse(kubeconfigHybridTplRaw))
+)
+
 func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 	kubeconfig, err := generateKubeconfig(cfg)
 	if err != nil {
@@ -47,6 +53,8 @@ type kubeconfigTemplateVars struct {
 	Region            string
 	APIServerEndpoint string
 	CaCertPath        string
+	SessionName       string
+	RoleARN           string
 }
 
 func generateKubeconfig(cfg *api.NodeConfig) ([]byte, error) {
@@ -63,8 +71,16 @@ func generateKubeconfig(cfg *api.NodeConfig) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := kubeconfigTemplate.Execute(&buf, config); err != nil {
-		return nil, err
+	if cfg.IsHybridNode() {
+		config.SessionName = cfg.Spec.Hybrid.NodeName
+		config.RoleARN = cfg.Spec.Hybrid.Anywhere.RoleARN
+		if err := kubeconfigHybridTpl.Execute(&buf, config); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := kubeconfigTemplate.Execute(&buf, config); err != nil {
+			return nil, err
+		}
 	}
 	return buf.Bytes(), nil
 }

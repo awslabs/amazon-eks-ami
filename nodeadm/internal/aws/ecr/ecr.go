@@ -6,18 +6,14 @@ import (
 	"net"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
 
 // Returns the base64 encoded authorization token string for ECR of the format "AWS:XXXXX"
-func GetAuthorizationToken(awsRegion string) (string, error) {
-	awsConfig, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(awsRegion))
-	if err != nil {
-		return "", err
-	}
+func GetAuthorizationToken(awsConfig aws.Config) (string, error) {
 	ecrClient := ecr.NewFromConfig(awsConfig)
 	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
@@ -123,4 +119,9 @@ func getEKSRegistryCoordinates(region string) (string, string) {
 		return "187977181151", "us-isob-east-1"
 	}
 	return "602401143452", "us-west-2"
+}
+
+func GetHybridRegistry(region string) ECRRegistry {
+	account, region := getEKSRegistryCoordinates(region)
+	return ECRRegistry(getRegistry(account, "ecr", region, "amazonaws.com"))
 }

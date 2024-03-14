@@ -72,6 +72,52 @@ spec:
                       by the default configuration file.
                     type: string
                 type: object
+              hybrid:
+                description: HybridOptions defines the options specific to hybrid
+                  node enrollment.
+                properties:
+                  iamRolesAnywhere:
+                    description: IAMRolesAnywhere includes IAM Roles Anywhere specific
+                      configuration and is mutually exclusive with SSM.
+                    properties:
+                      anchorArn:
+                        description: AnchorARN is the ARN of the trust anchor.
+                        type: string
+                      profileArn:
+                        description: ProfileARN is the ARN of the profile linked with
+                          the Hybrid IAM Role.
+                        type: string
+                      roleArn:
+                        description: RoleARN is the role to assume when retrieving
+                          temporary credentials.
+                        type: string
+                    type: object
+                  maxPods:
+                    description: MaxPods defines the maximum pods that can be hosted
+                      on the node.
+                    format: int32
+                    type: integer
+                  nodeName:
+                    description: NodeName is the name the node will adopt.
+                    type: string
+                  region:
+                    description: Region is an AWS region (e.g. us-east-1) used to
+                      retrieve regional artifacts.
+                    type: string
+                  ssm:
+                    description: SSM includes Systems Manager specific configuration
+                      and is mutually exclusive with IAMRolesAnywhere.
+                    properties:
+                      activationId:
+                        description: ActivationToken is the ID generated when creating
+                          an SSM activation.
+                        type: string
+                      activationToken:
+                        description: ActivationToken is the token generated when creating
+                          an SSM activation.
+                        type: string
+                    type: object
+                type: object
               instance:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.
