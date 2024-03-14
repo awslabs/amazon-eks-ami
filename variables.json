@@ -1,0 +1,4 @@
+{
+  "vpc_id": "<YOUR_VPC_HERE>",
+  "subnet_id": "<YOUR_SUBNET_HERE>"
+}
