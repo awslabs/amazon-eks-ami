@@ -377,13 +377,17 @@ For more information about image credential provider plugins, refer to the [Kube
 
 Some instance types launch with ephemeral NVMe instance storage (i3, i4i, c5d, c6id, etc). There are two main ways of utilizing this storage within Kubernetes: a single RAID-0 array for use by kubelet and containerd or mounting the individual disks for pod usage.
 
-The EKS Optimized AMI includes a utility script to configure ephemeral storage. The script can be invoked by passing the `--local-disks <raid0 | mount>` flag to the `/etc/eks/bootstrap.sh` script or the script can be invoked directly at `/bin/setup-local-disks`. All disks are formatted with an XFS file system.
+The EKS Optimized AMI includes a utility script to configure ephemeral storage. The script can be invoked by passing the `--local-disks <raid0 | raid10 | mount>` flag to the `/etc/eks/bootstrap.sh` script or the script can be invoked directly at `/bin/setup-local-disks`. All disks are formatted with an XFS file system.
 
 Below are details on the two disk setup options:
 
 ### RAID-0 for Kubelet and Containerd (raid0)
 
 A RAID-0 array is setup that includes all ephemeral NVMe instance storage disks. The containerd and kubelet state directories (`/var/lib/containerd` and `/var/lib/kubelet`) will then use the ephemeral storage for more and faster node ephemeral-storage. The node's ephemeral storage can be shared among pods that request ephemeral storage and container images that are downloaded to the node.
+
+### RAID-10 for Kubelet and Containerd (raid10)
+
+EXPERIMENTAL: A RAID-10 array is setup that includes all ephemeral NVMe instance storage disks, providing redundancy against maximum of 50% disk failures. Minimum of four disks are required. The containerd and kubelet state directories (`/var/lib/containerd` and `/var/lib/kubelet`) will then use the ephemeral storage for more and faster node ephemeral-storage. The node's ephemeral storage can be shared among pods that request ephemeral storage and container images that are downloaded to the node. The purpose of the feature is to be able to migrate workloads away gracefully on disk failure. The array needs to be monitored and there's no recovery of the raid array, as individual disk can not be replaced on an EC2 instance.
 
 ### Mount for Persistent Volumes (mount)
 
