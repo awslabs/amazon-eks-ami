@@ -127,37 +127,12 @@ function buildCommand(uuid, payload, name, args) {
 // The format of a command is `+NAME ARGS...`.
 // Leading and trailing spaces are ignored.
 function parseNamedArguments(line) {
-    const parsed = line.trim().match(/^\+([a-z\-]+)(?:\s+(.+))?$/);
+    const parsed = line.trim().match(/^\+([a-z\-]+(?::[a-z\-\d_]+)?)(?:\s+(.+))?$/);
     if (parsed) {
         return {
             name: parsed[1],
             args: parsed[2]
         }
-    }
-    return null;
-}
-
-function parseGoal(args) {
-    const goalMatch = args.match(/^(test|build)/);
-    if (goalMatch) {
-        return goalMatch[0];
-    }
-    // "test" goal, which executes all CI stages, is the default when no goal is specified
-    return "test"
-}
-
-function parseArgument(args, key) {
-    const match = args.match(new RegExp(`${key}=([^\\s]+)`));
-    if (match) {
-        return match[1];
-    }
-    if (key === "os_distro") {
-        // default to all variants
-        return "al2,al2023";
-    }
-    if (key === "k8s_versions") {
-        // default to all versions
-        return "1.21,1.22,1.23,1.24,1.25,1.26,1.27,1.28,1.29";
     }
     return null;
 }
@@ -173,6 +148,7 @@ class EchoCommand {
 }
 
 class CICommand {
+    workflow_goal_prefix = "workflow:";
     constructor(uuid, payload, args) {
         this.repository_owner = payload.repository.owner.login;
         this.repository_name = payload.repository.name;
@@ -180,15 +156,11 @@ class CICommand {
         this.comment_url = payload.comment.html_url;
         this.uuid = uuid;
         this.goal = "test";
-        this.os_distro = null;
-        this.kubernetes_versions = null;
-        this.goal_args = {};
+        // "test" goal, which executes all CI stages, is the default when no goal is specified
         if (args != null && args !== "") {
-            this.goal = parseGoal(args)
-            this.os_distro = parseArgument(args, "os_distro")
-            this.kubernetes_versions = parseArgument(args, "k8s_versions")
-            console.log(`after parsing, goal=${this.goal}, os_distro=${this.os_distro}, kubernetes_versions=${this.kubernetes_versions}`)
+            this.goal = args;
         }
+        this.goal_args = {};
     }
 
     addNamedArguments(goal, args) {
@@ -217,12 +189,14 @@ class CICommand {
             git_sha: pr.data.merge_commit_sha,
             goal: this.goal,
             requester: author,
-            comment_url: this.comment_url,
-            os_distro: this.os_distro,
-            kubernetes_versions: this.kubernetes_versions
+            comment_url: this.comment_url
         };
         for (const [goal, args] of Object.entries(this.goal_args)) {
-            inputs[`${goal}_arguments`] = args;
+            if (goal.startsWith(this.workflow_goal_prefix)) {
+                inputs[goal.substring(this.workflow_goal_prefix.length)] = args;
+            } else {
+                inputs[`${goal}_arguments`] = args;
+            }
         }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);
         await github.rest.actions.createWorkflowDispatch({
