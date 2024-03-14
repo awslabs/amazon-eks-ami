@@ -64,12 +64,12 @@ var validChars = map[rune]bool{
 	'-': true, '.': true, '^': true, '_': true, '`': true, '|': true, '~': true,
 }
 
-// RequestUserAgent is a build middleware that set the User-Agent for the request.
-type RequestUserAgent struct {
+// requestUserAgent is a build middleware that set the User-Agent for the request.
+type requestUserAgent struct {
 	sdkAgent, userAgent *smithyhttp.UserAgentBuilder
 }
 
-// NewRequestUserAgent returns a new requestUserAgent which will set the User-Agent and X-Amz-User-Agent for the
+// newRequestUserAgent returns a new requestUserAgent which will set the User-Agent and X-Amz-User-Agent for the
 // request.
 //
 // User-Agent example:
@@ -79,12 +79,12 @@ type RequestUserAgent struct {
 // X-Amz-User-Agent example:
 //
 //	aws-sdk-go-v2/1.2.3 md/GOOS/linux md/GOARCH/amd64 lang/go/1.15
-func NewRequestUserAgent() *RequestUserAgent {
+func newRequestUserAgent() *requestUserAgent {
 	userAgent, sdkAgent := smithyhttp.NewUserAgentBuilder(), smithyhttp.NewUserAgentBuilder()
 	addProductName(userAgent)
 	addProductName(sdkAgent)
 
-	r := &RequestUserAgent{
+	r := &requestUserAgent{
 		sdkAgent:  sdkAgent,
 		userAgent: userAgent,
 	}
@@ -94,7 +94,7 @@ func NewRequestUserAgent() *RequestUserAgent {
 	return r
 }
 
-func addSDKMetadata(r *RequestUserAgent) {
+func addSDKMetadata(r *requestUserAgent) {
 	r.AddSDKAgentKey(OperatingSystemMetadata, getNormalizedOSName())
 	r.AddSDKAgentKeyValue(LanguageMetadata, "go", languageVersion)
 	r.AddSDKAgentKeyValue(AdditionalMetadata, "GOOS", runtime.GOOS)
@@ -162,18 +162,18 @@ func AddRequestUserAgentMiddleware(stack *middleware.Stack) error {
 	return err
 }
 
-func getOrAddRequestUserAgent(stack *middleware.Stack) (*RequestUserAgent, error) {
-	id := (*RequestUserAgent)(nil).ID()
+func getOrAddRequestUserAgent(stack *middleware.Stack) (*requestUserAgent, error) {
+	id := (*requestUserAgent)(nil).ID()
 	bm, ok := stack.Build.Get(id)
 	if !ok {
-		bm = NewRequestUserAgent()
+		bm = newRequestUserAgent()
 		err := stack.Build.Add(bm, middleware.After)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	requestUserAgent, ok := bm.(*RequestUserAgent)
+	requestUserAgent, ok := bm.(*requestUserAgent)
 	if !ok {
 		return nil, fmt.Errorf("%T for %s middleware did not match expected type", bm, id)
 	}
@@ -182,34 +182,34 @@ func getOrAddRequestUserAgent(stack *middleware.Stack) (*RequestUserAgent, error
 }
 
 // AddUserAgentKey adds the component identified by name to the User-Agent string.
-func (u *RequestUserAgent) AddUserAgentKey(key string) {
+func (u *requestUserAgent) AddUserAgentKey(key string) {
 	u.userAgent.AddKey(strings.Map(rules, key))
 }
 
 // AddUserAgentKeyValue adds the key identified by the given name and value to the User-Agent string.
-func (u *RequestUserAgent) AddUserAgentKeyValue(key, value string) {
+func (u *requestUserAgent) AddUserAgentKeyValue(key, value string) {
 	u.userAgent.AddKeyValue(strings.Map(rules, key), strings.Map(rules, value))
 }
 
-// AddSDKAgentKey adds the component identified by name to the User-Agent string.
-func (u *RequestUserAgent) AddSDKAgentKey(keyType SDKAgentKeyType, key string) {
+// AddUserAgentKey adds the component identified by name to the User-Agent string.
+func (u *requestUserAgent) AddSDKAgentKey(keyType SDKAgentKeyType, key string) {
 	// TODO: should target sdkAgent
 	u.userAgent.AddKey(keyType.string() + "/" + strings.Map(rules, key))
 }
 
-// AddSDKAgentKeyValue adds the key identified by the given name and value to the User-Agent string.
-func (u *RequestUserAgent) AddSDKAgentKeyValue(keyType SDKAgentKeyType, key, value string) {
+// AddUserAgentKeyValue adds the key identified by the given name and value to the User-Agent string.
+func (u *requestUserAgent) AddSDKAgentKeyValue(keyType SDKAgentKeyType, key, value string) {
 	// TODO: should target sdkAgent
 	u.userAgent.AddKeyValue(keyType.string(), strings.Map(rules, key)+"#"+strings.Map(rules, value))
 }
 
 // ID the name of the middleware.
-func (u *RequestUserAgent) ID() string {
+func (u *requestUserAgent) ID() string {
 	return "UserAgent"
 }
 
 // HandleBuild adds or appends the constructed user agent to the request.
-func (u *RequestUserAgent) HandleBuild(ctx context.Context, in middleware.BuildInput, next middleware.BuildHandler) (
+func (u *requestUserAgent) HandleBuild(ctx context.Context, in middleware.BuildInput, next middleware.BuildHandler) (
 	out middleware.BuildOutput, metadata middleware.Metadata, err error,
 ) {
 	switch req := in.Request.(type) {
@@ -224,12 +224,12 @@ func (u *RequestUserAgent) HandleBuild(ctx context.Context, in middleware.BuildI
 	return next.HandleBuild(ctx, in)
 }
 
-func (u *RequestUserAgent) addHTTPUserAgent(request *smithyhttp.Request) {
+func (u *requestUserAgent) addHTTPUserAgent(request *smithyhttp.Request) {
 	const userAgent = "User-Agent"
 	updateHTTPHeader(request, userAgent, u.userAgent.Build())
 }
 
-func (u *RequestUserAgent) addHTTPSDKAgent(request *smithyhttp.Request) {
+func (u *requestUserAgent) addHTTPSDKAgent(request *smithyhttp.Request) {
 	const sdkAgent = "X-Amz-User-Agent"
 	updateHTTPHeader(request, sdkAgent, u.sdkAgent.Build())
 }

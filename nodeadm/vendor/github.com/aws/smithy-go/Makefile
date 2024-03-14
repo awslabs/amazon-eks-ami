@@ -33,17 +33,12 @@ smithy-clean:
 ##################
 # Linting/Verify #
 ##################
-.PHONY: verify vet cover
+.PHONY: verify vet
 
 verify: vet
 
 vet:
 	go vet ${BUILD_TAGS} --all ./...
-
-cover:
-	go test ${BUILD_TAGS} -coverprofile c.out ./...
-	@cover=`go tool cover -func c.out | grep '^total:' | awk '{ print $$3+0 }'`; \
-		echo "total (statements): $$cover%";
 
 ################
 # Unit Testing #
