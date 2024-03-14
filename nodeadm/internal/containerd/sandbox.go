@@ -1,11 +1,13 @@
 package containerd
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -32,7 +34,15 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	zap.L().Info("Found sandbox image", zap.String("image", sandboxImage))
 
 	zap.L().Info("Fetching ECR authorization token..")
-	ecrUserToken, err := ecr.GetAuthorizationToken(cfg.Status.Instance.Region)
+	opts := []func(*config.LoadOptions) error{config.WithRegion(cfg.Status.Instance.Region)}
+	if cfg.IsHybridNode() {
+		opts = append(opts, config.WithSharedConfigFiles([]string{"/etc/eks/hybrid-config"}))
+	}
+	awsConfig, err := config.LoadDefaultConfig(context.Background(), opts...)
+	if err != nil {
+		return err
+	}
+	ecrUserToken, err := ecr.GetAuthorizationToken(awsConfig)
 	if err != nil {
 		return err
 	}
