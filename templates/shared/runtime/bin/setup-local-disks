@@ -19,6 +19,10 @@ print_help() {
   echo "Sets up Amazon EC2 Instance Store NVMe disks"
   echo ""
   echo "-d, --dir directory to mount the filesystem(s) (default: /mnt/k8s-disks/)"
+  echo "--no-bind-kubelet disable bind mounting kubelet dir onto MD raid device"
+  echo "--no-bind-containerd disable bind mounting containerd dir onto MD raid device"
+  echo "--no-bind-pods-logs disable bind mounting /var/log/pods onto MD raid device"
+  echo "--no-bind-mounts disable all bind mounting onto MD raid device, only create and mount MD device"
   echo "-h, --help print this help"
 }
 
@@ -83,7 +87,18 @@ EOF
 
   prev_running=""
   needs_linked=""
-  for unit in "kubelet" "containerd"; do
+
+  BIND_MOUNTS=()
+
+  if [[ "${BIND_KUBELET}" == "true" ]]; then
+    BIND_MOUNTS+=("kubelet")
+  fi
+
+  if [[ "${BIND_CONTAINERD}" == "true" ]]; then
+    BIND_MOUNTS+=("containerd")
+  fi
+
+  for unit in "${BIND_MOUNTS[@]}"; do
     ## Check if the bind mount from the RAID already exists
     if [[ "$(systemctl is-active var-lib-${unit}.mount)" != "active" ]]; then
       # Check if components that depend on the RAID are running and, if so, stop them
@@ -95,11 +110,13 @@ EOF
   done
 
   ## Check if /var/log/pods has been bind mounted and make sure kubelet is stopped
-  if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
-    if systemctl is-active "kubelet" > /dev/null 2>&1; then
-      prev_running+=" ${unit}"
+  if [[ "${BIND_VAR_LOG_PODS}" == "true" ]]; then
+    if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
+      if systemctl is-active "kubelet" > /dev/null 2>&1; then
+        prev_running+=" kubelet"
+      fi
+      needs_linked+=" /var/log/pods"
     fi
-    needs_linked+=" /var/log/pods"
   fi
 
   if [[ ! -z "${prev_running}" ]]; then
@@ -168,6 +185,9 @@ EOF
 
 ## Main logic
 MNT_DIR="/mnt/k8s-disks"
+BIND_KUBELET="true"
+BIND_CONTAINERD="true"
+BIND_VAR_LOG_PODS="true"
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -179,6 +199,24 @@ while [[ $# -gt 0 ]]; do
     -d | --dir)
       MNT_DIR="$2"
       shift
+      shift
+      ;;
+    --no-bind-kubelet)
+      BIND_KUBELET="false"
+      shift
+      ;;
+    --no-bind-containerd)
+      BIND_CONTAINERD="false"
+      shift
+      ;;
+    --no-bind-pods-logs)
+      BIND_VAR_LOG_PODS="false"
+      shift
+      ;;
+    --no-bind-mounts)
+      BIND_KUBELET="false"
+      BIND_CONTAINERD="false"
+      BIND_VAR_LOG_PODS="false"
       shift
       ;;
     *)                   # unknown option
