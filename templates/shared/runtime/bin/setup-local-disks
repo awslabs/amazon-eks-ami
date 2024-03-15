@@ -22,6 +22,7 @@ print_help() {
   echo "--no-bind-kubelet disable bind mounting kubelet dir onto MD raid device"
   echo "--no-bind-containerd disable bind mounting containerd dir onto MD raid device"
   echo "--no-bind-pods-logs disable bind mounting /var/log/pods onto MD raid device"
+  echo "--no-bind-mounts disable all bind mounting onto MD raid device, only create and mount MD device"
   echo "-h, --help print this help"
 }
 
@@ -209,6 +210,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --no-bind-pods-logs)
+      BIND_VAR_LOG_PODS=false
+      shift
+      ;;
+    --no-bind-mounts)
+      BIND_KUBELET=false
+      BIND_CONTAINERD=false
       BIND_VAR_LOG_PODS=false
       shift
       ;;
