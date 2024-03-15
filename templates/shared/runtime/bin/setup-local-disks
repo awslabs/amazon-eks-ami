@@ -90,11 +90,11 @@ EOF
 
   BIND_MOUNTS=()
 
-  if [ "${BIND_KUBELET}" = true ]; then
+  if [[ "${BIND_KUBELET}" == "true" ]]; then
     BIND_MOUNTS+=("kubelet")
   fi
 
-  if [ "${BIND_CONTAINERD}" = true ]; then
+  if [[ "${BIND_CONTAINERD}" == "true" ]]; then
     BIND_MOUNTS+=("containerd")
   fi
 
@@ -110,7 +110,7 @@ EOF
   done
 
   ## Check if /var/log/pods has been bind mounted and make sure kubelet is stopped
-  if [[ "${BIND_VAR_LOG_PODS}" = true ]]; then
+  if [[ "${BIND_VAR_LOG_PODS}" == "true" ]]; then
     if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
       if systemctl is-active "kubelet" > /dev/null 2>&1; then
         prev_running+=" ${unit}"
@@ -185,9 +185,9 @@ EOF
 
 ## Main logic
 MNT_DIR="/mnt/k8s-disks"
-BIND_KUBELET=true
-BIND_CONTAINERD=true
-BIND_VAR_LOG_PODS=true
+BIND_KUBELET="true"
+BIND_CONTAINERD="true"
+BIND_VAR_LOG_PODS="true"
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -202,21 +202,21 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --no-bind-kubelet)
-      BIND_KUBELET=false
+      BIND_KUBELET="false"
       shift
       ;;
     --no-bind-containerd)
-      BIND_CONTAINERD=false
+      BIND_CONTAINERD="false"
       shift
       ;;
     --no-bind-pods-logs)
-      BIND_VAR_LOG_PODS=false
+      BIND_VAR_LOG_PODS="false"
       shift
       ;;
     --no-bind-mounts)
-      BIND_KUBELET=false
-      BIND_CONTAINERD=false
-      BIND_VAR_LOG_PODS=false
+      BIND_KUBELET="false"
+      BIND_CONTAINERD="false"
+      BIND_VAR_LOG_PODS="false"
       shift
       ;;
     *)                   # unknown option
