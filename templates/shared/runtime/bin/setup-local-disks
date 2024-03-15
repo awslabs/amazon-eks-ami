@@ -113,7 +113,7 @@ EOF
   if [[ "${BIND_VAR_LOG_PODS}" == "true" ]]; then
     if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
       if systemctl is-active "kubelet" > /dev/null 2>&1; then
-        prev_running+=" ${unit}"
+        prev_running+=" kubelet"
       fi
       needs_linked+=" /var/log/pods"
     fi
