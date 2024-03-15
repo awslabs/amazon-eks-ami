@@ -97,7 +97,7 @@ EOF
     BIND_MOUNTS+=("containerd")
   fi
 
-  for unit in "kubelet" "${BIND_MOUNTS[@]}"; do
+  for unit in "${BIND_MOUNTS[@]}"; do
     ## Check if the bind mount from the RAID already exists
     if [[ "$(systemctl is-active var-lib-${unit}.mount)" != "active" ]]; then
       # Check if components that depend on the RAID are running and, if so, stop them
