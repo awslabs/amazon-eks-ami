@@ -29,10 +29,11 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster    ClusterDetails    `json:"cluster,omitempty"`
-	Containerd ContainerdOptions `json:"containerd,omitempty"`
-	Instance   InstanceOptions   `json:"instance,omitempty"`
-	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Cluster      ClusterDetails    `json:"cluster,omitempty"`
+	Containerd   ContainerdOptions `json:"containerd,omitempty"`
+	Instance     InstanceOptions   `json:"instance,omitempty"`
+	Kubelet      KubeletOptions    `json:"kubelet,omitempty"`
+	FeatureGates map[string]bool   `json:"featureGates,omitempty"`
 }
 
 // ClusterDetails contains the coordinates of your EKS cluster.

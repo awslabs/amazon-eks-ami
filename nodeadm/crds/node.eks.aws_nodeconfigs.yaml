@@ -72,6 +72,10 @@ spec:
                       by the default configuration file.
                     type: string
                 type: object
+              featureGates:
+                additionalProperties:
+                  type: boolean
+                type: object
               instance:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.
