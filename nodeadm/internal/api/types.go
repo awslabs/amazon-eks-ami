@@ -32,6 +32,8 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	// FeatureGates holds key-value pairs to enable or disable application features.
+	FeatureGates map[string]bool `json:"featureGates,omitempty"`
 }
 
 type NodeConfigStatus struct {

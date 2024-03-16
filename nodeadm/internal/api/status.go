@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/featuregates"
 	"io"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 // Fetch information about the ec2 instance using IMDS data.
 // This information is stored into the internal config to avoid redundant calls
 // to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, imdsClient *imds.Client, ec2Client *ec2.Client) (*InstanceDetails, error) {
+func GetInstanceDetails(ctx context.Context, featureGates map[string]bool, imdsClient *imds.Client, ec2Client *ec2.Client) (*InstanceDetails, error) {
 	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
 	if err != nil {
 		return nil, err
@@ -30,9 +31,12 @@ func GetInstanceDetails(ctx context.Context, imdsClient *imds.Client, ec2Client 
 		return nil, err
 	}
 
-	privateDNSName, err := getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
-	if err != nil {
-		return nil, err
+	privateDNSName := ""
+	if !featuregates.InstanceIdNodeName.IsEnabled(featureGates) {
+		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &InstanceDetails{

@@ -61,6 +61,38 @@ spec:
 
 The configuration objects will be merged in the order they appear in the MIME multi-part document, meaning the value in the lattermost configuration object will take precedence.
 
+--- 
+## Configuring node name
+
+We introduced an experiment feature in AL2023 AMI that allows you to name your node with EC2 instance name instead of EC2 private DNS name.
+
+To opt-in to the feature, you will need 
+- [Create new worker node IAM role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html#create-worker-node-role)
+- [Update the `aws-auth` ConfigMap with above created role](https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html#aws-auth-users). See example below
+```
+- groups:
+  - system:bootstrappers
+  - system:nodes
+  rolearn: <role_created_above>
+  username: system:node:{{SessionName}}
+```
+- Enable the new feature gate `InstanceIdNodeName` in the user data, See example configuration below
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  featureGates:
+    InstanceIdNodeName: true
+```
+- [Create launch template with above user data](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html). 
+- [Create the node group with launch template](https://docs.aws.amazon.com/eks/latest/userguide/create-managed-node-group.html).
+
 ---
 
 ## Configuring `containerd`
