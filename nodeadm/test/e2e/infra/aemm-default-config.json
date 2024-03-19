@@ -20,5 +20,10 @@
         "region": "us-west-2"
       }
     }
+  },
+  "userdata": {
+    "values": {
+      "userdata": "LS0tCmFwaVZlcnNpb246IG5vZGUuZWtzLmF3cy92MWFscGhhMQpraW5kOiBOb2RlQ29uZmlnCnNwZWM6CiAgY2x1c3RlcjoKICAgIG5hbWU6IG15LWNsdXN0ZXIKICAgIGFwaVNlcnZlckVuZHBvaW50OiBodHRwczovL2V4YW1wbGUuY29tCiAgICBjZXJ0aWZpY2F0ZUF1dGhvcml0eTogWTJWeWRHbG1hV05oZEdWQmRYUm9iM0pwZEhrPQogICAgY2lkcjogMTAuMTAwLjAuMC8xNgo="
+    }
   }
 }
