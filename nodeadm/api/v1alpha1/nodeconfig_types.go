@@ -39,15 +39,19 @@ type NodeConfigSpec struct {
 // These details can be found using the [DescribeCluster API](https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeCluster.html).
 type ClusterDetails struct {
 	// Name is the name of your EKS cluster
+	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 
 	// APIServerEndpoint is the URL of your EKS cluster's kube-apiserver.
+	// +kubebuilder:validation:Required
 	APIServerEndpoint string `json:"apiServerEndpoint,omitempty"`
 
 	// CertificateAuthority is a base64-encoded string of your cluster's certificate authority chain.
+	// +kubebuilder:validation:Required
 	CertificateAuthority []byte `json:"certificateAuthority,omitempty"`
 
 	// CIDR is your cluster's Pod IP CIDR. This value is used to infer your cluster's DNS address.
+	// +kubebuilder:validation:Required
 	CIDR string `json:"cidr,omitempty"`
 
 	// EnableOutpost determines how your node is configured when running on an AWS Outpost.
