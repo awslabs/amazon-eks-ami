@@ -169,8 +169,8 @@ BINARIES=(
 for binary in ${BINARIES[*]}; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+    aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
+    aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
   else
     echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
     sudo wget $S3_URL_BASE/$binary
@@ -191,7 +191,7 @@ ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
 
 if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
   echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
-  aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
+  aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
 else
   echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
   sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
