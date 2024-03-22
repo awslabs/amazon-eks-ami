@@ -102,9 +102,9 @@ function wait::dbus-ready() {
 
 function mock::aws() {
   local CONFIG_PATH=${1:-/etc/aemm-default-config.json}
-  imds-mock --config-file $CONFIG_PATH &
+  [ "${IMDS_MOCK_ONLY_CONFIGURE:-}" = "true" ] || imds-mock --config-file $CONFIG_PATH &
   export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338
-  $HOME/.local/bin/moto_server -p5000 &
+  [ "${AWS_MOCK_ONLY_CONFIGURE:-}" = "true" ] || $HOME/.local/bin/moto_server -p5000 &
   export AWS_ACCESS_KEY_ID='testing'
   export AWS_SECRET_ACCESS_KEY='testing'
   export AWS_SECURITY_TOKEN='testing'
@@ -113,13 +113,4 @@ function mock::aws() {
   export AWS_ENDPOINT_URL=http://localhost:5000
   # ensure that our instance exists in the API
   aws ec2 run-instances
-}
-
-function mock::instance-type() {
-  cat /etc/aemm-default-config.json | jq '.metadata.values."instance-type" = "mock-type.large" | .dynamic.values."instance-identity-document".instanceType = "mock-type.large"' | tee /etc/aemm-default-config.json
-}
-
-function revert::mock::instance-type() {
-  cat /etc/aemm-default-config.json | jq '.metadata.values."instance-type" = "m4.xlarge" | .dynamic.values."instance-identity-document".instanceType = "m4.xlarge"' | tee /etc/aemm-default-config.json
-
 }
