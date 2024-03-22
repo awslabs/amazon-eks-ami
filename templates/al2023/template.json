@@ -9,6 +9,7 @@
     "arch": null,
     "associate_public_ip_address": null,
     "aws_access_key_id": null,
+    "aws_endpoint_url_s3": null,
     "aws_region": null,
     "aws_secret_access_key": null,
     "aws_session_token": null,
@@ -176,6 +177,7 @@
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+	"AWS_ENDPOINT_URL_S3={{user `aws_endpoint_url_s3`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
