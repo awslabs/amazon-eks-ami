@@ -210,8 +210,10 @@ get_instance_id() {
   fi
 }
 
+REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region || echo "")
+
 get_region() {
-  if REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
+  if [ -n "$REGION" ]; then
     echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
   else
     warning "Unable to find EC2 Region, skipping."
@@ -563,9 +565,16 @@ get_networking_info() {
   # configure-multicard-interfaces
   timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
 
-  # test some network connectivity
+  # test network connectivity to aws service
   timeout 75 ping -A -c 10 amazon.com > "${COLLECT_DIR}"/networking/ping_amazon.com.txt
   timeout 75 ping -A -c 10 public.ecr.aws > "${COLLECT_DIR}"/networking/ping_public.ecr.aws.txt
+  if [ -n "$REGION" ]; then
+    mkdir -p "${COLLECT_DIR}/networking/curl_aws_service_endpoint"
+    timeout 75 curl -v --connect-timeout 3 --max-time 10 "https://sts.${REGION}.amazonaws.com" >> ${COLLECT_DIR}"/networking/curl_aws_service_endpoint/sts.txt" 2>&1
+    timeout 75 curl -v --connect-timeout 3 --max-time 10 "https://ec2.${REGION}.amazonaws.com" >> ${COLLECT_DIR}"/networking/curl_aws_service_endpoint/ec2.txt" 2>&1
+    timeout 75 curl -v --connect-timeout 3 --max-time 10 "https://s3.${REGION}.amazonaws.com" >> ${COLLECT_DIR}"/networking/curl_aws_service_endpoint/s3.txt" 2>&1
+    timeout 75 curl -v --connect-timeout 3 --max-time 10 "https://logs.${REGION}.amazonaws.com" >> ${COLLECT_DIR}"/networking/curl_aws_service_endpoint/logs.txt" 2>&1
+  fi
 
   if [[ -e "${COLLECT_DIR}"/kubelet/kubeconfig.yaml ]]; then
     API_SERVER=$(grep server: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*server: //')
