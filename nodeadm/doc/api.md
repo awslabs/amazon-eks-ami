@@ -105,3 +105,4 @@ _Appears in:_
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `featureGates` _object (keys:string, values:boolean)_ |  |
