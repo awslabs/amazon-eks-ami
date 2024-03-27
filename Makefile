@@ -24,7 +24,7 @@ ifeq ($(arch), arm64)
 	instance_type ?= m6g.large
 	AMI_VARIANT := $(AMI_VARIANT)-arm64
 else
-	instance_type ?= m5.large
+	instance_type ?= t2.micro
 endif
 ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
