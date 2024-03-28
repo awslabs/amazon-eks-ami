@@ -62,6 +62,7 @@ Function create_working_dir{
         New-Item -type directory -path $info_system\containerd_log -Force >$null
         New-Item -type directory -path $info_system\network -Force >$null
         New-Item -type directory -path $info_system\network\hns -Force >$null
+        New-Item -type directory -path $info_system\events -Force >$null
         Write-Host "OK" -ForegroundColor "green"
     }
     catch {
@@ -349,6 +350,25 @@ Function get_network_info{
     }
 }
 
+Function get_windows_events{
+    try {
+        Write-Host "Collecting Windows events"
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\Application.evtx" -Destination $info_system\events
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\EKS.evtx" -Destination $info_system\events
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\System.evtx" -Destination $info_system\events
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Containers*.evtx" -Destination $info_system\events
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Host-Network-Service*.evtx" -Destination $info_system\events
+        Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Hyper-V-Compute*.evtx" -Destination $info_system\events
+
+        Write-Host "OK" -ForegroundColor "green"
+    }
+    catch {
+        Write-Error "Unable to collect Windows events"
+        Break
+    }
+
+}
+
 Function cleanup{
     Write-Host "Cleaning up directory"
     Remove-Item -Recurse -Force $basedir -ErrorAction Ignore
@@ -390,7 +410,7 @@ Function collect{
     get_containerd_logs
     get_eks_logs
     get_network_info
-
+    get_windows_events
 }
 
 #--------------------------
