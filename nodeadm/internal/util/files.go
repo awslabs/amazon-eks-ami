@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"path"
@@ -13,4 +14,16 @@ func WriteFileWithDir(filePath string, data []byte, perm fs.FileMode) error {
 		return err
 	}
 	return os.WriteFile(filePath, data, perm)
+}
+
+// IsFilePathExists checks whether specific file path exists
+func IsFilePathExists(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }

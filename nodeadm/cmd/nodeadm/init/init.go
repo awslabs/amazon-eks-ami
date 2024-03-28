@@ -84,6 +84,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	aspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
+		system.NewNetworkingAspect(),
 	}
 
 	daemons := []daemon.Daemon{
