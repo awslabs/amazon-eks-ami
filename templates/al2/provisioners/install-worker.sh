@@ -392,7 +392,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   sudo systemctl enable containerd
 
   K8S_MINOR_VERSION=$(echo "${KUBERNETES_VERSION}" | cut -d'.' -f1-2)
-  PREVIOUS_K8S_MINOR_VERSION=$(echo ${KUBERNETES_MINOR_VERSION:0:1}."$((${KUBERNETES_MINOR_VERSION:2:3} - 1))")
+  PREVIOUS_K8S_MINOR_VERSION=$(echo ${K8S_MINOR_VERSION:0:1}."$((${K8S_MINOR_VERSION:2:3} - 1))")
 
   #### Cache kube-proxy images starting with the addon default version and the latest version
   KUBE_PROXY_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version=${K8S_MINOR_VERSION})
