@@ -392,9 +392,13 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   sudo systemctl enable containerd
 
   K8S_MINOR_VERSION=$(echo "${KUBERNETES_VERSION}" | cut -d'.' -f1-2)
+  PREVIOUS_K8S_MINOR_VERSION=$(echo ${KUBERNETES_MINOR_VERSION:0:1}."$((${KUBERNETES_MINOR_VERSION:2:3} - 1))")
 
   #### Cache kube-proxy images starting with the addon default version and the latest version
   KUBE_PROXY_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version=${K8S_MINOR_VERSION})
+  if [[ $(jq '.addons | length' <<< $KUBE_PROXY_ADDON_VERSIONS) -eq 0 ]]; then
+    KUBE_PROXY_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name kube-proxy --kubernetes-version=${PREVIOUS_K8S_MINOR_VERSION})
+  fi
   KUBE_PROXY_IMGS=()
   if [[ $(jq '.addons | length' <<< $KUBE_PROXY_ADDON_VERSIONS) -gt 0 ]]; then
     DEFAULT_KUBE_PROXY_FULL_VERSION=$(echo "${KUBE_PROXY_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
@@ -418,6 +422,9 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
 
   #### Cache VPC CNI images starting with the addon default version and the latest version
   VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${K8S_MINOR_VERSION})
+  if [[ $jq '.addons | length' <<< $VPC_CNI_ADDON_VERSIONS -eq 0 ]]; then
+    VPC_CNI_ADDON_VERSIONS=$(aws eks describe-addon-versions --addon-name vpc-cni --kubernetes-version=${PREVIOUS_K8S_MINOR_VERSION})
+  fi
   VPC_CNI_IMGS=()
   if [[ $(jq '.addons | length' <<< $VPC_CNI_ADDON_VERSIONS) -gt 0 ]]; then
     DEFAULT_VPC_CNI_VERSION=$(echo "${VPC_CNI_ADDON_VERSIONS}" | jq -r '.addons[] .addonVersions[] | select(.compatibilities[] .defaultVersion==true).addonVersion')
