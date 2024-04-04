@@ -29,6 +29,7 @@ function imdscurl() {
     --show-error \
     --output $OUTPUT_FILE \
     --write-out "%{http_code}" \
+    --retry-connrefused \
     --retry $IMDS_RETRIES \
     --retry-delay $IMDS_RETRY_DELAY_SECONDS \
     "$@" || echo "1")
