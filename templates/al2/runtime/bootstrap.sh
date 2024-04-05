@@ -629,6 +629,15 @@ Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
 EOF
 fi
 
+# WARNING: this implementation detail is subject to change!
+# Do not use this as a way to inject behavior into this script
+BOOTSTRAP_GPU_HELPER=/etc/eks/bootstrap-gpu.sh
+if [ -x "${BOOTSTRAP_GPU_HELPER}" ]; then
+  log "INFO: starting GPU bootstrap helper..."
+  "${BOOTSTRAP_GPU_HELPER}"
+  log "INFO: completed GPU bootstrap helper!"
+fi
+
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
