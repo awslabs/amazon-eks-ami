@@ -302,7 +302,7 @@ func autoConvert_v1alpha1_NodeConfigSpec_To_api_NodeConfigSpec(in *v1alpha1.Node
 	if err := Convert_v1alpha1_KubeletOptions_To_api_KubeletOptions(&in.Kubelet, &out.Kubelet, s); err != nil {
 		return err
 	}
-	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
+	out.FeatureGates = *(*map[api.Feature]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 
@@ -324,7 +324,7 @@ func autoConvert_api_NodeConfigSpec_To_v1alpha1_NodeConfigSpec(in *api.NodeConfi
 	if err := Convert_api_KubeletOptions_To_v1alpha1_KubeletOptions(&in.Kubelet, &out.Kubelet, s); err != nil {
 		return err
 	}
-	out.FeatureGates = *(*map[string]bool)(unsafe.Pointer(&in.FeatureGates))
+	out.FeatureGates = *(*map[v1alpha1.Feature]bool)(unsafe.Pointer(&in.FeatureGates))
 	return nil
 }
 

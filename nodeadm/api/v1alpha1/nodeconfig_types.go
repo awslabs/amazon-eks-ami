@@ -34,7 +34,7 @@ type NodeConfigSpec struct {
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
 	// FeatureGates holds key-value pairs to enable or disable application features.
-	FeatureGates map[string]bool `json:"featureGates,omitempty"`
+	FeatureGates map[Feature]bool `json:"featureGates,omitempty"`
 }
 
 // ClusterDetails contains the coordinates of your EKS cluster.
@@ -99,4 +99,13 @@ const (
 
 	// LocalStorageMount will mount each local disk individually
 	LocalStorageMount LocalStorageStrategy = "Mount"
+)
+
+// Feature specifies which feature gate should be toggled
+// +kubebuilder:validation:Enum={InstanceIdNodeName}
+type Feature string
+
+const (
+	// InstanceIdNodeName will use EC2 instance ID as node name
+	InstanceIdNodeName Feature = "InstanceIdNodeName"
 )

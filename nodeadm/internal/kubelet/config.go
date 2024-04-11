@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/featuregates"
 	"io"
 	"net"
 	"net/url"
@@ -251,7 +250,7 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 		// provider ID needs to be specified when the cloud provider is external
 		ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
 		var nodeName string
-		if featuregates.InstanceIdNodeName.IsEnabled(cfg.Spec.FeatureGates) {
+		if api.IsFeatureEnabled(api.InstanceIdNodeName, cfg.Spec.FeatureGates) {
 			zap.L().Info("Opt-in Instance Id naming strategy")
 			nodeName = cfg.Status.Instance.ID
 		} else {

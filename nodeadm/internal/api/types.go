@@ -28,12 +28,11 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster    ClusterDetails    `json:"cluster,omitempty"`
-	Containerd ContainerdOptions `json:"containerd,omitempty"`
-	Instance   InstanceOptions   `json:"instance,omitempty"`
-	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
-	// FeatureGates holds key-value pairs to enable or disable application features.
-	FeatureGates map[string]bool `json:"featureGates,omitempty"`
+	Cluster      ClusterDetails    `json:"cluster,omitempty"`
+	Containerd   ContainerdOptions `json:"containerd,omitempty"`
+	Instance     InstanceOptions   `json:"instance,omitempty"`
+	Kubelet      KubeletOptions    `json:"kubelet,omitempty"`
+	FeatureGates map[Feature]bool  `json:"featureGates,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -105,4 +104,11 @@ type LocalStorageStrategy string
 const (
 	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
 	LocalStorageMount LocalStorageStrategy = "Mount"
+)
+
+type Feature string
+
+const (
+	// InstanceIdNodeName will use EC2 instance ID as node name
+	InstanceIdNodeName Feature = "InstanceIdNodeName"
 )

@@ -226,7 +226,7 @@ func (in *NodeConfigSpec) DeepCopyInto(out *NodeConfigSpec) {
 	in.Kubelet.DeepCopyInto(&out.Kubelet)
 	if in.FeatureGates != nil {
 		in, out := &in.FeatureGates, &out.FeatureGates
-		*out = make(map[string]bool, len(*in))
+		*out = make(map[Feature]bool, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
