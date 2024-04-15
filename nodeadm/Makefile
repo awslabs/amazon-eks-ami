@@ -41,7 +41,7 @@ clean:
 
 .PHONY: crds
 crds: controller-gen ## Generate CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=crds/
+	$(CONTROLLER_GEN) crd paths="./..." output:crd:artifacts:config=internal/api/bridge/crds
 
 .PHONY: generate
 generate: generate-code generate-doc ## Generate code and documentation.
