@@ -35,6 +35,18 @@ _Appears in:_
 | --- | --- |
 | `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
 
+#### Feature
+
+_Underlying type:_ _string_
+
+Feature specifies which feature gate should be toggled
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+.Validation:
+- Enum: [InstanceIdNodeName]
+
 #### InstanceOptions
 
 InstanceOptions determines how the node's operating system and devices are configured.
@@ -105,3 +117,4 @@ _Appears in:_
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `featureGates` _object (keys:[Feature](#feature), values:boolean)_ | FeatureGates holds key-value pairs to enable or disable application features. |

@@ -72,6 +72,12 @@ spec:
                       by the default configuration file.
                     type: string
                 type: object
+              featureGates:
+                additionalProperties:
+                  type: boolean
+                description: FeatureGates holds key-value pairs to enable or disable
+                  application features.
+                type: object
               instance:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.

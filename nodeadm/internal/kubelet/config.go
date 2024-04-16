@@ -249,9 +249,16 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 		flags["cloud-provider"] = "external"
 		// provider ID needs to be specified when the cloud provider is external
 		ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
-		// the name of the Node object must equal the EC2 PrivateDnsName
-		// see: https://github.com/awslabs/amazon-eks-ami/pull/1264
-		flags["hostname-override"] = cfg.Status.Instance.PrivateDNSName
+		var nodeName string
+		if api.IsFeatureEnabled(api.InstanceIdNodeName, cfg.Spec.FeatureGates) {
+			zap.L().Info("Opt-in Instance Id naming strategy")
+			nodeName = cfg.Status.Instance.ID
+		} else {
+			// the name of the Node object default to EC2 PrivateDnsName
+			// see: https://github.com/awslabs/amazon-eks-ami/pull/1264
+			nodeName = cfg.Status.Instance.PrivateDNSName
+		}
+		flags["hostname-override"] = nodeName
 	} else {
 		flags["cloud-provider"] = "aws"
 	}

@@ -153,7 +153,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), imdsClient, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, imdsClient, ec2.NewFromConfig(awsConfig))
 	if err != nil {
 		return err
 	}
