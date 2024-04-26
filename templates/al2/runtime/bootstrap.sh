@@ -46,6 +46,11 @@ function log {
 
 log "INFO: starting..."
 
+if [ "${EUID}" -ne 0 ]; then
+  log "ERROR: script must be run as root"
+  exit 1
+fi
+
 POSITIONAL=()
 
 while [[ $# -gt 0 ]]; do
