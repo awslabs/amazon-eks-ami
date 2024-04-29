@@ -35,8 +35,8 @@ jobs:
         with:
           title: 'Update dependencies'
           commit-message: Update dependencies
-          committer: github-actions <actions@github.com>
-          author: github-actions <actions@github.com>
+          committer: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+          author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           branch: dependencies/update
           branch-suffix: timestamp
           base: main
