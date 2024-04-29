@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -147,22 +146,14 @@ type RunInstancesInput struct {
 	// apply when using an EBS-optimized instance. Default: false
 	EbsOptimized *bool
 
-	// Deprecated. Amazon Elastic Graphics reached end of life on January 8, 2024. For
-	// workloads that require graphics acceleration, we recommend that you use Amazon
-	// EC2 G4ad, G4dn, or G5 instances.
+	// An elastic GPU to associate with the instance. Amazon Elastic Graphics reached
+	// end of life on January 8, 2024.
 	ElasticGpuSpecification []types.ElasticGpuSpecification
 
-	// An elastic inference accelerator to associate with the instance. Elastic
-	// inference accelerators are a resource you can attach to your Amazon EC2
-	// instances to accelerate your Deep Learning (DL) inference workloads. You cannot
-	// specify accelerators from different generations in the same request. Starting
-	// April 15, 2023, Amazon Web Services will not onboard new customers to Amazon
-	// Elastic Inference (EI), and will help current customers migrate their workloads
-	// to options that offer better price and performance. After April 15, 2023, new
-	// customers will not be able to launch instances with Amazon EI accelerators in
-	// Amazon SageMaker, Amazon ECS, or Amazon EC2. However, customers who have used
-	// Amazon EI at least once during the past 30-day period are considered current
-	// customers and will be able to continue using the service.
+	// An elastic inference accelerator to associate with the instance. Amazon Elastic
+	// Inference (EI) is no longer available to new customers. For more information,
+	// see Amazon Elastic Inference FAQs (http://aws.amazon.com/machine-learning/elastic-inference/faqs/)
+	// .
 	ElasticInferenceAccelerators []types.ElasticInferenceAccelerator
 
 	// If you’re launching an instance into a dual-stack or IPv6-only subnet, you can
@@ -240,9 +231,8 @@ type RunInstancesInput struct {
 	// choose an AMI that is configured to allow users another way to log in.
 	KeyName *string
 
-	// The launch template to use to launch the instances. Any parameters that you
-	// specify in RunInstances override the same parameters in the launch template.
-	// You can specify either the name or ID of a launch template, but not both.
+	// The launch template. Any additional parameters that you specify for the new
+	// instance overwrite the corresponding parameters included in the launch template.
 	LaunchTemplate *types.LaunchTemplateSpecification
 
 	// The license configurations.
@@ -259,9 +249,7 @@ type RunInstancesInput struct {
 	// Specifies whether detailed monitoring is enabled for the instance.
 	Monitoring *types.RunInstancesMonitoringEnabled
 
-	// The network interfaces to associate with the instance. If you specify a network
-	// interface, you must specify any security groups and subnets as part of the
-	// network interface.
+	// The network interfaces to associate with the instance.
 	NetworkInterfaces []types.InstanceNetworkInterfaceSpecification
 
 	// The placement for the instance.
@@ -292,16 +280,18 @@ type RunInstancesInput struct {
 	// The IDs of the security groups. You can create a security group using
 	// CreateSecurityGroup (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateSecurityGroup.html)
 	// . If you specify a network interface, you must specify any security groups as
-	// part of the network interface.
+	// part of the network interface instead of using this parameter.
 	SecurityGroupIds []string
 
 	// [Default VPC] The names of the security groups. If you specify a network
-	// interface, you must specify any security groups as part of the network
-	// interface. Default: Amazon EC2 uses the default security group.
+	// interface, you must specify any security groups as part of the network interface
+	// instead of using this parameter. Default: Amazon EC2 uses the default security
+	// group.
 	SecurityGroups []string
 
 	// The ID of the subnet to launch the instance into. If you specify a network
-	// interface, you must specify any subnets as part of the network interface.
+	// interface, you must specify any subnets as part of the network interface instead
+	// of using this parameter.
 	SubnetId *string
 
 	// The tags to apply to the resources that are created during instance launch. You
@@ -374,25 +364,25 @@ func (c *Client) addOperationRunInstancesMiddlewares(stack *middleware.Stack, op
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -416,7 +406,7 @@ func (c *Client) addOperationRunInstancesMiddlewares(stack *middleware.Stack, op
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRunInstances(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

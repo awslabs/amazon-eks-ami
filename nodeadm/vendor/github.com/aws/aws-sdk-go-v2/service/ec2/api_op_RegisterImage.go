@@ -6,15 +6,14 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Registers an AMI. When you're creating an AMI, this is the final step you must
-// complete before you can launch an instance from the AMI. For more information
-// about creating AMIs, see Create your own AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html)
+// Registers an AMI. When you're creating an instance-store backed AMI,
+// registering the AMI is the final step in the creation process. For more
+// information about creating AMIs, see Create your own AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/creating-an-ami.html)
 // in the Amazon Elastic Compute Cloud User Guide. For Amazon EBS-backed instances,
 // CreateImage creates and registers the AMI in a single request, so you don't
 // have to register the AMI yourself. We recommend that you always use CreateImage
@@ -94,8 +93,8 @@ type RegisterImageInput struct {
 	// volume. If you create an AMI on an Outpost, then all backing snapshots must be
 	// on the same Outpost or in the Region of that Outpost. AMIs on an Outpost that
 	// include local snapshots can be used to launch instances on the same Outpost
-	// only. For more information, Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshots-outposts.html#ami)
-	// in the Amazon EC2 User Guide.
+	// only. For more information, Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html#ami)
+	// in the Amazon EBS User Guide.
 	BlockDeviceMappings []types.BlockDeviceMapping
 
 	// The boot mode of the AMI. A value of uefi-preferred indicates that the AMI
@@ -151,6 +150,12 @@ type RegisterImageInput struct {
 	// instances launched from the AMI unreachable.
 	SriovNetSupport *string
 
+	// The tags to apply to the AMI. To tag the AMI, the value for ResourceType must
+	// be image . If you specify another value for ResourceType , the request fails. To
+	// tag an AMI after it has been registered, see CreateTags (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTags.html)
+	// .
+	TagSpecifications []types.TagSpecification
+
 	// Set to v2.0 to enable Trusted Platform Module (TPM) support. For more
 	// information, see NitroTPM (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nitrotpm.html)
 	// in the Amazon EC2 User Guide.
@@ -204,25 +209,25 @@ func (c *Client) addOperationRegisterImageMiddlewares(stack *middleware.Stack, o
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -243,7 +248,7 @@ func (c *Client) addOperationRegisterImageMiddlewares(stack *middleware.Stack, o
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRegisterImage(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
@@ -26,8 +26,8 @@ import (
 // encrypted by default using the default encryption key for the Region, or a
 // different key that you specify in the request using KmsKeyId. Outposts do not
 // support unencrypted snapshots. For more information, Amazon EBS local snapshots
-// on Outposts (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshots-outposts.html#ami)
-// in the Amazon EC2 User Guide. For more information about the prerequisites and
+// on Outposts (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html#ami)
+// in the Amazon EBS User Guide. For more information about the prerequisites and
 // limits when copying an AMI, see Copy an AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/CopyingAMIs.html)
 // in the Amazon EC2 User Guide.
 func (c *Client) CopyImage(ctx context.Context, params *CopyImageInput, optFns ...func(*Options)) (*CopyImageOutput, error) {
@@ -84,8 +84,8 @@ type CopyImageInput struct {
 	// an Outpost. The AMI must be in the Region of the destination Outpost. You cannot
 	// copy an AMI from an Outpost to a Region, from one Outpost to another, or within
 	// the same Outpost. For more information, see Copy AMIs from an Amazon Web
-	// Services Region to an Outpost (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshots-outposts.html#copy-amis)
-	// in the Amazon EC2 User Guide.
+	// Services Region to an Outpost (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html#copy-amis)
+	// in the Amazon EBS User Guide.
 	DestinationOutpostArn *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -98,8 +98,8 @@ type CopyImageInput struct {
 	// encrypted. You can encrypt a copy of an unencrypted snapshot, but you cannot
 	// create an unencrypted copy of an encrypted snapshot. The default KMS key for
 	// Amazon EBS is used unless you specify a non-default Key Management Service (KMS)
-	// KMS key using KmsKeyId . For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html)
-	// in the Amazon EC2 User Guide.
+	// KMS key using KmsKeyId . For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
+	// in the Amazon EBS User Guide.
 	Encrypted *bool
 
 	// The identifier of the symmetric Key Management Service (KMS) KMS key to use
@@ -118,6 +118,16 @@ type CopyImageInput struct {
 	// eventually fails. The specified KMS key must exist in the destination Region.
 	// Amazon EBS does not support asymmetric KMS keys.
 	KmsKeyId *string
+
+	// The tags to apply to the new AMI and new snapshots. You can tag the AMI, the
+	// snapshots, or both.
+	//   - To tag the new AMI, the value for ResourceType must be image .
+	//   - To tag the new snapshots, the value for ResourceType must be snapshot . The
+	//   same tag is applied to all the new snapshots.
+	// If you specify other values for ResourceType , the request fails. To tag an AMI
+	// or snapshot after it has been created, see CreateTags (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateTags.html)
+	// .
+	TagSpecifications []types.TagSpecification
 
 	noSmithyDocumentSerde
 }
@@ -156,25 +166,25 @@ func (c *Client) addOperationCopyImageMiddlewares(stack *middleware.Stack, optio
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -195,7 +205,7 @@ func (c *Client) addOperationCopyImageMiddlewares(stack *middleware.Stack, optio
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCopyImage(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

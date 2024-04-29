@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -63,14 +62,14 @@ type DescribeLaunchTemplateVersionsInput struct {
 	Filters []types.Filter
 
 	// The ID of the launch template. To describe one or more versions of a specified
-	// launch template, you must specify either the LaunchTemplateId or the
-	// LaunchTemplateName , but not both. To describe all the latest or default launch
+	// launch template, you must specify either the launch template ID or the launch
+	// template name, but not both. To describe all the latest or default launch
 	// template versions in your account, you must omit this parameter.
 	LaunchTemplateId *string
 
 	// The name of the launch template. To describe one or more versions of a
-	// specified launch template, you must specify either the LaunchTemplateName or
-	// the LaunchTemplateId , but not both. To describe all the latest or default
+	// specified launch template, you must specify either the launch template name or
+	// the launch template ID, but not both. To describe all the latest or default
 	// launch template versions in your account, you must omit this parameter.
 	LaunchTemplateName *string
 
@@ -146,25 +145,25 @@ func (c *Client) addOperationDescribeLaunchTemplateVersionsMiddlewares(stack *mi
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -182,7 +181,7 @@ func (c *Client) addOperationDescribeLaunchTemplateVersionsMiddlewares(stack *mi
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeLaunchTemplateVersions(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

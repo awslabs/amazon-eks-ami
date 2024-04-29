@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -14,8 +13,8 @@ import (
 )
 
 // Restores a snapshot from the Recycle Bin. For more information, see Restore
-// snapshots from the Recycle Bin (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/recycle-bin-working-with-snaps.html#recycle-bin-restore-snaps)
-// in the Amazon Elastic Compute Cloud User Guide.
+// snapshots from the Recycle Bin (https://docs.aws.amazon.com/ebs/latest/userguide/recycle-bin-working-with-snaps.html#recycle-bin-restore-snaps)
+// in the Amazon EBS User Guide.
 func (c *Client) RestoreSnapshotFromRecycleBin(ctx context.Context, params *RestoreSnapshotFromRecycleBinInput, optFns ...func(*Options)) (*RestoreSnapshotFromRecycleBinOutput, error) {
 	if params == nil {
 		params = &RestoreSnapshotFromRecycleBinInput{}
@@ -56,8 +55,8 @@ type RestoreSnapshotFromRecycleBinOutput struct {
 	Encrypted *bool
 
 	// The ARN of the Outpost on which the snapshot is stored. For more information,
-	// see Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshots-outposts.html)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// see Amazon EBS local snapshots on Outposts (https://docs.aws.amazon.com/ebs/latest/userguide/snapshots-outposts.html)
+	// in the Amazon EBS User Guide.
 	OutpostArn *string
 
 	// The ID of the Amazon Web Services account that owns the EBS snapshot.
@@ -112,25 +111,25 @@ func (c *Client) addOperationRestoreSnapshotFromRecycleBinMiddlewares(stack *mid
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -151,7 +150,7 @@ func (c *Client) addOperationRestoreSnapshotFromRecycleBinMiddlewares(stack *mid
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRestoreSnapshotFromRecycleBin(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
