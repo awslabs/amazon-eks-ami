@@ -12,4 +12,7 @@ spec:
       version = 2
 
       [grpc]
-      address = "/run/containerd/containerd.sock"
+      address = "/run/foo/foo.sock"
+
+      [plugins."io.containerd.grpc.v1.cri".containerd]
+      discard_unpacked_layers = false

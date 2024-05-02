@@ -6,30 +6,40 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"github.com/pelletier/go-toml/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Merges two NodeConfigs with custom collision handling
 func (dst *NodeConfig) Merge(src *NodeConfig) error {
-	return mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(kubeletTransformer{}))
+	return mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(nodeConfigTransformer{}))
 }
 
 const (
 	kubeletFlagsName  = "Flags"
 	kubeletConfigName = "Config"
+
+	containerdConfigName = "Config"
 )
 
-type kubeletTransformer struct{}
+type nodeConfigTransformer struct{}
 
-func (k kubeletTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
-	if typ == reflect.TypeOf(KubeletOptions{}) {
+func (t nodeConfigTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
+	if typ == reflect.TypeOf(ContainerdOptions{}) {
 		return func(dst, src reflect.Value) error {
-			k.transformFlags(
+			return t.transformContainerdConfig(
+				dst.FieldByName(containerdConfigName),
+				src.FieldByName(containerdConfigName),
+			)
+		}
+	} else if typ == reflect.TypeOf(KubeletOptions{}) {
+		return func(dst, src reflect.Value) error {
+			t.transformKubeletFlags(
 				dst.FieldByName(kubeletFlagsName),
 				src.FieldByName(kubeletFlagsName),
 			)
 
-			if err := k.transformConfig(
+			if err := t.transformKubeletConfig(
 				dst.FieldByName(kubeletConfigName),
 				src.FieldByName(kubeletConfigName),
 			); err != nil {
@@ -42,7 +52,7 @@ func (k kubeletTransformer) Transformer(typ reflect.Type) func(dst, src reflect.
 	return nil
 }
 
-func (k kubeletTransformer) transformFlags(dst, src reflect.Value) {
+func (t nodeConfigTransformer) transformKubeletFlags(dst, src reflect.Value) {
 	if dst.CanSet() {
 		// kubelet flags are parsed using https://github.com/spf13/pflag, where
 		// flag order determines precedence. For single-value flags this is
@@ -56,7 +66,7 @@ func (k kubeletTransformer) transformFlags(dst, src reflect.Value) {
 	}
 }
 
-func (k kubeletTransformer) transformConfig(dst, src reflect.Value) error {
+func (t nodeConfigTransformer) transformKubeletConfig(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		if dst.Len() <= 0 {
 			// if the destination is empty just use the source data
@@ -73,6 +83,35 @@ func (k kubeletTransformer) transformConfig(dst, src reflect.Value) error {
 				return err
 			}
 			dst.Set(reflect.ValueOf(rawMap))
+		}
+	}
+	return nil
+}
+
+func (t nodeConfigTransformer) transformContainerdConfig(dst, src reflect.Value) error {
+	if dst.CanSet() {
+		if dst.Len() <= 0 {
+			// if the destination is empty just use the source data
+			dst.Set(src)
+		} else if src.Len() > 0 {
+			// containerd config is a string an inline string here, so we
+			// explicitly perform a merge with dst and src data.
+			var systemContainerdConfigMap map[string]interface{}
+			if err := toml.Unmarshal([]byte(dst.String()), &systemContainerdConfigMap); err != nil {
+				return err
+			}
+			var userContainerdConfigMap map[string]interface{}
+			if err := toml.Unmarshal([]byte(src.String()), &userContainerdConfigMap); err != nil {
+				return err
+			}
+			if err := mergo.Merge(&systemContainerdConfigMap, &userContainerdConfigMap, mergo.WithOverride); err != nil {
+				return err
+			}
+			containerdConfig, err := toml.Marshal(systemContainerdConfigMap)
+			if err != nil {
+				return err
+			}
+			dst.SetString(string(containerdConfig))
 		}
 	}
 	return nil

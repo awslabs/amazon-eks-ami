@@ -3,11 +3,12 @@ package containerd
 import (
 	"bytes"
 	_ "embed"
-	"path/filepath"
 	"text/template"
 
+	"dario.cat/mergo"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"github.com/pelletier/go-toml/v2"
 	"go.uber.org/zap"
 )
 
@@ -35,16 +36,28 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
-	if err := util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm); err != nil {
-		return err
-	}
+	// because the logic in containerd's import merge decides to completely
+	// overwrite entire sections, we want to implement this merging ourselves.
+	// see: https://github.com/containerd/containerd/blob/main/cmd/containerd/server/config/config.go#L407-L431
 	if len(cfg.Spec.Containerd.Config) > 0 {
-		containerConfigImportPath := filepath.Join(containerdConfigImportDir, "00-nodeadm.toml")
-		zap.L().Info("Writing user containerd config to drop-in file..", zap.String("path", containerConfigImportPath))
-		return util.WriteFileWithDir(containerConfigImportPath, []byte(cfg.Spec.Containerd.Config), containerdConfigPerm)
+		var userContainerdConfigMap map[string]interface{}
+		if err := toml.Unmarshal([]byte(cfg.Spec.Containerd.Config), &userContainerdConfigMap); err != nil {
+			return err
+		}
+		var systemContainerdConfigMap map[string]interface{}
+		if err := toml.Unmarshal(containerdConfig, &systemContainerdConfigMap); err != nil {
+			return err
+		}
+		if err := mergo.Merge(&systemContainerdConfigMap, userContainerdConfigMap, mergo.WithOverride); err != nil {
+			return err
+		}
+		containerdConfig, err = toml.Marshal(systemContainerdConfigMap)
+		if err != nil {
+			return err
+		}
 	}
-	return nil
+	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
+	return util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
