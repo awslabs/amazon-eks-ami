@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.6"
+readonly PROGRAM_VERSION="0.7.7"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -71,6 +71,7 @@ COMMON_LOGS=(
   aws-routed-eni # eks
   containers     # eks
   pods           # eks
+  cron
   cloud-init.log
   cloud-init-output.log
   user-data.log
