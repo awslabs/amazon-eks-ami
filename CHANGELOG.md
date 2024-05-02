@@ -8,8 +8,8 @@
 
 > [!NOTE]
 >
-> Be aware that we are tracking an ongoing issue with the 535-series drivers and instance types in the `g4` and `g5` families. 
-> This release disabled GSP on 1.26+ on `g4` and `g5` families. 
+> Be aware that we are tracking an ongoing issue with the 535-series drivers and instance types in the `g4` and `g5` families.
+> This release disabled GSP on 1.26+ on `g4` and `g5` families.
 > More information is available in #1523.
 >
 
