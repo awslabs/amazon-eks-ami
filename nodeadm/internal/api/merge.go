@@ -74,7 +74,7 @@ func (t nodeConfigTransformer) transformKubeletConfig(dst, src reflect.Value) er
 		} else if src.Len() > 0 {
 			// kubelet config in an inline document here, so we explicitly
 			// perform a merge with dst and src data.
-			mergedMap, err := util.DocumentMerge(dst.Interface(), src.Interface(), mergo.WithOverride)
+			mergedMap, err := util.Merge(dst.Interface(), src.Interface(), json.Marshal, json.Unmarshal)
 			if err != nil {
 				return err
 			}
@@ -96,22 +96,17 @@ func (t nodeConfigTransformer) transformContainerdConfig(dst, src reflect.Value)
 		} else if src.Len() > 0 {
 			// containerd config is a string an inline string here, so we
 			// explicitly perform a merge with dst and src data.
-			var systemContainerdConfigMap map[string]interface{}
-			if err := toml.Unmarshal([]byte(dst.String()), &systemContainerdConfigMap); err != nil {
-				return err
-			}
-			var userContainerdConfigMap map[string]interface{}
-			if err := toml.Unmarshal([]byte(src.String()), &userContainerdConfigMap); err != nil {
-				return err
-			}
-			if err := mergo.Merge(&systemContainerdConfigMap, &userContainerdConfigMap, mergo.WithOverride); err != nil {
-				return err
-			}
-			containerdConfig, err := toml.Marshal(systemContainerdConfigMap)
+			dstConfig := []byte(dst.String())
+			srcConfig := []byte(src.String())
+			configBytes, err := util.Merge(dstConfig, srcConfig, toml.Marshal, toml.Unmarshal)
 			if err != nil {
 				return err
 			}
-			dst.SetString(string(containerdConfig))
+			config, err := toml.Marshal(configBytes)
+			if err != nil {
+				return err
+			}
+			dst.SetString(string(config))
 		}
 	}
 	return nil

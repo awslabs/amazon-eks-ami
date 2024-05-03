@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"text/template"
 
-	"dario.cat/mergo"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/pelletier/go-toml/v2"
@@ -15,9 +14,8 @@ import (
 const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 
 const (
-	containerdConfigFile      = "/etc/containerd/config.toml"
-	containerdConfigImportDir = "/etc/containerd/config.d"
-	containerdConfigPerm      = 0644
+	containerdConfigFile = "/etc/containerd/config.toml"
+	containerdConfigPerm = 0644
 )
 
 var (
@@ -38,24 +36,18 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	}
 	// because the logic in containerd's import merge decides to completely
 	// overwrite entire sections, we want to implement this merging ourselves.
-	// see: https://github.com/containerd/containerd/blob/main/cmd/containerd/server/config/config.go#L407-L431
+	// see: https://github.com/containerd/containerd/blob/a91b05d99ceac46329be06eb43f7ae10b89aad45/cmd/containerd/server/config/config.go#L407-L431
 	if len(cfg.Spec.Containerd.Config) > 0 {
-		var userContainerdConfigMap map[string]interface{}
-		if err := toml.Unmarshal([]byte(cfg.Spec.Containerd.Config), &userContainerdConfigMap); err != nil {
+		containerdConfigMap, err := util.Merge(containerdConfig, []byte(cfg.Spec.Containerd.Config), toml.Marshal, toml.Unmarshal)
+		if err != nil {
 			return err
 		}
-		var systemContainerdConfigMap map[string]interface{}
-		if err := toml.Unmarshal(containerdConfig, &systemContainerdConfigMap); err != nil {
-			return err
-		}
-		if err := mergo.Merge(&systemContainerdConfigMap, userContainerdConfigMap, mergo.WithOverride); err != nil {
-			return err
-		}
-		containerdConfig, err = toml.Marshal(systemContainerdConfigMap)
+		containerdConfig, err = toml.Marshal(containerdConfigMap)
 		if err != nil {
 			return err
 		}
 	}
+
 	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
 	return util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
 }
