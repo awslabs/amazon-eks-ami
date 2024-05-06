@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -16,18 +15,16 @@ import (
 // size, volume type, and IOPS capacity. If your EBS volume is attached to a
 // current-generation EC2 instance type, you might be able to apply these changes
 // without stopping the instance or detaching the volume from it. For more
-// information about modifying EBS volumes, see Amazon EBS Elastic Volumes (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modify-volume.html)
-// (Linux instances) or Amazon EBS Elastic Volumes (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ebs-modify-volume.html)
-// (Windows instances). When you complete a resize operation on your volume, you
-// need to extend the volume's file-system size to take advantage of the new
-// storage capacity. For more information, see Extend a Linux file system (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-expand-volume.html#recognize-expanded-volume-linux)
-// or Extend a Windows file system (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ebs-expand-volume.html#recognize-expanded-volume-windows)
+// information about modifying EBS volumes, see Amazon EBS Elastic Volumes (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-modify-volume.html)
+// in the Amazon EBS User Guide. When you complete a resize operation on your
+// volume, you need to extend the volume's file-system size to take advantage of
+// the new storage capacity. For more information, see Extend the file system (https://docs.aws.amazon.com/ebs/latest/userguide/recognize-expanded-volume-linux.html)
 // . You can use CloudWatch Events to check the status of a modification to an EBS
 // volume. For information about CloudWatch Events, see the Amazon CloudWatch
 // Events User Guide (https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/)
 // . You can also track the status of a modification using
 // DescribeVolumesModifications . For information about tracking status changes
-// using either method, see Monitor the progress of volume modifications (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-volume-modifications.html)
+// using either method, see Monitor the progress of volume modifications (https://docs.aws.amazon.com/ebs/latest/userguide/monitoring-volume-modifications.html)
 // . With previous-generation instance types, resizing an EBS volume might require
 // detaching and reattaching the volume or stopping and restarting the instance.
 // After modifying a volume, you must wait at least six hours and ensure that the
@@ -76,8 +73,8 @@ type ModifyVolumeInput struct {
 	// Specifies whether to enable Amazon EBS Multi-Attach. If you enable
 	// Multi-Attach, you can attach the volume to up to 16 Nitro-based instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#ec2-nitro-instances)
 	// in the same Availability Zone. This parameter is supported with io1 and io2
-	// volumes only. For more information, see Amazon EBS Multi-Attach (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volumes-multi.html)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// volumes only. For more information, see Amazon EBS Multi-Attach (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes-multi.html)
+	// in the Amazon EBS User Guide.
 	MultiAttachEnabled *bool
 
 	// The target size of the volume, in GiB. The target volume size must be greater
@@ -98,9 +95,8 @@ type ModifyVolumeInput struct {
 	Throughput *int32
 
 	// The target EBS volume type of the volume. For more information, see Amazon EBS
-	// volume types (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html)
-	// in the Amazon Elastic Compute Cloud User Guide. Default: The existing type is
-	// retained.
+	// volume types (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html)
+	// in the Amazon EBS User Guide. Default: The existing type is retained.
 	VolumeType types.VolumeType
 
 	noSmithyDocumentSerde
@@ -139,25 +135,25 @@ func (c *Client) addOperationModifyVolumeMiddlewares(stack *middleware.Stack, op
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -178,7 +174,7 @@ func (c *Client) addOperationModifyVolumeMiddlewares(stack *middleware.Stack, op
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyVolume(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

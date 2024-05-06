@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -19,12 +18,12 @@ import (
 // snapshot are propagated to the volume. You can create encrypted volumes.
 // Encrypted volumes must be attached to instances that support Amazon EBS
 // encryption. Volumes that are created from encrypted snapshots are also
-// automatically encrypted. For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html)
-// in the Amazon Elastic Compute Cloud User Guide. You can tag your volumes during
-// creation. For more information, see Tag your Amazon EC2 resources (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+// automatically encrypted. For more information, see Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
+// in the Amazon EBS User Guide. You can tag your volumes during creation. For more
+// information, see Tag your Amazon EC2 resources (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
 // in the Amazon Elastic Compute Cloud User Guide. For more information, see
-// Create an Amazon EBS volume (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-creating-volume.html)
-// in the Amazon Elastic Compute Cloud User Guide.
+// Create an Amazon EBS volume (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-creating-volume.html)
+// in the Amazon EBS User Guide.
 func (c *Client) CreateVolume(ctx context.Context, params *CreateVolumeInput, optFns ...func(*Options)) (*CreateVolumeOutput, error) {
 	if params == nil {
 		params = &CreateVolumeInput{}
@@ -62,10 +61,10 @@ type CreateVolumeInput struct {
 	// Indicates whether the volume should be encrypted. The effect of setting the
 	// encryption state to true depends on the volume origin (new or from a snapshot),
 	// starting encryption state, ownership, and whether encryption by default is
-	// enabled. For more information, see Encryption by default (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#encryption-by-default)
-	// in the Amazon Elastic Compute Cloud User Guide. Encrypted Amazon EBS volumes
-	// must be attached to instances that support Amazon EBS encryption. For more
-	// information, see Supported instance types (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html#EBSEncryption_supported_instances)
+	// enabled. For more information, see Encryption by default (https://docs.aws.amazon.com/ebs/latest/userguide/work-with-ebs-encr.html#encryption-by-default)
+	// in the Amazon EBS User Guide. Encrypted Amazon EBS volumes must be attached to
+	// instances that support Amazon EBS encryption. For more information, see
+	// Supported instance types (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption-requirements.html#ebs-encryption_supported_instances)
 	// .
 	Encrypted *bool
 
@@ -104,8 +103,8 @@ type CreateVolumeInput struct {
 	// Multi-Attach, you can attach the volume to up to 16 Instances built on the
 	// Nitro System (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#ec2-nitro-instances)
 	// in the same Availability Zone. This parameter is supported with io1 and io2
-	// volumes only. For more information, see Amazon EBS Multi-Attach (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volumes-multi.html)
-	// in the Amazon Elastic Compute Cloud User Guide.
+	// volumes only. For more information, see Amazon EBS Multi-Attach (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes-multi.html)
+	// in the Amazon EBS User Guide.
 	MultiAttachEnabled *bool
 
 	// The Amazon Resource Name (ARN) of the Outpost.
@@ -141,8 +140,8 @@ type CreateVolumeInput struct {
 	//   - Cold HDD: sc1
 	//   - Magnetic: standard
 	// Throughput Optimized HDD ( st1 ) and Cold HDD ( sc1 ) volumes can't be used as
-	// boot volumes. For more information, see Amazon EBS volume types (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html)
-	// in the Amazon Elastic Compute Cloud User Guide. Default: gp2
+	// boot volumes. For more information, see Amazon EBS volume types (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html)
+	// in the Amazon EBS User Guide. Default: gp2
 	VolumeType types.VolumeType
 
 	noSmithyDocumentSerde
@@ -151,7 +150,8 @@ type CreateVolumeInput struct {
 // Describes a volume.
 type CreateVolumeOutput struct {
 
-	// Information about the volume attachments.
+	// This parameter is not returned by CreateVolume. Information about the volume
+	// attachments.
 	Attachments []types.VolumeAttachment
 
 	// The Availability Zone for the volume.
@@ -163,7 +163,8 @@ type CreateVolumeOutput struct {
 	// Indicates whether the volume is encrypted.
 	Encrypted *bool
 
-	// Indicates whether the volume was created using fast snapshot restore.
+	// This parameter is not returned by CreateVolume. Indicates whether the volume
+	// was created using fast snapshot restore.
 	FastRestored *bool
 
 	// The number of I/O operations per second (IOPS). For gp3 , io1 , and io2
@@ -188,7 +189,7 @@ type CreateVolumeOutput struct {
 	// The snapshot from which the volume was created, if applicable.
 	SnapshotId *string
 
-	// Reserved for future use.
+	// This parameter is not returned by CreateVolume. Reserved for future use.
 	SseType types.SSEType
 
 	// The volume state.
@@ -234,25 +235,25 @@ func (c *Client) addOperationCreateVolumeMiddlewares(stack *middleware.Stack, op
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -276,7 +277,7 @@ func (c *Client) addOperationCreateVolumeMiddlewares(stack *middleware.Stack, op
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateVolume(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -18,14 +17,16 @@ import (
 // enters the deleted_terminating state. Otherwise, the EC2 Fleet enters the
 // deleted_running state, and the instances continue to run until they are
 // interrupted or you terminate them manually. For instant fleets, EC2 Fleet must
-// terminate the instances when the fleet is deleted. A deleted instant fleet with
-// running instances is not supported. Restrictions
-//   - You can delete up to 25 instant fleets in a single request. If you exceed
-//     this number, no instant fleets are deleted and an error is returned. There is
-//     no restriction on the number of fleets of type maintain or request that can be
-//     deleted in a single request.
-//   - Up to 1000 instances can be terminated in a single request to delete instant
-//     fleets.
+// terminate the instances when the fleet is deleted. Up to 1000 instances can be
+// terminated in a single request to delete instant fleets. A deleted instant
+// fleet with running instances is not supported. Restrictions
+//   - You can delete up to 25 fleets of type instant in a single request.
+//   - You can delete up to 100 fleets of type maintain or request in a single
+//     request.
+//   - You can delete up to 125 fleets in a single request, provided you do not
+//     exceed the quota for each fleet type, as specified above.
+//   - If you exceed the specified number of fleets to delete, no fleets are
+//     deleted.
 //
 // For more information, see Delete an EC2 Fleet (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-ec2-fleet.html#delete-fleet)
 // in the Amazon EC2 User Guide.
@@ -46,7 +47,8 @@ func (c *Client) DeleteFleets(ctx context.Context, params *DeleteFleetsInput, op
 
 type DeleteFleetsInput struct {
 
-	// The IDs of the EC2 Fleets.
+	// The IDs of the EC2 Fleets. Constraints: In a single request, you can specify up
+	// to 25 instant fleet IDs and up to 100 maintain or request fleet IDs.
 	//
 	// This member is required.
 	FleetIds []string
@@ -106,25 +108,25 @@ func (c *Client) addOperationDeleteFleetsMiddlewares(stack *middleware.Stack, op
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -145,7 +147,7 @@ func (c *Client) addOperationDeleteFleetsMiddlewares(stack *middleware.Stack, op
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteFleets(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

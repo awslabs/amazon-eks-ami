@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -73,14 +72,22 @@ type ModifyInstanceMetadataOptionsInput struct {
 	//   instance metadata retrieval requests. With this option, retrieving the IAM role
 	//   credentials always returns IMDSv2 credentials; IMDSv1 credentials are not
 	//   available.
-	// Default: If the value of ImdsSupport for the Amazon Machine Image (AMI) for
-	// your instance is v2.0 , the default is required .
+	// Default:
+	//   - If the value of ImdsSupport for the Amazon Machine Image (AMI) for your
+	//   instance is v2.0 and the account level default is set to no-preference , the
+	//   default is required .
+	//   - If the value of ImdsSupport for the Amazon Machine Image (AMI) for your
+	//   instance is v2.0 , but the account level default is set to V1 or V2 , the
+	//   default is optional .
+	// The default value can also be affected by other combinations of parameters. For
+	// more information, see Order of precedence for instance metadata options (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html#instance-metadata-options-order-of-precedence)
+	// in the Amazon EC2 User Guide.
 	HttpTokens types.HttpTokensState
 
 	// Set to enabled to allow access to instance tags from the instance metadata. Set
 	// to disabled to turn off access to instance tags from the instance metadata. For
 	// more information, see Work with instance tags using the instance metadata (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html#work-with-tags-in-IMDS)
-	// . Default: disabled
+	// .
 	InstanceMetadataTags types.InstanceMetadataTagsState
 
 	noSmithyDocumentSerde
@@ -122,25 +129,25 @@ func (c *Client) addOperationModifyInstanceMetadataOptionsMiddlewares(stack *mid
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -161,7 +168,7 @@ func (c *Client) addOperationModifyInstanceMetadataOptionsMiddlewares(stack *mid
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyInstanceMetadataOptions(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -85,11 +84,11 @@ type ModifySubnetAttributeInput struct {
 	MapCustomerOwnedIpOnLaunch *types.AttributeBooleanValue
 
 	// Specify true to indicate that network interfaces attached to instances created
-	// in the specified subnet should be assigned a public IPv4 address. Starting on
-	// February 1, 2024, Amazon Web Services will charge for all public IPv4 addresses,
-	// including public IPv4 addresses associated with running instances and Elastic IP
-	// addresses. For more information, see the Public IPv4 Address tab on the Amazon
-	// VPC pricing page (http://aws.amazon.com/vpc/pricing/) .
+	// in the specified subnet should be assigned a public IPv4 address. Amazon Web
+	// Services charges for all public IPv4 addresses, including public IPv4 addresses
+	// associated with running instances and Elastic IP addresses. For more
+	// information, see the Public IPv4 Address tab on the Amazon VPC pricing page (http://aws.amazon.com/vpc/pricing/)
+	// .
 	MapPublicIpOnLaunch *types.AttributeBooleanValue
 
 	// The type of hostname to assign to instances in the subnet at launch. For
@@ -131,25 +130,25 @@ func (c *Client) addOperationModifySubnetAttributeMiddlewares(stack *middleware.
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -170,7 +169,7 @@ func (c *Client) addOperationModifySubnetAttributeMiddlewares(stack *middleware.
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifySubnetAttribute(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

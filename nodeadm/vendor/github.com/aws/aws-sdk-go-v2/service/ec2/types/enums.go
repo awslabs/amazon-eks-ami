@@ -1326,6 +1326,48 @@ func (DatafeedSubscriptionState) Values() []DatafeedSubscriptionState {
 	}
 }
 
+type DefaultInstanceMetadataEndpointState string
+
+// Enum values for DefaultInstanceMetadataEndpointState
+const (
+	DefaultInstanceMetadataEndpointStateDisabled     DefaultInstanceMetadataEndpointState = "disabled"
+	DefaultInstanceMetadataEndpointStateEnabled      DefaultInstanceMetadataEndpointState = "enabled"
+	DefaultInstanceMetadataEndpointStateNoPreference DefaultInstanceMetadataEndpointState = "no-preference"
+)
+
+// Values returns all known values for DefaultInstanceMetadataEndpointState. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (DefaultInstanceMetadataEndpointState) Values() []DefaultInstanceMetadataEndpointState {
+	return []DefaultInstanceMetadataEndpointState{
+		"disabled",
+		"enabled",
+		"no-preference",
+	}
+}
+
+type DefaultInstanceMetadataTagsState string
+
+// Enum values for DefaultInstanceMetadataTagsState
+const (
+	DefaultInstanceMetadataTagsStateDisabled     DefaultInstanceMetadataTagsState = "disabled"
+	DefaultInstanceMetadataTagsStateEnabled      DefaultInstanceMetadataTagsState = "enabled"
+	DefaultInstanceMetadataTagsStateNoPreference DefaultInstanceMetadataTagsState = "no-preference"
+)
+
+// Values returns all known values for DefaultInstanceMetadataTagsState. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (DefaultInstanceMetadataTagsState) Values() []DefaultInstanceMetadataTagsState {
+	return []DefaultInstanceMetadataTagsState{
+		"disabled",
+		"enabled",
+		"no-preference",
+	}
+}
+
 type DefaultRouteTableAssociationValue string
 
 // Enum values for DefaultRouteTableAssociationValue
@@ -1699,6 +1741,42 @@ func (Ec2InstanceConnectEndpointState) Values() []Ec2InstanceConnectEndpointStat
 		"delete-in-progress",
 		"delete-complete",
 		"delete-failed",
+	}
+}
+
+type EkPubKeyFormat string
+
+// Enum values for EkPubKeyFormat
+const (
+	EkPubKeyFormatDer  EkPubKeyFormat = "der"
+	EkPubKeyFormatTpmt EkPubKeyFormat = "tpmt"
+)
+
+// Values returns all known values for EkPubKeyFormat. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (EkPubKeyFormat) Values() []EkPubKeyFormat {
+	return []EkPubKeyFormat{
+		"der",
+		"tpmt",
+	}
+}
+
+type EkPubKeyType string
+
+// Enum values for EkPubKeyType
+const (
+	EkPubKeyTypeRsa2048    EkPubKeyType = "rsa-2048"
+	EkPubKeyTypeEccSecP384 EkPubKeyType = "ecc-sec-p384"
+)
+
+// Values returns all known values for EkPubKeyType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (EkPubKeyType) Values() []EkPubKeyType {
+	return []EkPubKeyType{
+		"rsa-2048",
+		"ecc-sec-p384",
 	}
 }
 
@@ -2443,18 +2521,19 @@ type ImageAttributeName string
 
 // Enum values for ImageAttributeName
 const (
-	ImageAttributeNameDescription        ImageAttributeName = "description"
-	ImageAttributeNameKernel             ImageAttributeName = "kernel"
-	ImageAttributeNameRamdisk            ImageAttributeName = "ramdisk"
-	ImageAttributeNameLaunchPermission   ImageAttributeName = "launchPermission"
-	ImageAttributeNameProductCodes       ImageAttributeName = "productCodes"
-	ImageAttributeNameBlockDeviceMapping ImageAttributeName = "blockDeviceMapping"
-	ImageAttributeNameSriovNetSupport    ImageAttributeName = "sriovNetSupport"
-	ImageAttributeNameBootMode           ImageAttributeName = "bootMode"
-	ImageAttributeNameTpmSupport         ImageAttributeName = "tpmSupport"
-	ImageAttributeNameUefiData           ImageAttributeName = "uefiData"
-	ImageAttributeNameLastLaunchedTime   ImageAttributeName = "lastLaunchedTime"
-	ImageAttributeNameImdsSupport        ImageAttributeName = "imdsSupport"
+	ImageAttributeNameDescription              ImageAttributeName = "description"
+	ImageAttributeNameKernel                   ImageAttributeName = "kernel"
+	ImageAttributeNameRamdisk                  ImageAttributeName = "ramdisk"
+	ImageAttributeNameLaunchPermission         ImageAttributeName = "launchPermission"
+	ImageAttributeNameProductCodes             ImageAttributeName = "productCodes"
+	ImageAttributeNameBlockDeviceMapping       ImageAttributeName = "blockDeviceMapping"
+	ImageAttributeNameSriovNetSupport          ImageAttributeName = "sriovNetSupport"
+	ImageAttributeNameBootMode                 ImageAttributeName = "bootMode"
+	ImageAttributeNameTpmSupport               ImageAttributeName = "tpmSupport"
+	ImageAttributeNameUefiData                 ImageAttributeName = "uefiData"
+	ImageAttributeNameLastLaunchedTime         ImageAttributeName = "lastLaunchedTime"
+	ImageAttributeNameImdsSupport              ImageAttributeName = "imdsSupport"
+	ImageAttributeNameDeregistrationProtection ImageAttributeName = "deregistrationProtection"
 )
 
 // Values returns all known values for ImageAttributeName. Note that this can be
@@ -2474,6 +2553,7 @@ func (ImageAttributeName) Values() []ImageAttributeName {
 		"uefiData",
 		"lastLaunchedTime",
 		"imdsSupport",
+		"deregistrationProtection",
 	}
 }
 
@@ -3701,6 +3781,19 @@ const (
 	InstanceTypeR7iMetal48xl    InstanceType = "r7i.metal-48xl"
 	InstanceTypeR7izMetal16xl   InstanceType = "r7iz.metal-16xl"
 	InstanceTypeR7izMetal32xl   InstanceType = "r7iz.metal-32xl"
+	InstanceTypeC7gdMetal       InstanceType = "c7gd.metal"
+	InstanceTypeM7gdMetal       InstanceType = "m7gd.metal"
+	InstanceTypeR7gdMetal       InstanceType = "r7gd.metal"
+	InstanceTypeG6Xlarge        InstanceType = "g6.xlarge"
+	InstanceTypeG62xlarge       InstanceType = "g6.2xlarge"
+	InstanceTypeG64xlarge       InstanceType = "g6.4xlarge"
+	InstanceTypeG68xlarge       InstanceType = "g6.8xlarge"
+	InstanceTypeG612xlarge      InstanceType = "g6.12xlarge"
+	InstanceTypeG616xlarge      InstanceType = "g6.16xlarge"
+	InstanceTypeG624xlarge      InstanceType = "g6.24xlarge"
+	InstanceTypeG648xlarge      InstanceType = "g6.48xlarge"
+	InstanceTypeGr64xlarge      InstanceType = "gr6.4xlarge"
+	InstanceTypeGr68xlarge      InstanceType = "gr6.8xlarge"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -4491,6 +4584,19 @@ func (InstanceType) Values() []InstanceType {
 		"r7i.metal-48xl",
 		"r7iz.metal-16xl",
 		"r7iz.metal-32xl",
+		"c7gd.metal",
+		"m7gd.metal",
+		"r7gd.metal",
+		"g6.xlarge",
+		"g6.2xlarge",
+		"g6.4xlarge",
+		"g6.8xlarge",
+		"g6.12xlarge",
+		"g6.16xlarge",
+		"g6.24xlarge",
+		"g6.48xlarge",
+		"gr6.4xlarge",
+		"gr6.8xlarge",
 	}
 }
 
@@ -5593,6 +5699,27 @@ func (MembershipType) Values() []MembershipType {
 	}
 }
 
+type MetadataDefaultHttpTokensState string
+
+// Enum values for MetadataDefaultHttpTokensState
+const (
+	MetadataDefaultHttpTokensStateOptional     MetadataDefaultHttpTokensState = "optional"
+	MetadataDefaultHttpTokensStateRequired     MetadataDefaultHttpTokensState = "required"
+	MetadataDefaultHttpTokensStateNoPreference MetadataDefaultHttpTokensState = "no-preference"
+)
+
+// Values returns all known values for MetadataDefaultHttpTokensState. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (MetadataDefaultHttpTokensState) Values() []MetadataDefaultHttpTokensState {
+	return []MetadataDefaultHttpTokensState{
+		"optional",
+		"required",
+		"no-preference",
+	}
+}
+
 type MetricType string
 
 // Enum values for MetricType
@@ -5740,10 +5867,11 @@ type NetworkInterfaceAttribute string
 
 // Enum values for NetworkInterfaceAttribute
 const (
-	NetworkInterfaceAttributeDescription     NetworkInterfaceAttribute = "description"
-	NetworkInterfaceAttributeGroupSet        NetworkInterfaceAttribute = "groupSet"
-	NetworkInterfaceAttributeSourceDestCheck NetworkInterfaceAttribute = "sourceDestCheck"
-	NetworkInterfaceAttributeAttachment      NetworkInterfaceAttribute = "attachment"
+	NetworkInterfaceAttributeDescription              NetworkInterfaceAttribute = "description"
+	NetworkInterfaceAttributeGroupSet                 NetworkInterfaceAttribute = "groupSet"
+	NetworkInterfaceAttributeSourceDestCheck          NetworkInterfaceAttribute = "sourceDestCheck"
+	NetworkInterfaceAttributeAttachment               NetworkInterfaceAttribute = "attachment"
+	NetworkInterfaceAttributeAssociatePublicIpAddress NetworkInterfaceAttribute = "associatePublicIpAddress"
 )
 
 // Values returns all known values for NetworkInterfaceAttribute. Note that this
@@ -5755,6 +5883,7 @@ func (NetworkInterfaceAttribute) Values() []NetworkInterfaceAttribute {
 		"groupSet",
 		"sourceDestCheck",
 		"attachment",
+		"associatePublicIpAddress",
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -56,8 +55,7 @@ type RevokeSecurityGroupIngressInput struct {
 	DryRun *bool
 
 	// If the protocol is TCP or UDP, this is the start of the port range. If the
-	// protocol is ICMP, this is the type number. A value of -1 indicates all ICMP
-	// types.
+	// protocol is ICMP, this is the ICMP type or -1 (all ICMP types).
 	FromPort *int32
 
 	// The ID of the security group.
@@ -90,7 +88,7 @@ type RevokeSecurityGroupIngressInput struct {
 	SourceSecurityGroupOwnerId *string
 
 	// If the protocol is TCP or UDP, this is the end of the port range. If the
-	// protocol is ICMP, this is the code. A value of -1 indicates all ICMP codes.
+	// protocol is ICMP, this is the ICMP code or -1 (all ICMP codes).
 	ToPort *int32
 
 	noSmithyDocumentSerde
@@ -133,25 +131,25 @@ func (c *Client) addOperationRevokeSecurityGroupIngressMiddlewares(stack *middle
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -169,7 +167,7 @@ func (c *Client) addOperationRevokeSecurityGroupIngressMiddlewares(stack *middle
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRevokeSecurityGroupIngress(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
