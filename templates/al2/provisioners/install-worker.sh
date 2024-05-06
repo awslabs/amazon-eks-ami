@@ -196,7 +196,9 @@ EOF
 ###############################################################################
 
 sudo yum install -y nerdctl
-sudo mkdir /etc/nerdctl
+if [ ! -d "/etc/nerdctl" ]; then
+    sudo mkdir /etc/nerdctl
+fi
 cat << EOF | sudo tee -a /etc/nerdctl/nerdctl.toml
 namespace = "k8s.io"
 EOF
