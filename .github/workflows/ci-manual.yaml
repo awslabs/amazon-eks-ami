@@ -24,11 +24,21 @@ on:
         default: "test"
         options:
           - "build"
-          - "launch"
           - "test"
+      os_distros:
+        description: 'Operating System Distributions (comma-separated, e.g., al2,al2023)'
+        default: "al2,al2023"
+        required: false
+        type: string
+      k8s_versions:
+        description: 'Kubernetes Versions (comma-separated, e.g., 1.21,1.22)'
+        default: "1.21,1.22,1.23,1.24,1.25,1.26,1.27,1.28,1.29,1.30"
+        required: false
+        type: string
       build_arguments:
         required: false
         type: string
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -38,17 +48,16 @@ jobs:
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       build_id: ${{ steps.variables.outputs.build_id }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
+      os_distros: ${{ steps.variables.outputs.os_distros }}
     steps:
     - id: variables
       run: |
         echo "git_sha_short=$(echo ${{ inputs.git_sha }} | rev | cut -c-7 | rev)" >> $GITHUB_OUTPUT
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-        # grab supported versions directly from eksctl
-        wget --no-verbose -O eksctl.tar.gz "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
-        tar xzf eksctl.tar.gz && chmod +x ./eksctl
-        echo "kubernetes_versions=$(./eksctl version --output json | jq -c .EKSServerSupportedVersions)" >> $GITHUB_OUTPUT
         echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
+        echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+        echo "os_distros=$(jq -Rn --arg input '${{ inputs.os_distros }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
 
   notify-start:
     runs-on: ubuntu-latest
@@ -66,7 +75,7 @@ jobs:
             });
   kubernetes-versions:
     runs-on: ubuntu-latest
-    name: ${{ matrix.k8s_version }}
+    name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
     needs:
       - setup
       - notify-start
@@ -78,10 +87,17 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
+        os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
+        # al2023 is not supporting 1.22 and below, exclude them from CI
+        exclude:
+          - os_distro: al2023
+            k8s_version: 1.21
+          - os_distro: al2023
+            k8s_version: 1.22
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: 'master'
+          ref: 'main'
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ${{ secrets.AWS_REGION }}
@@ -94,23 +110,19 @@ jobs:
         with:
           git_sha: ${{ inputs.git_sha }}
           k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           additional_arguments: ${{ inputs.build_arguments }}
-      - if: ${{ inputs.goal == 'launch' || inputs.goal == 'test' }}
-        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Launch"
-        id: launch
-        uses: ./.github/actions/ci/launch
+      - if: ${{ inputs.goal == 'test' }}
+        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
+        id: test
+        uses: ./.github/actions/ci/kubetest2
         with:
           ami_id: ${{ steps.build.outputs.ami_id }}
           k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           aws_region: ${{ secrets.AWS_REGION }}
-      - if: ${{ inputs.goal == 'test' }}
-        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
-        id: sonobuoy
-        uses: ./.github/actions/ci/sonobuoy
-        with:
-          cluster_name: ${{ steps.launch.outputs.cluster_name }}
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -133,18 +145,17 @@ jobs:
               "cancelled": "🚮"
             };
             const uniqueStepNames = new Set();
-            const stepConclusionsByK8sVersion = new Map();
+            const stepConclusionsByJob = new Map();
             const ciStepNamePrefix = "${{ needs.setup.outputs.ci_step_name_prefix }}";
             for (const job of data.jobs) {
-              if (/\d+\.\d+/.test(job.name)) {
-                const k8sVersion = job.name;
+              if (/^\d+\.\d+/.test(job.name)) {
                 for (const step of job.steps) {
                   if (step.name.startsWith(ciStepNamePrefix)) {
                     const stepName = step.name.substring(ciStepNamePrefix.length).trim();
-                    let stepConclusions = stepConclusionsByK8sVersion.get(k8sVersion);
+                    let stepConclusions = stepConclusionsByJob.get(job.name);
                     if (!stepConclusions) {
                       stepConclusions = new Map();
-                      stepConclusionsByK8sVersion.set(k8sVersion, stepConclusions);
+                      stepConclusionsByJob.set(job.name, stepConclusions);
                     }
                     stepConclusions.set(stepName, step.conclusion);
                     uniqueStepNames.add(stepName);
@@ -153,7 +164,7 @@ jobs:
               }
             }
             const headers = [{
-              data: 'Kubernetes version',
+              data: 'AMI variant',
               header: true
             }];
             for (const stepName of uniqueStepNames.values()) {
@@ -163,10 +174,10 @@ jobs:
               });
             }
             const rows = [];
-            for (const stepConclusionsForK8sVersion of [...stepConclusionsByK8sVersion.entries()].sort()) {
-              const k8sVersion = stepConclusionsForK8sVersion[0];
-              const row = [k8sVersion];
-              for (const step of stepConclusionsForK8sVersion[1].entries()) {
+            for (const stepConclusionsForJob of [...stepConclusionsByJob.entries()].sort()) {
+              const job = stepConclusionsForJob[0];
+              const row = [job];
+              for (const step of stepConclusionsForJob[1].entries()) {
                   row.push(`${step[1]} ${conclusionEmojis[step[1]]}`);
               }
               rows.push(row);

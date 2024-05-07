@@ -1,0 +1,1 @@
+../../../nodeadm/doc/examples.md

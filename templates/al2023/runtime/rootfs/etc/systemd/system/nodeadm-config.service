@@ -1,0 +1,13 @@
+[Unit]
+Description=EKS Nodeadm Config
+Documentation=https://github.com/awslabs/amazon-eks-ami
+# run before cloud-init, then user can still execute their
+# own workflows from ec2 userdata cloud-init scripts
+Before=cloud-init.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nodeadm init --skip run
+
+[Install]
+WantedBy=multi-user.target

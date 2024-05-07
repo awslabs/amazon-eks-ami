@@ -127,7 +127,7 @@ function buildCommand(uuid, payload, name, args) {
 // The format of a command is `+NAME ARGS...`.
 // Leading and trailing spaces are ignored.
 function parseNamedArguments(line) {
-    const parsed = line.trim().match(/^\+([a-z\-]+)(?:\s+(.+))?$/);
+    const parsed = line.trim().match(/^\+([a-z\-]+(?::[a-z\-\d_]+)?)(?:\s+(.+))?$/);
     if (parsed) {
         return {
             name: parsed[1],
@@ -148,6 +148,7 @@ class EchoCommand {
 }
 
 class CICommand {
+    workflow_goal_prefix = "workflow:";
     constructor(uuid, payload, args) {
         this.repository_owner = payload.repository.owner.login;
         this.repository_name = payload.repository.name;
@@ -156,7 +157,7 @@ class CICommand {
         this.uuid = uuid;
         this.goal = "test";
         // "test" goal, which executes all CI stages, is the default when no goal is specified
-        if (args != null && args != "") {
+        if (args != null && args !== "") {
             this.goal = args;
         }
         this.goal_args = {};
@@ -191,14 +192,18 @@ class CICommand {
             comment_url: this.comment_url
         };
         for (const [goal, args] of Object.entries(this.goal_args)) {
-            inputs[`${goal}_arguments`] = args;
+            if (goal.startsWith(this.workflow_goal_prefix)) {
+                inputs[goal.substring(this.workflow_goal_prefix.length)] = args;
+            } else {
+                inputs[`${goal}_arguments`] = args;
+            }
         }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);
         await github.rest.actions.createWorkflowDispatch({
             owner: this.repository_owner,
             repo: this.repository_name,
             workflow_id: 'ci-manual.yaml',
-            ref: 'master',
+            ref: 'main',
             inputs: inputs
         });
         return null;

@@ -25,7 +25,10 @@ jobs:
       - run: git config credential.helper '!aws codecommit credential-helper $@'
       - run: git config credential.UseHttpPath true
       - run: git remote add codecommit ${{ secrets.AWS_CODECOMMIT_REPO_URL }}
+<<<<<<< HEAD
       - run: git checkout master
       - run: git push codecommit master
+=======
+>>>>>>> upstream/main
       - run: git checkout main
       - run: git push codecommit main

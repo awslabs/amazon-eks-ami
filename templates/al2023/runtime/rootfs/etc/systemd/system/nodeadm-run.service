@@ -1,0 +1,14 @@
+[Unit]
+Description=EKS Nodeadm Run
+Documentation=https://github.com/awslabs/amazon-eks-ami
+# start after cloud-init, in order to pickup changes the
+# user may have applied via cloud-init scripts
+After=nodeadm-config.service cloud-final.service
+Requires=nodeadm-config.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nodeadm init --skip config
+
+[Install]
+WantedBy=multi-user.target
