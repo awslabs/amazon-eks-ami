@@ -34,6 +34,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
+| `baseRuntimeSpec` _object (keys:string, values:RawExtension)_ | BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based. The provided spec will be merged with the default spec; so that a partial spec may be provided. For more information, see: https://github.com/opencontainers/runtime-spec |
 
 #### Feature
 

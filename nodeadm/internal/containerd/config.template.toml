@@ -17,6 +17,7 @@ config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
 runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/base-runtime-spec.json"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
 SystemdCgroup = true
