@@ -346,6 +346,20 @@ get_iptables_info() {
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
+  if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
+    echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
+  else
+    ## check that ip_vs module is loaded in get_modinfo()
+    try "collect ipvs information"
+    ipvsadm --save | tee -a "${COLLECT_DIR}"/networking/ipvsadm-save.txt
+    ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipset --list | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+    ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+  fi
+
   ok
 }
 
@@ -408,6 +422,7 @@ get_kernel_info() {
 get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
+  lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
 }
 
 get_docker_logs() {
