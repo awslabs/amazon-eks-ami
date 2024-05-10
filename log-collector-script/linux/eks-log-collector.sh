@@ -351,7 +351,7 @@ get_iptables_info() {
   else
     ## check that ip_vs module is loaded in get_modinfo()
     try "collect ipvs information"
-    ipvsadm --save | tee -a "${COLLECT_DIR}"/networking/ipvsadm-save.txt
+    ipvsadm --save  | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add \tproto \tvirt-server \tscheduler algthm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
