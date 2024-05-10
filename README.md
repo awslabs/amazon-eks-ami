@@ -1,3 +1,20 @@
+# MongoDB FedRAMP Documentation
+
+To find the proper build-date for a given Kubernetes version, run a variant of the following:
+```
+aws s3 ls --profile xgen-prod s3://amazon-eks/1.27.12/
+```
+
+To build an AWS EKS AMI for a given Kubernetes version, run a variant of the following:
+```
+enable_fips=true aws_region=us-gov-west-1 kubernetes_version=1.27.12 kubernetes_build_date=2024-04-19 arch=x86_64 make build
+```
+
+To upload the AMI to gov environments, run a variant of the following:
+```
+aws ec2 modify-image-attribute --image-id <ami-xxxxxxxxxxxx> --launch-permission "Add=[{OrganizationArn=arn:aws-us-gov:organizations::255955262727:organization/o-swvi5bpd85}]"
+```
+
 # Amazon EKS AMI Build Specification
 
 This repository contains resources and configuration scripts for building a

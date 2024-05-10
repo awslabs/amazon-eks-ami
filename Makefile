@@ -13,7 +13,7 @@ K8S_VERSION_PARTS := $(subst ., ,$(kubernetes_version))
 K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS})
 
 AMI_VARIANT ?= amazon-eks
-AMI_VERSION ?= v$(shell date '+%Y%m%d')
+AMI_VERSION ?= v$(shell date '+%Y%m%d-%H%M')
 os_distro ?= al2
 arch ?= x86_64
 
@@ -40,7 +40,7 @@ else ifeq ($(aws_region), us-gov-west-1)
 endif
 
 # default to the latest supported Kubernetes version
-k8s=1.28
+k8s=1.27
 
 .PHONY: build
 build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI

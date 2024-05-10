@@ -179,6 +179,24 @@
       ]
     },
     {
+      "type": "file",
+      "source": "{{template_dir}}/provisioners/aws-stig-config.sh",
+      "destination": "~/aws-stig-config.sh"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/provisioners/mongodb-stig-config.sh",
+      "destination": "~/mongodb-stig-config.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder` }}",
+      "inline": [
+        "sudo bash ~/aws-stig-config.sh",
+        "sudo bash ~/mongodb-stig-config.sh"
+      ]
+    },
+    {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["sudo reboot"],
