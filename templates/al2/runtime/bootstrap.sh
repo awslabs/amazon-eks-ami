@@ -642,6 +642,11 @@ systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet
 
+if ! systemctl is-active --quiet kubelet; then
+  log "ERROR: kubelet failed to start"
+  exit 1
+fi
+
 # gpu boost clock
 if command -v nvidia-smi &> /dev/null; then
   log "INFO: nvidia-smi found"
