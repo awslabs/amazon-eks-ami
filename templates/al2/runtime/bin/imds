@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ "$#" -ne 1 ]; then
+  echo >&2 "usage: imds token|API_PATH"
+  exit 1
+fi
+
+IMDS_DEBUG="${IMDS_DEBUG:-false}"
+# default ttl is 15 minutes
+IMDS_TOKEN_TTL_SECONDS=${IMDS_TOKEN_TTL_SECONDS:-900}
+IMDS_RETRIES=${IMDS_RETRIES:-10}
+IMDS_RETRY_DELAY_SECONDS=${IMDS_RETRY_DELAY_SECONDS:-1}
+IMDS_ENDPOINT=${IMDS_ENDPOINT:-169.254.169.254}
+
+function log() {
+  if [ "$IMDS_DEBUG" = "true" ]; then
+    echo >&2 "$1"
+  fi
+}
+
+function imdscurl() {
+  local OUTPUT_FILE=$(mktemp)
+  local CODE=$(curl \
+    --silent \
+    --show-error \
+    --output $OUTPUT_FILE \
+    --write-out "%{http_code}" \
+    --retry-connrefused \
+    --retry $IMDS_RETRIES \
+    --retry-delay $IMDS_RETRY_DELAY_SECONDS \
+    "$@" || echo "1")
+  # CODE will be either the HTTP status code, or 1 if the exit code of `curl` is non-zero
+  if [[ ${CODE} -lt 200 || ${CODE} -gt 299 ]]; then
+    cat >&2 $OUTPUT_FILE
+    return $CODE
+  fi
+  printf "$(cat $OUTPUT_FILE)\n"
+  rm $OUTPUT_FILE
+}
+
+function get-token() {
+  imdscurl \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: $IMDS_TOKEN_TTL_SECONDS" \
+    -X PUT \
+    "http://$IMDS_ENDPOINT/latest/api/token"
+}
+
+function get-with-token() {
+  local API_PATH="$1"
+  imdscurl \
+    -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN:-$(get-token)}" \
+    "http://$IMDS_ENDPOINT/$API_PATH"
+}
+
+log "ℹ️ Talking to IMDS at $IMDS_ENDPOINT"
+
+if [ "$1" = "token" ]; then
+  get-token
+else
+  # leading slashes will be removed
+  API_PATH="${1#/}"
+  get-with-token "$API_PATH"
+fi

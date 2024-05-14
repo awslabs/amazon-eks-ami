@@ -8,7 +8,7 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  cluster-sweeper:
+  kubetest2-sweeper:
     # disable in forks
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
@@ -18,10 +18,9 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_JANITOR }}
-      - uses: ./.github/actions/janitor/cluster-sweeper
+      - uses: ./.github/actions/janitor/kubetest2-sweeper
         with:
-          # 3 hours
-          max_age_seconds: 10800
+          max_resource_age_duration: 3h
   ami-sweeper:
     # disable in forks
     if: github.repository == 'awslabs/amazon-eks-ami'
