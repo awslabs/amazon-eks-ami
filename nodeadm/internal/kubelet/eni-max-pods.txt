@@ -206,6 +206,11 @@ c7gn.large 29
 c7gn.medium 8
 c7gn.metal 737
 c7gn.xlarge 58
+c7i-flex.2xlarge 58
+c7i-flex.4xlarge 234
+c7i-flex.8xlarge 234
+c7i-flex.large 29
+c7i-flex.xlarge 58
 c7i.12xlarge 234
 c7i.16xlarge 737
 c7i.24xlarge 737
