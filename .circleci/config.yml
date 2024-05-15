@@ -5,7 +5,7 @@ jobs:
   prepare_env:
     # job to prepare build environment
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
     working_directory: ~/aws_ecr_ami
     steps:
       - checkout:
@@ -16,7 +16,7 @@ jobs:
             - aws_ecr_ami
   build:
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
     steps:
       - attach_workspace:
             at: .
@@ -34,7 +34,7 @@ jobs:
           # By default, Circle CI have 10 minutes timeout without response,
           # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
-          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 1.26
+          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 1.25
 workflows:
   aws_eks_ami:
     jobs:
