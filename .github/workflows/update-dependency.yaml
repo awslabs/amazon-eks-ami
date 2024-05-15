@@ -1,0 +1,47 @@
+---
+name: 'Update Dependencies'
+on:
+  workflow_dispatch:
+  schedule:
+    # every Monday
+    - cron: '0 0 * * 1'
+env:
+  GOPROXY: https://proxy.golang.org
+permissions:
+  contents: read
+jobs:
+  update-deps:
+    if: ${{ github.repository == 'awslabs/amazon-eks-ami' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.8'
+      - uses: actions/checkout@v4
+      - name: Update Nodeadm Dependencies
+        id: update_deps
+        run: |
+          cd nodeadm
+          make update-deps
+          echo 'changes<<EOF' >> $GITHUB_OUTPUT
+          git status --porcelain >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+      - name: Create PR
+        if: ${{ steps.update_deps.outputs.changes != '' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: 'Update dependencies'
+          commit-message: Update dependencies
+          committer: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+          author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+          branch: dependencies/update
+          branch-suffix: timestamp
+          base: main
+          delete-branch: true
+          labels: |
+            changelog/exclude
+          body: |
+            Updating go.mod with latest dependencies.

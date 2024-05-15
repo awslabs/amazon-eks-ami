@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -o nounset
+
+# ensure these flags are equivalent to the rules in the .editorconfig
+FLAGS="--list --language-dialect auto --indent 2 --binary-next-line --case-indent --space-redirects"
+
+cd $(dirname $0)/..
+WORKDIR=$(realpath .)
+
+SHFMT_COMMAND=$(which shmft 2> /dev/null)
+if [ -z "${SHFMT_COMMAND}" ]; then
+  SHFMT_COMMAND="docker run --rm -v ${WORKDIR}:${WORKDIR} -w ${WORKDIR} mvdan/shfmt"
+fi
+
+FILES=$(${SHFMT_COMMAND} --find --language-dialect auto "${WORKDIR}" | grep -v "nodeadm/vendor/")
+
+${SHFMT_COMMAND} ${FLAGS} $@ ${FILES}

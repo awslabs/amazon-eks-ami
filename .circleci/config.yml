@@ -5,7 +5,7 @@ jobs:
   prepare_env:
     # job to prepare build environment
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
     working_directory: ~/aws_ecr_ami
     steps:
       - checkout:
@@ -16,7 +16,9 @@ jobs:
             - aws_ecr_ami
   build:
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.1
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
+    environment:
+      K8S_VERSION: 1.25
     steps:
       - attach_workspace:
             at: .
@@ -25,6 +27,8 @@ jobs:
           command: |
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
+            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y%m%d')"
+            echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
       - run:
           name: Install aws cli
           command: apk add aws-cli
@@ -34,7 +38,7 @@ jobs:
           # By default, Circle CI have 10 minutes timeout without response,
           # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
-          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 1.25
+          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 ${K8S_VERSION}
 workflows:
   aws_eks_ami:
     jobs:

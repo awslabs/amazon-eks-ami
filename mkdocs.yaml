@@ -5,12 +5,21 @@ repo_name: awslabs/amazon-eks-ami
 repo_url: https://github.com/awslabs/amazon-eks-ami
 nav:
   - 'Overview': README.md
-  - 'User Guide': USER_GUIDE.md
   - 'Changelog': CHANGELOG.md
   - 'Community':
     - 'Contribution guidelines': CONTRIBUTING.md
     - 'Code of Conduct': CODE_OF_CONDUCT.md
-
+  - 'Development': development.md
+  - 'Usage':
+    - 'Overview': usage/overview.md
+    - 'Amazon Linux 2': usage/al2.md
+    - 'Amazon Linux 2023': usage/al2023.md
+  - 'nodeadm':
+    - 'Overview': nodeadm/README.md
+    - 'API':
+      - 'Concepts': nodeadm/doc/api-concepts.md
+      - 'Reference': nodeadm/doc/api.md
+    - 'Examples': nodeadm/doc/examples.md
 theme:
   name: material
   palette:

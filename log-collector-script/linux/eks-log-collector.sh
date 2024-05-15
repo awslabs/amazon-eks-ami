@@ -20,8 +20,8 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.6"
-readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/master/log-collector-script/"
+readonly PROGRAM_VERSION="0.7.7"
+readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
 readonly LOG_DIR="/var/log"
@@ -61,6 +61,7 @@ COMMON_DIRECTORIES=(
   ipamd         # eks
   sysctls       # eks
   kubelet       # eks
+  nodeadm       # eks
   cni           # eks
 )
 
@@ -70,6 +71,7 @@ COMMON_LOGS=(
   aws-routed-eni # eks
   containers     # eks
   pods           # eks
+  cron
   cloud-init.log
   cloud-init-output.log
   user-data.log
@@ -273,6 +275,7 @@ collect() {
   get_containerd_info
   get_docker_info
   get_k8s_info
+  get_nodeadm_info
   get_ipamd_info
   get_multus_info
   get_sysctls_info
@@ -331,10 +334,15 @@ get_iptables_info() {
   else
     try "collect iptables information"
     iptables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/iptables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-mangle.txt
+    ip6tables --wait 1 --numeric --verbose --list --table mangle | tee "${COLLECT_DIR}"/networking/ip6tables-mangle.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-mangle.txt
     iptables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/iptables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-filter.txt
+    ip6tables --wait 1 --numeric --verbose --list --table filter | tee "${COLLECT_DIR}"/networking/ip6tables-filter.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-filter.txt
     iptables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/iptables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables-nat.txt
+    ip6tables --wait 1 --numeric --verbose --list --table nat | tee "${COLLECT_DIR}"/networking/ip6tables-nat.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables-nat.txt
     iptables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/iptables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/iptables.txt
+    ip6tables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/ip6tables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables.txt
     iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
+    ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
   ok
@@ -426,42 +434,64 @@ get_docker_logs() {
 get_k8s_info() {
   try "collect kubelet information"
 
-  if [[ -n "${KUBECONFIG:-}" ]]; then
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  find_kubeconfig() {
+    if [[ -n "${KUBECONFIG:-}" ]]; then
+      echo "${KUBECONFIG}"
+    elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
+      echo "/etc/eksctl/kubeconfig.yaml"
+    elif [[ -f /etc/systemd/system/kubelet.service ]]; then
+      echo $(grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}')
+    elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
+      echo "/var/lib/kubelet/kubeconfig"
+    else
+      echo ""
+    fi
+  }
 
-  elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
-    KUBECONFIG="/etc/eksctl/kubeconfig.yaml"
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  KUBECONFIG_PATH=$(find_kubeconfig)
 
-  elif [[ -f /etc/systemd/system/kubelet.service ]]; then
-    KUBECONFIG=$(grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}')
-    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG}" svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
-
-  elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
-    KUBECONFIG="/var/lib/kubelet/kubeconfig"
-    command -v kubectl > /dev/null && kubectl get --kubeconfig=${KUBECONFIG} svc > "${COLLECT_DIR}"/kubelet/svc.log
-    command -v kubectl > /dev/null && kubectl --kubeconfig=${KUBECONFIG} config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
-
+  if [[ -n "${KUBECONFIG_PATH}" ]]; then
+    command -v kubectl > /dev/null && kubectl get --kubeconfig="${KUBECONFIG_PATH}" svc > "${COLLECT_DIR}"/kubelet/svc.log
+    command -v kubectl > /dev/null && kubectl --kubeconfig="${KUBECONFIG_PATH}" config view --output yaml > "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
   else
     echo "======== Unable to find KUBECONFIG, IGNORING POD DATA =========" >> "${COLLECT_DIR}"/kubelet/svc.log
   fi
 
   # Try to copy the kubeconfig file if kubectl command doesn't exist
-  [[ (! -f "${COLLECT_DIR}/kubelet/kubeconfig.yaml") && (-n ${KUBECONFIG}) ]] && cp ${KUBECONFIG} "${COLLECT_DIR}"/kubelet/kubeconfig.yaml
+  if [[ ! -f "${COLLECT_DIR}/kubelet/kubeconfig.yaml" && -n "${KUBECONFIG_PATH}" ]]; then
+    cp "${KUBECONFIG_PATH}" "${COLLECT_DIR}/kubelet/kubeconfig.yaml"
+  fi
 
   case "${INIT_TYPE}" in
     systemd)
       timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
 
       systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
+
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
 
       timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/kubelet-eks_service.txt 2>&1
+      ;;
+    *)
+      warning "The current operating system is not supported."
+      ;;
+  esac
+
+  ok
+}
+
+get_nodeadm_info() {
+  try "collect nodeadm information"
+  case "${INIT_TYPE}" in
+    systemd)
+      timeout 75 journalctl --unit=nodeadm-config --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-config.log
+
+      timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
+
       ;;
     *)
       warning "The current operating system is not supported."
@@ -517,13 +547,19 @@ get_networking_info() {
   timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
   echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
   timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
+  echo "*** Output of conntrack -L -f ipv6 ***" >> "${COLLECT_DIR}"/networking/conntrack6.txt
+  timeout 75 conntrack -L -f ipv6 >> "${COLLECT_DIR}"/networking/conntrack6.txt
 
   # ifconfig
   timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
 
   # ip rule show
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
+  timeout 75 ip -6 rule show > "${COLLECT_DIR}"/networking/ip6rule.txt
+
+  # ip route show
   timeout 75 ip route show table all >> "${COLLECT_DIR}"/networking/iproute.txt
+  timeout 75 ip -6 route show table all >> "${COLLECT_DIR}"/networking/ip6route.txt
 
   # configure-multicard-interfaces
   timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
