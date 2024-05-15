@@ -19,4 +19,4 @@ wait::dbus-ready
 nodeadm init --skip run --config-source file://config.yaml
 assert::json-files-equal /etc/kubernetes/kubelet/config.json expected-kubelet-config.json
 # default the name strategy should be EC2PrivateName, use this pattern to assert
-assert::file-contains /etc/eks/kubelet/environment '--hostname-override=ip.*ec2.internal '
+assert::file-contains /etc/eks/kubelet/environment '--hostname-override=ip.*ec2.internal'

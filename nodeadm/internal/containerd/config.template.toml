@@ -1,10 +1,6 @@
 version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"
-# Users can use the following import directory to add additional
-# configuration to containerd. The imports do not behave exactly like overrides.
-# see: https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md#format
-imports = ["/etc/containerd/config.d/*.toml"]
 
 [grpc]
 address = "/run/containerd/containerd.sock"

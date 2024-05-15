@@ -12,7 +12,8 @@ require (
 	github.com/containerd/containerd v1.7.13
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/integrii/flaggy v1.5.2
-	github.com/stretchr/testify v1.8.4
+	github.com/pelletier/go-toml/v2 v2.2.2
+	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/mod v0.14.0
 	k8s.io/apimachinery v0.29.1
@@ -24,7 +25,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/tools v0.16.1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/grpc v1.58.3 // indirect
