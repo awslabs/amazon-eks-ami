@@ -4,6 +4,7 @@
     "ami_description": "EKS Kubernetes Worker AMI with AmazonLinux2 image",
     "ami_regions": "",
     "ami_users": "{{env `AMI_USERS`}}",
+    "ami_name": "{{env `AMI_NAME`}}",
     "associate_public_ip_address": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_region": "us-west-2",
