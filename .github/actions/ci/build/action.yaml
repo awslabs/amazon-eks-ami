@@ -9,6 +9,9 @@ inputs:
   k8s_version:
     required: true
     type: string
+  os_distro:
+    required: true
+    type: string
   additional_arguments:
     required: false
     type: string
@@ -24,9 +27,9 @@ runs:
     - id: build
       shell: bash
       run: |
-        packer plugins install github.com/hashicorp/amazon
-        AMI_NAME="amazon-eks-node-${{ inputs.k8s_version }}-${{ inputs.build_id }}"
-        make ${{ inputs.k8s_version }} ami_name=${AMI_NAME} ${{ inputs.additional_arguments }}
+        PACKER_GITHUB_API_TOKEN="${{ github.token }}" packer plugins install github.com/hashicorp/amazon
+        AMI_NAME="amazon-eks-node-${{ inputs.os_distro }}-${{ inputs.k8s_version }}-${{ inputs.build_id }}"
+        make k8s=${{ inputs.k8s_version }} os_distro=${{ inputs.os_distro }} ami_name=${AMI_NAME} ${{ inputs.additional_arguments }}
         echo "ami_id=$(jq -r .builds[0].artifact_id "${AMI_NAME}-manifest.json" | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
     - uses: actions/upload-artifact@v3
       with:

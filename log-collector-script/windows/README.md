@@ -9,7 +9,7 @@ This project was created to collect Amazon EKS log files and OS logs for trouble
 * Run this project as the Administrator user:
 
 ```
-Invoke-WebRequest -OutFile eks-log-collector.ps1 https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/windows/eks-log-collector.ps1
+Invoke-WebRequest -OutFile eks-log-collector.ps1 https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/windows/eks-log-collector.ps1
 .\eks-log-collector.ps1
 ```
 
@@ -98,7 +98,7 @@ Done... your bundled logs are located in  C:\log-collector\eks_i-0b318f704c74b6a
 aws ssm create-document \
   --name "EKSLogCollectorWindows" \
   --document-type "Command" \
-  --content https://raw.githubusercontent.com/awslabs/amazon-eks-ami/master/log-collector-script/windows/eks-ssm-content.json
+  --content https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/windows/eks-ssm-content.json
 ```
 
 2. To execute the bash script in the SSM document and to collect the logs from worker, run the following command:
