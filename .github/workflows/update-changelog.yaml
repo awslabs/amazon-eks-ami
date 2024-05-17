@@ -47,7 +47,7 @@ jobs:
             // if the release notes are modified in the GitHub web editor, trailing spaces can be added accidentally
             updatedChangelog = updatedChangelog.split('\n').map(s => s.replace(/\s+$/, '')).join('\n');
             fs.writeFileSync(changelogPath, updatedChangelog);
-      - uses: peter-evans/create-pull-request@v5
+      - uses: peter-evans/create-pull-request@v6
         with:
           branch: update-changelog
           path: amazon-eks-ami/
