@@ -45,7 +45,7 @@ jobs:
             const newEntry = `# ${release.data.name}\n${release.data.body}`;
             let updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry + '\n---\n');
             // if the release notes are modified in the GitHub web editor, trailing spaces can be added accidentally
-            updatedChangelog = updatedChangelog.replace(/\s+$/, '');
+            updatedChangelog = updatedChangelog.split('\n').map(s => s.replace(/\s+$/, '')).join('\n');
             fs.writeFileSync(changelogPath, updatedChangelog);
       - uses: peter-evans/create-pull-request@v4
         with:
