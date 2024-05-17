@@ -684,7 +684,7 @@ get_system_services() {
   echo -e "PID\tCount" > "${COLLECT_DIR}/system/large_environments.txt"
   for i in /proc/*/environ; do
     ENV_COUNT=$(tr '\0' '\n' < "$i" | grep -cv '^$')
-    if (( ENV_COUNT > 1000 )); then
+    if ((ENV_COUNT > 1000)); then
       PID=$(echo "$i" | sed 's#/proc/##' | sed 's#/environ##')
       echo -e "${PID}\t${ENV_COUNT}" >> "${COLLECT_DIR}/system/large_environments.txt"
     fi
