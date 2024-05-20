@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -14,10 +13,12 @@ import (
 
 // Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
 // that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
-// G4dn, or G5 instances. Describes the Elastic Graphics accelerator associated
-// with your instances. For more information about Elastic Graphics, see Amazon
-// Elastic Graphics (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/elastic-graphics.html)
-// .
+// G4dn, or G5 instances.
+//
+// Describes the Elastic Graphics accelerator associated with your instances. For
+// more information about Elastic Graphics, see [Amazon Elastic Graphics].
+//
+// [Amazon Elastic Graphics]: https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/elastic-graphics.html
 func (c *Client) DescribeElasticGpus(ctx context.Context, params *DescribeElasticGpusInput, optFns ...func(*Options)) (*DescribeElasticGpusOutput, error) {
 	if params == nil {
 		params = &DescribeElasticGpusInput{}
@@ -45,14 +46,19 @@ type DescribeElasticGpusInput struct {
 	ElasticGpuIds []string
 
 	// The filters.
+	//
 	//   - availability-zone - The Availability Zone in which the Elastic Graphics
 	//   accelerator resides.
+	//
 	//   - elastic-gpu-health - The status of the Elastic Graphics accelerator ( OK |
 	//   IMPAIRED ).
+	//
 	//   - elastic-gpu-state - The state of the Elastic Graphics accelerator ( ATTACHED
 	//   ).
+	//
 	//   - elastic-gpu-type - The type of Elastic Graphics accelerator; for example,
 	//   eg1.medium .
+	//
 	//   - instance-id - The ID of the instance to which the Elastic Graphics
 	//   accelerator is associated.
 	Filters []types.Filter
@@ -110,25 +116,25 @@ func (c *Client) addOperationDescribeElasticGpusMiddlewares(stack *middleware.St
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -146,7 +152,7 @@ func (c *Client) addOperationDescribeElasticGpusMiddlewares(stack *middleware.St
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeElasticGpus(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
