@@ -59,7 +59,7 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 // readExistingContainerdConfig reads /etc/containerd/config.toml
 // and returns lines that are not comments
 func readExistingContainerdConfig() (string, error) {
-	zap.L().Info("Reading exisitng config file...", zap.String("path", string(containerdConfigFile)))
+	zap.L().Info("Reading existing config file...", zap.String("path", string(containerdConfigFile)))
 	file, err := os.Open(containerdConfigFile)
 	var contents strings.Builder
 	if err != nil {
@@ -70,6 +70,7 @@ func readExistingContainerdConfig() (string, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+		// skip lines with comments
 		if !strings.HasPrefix(line, "#") {
 			contents.WriteString(fmt.Sprintln(line))
 		}
