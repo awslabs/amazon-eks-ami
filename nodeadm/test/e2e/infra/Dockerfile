@@ -39,6 +39,7 @@ COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.serv
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
 COPY test/e2e/infra/mock/ /sys_devices_system_mock/
 COPY test/e2e/helpers.sh /helpers.sh
+COPY test/e2e/infra/containerd-config.toml /etc/containerd/config.toml
 
 RUN mkdir -p /etc/eks/image-credential-provider/
 RUN touch /etc/eks/image-credential-provider/ecr-credential-provider

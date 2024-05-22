@@ -1,8 +1,12 @@
 package containerd
 
 import (
+	"bufio"
 	"bytes"
 	_ "embed"
+	"fmt"
+	"os"
+	"strings"
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -52,7 +56,37 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	return util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
 }
 
+// readExistingContainerdConfig reads /etc/containerd/config.toml
+// and returns lines that are not comments
+func readExistingContainerdConfig() (string, error) {
+	zap.L().Info("Reading exisitng config file...", zap.String("path", string(containerdConfigFile)))
+	file, err := os.Open(containerdConfigFile)
+	var contents strings.Builder
+	if err != nil {
+		return contents.String(), err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "#") {
+			contents.WriteString(fmt.Sprintln(line))
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return contents.String(), err
+	}
+
+	return contents.String(), nil
+}
+
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
+	existingConfig, err := readExistingContainerdConfig()
+	if err != nil {
+		return nil, err
+	}
 	configVars := containerdTemplateVars{
 		SandboxImage: cfg.Status.Defaults.SandboxImage,
 	}
@@ -60,5 +94,17 @@ func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
 	if err := containerdConfigTemplate.Execute(&buf, configVars); err != nil {
 		return nil, err
 	}
+
+	if existingConfig != "" {
+		// merge existing config with the one comming from the template
+		mergedConfigMap, err := util.Merge(buf.Bytes(), []byte(existingConfig), toml.Marshal, toml.Unmarshal)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return toml.Marshal(mergedConfigMap)
+	}
+
 	return buf.Bytes(), nil
 }

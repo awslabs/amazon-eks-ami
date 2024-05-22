@@ -1,3 +1,4 @@
+default_runtime_name = 'runc'
 root = '/var/lib/containerd'
 state = '/run/containerd'
 version = 2
@@ -14,10 +15,14 @@ bin_dir = '/opt/cni/bin'
 conf_dir = '/etc/cni/net.d'
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd]
-default_runtime_name = 'runc'
+default_runtime_name = 'mock-runtime'
 discard_unpacked_layers = false
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.mock-runtime]
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.mock-runtime.options]
+BinaryName = '/usr/local/bin/oci_mock_hook_wrapper.sh'
+
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc]
 runtime_type = 'io.containerd.runc.v2'
 
