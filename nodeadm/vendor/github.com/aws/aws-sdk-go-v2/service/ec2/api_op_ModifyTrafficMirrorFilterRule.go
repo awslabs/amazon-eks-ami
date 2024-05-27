@@ -6,14 +6,15 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Modifies the specified Traffic Mirror rule. DestinationCidrBlock and
-// SourceCidrBlock must both be an IPv4 range or an IPv6 range.
+// Modifies the specified Traffic Mirror rule.
+//
+// DestinationCidrBlock and SourceCidrBlock must both be an IPv4 range or an IPv6
+// range.
 func (c *Client) ModifyTrafficMirrorFilterRule(ctx context.Context, params *ModifyTrafficMirrorFilterRuleInput, optFns ...func(*Options)) (*ModifyTrafficMirrorFilterRuleOutput, error) {
 	if params == nil {
 		params = &ModifyTrafficMirrorFilterRuleInput{}
@@ -55,6 +56,7 @@ type ModifyTrafficMirrorFilterRuleInput struct {
 	Protocol *int32
 
 	// The properties that you want to remove from the Traffic Mirror filter rule.
+	//
 	// When you remove a property from a Traffic Mirror filter rule, the property is
 	// set to the default.
 	RemoveFields []types.TrafficMirrorFilterRuleField
@@ -112,25 +114,25 @@ func (c *Client) addOperationModifyTrafficMirrorFilterRuleMiddlewares(stack *mid
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -151,7 +153,7 @@ func (c *Client) addOperationModifyTrafficMirrorFilterRuleMiddlewares(stack *mid
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyTrafficMirrorFilterRule(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
