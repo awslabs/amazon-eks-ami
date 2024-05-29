@@ -792,6 +792,10 @@ u-6tb1.56xlarge 737
 u-6tb1.metal 147
 u-9tb1.112xlarge 737
 u-9tb1.metal 147
+u7i-12tb.224xlarge 737
+u7in-16tb.224xlarge 394
+u7in-24tb.224xlarge 394
+u7in-32tb.224xlarge 394
 vt1.24xlarge 737
 vt1.3xlarge 58
 vt1.6xlarge 234
