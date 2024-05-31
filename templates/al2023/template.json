@@ -109,7 +109,8 @@
       "metadata_options": {
         "http_tokens": "required"
       },
-      "user_data_file": "{{user `user_data_file`}}"
+      "user_data_file": "{{user `user_data_file`}}",
+      "ena_support": true
     }
   ],
   "provisioners": [
