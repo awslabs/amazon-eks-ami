@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.6"
+readonly PROGRAM_VERSION="0.7.8"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -71,6 +71,7 @@ COMMON_LOGS=(
   aws-routed-eni # eks
   containers     # eks
   pods           # eks
+  cron
   cloud-init.log
   cloud-init-output.log
   user-data.log
@@ -281,6 +282,7 @@ collect() {
   get_networking_info
   get_cni_config
   get_cni_configuration_variables
+  get_network_policy_ebpf_info
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
@@ -538,6 +540,18 @@ get_sysctls_info() {
   ok
 }
 
+get_network_policy_ebpf_info() {
+  try "collect network policy ebpf loaded data"
+  echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
+  LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
+
+  for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+    echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+    /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+  done
+  ok
+}
+
 get_networking_info() {
   try "collect networking infomation"
 
@@ -678,6 +692,16 @@ get_system_services() {
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
   timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
   timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
+
+  # collect pids which have large environments
+  echo -e "PID\tCount" > "${COLLECT_DIR}/system/large_environments.txt"
+  for i in /proc/*/environ; do
+    ENV_COUNT=$(tr '\0' '\n' < "$i" | grep -cv '^$')
+    if ((ENV_COUNT > 1000)); then
+      PID=$(echo "$i" | sed 's#/proc/##' | sed 's#/environ##')
+      echo -e "${PID}\t${ENV_COUNT}" >> "${COLLECT_DIR}/system/large_environments.txt"
+    fi
+  done
 
   ok
 }

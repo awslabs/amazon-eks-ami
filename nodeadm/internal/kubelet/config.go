@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"dario.cat/mergo"
-
 	"go.uber.org/zap"
 	"golang.org/x/mod/semver"
 
@@ -191,11 +189,6 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 			ipHostMappings = append(ipHostMappings, fmt.Sprintf("%s\t%s", ip, apiUrl.Host))
 		}
 		output := strings.Join(ipHostMappings, "\n") + "\n"
-
-		if err != nil {
-			return err
-		}
-
 		// append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
 		f, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, kubeletConfigPerm)
 		if err != nil {
@@ -338,7 +331,7 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
 
 	var kubeletConfigBytes []byte
 	if cfg.Spec.Kubelet.Config != nil && len(cfg.Spec.Kubelet.Config) > 0 {
-		mergedMap, err := util.DocumentMerge(kubeletConfig, cfg.Spec.Kubelet.Config, mergo.WithOverride)
+		mergedMap, err := util.Merge(kubeletConfig, cfg.Spec.Kubelet.Config, json.Marshal, json.Unmarshal)
 		if err != nil {
 			return err
 		}
@@ -392,16 +385,15 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in
 		// config as a valid KubeletConfiguration
-		userKubeletConfigMap, err := util.DocumentMerge(defaultKubeletSubConfig().TypeMeta, cfg.Spec.Kubelet.Config)
+		userKubeletConfigMap, err := util.Merge(defaultKubeletSubConfig().TypeMeta, cfg.Spec.Kubelet.Config, json.Marshal, json.Unmarshal)
 		if err != nil {
 			return err
 		}
-
-		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
 		userKubeletConfigBytes, err := json.MarshalIndent(userKubeletConfigMap, "", strings.Repeat(" ", 4))
 		if err != nil {
 			return err
 		}
+		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
 		if err := util.WriteFileWithDir(filePath, userKubeletConfigBytes, kubeletConfigPerm); err != nil {
 			return err
 		}

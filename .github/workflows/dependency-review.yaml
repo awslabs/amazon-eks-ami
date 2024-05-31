@@ -9,25 +9,24 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4
   gosec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.21.8'
+          go-version-file: 'nodeadm/go.mod'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - run: gosec -exclude-generated ./...
         working-directory: nodeadm
   govulncheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: golang/govulncheck-action@v1
         with:
-          go-version-input: 1.21.8
           work-dir: ./nodeadm
           go-version-file: nodeadm/go.mod
           cache: false

@@ -2,6 +2,8 @@ package configprovider
 
 import (
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -22,16 +24,38 @@ const (
 	nodeConfigMediaType        = "application/" + api.GroupName
 )
 
-type userDataConfigProvider struct{}
-
-func NewUserDataConfigProvider() ConfigProvider {
-	return &userDataConfigProvider{}
+type userDataProvider interface {
+	GetUserData() ([]byte, error)
 }
 
-func (ics *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
-	userData, err := imds.GetUserData()
+type imdsUserDataProvider struct{}
+
+func (p *imdsUserDataProvider) GetUserData() ([]byte, error) {
+	return imds.GetUserData()
+}
+
+type userDataConfigProvider struct {
+	userDataProvider userDataProvider
+}
+
+func NewUserDataConfigProvider() ConfigProvider {
+	return &userDataConfigProvider{
+		userDataProvider: &imdsUserDataProvider{},
+	}
+}
+
+func (p *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
+	userData, err := p.userDataProvider.GetUserData()
 	if err != nil {
 		return nil, err
+	}
+	userData, err = decodeIfBase64(userData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode user data: %v", err)
+	}
+	userData, err = decompressIfGZIP(userData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decompress user data: %v", err)
 	}
 	// if the MIME data fails to parse as a multipart document, then fall back
 	// to parsing the entire userdata as the node config.
@@ -85,6 +109,14 @@ func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 				if err != nil {
 					return nil, err
 				}
+				nodeConfigPart, err = decodeIfBase64(nodeConfigPart)
+				if err != nil {
+					return nil, err
+				}
+				nodeConfigPart, err = decompressIfGZIP(nodeConfigPart)
+				if err != nil {
+					return nil, err
+				}
 				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart)
 				if err != nil {
 					return nil, err
@@ -102,6 +134,39 @@ func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 		}
 		return config, nil
 	} else {
-		return nil, fmt.Errorf("Could not find NodeConfig within UserData")
+		return nil, fmt.Errorf("could not find NodeConfig within UserData")
 	}
+}
+
+func decodeIfBase64(data []byte) ([]byte, error) {
+	e := base64.StdEncoding
+	maxDecodedLen := e.DecodedLen(len(data))
+	decodedData := make([]byte, maxDecodedLen)
+	decodedLen, err := e.Decode(decodedData, data)
+	if err != nil {
+		return data, nil
+	}
+	return decodedData[:decodedLen], nil
+}
+
+// https://en.wikipedia.org/wiki/Gzip
+const gzipMagicNumber = uint16(0x1f8b)
+
+func decompressIfGZIP(data []byte) ([]byte, error) {
+	if len(data) < 2 {
+		return data, nil
+	}
+	preamble := uint16(data[0])<<8 | uint16(data[1])
+	if preamble == gzipMagicNumber {
+		reader, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create GZIP reader: %v", err)
+		}
+		if decompressed, err := io.ReadAll(reader); err != nil {
+			return nil, fmt.Errorf("failed to read from GZIP reader: %v", err)
+		} else {
+			return decompressed, nil
+		}
+	}
+	return data, nil
 }
