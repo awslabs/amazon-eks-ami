@@ -29,7 +29,10 @@ type containerdTemplateVars struct {
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
-	// write nodeadm's generated containerd config to the default path
+	if err := writeBaseRuntimeSpec(cfg); err != nil {
+		return err
+	}
+
 	containerdConfig, err := generateContainerdConfig(cfg)
 	if err != nil {
 		return err

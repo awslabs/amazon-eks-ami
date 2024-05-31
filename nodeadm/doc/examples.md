@@ -119,3 +119,24 @@ spec:
 ```
 
 Can be used to disable deletion of unpacked image layers in the `containerd` content store.
+
+---
+
+## Modifying container RLIMITs
+
+If your workload requires different RLIMITs than the defaults, you can use the `baseRuntimeSpec` option of `containerd` to override them:
+
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster: ...
+  containerd:
+    baseRuntimeSpec:
+      process:
+        rlimits:
+          - type: RLIMIT_NOFILE
+            soft: 1024
+            hard: 1024
+```
