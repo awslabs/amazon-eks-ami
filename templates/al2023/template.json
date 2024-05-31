@@ -18,6 +18,7 @@
     "creator": null,
     "enable_fips": null,
     "encrypted": null,
+    "hardened_image": null,
     "iam_instance_profile": null,
     "instance_type": null,
     "kms_key_id": null,
@@ -194,6 +195,14 @@
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/hardened-images.sh",
+      "environment_vars": [
+        "HARDENED_IMAGE={{user `hardened_image`}}"
       ]
     },
     {
