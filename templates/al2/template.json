@@ -182,6 +182,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": ["sudo reboot"],
       "expect_disconnect": true,
       "pause_after": "90s"
@@ -212,7 +220,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "script": "{{template_dir}}/../fluence/provisioners/check_loaded_kernel_modules.sh",
       "environment_vars": [
         "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
