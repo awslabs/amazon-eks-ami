@@ -62,7 +62,7 @@ workflows:
             - PACKER_OPERATIONS_DEV_0
           requires:
             - prepare_env
-          filters:
-            branches:
-              only:
-                - dev
+          # filters:
+          #   branches:
+          #     only:
+          #       - dev

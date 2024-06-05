@@ -21,6 +21,7 @@
     "creator": null,
     "docker_version": null,
     "enable_fips": null,
+    "enable_fluence_kernel_modules": null,
     "encrypted": null,
     "iam_instance_profile": null,
     "instance_type": null,
@@ -176,6 +177,14 @@
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
     },
     {
