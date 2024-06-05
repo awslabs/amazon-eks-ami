@@ -174,14 +174,6 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
-      "environment_vars": [
-        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
@@ -196,6 +188,21 @@
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": ["sudo reboot"],
+      "expect_disconnect": true,
+      "pause_after": "90s"
     },
     {
       "type": "shell",

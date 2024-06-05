@@ -16,3 +16,5 @@ Example addition to template.json
     },
     ...
 ```
+
+If you parametrize your script remember to set default variables values for os distro.
