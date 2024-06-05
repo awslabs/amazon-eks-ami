@@ -212,6 +212,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
     {
@@ -220,14 +228,6 @@
       "script": "{{template_dir}}/provisioners/cleanup-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
-      "environment_vars": [
-        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
     },
     {
