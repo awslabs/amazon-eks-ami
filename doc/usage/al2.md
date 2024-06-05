@@ -25,6 +25,7 @@
 | `creator` |  |
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
+| `enable_fluence_kernel_modules` |  |
 | `encrypted` |  |
 | `iam_instance_profile` | The name of an IAM instance profile to launch the EC2 instance with. |
 | `instance_type` |  |

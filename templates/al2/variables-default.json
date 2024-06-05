@@ -17,6 +17,7 @@
     "creator": "{{env `USER`}}",
     "docker_version": "none",
     "enable_fips": "false",
+    "enable_fluence_kernel_modules": "false",
     "encrypted": "false",
     "kernel_version": "",
     "kms_key_id": "",
