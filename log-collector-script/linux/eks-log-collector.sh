@@ -349,9 +349,9 @@ get_iptables_info() {
   if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
     echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
   else
-    ## check that ip_vs module is loaded in get_modinfo()
+    # check that ip_vs module is loaded in get_modinfo()
     try "collect ipvs information"
-    ipvsadm --save  | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add \tproto \tvirt-server \tscheduler algthm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --save | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add \tproto \tvirt-server \tscheduler algthm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
