@@ -9,7 +9,7 @@ Example addition to template.json
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../fluence/provisioners/load_kernel_modules.sh",
+      "script": "{{template_dir}}/../fluence/provisioners/check_loaded_kernel_modules.sh",
       "environment_vars": [
         "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
@@ -18,3 +18,14 @@ Example addition to template.json
 ```
 
 If you parametrize your script remember to set default variables values for os distro.
+
+If you need to use some file config it is better to prepare file like in `fluence/runtime` and then add them by using
+```
+    ...
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../fluence/runtime/rootfs/",
+      "destination": "{{user `working_dir`}}/rootfs"
+    },
+    ...
+```
