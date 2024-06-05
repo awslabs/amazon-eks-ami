@@ -13,6 +13,7 @@
     "containerd_version": "*",
     "creator": "{{env `USER`}}",
     "enable_fips": "false",
+    "enable_fluence_kernel_modules": "false",
     "encrypted": "false",
     "kms_key_id": "",
     "iam_instance_profile": "",

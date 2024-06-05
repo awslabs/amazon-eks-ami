@@ -21,6 +21,7 @@
     "creator": null,
     "docker_version": null,
     "enable_fips": null,
+    "enable_fluence_kernel_modules": null,
     "encrypted": null,
     "iam_instance_profile": null,
     "instance_type": null,
@@ -127,8 +128,14 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
         "mkdir -p {{user `working_dir`}}",
+        "mkdir -p {{user `working_dir`}}/rootfs",
         "mkdir -p {{user `working_dir`}}/log-collector-script"
       ]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../fluence/runtime/rootfs/",
+      "destination": "{{user `working_dir`}}/rootfs"
     },
     {
       "type": "shell",
@@ -152,6 +159,12 @@
       "type": "file",
       "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
+      ]
     },
     {
       "type": "shell",
@@ -206,6 +219,14 @@
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/check_loaded_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
     },
     {

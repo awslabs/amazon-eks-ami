@@ -17,6 +17,7 @@
     "containerd_version": "1.6.*",
     "creator": "{{env `USER`}}",
     "docker_version": "20.10.23-1.amzn2.0.1",
+    "enable_fluence_kernel_modules": "true",
     "encrypted": "true",
     "kernel_version": "",
     "kms_key_id": "{{env `KMS_KEY_ID`}}",

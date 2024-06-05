@@ -17,6 +17,7 @@
     "containerd_version": null,
     "creator": null,
     "enable_fips": null,
+    "enable_fluence_kernel_modules": null,
     "encrypted": null,
     "iam_instance_profile": null,
     "instance_type": null,
@@ -134,6 +135,11 @@
     },
     {
       "type": "file",
+      "source": "{{template_dir}}/../fluence/runtime/rootfs/",
+      "destination": "{{user `working_dir`}}/rootfs"
+    },
+    {
+      "type": "file",
       "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
@@ -194,6 +200,14 @@
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/check_loaded_kernel_modules.sh",
+      "environment_vars": [
+        "ENABLE_FLUENCE_KERNEL_MODULES={{user `enable_fluence_kernel_modules`}}"
       ]
     },
     {
