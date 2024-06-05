@@ -5,5 +5,5 @@ if [[ "$ENABLE_FLUENCE_KERNEL_MODULES" == "true" ]]; then
   #sudo yum install kmod
   sudo modprobe nf_nat_ftp
   echo "Check what kernel modules are loaded"
-  lsmod
+  sudo lsmod
 fi
