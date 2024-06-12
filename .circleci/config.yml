@@ -24,6 +24,7 @@ jobs:
       K8S_VERSION: 1.26
       kubernetes_version: 1.26
       os_distro: "al2023"
+      kubernetes_build_date: "2024-03-14"
     steps:
       - attach_workspace:
             at: .
