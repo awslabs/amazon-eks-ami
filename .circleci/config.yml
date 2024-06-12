@@ -22,6 +22,7 @@ jobs:
     executor: packer
     environment:
       K8S_VERSION: 1.26
+      kubernetes_version: 1.26
       os_distro: "al2023"
     steps:
       - attach_workspace:
