@@ -39,6 +39,9 @@ jobs:
           name: Install aws cli
           command: apk add aws-cli
       - run:
+          name: Install dependency for packer
+          command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
+      - run:
           name: Packer validate and build AMI
           # AWS sometimes take really long to finish ami build.
           # By default, Circle CI have 10 minutes timeout without response,
