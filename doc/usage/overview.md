@@ -149,9 +149,13 @@ To build the EKS Optimized AMI, you will need the following permissions:
         {
             "Effect": "Allow",
             "Action": [
-                "s3:GetObject"
+                "s3:GetObject",
+                "s3:ListBucket"
             ],
-            "Resource": "arn:aws:s3:::amazon-eks/*"
+            "Resource": [
+                "arn:aws:s3:::amazon-eks/*",
+                "arn:aws:s3:::amazon-eks"
+            ]
         }
     ]
 }
