@@ -543,6 +543,7 @@ m7i.metal-24xl 737
 m7i.metal-48xl 737
 m7i.xlarge 58
 mac1.metal 234
+mac2-m1ultra.metal 234
 mac2-m2.metal 234
 mac2-m2pro.metal 234
 mac2.metal 234
