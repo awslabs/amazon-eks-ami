@@ -17,10 +17,10 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.21.8'
-      - uses: actions/checkout@v4
+          go-version-file: 'nodeadm/go.mod'
       - name: Update Nodeadm Dependencies
         id: update_deps
         run: |
@@ -38,7 +38,6 @@ jobs:
           committer: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           branch: dependencies/update
-          branch-suffix: timestamp
           base: main
           delete-branch: true
           labels: |
