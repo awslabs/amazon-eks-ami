@@ -2,8 +2,6 @@ module github.com/awslabs/amazon-eks-ami/nodeadm
 
 go 1.22.4
 
-toolchain go1.22.4
-
 require (
 	github.com/aws/aws-sdk-go v1.54.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.18
@@ -18,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.18.0
+	golang.org/x/tools v0.18.0
 	k8s.io/apimachinery v0.30.2
 	k8s.io/cri-api v0.30.2
 	k8s.io/kubelet v0.30.2
