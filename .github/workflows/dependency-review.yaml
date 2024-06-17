@@ -9,13 +9,13 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: actions/dependency-review-action@72eb03d02c7872a771aacd928f3123ac62ad6d3a # 4.3.3
   gosec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # 5.0.1
         with:
           go-version-file: 'nodeadm/go.mod'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
@@ -24,8 +24,8 @@ jobs:
   govulncheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: golang/govulncheck-action@v1
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: golang/govulncheck-action@dd0578b371c987f96d1185abb54344b44352bd58 # 1.0.3
         with:
           work-dir: ./nodeadm
           go-version-file: nodeadm/go.mod
