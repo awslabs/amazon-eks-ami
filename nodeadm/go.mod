@@ -1,6 +1,6 @@
 module github.com/awslabs/amazon-eks-ami/nodeadm
 
-go 1.22.0
+go 1.22.4
 
 toolchain go1.22.4
 
