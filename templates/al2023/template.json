@@ -213,6 +213,11 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../fluence/provisioners/check_services.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
     {
