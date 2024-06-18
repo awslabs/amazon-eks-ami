@@ -33,5 +33,5 @@ runs:
         echo "ami_id=$(jq -r .builds[0].artifact_id "${AMI_NAME}-manifest.json" | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
     - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # 4.3.3
       with:
-        name: version-info
+        name: version-info-${{ inputs.k8s_version }}-${{ inputs.os_distro }}
         path: "*-version-info.json"
