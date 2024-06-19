@@ -167,6 +167,40 @@ class CICommand {
         this.goal_args[goal] = args;
     }
 
+    // a map of file path prefixes to OS distros that are associated with the file paths
+    // a value of "*" implies multiple OS distros are associated with the path, and we should just rely on the workflow's default
+    osDistroPathPrefixHints = {
+        "templates/al2/": "al2",
+        "templates/al2023/": "al2023",
+        "templates/shared/": "*",
+        "nodeadm/": "al2023",
+    };
+
+    async guessOsDistrosForChangedFiles(github) {
+        const files = await github.rest.pulls.listFiles({
+            owner: this.repository_owner,
+            repo: this.repository_name,
+            pull_number: this.pr_number
+        });
+        const osDistros = [];
+        for (const file of files) {
+            for (const prefix of osDistroPathPrefixHints) {
+                if (file.filename.startsWith(prefix)) {
+                    const osDistro = this.osDistroPathPrefixHints[prefix];
+                    osDistros.push(osDistro);
+                }
+            }
+        }
+        if (osDistros.includes('*')) {
+            console.log("changed files matched a prefix mapped to the wildcard, not attempting to guess os_distros!");
+            return null;
+        }
+        if (osDistros.length == 0) {
+            return null;
+        }
+        return osDistros.join(',');
+    }
+
     async run(author, github) {
         const pr = await github.rest.pulls.get({
             owner: this.repository_owner,
@@ -196,6 +230,12 @@ class CICommand {
                 inputs[goal.substring(this.workflow_goal_prefix.length)] = args;
             } else {
                 inputs[`${goal}_arguments`] = args;
+            }
+        }
+        if (!inputs.hasOwnProperty('os_distros')) {
+            const osDistros = await this.guessOsDistrosForChangedFiles(github);
+            if (osDistros != null) {
+                inputs['os_distros'] = osDistros;
             }
         }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);
