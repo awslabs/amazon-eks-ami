@@ -183,7 +183,7 @@ class CICommand {
             pull_number: this.pr_number
         });
         const osDistros = [];
-        for (const file of files) {
+        for (const file of files.data) {
             for (const prefix of osDistroPathPrefixHints) {
                 if (file.filename.startsWith(prefix)) {
                     const osDistro = this.osDistroPathPrefixHints[prefix];
