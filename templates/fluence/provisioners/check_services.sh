@@ -6,7 +6,7 @@ echo "Enable ssm-agent service"
 cat /usr/lib/systemd/system/amazon-ssm-agent.service
 
 echo "Check ssm-agent service status"
-sudo systemctl status amazon-ssm-agent
+sudo systemctl status amazon-ssm-agent --no-pager
 
 echo "Check what services are enabled"
 systemctl --type=service --no-pager --state=active
