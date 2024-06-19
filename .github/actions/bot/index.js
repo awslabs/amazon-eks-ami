@@ -233,7 +233,7 @@ class CICommand {
             }
         }
         if (!inputs.hasOwnProperty('os_distros')) {
-            osDistros = await this.guessOsDistrosForChangedFiles(github);
+            const osDistros = await this.guessOsDistrosForChangedFiles(github);
             if (osDistros != null) {
                 inputs['os_distros'] = osDistros;
             }
