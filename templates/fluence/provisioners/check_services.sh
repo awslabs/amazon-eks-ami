@@ -9,7 +9,7 @@ echo "Start ssm-agent service"
 sudo systemctl start amazon-ssm-agent --no-pager
 
 echo "Get ssm-agent logs"
-sudo journalctl -u amazon-ssm-agent --no-pager
+sudo journalctl -u amazon-ssm-agent --no-pager --no-tail
 
 echo "Check what services are enabled"
 systemctl --type=service --no-pager --state=active
