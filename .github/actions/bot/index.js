@@ -191,7 +191,7 @@ class CICommand {
                 }
             }
         }
-        if (osDistros.includes('*') != 1) {
+        if (osDistros.includes('*')) {
             console.log("changed files matched a prefix mapped to the wildcard, not attempting to guess os_distros!");
             return null;
         }
