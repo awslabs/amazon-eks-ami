@@ -13,7 +13,9 @@ MINOR_VERSION="${1}"
 
 # retrieve the available "VERSION/BUILD_DATE" prefixes (e.g. "1.28.1/2023-09-14")
 # from the binary object keys, sorted in descending semver order, and pick the first one
-LATEST_BINARIES=$(aws s3api list-objects-v2 --bucket amazon-eks --prefix "${MINOR_VERSION}" --query 'Contents[*].[Key]' --output text | cut -d'/' -f-2 | sort -Vru | head -n1)
+# TODO: ideally we want to use the value of $binary_bucket_region instead of hard-coding us-west-2
+# since setting the binary_bucket_region value really is the indication of where the binaries are located.
+LATEST_BINARIES=$(aws s3api list-objects-v2 --bucket amazon-eks --prefix "${MINOR_VERSION}" --query 'Contents[*].[Key]' --output text --region us-west-2 --no-sign-request | cut -d'/' -f-2 | sort -Vru | head -n1)
 
 if [ "${LATEST_BINARIES}" == "None" ]; then
   echo >&2 "No binaries available for minor version: ${MINOR_VERSION}"
