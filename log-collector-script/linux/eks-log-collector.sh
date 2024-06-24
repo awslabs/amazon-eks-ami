@@ -800,7 +800,7 @@ get_io_throttled_processes() {
 
 get_nvidia_bug_report() {
   try "Collect Nvidia Bug report"
-  if ! command -v nvidia-bug-report.sh  &> /dev/null; then
+  if ! command -v nvidia-bug-report.sh &> /dev/null; then
     echo "No Nvidia drivers found, nothing to do."
   else
     timeout 75 command nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null        
