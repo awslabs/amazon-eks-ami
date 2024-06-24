@@ -95,6 +95,7 @@ var accountsByRegion = map[string]string{
 	"us-iso-west-1":  "608367168043",
 	"us-iso-east-1":  "725322719131",
 	"us-isob-east-1": "187977181151",
+	"eu-isoe-west-1": "249663109785",
 	"af-south-1":     "877085696533",
 	"ap-southeast-3": "296578399912",
 	"me-central-1":   "759879836304",
@@ -121,6 +122,8 @@ func getEKSRegistryCoordinates(region string) (string, string) {
 		return "725322719131", "us-iso-east-1"
 	} else if strings.HasPrefix(region, "us-isob-") {
 		return "187977181151", "us-isob-east-1"
+	} else if strings.HasPrefix(region, "eu-isoe-") {
+		return "249663109785", "eu-isoe-west-1"
 	}
 	return "602401143452", "us-west-2"
 }
