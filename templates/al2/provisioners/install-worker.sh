@@ -136,6 +136,13 @@ fi
 
 sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 
+if vercmp "${KUBERNETES_VERSION}" gteq "1.30.0"; then
+  # increase the max inhibit delay to accommodate kubelet's graceful shutdown procedure
+  cat << EOF | sudo tee /etc/systemd/logind.conf.d/00-kubelet-graceful-shutdown.conf
+InhibitDelayMaxSec=45
+EOF
+fi
+
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
