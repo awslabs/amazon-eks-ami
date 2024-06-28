@@ -2,7 +2,7 @@
 
 <!--new-changelog-entry-placeholder-->
 
-# MI Release v20240625
+# AMI Release v20240625
 <!-- Release notes generated using configuration in .github/release.yaml at 8c6ac67bc011b103f398111ad1ca58c699810e64 -->
 
 ## What's Changed
