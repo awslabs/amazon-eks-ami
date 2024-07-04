@@ -79,7 +79,7 @@
       ],
       "aws_polling": {
         "delay_seconds": 30,
-        "max_attempts": 90
+        "max_attempts": 480
       },
       "ami_regions": "{{user `ami_regions`}}",
       "ssh_username": "{{user `ssh_username`}}",
