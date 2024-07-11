@@ -40,6 +40,19 @@ for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
   fi
 done
 
+sysctl_log=$(sysctl -a -e)
+valid_sysctl_log=$(cat )
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+# Compare against our predefined expected sysctl log.
+# This check prevents any upstream (distro) kernel parameters from changing without us knowing.
+# The output file is generated via 'sudo sysctl -a -e' on a known good AL2023 host.
+if [[ $sysctl_log == $(cat $script_dir/resources/sysctl.txt)]]; then
+  echo "Sysctl output matches expected output."
+else
+  echo "Sysctl output does NOT match expected output. Something may have changed."
+  exit 1
+fi
 echo "Required commands were found: ${REQUIRED_COMMANDS[*]}"
 
 REQUIRED_FREE_MEBIBYTES=1024
