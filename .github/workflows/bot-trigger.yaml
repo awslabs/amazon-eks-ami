@@ -1,9 +1,9 @@
 name: Bot
 run-name: 🤖 beep boop
 on:
-  issue_comment:
-    types:
-      - created
+#  issue_comment:
+#    types:
+#      - created
 jobs:
   bot:
     if: ${{ github.event.issue.pull_request }}
