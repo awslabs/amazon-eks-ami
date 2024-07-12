@@ -154,6 +154,7 @@ class CICommand {
         this.repository_name = payload.repository.name;
         this.pr_number = payload.issue.number;
         this.comment_url = payload.comment.html_url;
+        this.comment_created_at = payload.comment.created_at;
         this.uuid = uuid;
         this.goal = "test";
         // "test" goal, which executes all CI stages, is the default when no goal is specified
@@ -216,6 +217,14 @@ class CICommand {
                 return `@${author} this PR is not currently mergeable, you'll need to rebase it first.`;
             default:
                 throw new Error(`Unknown mergeable value: ${mergeable}`);
+        }
+        const merge_commit = await github.rest.commits.get({
+            owner: this.repository_owner,
+            repo: this.repository_name,
+            ref: pr.data.merge_commit_sha
+        });
+        if (new Date(this.comment_created_at) < new Date(merge_commit.data.author.date)) {
+            return `@${author} this PR has been updated since your request, you'll need to review the changes.`;
         }
         const inputs = {
             uuid: this.uuid,
