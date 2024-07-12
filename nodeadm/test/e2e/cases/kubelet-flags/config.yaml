@@ -14,3 +14,6 @@ spec:
       - --v=5
       - --node-labels=foo=bar,foo2=baz
       - --register-with-taints=foo=bar:NoSchedule
+      - |
+        --foo
+        --bar

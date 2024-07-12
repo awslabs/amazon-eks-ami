@@ -2,6 +2,7 @@ package kubelet
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -30,12 +31,11 @@ func (k *kubelet) writeKubeletEnvironment(cfg *api.NodeConfig) error {
 	// write additional environment variables
 	var kubeletEnvironment []string
 	for eKey, eValue := range k.environment {
-		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf(`%s="%s"`, eKey, eValue))
+		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf(`%s=%s`, sanitize(eKey), sanitize(eValue)))
 	}
 	return util.WriteFileWithDir(kubeletEnvironmentFilePath, []byte(strings.Join(kubeletEnvironment, "\n")), kubeletConfigPerm)
 }
 
-// Add values to the environment variables map in a terse manner
-func (k *kubelet) setEnv(envName string, envArg string) {
-	k.environment[envName] = envArg
+func sanitize(s string) string {
+	return regexp.MustCompile("[\n\r]").ReplaceAllString(s, " ")
 }
