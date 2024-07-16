@@ -19,12 +19,15 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 		return "", err
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
-	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		return "", err
+
+	for i := 0; i < 3; i++ {
+		token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+		if err == nil {
+			authData := token.AuthorizationData[0].AuthorizationToken
+			return *authData, nil
+		}
 	}
-	authData := token.AuthorizationData[0].AuthorizationToken
-	return *authData, nil
+	return "", err
 }
 
 func (r *ECRRegistry) GetSandboxImage() string {
