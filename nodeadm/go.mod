@@ -3,7 +3,6 @@ module github.com/awslabs/amazon-eks-ami/nodeadm
 go 1.22.5
 
 require (
-	github.com/aws/aws-sdk-go v1.54.19
 	github.com/aws/aws-sdk-go-v2/config v1.27.26
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.11
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.170.0
