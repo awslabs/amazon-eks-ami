@@ -10,10 +10,7 @@ async function bot(core, github, context, uuid) {
     }
     console.log("Comment found in payload");
 
-    // user's org membership must be public for the author_association to be MEMBER
-    // go to the org's member page, find yourself, and set the visibility to public
-    const author = payload.comment.user.login;
-    const authorized = ["OWNER", "MEMBER"].includes(payload.comment.author_association);
+    const authorized = await isUserAuthorized(github, payload);
     if (!authorized) {
         console.log(`Comment author is not authorized: ${author}`);
         return;
@@ -50,6 +47,31 @@ async function bot(core, github, context, uuid) {
             console.log("Command did not return a reply");
         }
     }
+}
+
+/**
+ * @returns true if the author of this payload's comment has both:
+ * - an OWNER or MEMBER of the repository's organization
+ * - the admin or maintain roles in the repository
+ */
+async function isUserAuthorized(github, payload) {
+    // user's org membership must be public for the author_association to be MEMBER
+    // go to the org's member page, find yourself, and set the visibility to public
+    const author = payload.comment.user.login;
+    if (!["OWNER", "MEMBER"].includes(payload.comment.author_association)) {
+        console.log(`Comment author association is not OWNER or MEMBER: ${author}`);
+        return false;
+    }
+    const authorPermissionLevel = await github.rest.repos.getCollaboratorPermissionLevel({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        username: author
+    });
+    if (!['admin', 'maintain'].includes(authorPermissionLevel.data.role_name)) {
+        console.log(`Comment author does not have the admin or maintain role for the repository: ${author}`);
+        return false;
+    }
+    return true;
 }
 
 // replyToCommand creates a comment on the same PR that triggered this workflow
