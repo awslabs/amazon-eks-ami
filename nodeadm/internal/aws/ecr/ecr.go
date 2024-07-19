@@ -24,10 +24,7 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 	var token *ecr.GetAuthorizationTokenOutput
 	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
 		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	if err != nil {
 		return "", err
