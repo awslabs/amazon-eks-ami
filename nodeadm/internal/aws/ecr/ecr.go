@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 // Returns the base64 encoded authorization token string for ECR of the format "AWS:XXXXX"
@@ -19,7 +21,11 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 		return "", err
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
-	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+	var token *ecr.GetAuthorizationTokenOutput
+	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+		return err
+	})
 	if err != nil {
 		return "", err
 	}
