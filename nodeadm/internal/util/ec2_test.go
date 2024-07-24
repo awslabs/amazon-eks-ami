@@ -1,15 +1,17 @@
-package util
+package util_test
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go/aws"
+	ec2util "github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
 
 type MockEC2Client struct {
@@ -24,14 +26,14 @@ func (m *MockEC2Client) DescribeInstanceTypes(ctx context.Context, params *ec2.D
 func TestGetEniInfoForInstanceType(t *testing.T) {
 	tests := []struct {
 		instanceType   string
-		expectedResult EniInfo
+		expectedResult ec2util.EniInfo
 		mockResponse   ec2.DescribeInstanceTypesOutput
 		mockError      error
 		expectedError  error
 	}{
 		{
 			instanceType: "t3.medium",
-			expectedResult: EniInfo{
+			expectedResult: ec2util.EniInfo{
 				EniCount:        int32(3),
 				PodsPerEniCount: int32(6),
 			},
@@ -51,7 +53,7 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 		},
 		{
 			instanceType:   "t3.medium",
-			expectedResult: EniInfo{},
+			expectedResult: ec2util.EniInfo{},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{},
 			},
@@ -60,7 +62,7 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 		},
 		{
 			instanceType:   "mock-type.large",
-			expectedResult: EniInfo{},
+			expectedResult: ec2util.EniInfo{},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{},
 			},
@@ -73,7 +75,7 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 		mockEC2 := &MockEC2Client{}
 		mockEC2.On("DescribeInstanceTypes", mock.Anything, mock.AnythingOfType("*ec2.DescribeInstanceTypesInput")).Return(&test.mockResponse, test.mockError)
 
-		result, err := GetEniInfoForInstanceType(mockEC2, test.instanceType)
+		result, err := ec2util.GetEniInfoForInstanceType(mockEC2, test.instanceType)
 		assert.Equal(t, test.expectedError, err)
 		assert.Equal(t, test.expectedResult, result)
 	}

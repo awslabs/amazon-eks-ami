@@ -63,6 +63,7 @@ COMMON_DIRECTORIES=(
   kubelet       # eks
   nodeadm       # eks
   cni           # eks
+  gpu           # eks
 )
 
 COMMON_LOGS=(
@@ -287,6 +288,7 @@ collect() {
   get_sandboxImage_info
   get_cpu_throttled_processes
   get_io_throttled_processes
+  get_nvidia_bug_report
 }
 
 pack() {
@@ -793,6 +795,16 @@ get_io_throttled_processes() {
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
   command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  ok
+}
+
+get_nvidia_bug_report() {
+  try "Collect Nvidia Bug report"
+  if ! command -v nvidia-bug-report.sh &> /dev/null; then
+    echo "No Nvidia drivers found, nothing to do."
+  else
+    timeout 75 nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null
+  fi
   ok
 }
 
