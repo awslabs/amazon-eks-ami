@@ -114,6 +114,7 @@ var accountsByRegion = map[string]string{
 	"ap-southeast-4": "491585149902",
 	"il-central-1":   "066635153087",
 	"ca-west-1":      "761377655185",
+	"ap-southeast-5": "151610086707",
 }
 
 // getEKSRegistryCoordinates returns an AWS region and account ID for the default EKS ECR container image registry
