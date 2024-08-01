@@ -218,12 +218,12 @@ class CICommand {
             default:
                 throw new Error(`Unknown mergeable value: ${mergeable}`);
         }
-        const merge_commit = await github.rest.commits.get({
+        const merge_commit = await github.rest.repos.getCommit({
             owner: this.repository_owner,
             repo: this.repository_name,
             ref: pr.data.merge_commit_sha
         });
-        if (new Date(this.comment_created_at) < new Date(merge_commit.data.author.date)) {
+        if (new Date(this.comment_created_at) < new Date(merge_commit.data.commit.committer.date)) {
             return `@${author} this PR has been updated since your request, you'll need to review the changes.`;
         }
         const inputs = {
