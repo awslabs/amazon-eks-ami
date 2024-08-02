@@ -1,10 +1,6 @@
 version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"
-# Users can use the following import directory to add additional
-# configuration to containerd. The imports do not behave exactly like overrides.
-# see: https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md#format
-imports = ["/etc/containerd/config.d/*.toml"]
 
 [grpc]
 address = "/run/containerd/containerd.sock"
@@ -21,6 +17,7 @@ config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
 runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/base-runtime-spec.json"
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
 SystemdCgroup = true

@@ -49,7 +49,7 @@ type ClusterDetails struct {
 	// CertificateAuthority is a base64-encoded string of your cluster's certificate authority chain.
 	CertificateAuthority []byte `json:"certificateAuthority,omitempty"`
 
-	// CIDR is your cluster's Pod IP CIDR. This value is used to infer your cluster's DNS address.
+	// CIDR is your cluster's service CIDR block. This value is used to infer your cluster's DNS address.
 	CIDR string `json:"cidr,omitempty"`
 
 	// EnableOutpost determines how your node is configured when running on an AWS Outpost.
@@ -61,21 +61,25 @@ type ClusterDetails struct {
 
 // KubeletOptions are additional parameters passed to `kubelet`.
 type KubeletOptions struct {
-	// Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/)
+	// Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/)
 	// that will be merged with the defaults.
 	Config map[string]runtime.RawExtension `json:"config,omitempty"`
 
-	// Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
+	// Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
 	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
 }
 
 // ContainerdOptions are additional parameters passed to `containerd`.
 type ContainerdOptions struct {
-	// Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)
-	// that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154)
-	// by the default configuration file.
+	// Config is an inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)
+	// that will be merged with the defaults.
 	Config string `json:"config,omitempty"`
+
+	// BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based.
+	// The provided spec will be merged with the default spec; so that a partial spec may be provided.
+	// For more information, see: https://github.com/opencontainers/runtime-spec
+	BaseRuntimeSpec map[string]runtime.RawExtension `json:"baseRuntimeSpec,omitempty"`
 }
 
 // InstanceOptions determines how the node's operating system and devices are configured.

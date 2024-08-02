@@ -136,6 +136,7 @@ func Convert_api_ClusterDetails_To_v1alpha1_ClusterDetails(in *api.ClusterDetail
 
 func autoConvert_v1alpha1_ContainerdOptions_To_api_ContainerdOptions(in *v1alpha1.ContainerdOptions, out *api.ContainerdOptions, s conversion.Scope) error {
 	out.Config = in.Config
+	out.BaseRuntimeSpec = *(*api.InlineDocument)(unsafe.Pointer(&in.BaseRuntimeSpec))
 	return nil
 }
 
@@ -146,6 +147,7 @@ func Convert_v1alpha1_ContainerdOptions_To_api_ContainerdOptions(in *v1alpha1.Co
 
 func autoConvert_api_ContainerdOptions_To_v1alpha1_ContainerdOptions(in *api.ContainerdOptions, out *v1alpha1.ContainerdOptions, s conversion.Scope) error {
 	out.Config = in.Config
+	out.BaseRuntimeSpec = *(*map[string]runtime.RawExtension)(unsafe.Pointer(&in.BaseRuntimeSpec))
 	return nil
 }
 

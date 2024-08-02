@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -14,8 +13,11 @@ import (
 
 // Provision a CIDR to an IPAM pool. You can use this action to provision new
 // CIDRs to a top-level pool or to transfer a CIDR from a top-level pool to a pool
-// within it. For more information, see Provision CIDRs to pools (https://docs.aws.amazon.com/vpc/latest/ipam/prov-cidr-ipam.html)
-// in the Amazon VPC IPAM User Guide.
+// within it.
+//
+// For more information, see [Provision CIDRs to pools] in the Amazon VPC IPAM User Guide.
+//
+// [Provision CIDRs to pools]: https://docs.aws.amazon.com/vpc/latest/ipam/prov-cidr-ipam.html
 func (c *Client) ProvisionIpamPoolCidr(ctx context.Context, params *ProvisionIpamPoolCidrInput, optFns ...func(*Options)) (*ProvisionIpamPoolCidrOutput, error) {
 	if params == nil {
 		params = &ProvisionIpamPoolCidrInput{}
@@ -44,12 +46,14 @@ type ProvisionIpamPoolCidrInput struct {
 	Cidr *string
 
 	// A signed document that proves that you are authorized to bring a specified IP
-	// address range to Amazon using BYOIP. This option applies to public pools only.
+	// address range to Amazon using BYOIP. This option only applies to IPv4 and IPv6
+	// pools in the public scope.
 	CidrAuthorizationContext *types.IpamCidrAuthorizationContext
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request. For more information, see Ensuring Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
-	// .
+	// of the request. For more information, see [Ensuring idempotency].
+	//
+	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
 	ClientToken *string
 
 	// A check for whether you have the required permissions for the action without
@@ -58,11 +62,20 @@ type ProvisionIpamPoolCidrInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// Verification token ID. This option only applies to IPv4 and IPv6 pools in the
+	// public scope.
+	IpamExternalResourceVerificationTokenId *string
+
 	// The netmask length of the CIDR you'd like to provision to a pool. Can be used
 	// for provisioning Amazon-provided IPv6 CIDRs to top-level pools and for
 	// provisioning CIDRs to pools with source pools. Cannot be used to provision BYOIP
 	// CIDRs to top-level pools. Either "NetmaskLength" or "Cidr" is required.
 	NetmaskLength *int32
+
+	// The method for verifying control of a public IP address range. Defaults to
+	// remarks-x509 if not specified. This option only applies to IPv4 and IPv6 pools
+	// in the public scope.
+	VerificationMethod types.VerificationMethod
 
 	noSmithyDocumentSerde
 }
@@ -100,25 +113,25 @@ func (c *Client) addOperationProvisionIpamPoolCidrMiddlewares(stack *middleware.
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -133,6 +146,12 @@ func (c *Client) addOperationProvisionIpamPoolCidrMiddlewares(stack *middleware.
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = addIdempotencyToken_opProvisionIpamPoolCidrMiddleware(stack, options); err != nil {
 		return err
 	}
@@ -142,7 +161,7 @@ func (c *Client) addOperationProvisionIpamPoolCidrMiddlewares(stack *middleware.
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opProvisionIpamPoolCidr(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
