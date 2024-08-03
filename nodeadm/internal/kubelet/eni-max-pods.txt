@@ -38,6 +38,8 @@
 #
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI
 #
+# NOTE: For multi-card instance types (p5.48xlarge) the max limits is calculated only against the default network card at index (0).
+#
 a1.2xlarge 58
 a1.4xlarge 234
 a1.large 29
