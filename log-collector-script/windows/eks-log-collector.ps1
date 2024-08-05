@@ -268,7 +268,7 @@ Function get_eks_logs{
 Function get_k8s_info{
     try {
         Write-Host "Collecting Kubelet logs"
-        Get-EventLog -LogName EKS -Source kubelet | Export-CSV $info_system/kubelet/kubelet-service.csv
+        Get-WinEvent -ProviderName kubelet | Export-CSV $info_system/kubelet/kubelet-service.csv
         Write-Host "OK" -foregroundcolor "green"
     }
     catch{
@@ -278,7 +278,7 @@ Function get_k8s_info{
 
     try {
         Write-Host "Collecting Kube-proxy logs"
-        Get-EventLog -LogName EKS -Source kube-proxy | Export-CSV $info_system/kube-proxy/kube-proxy-service.csv
+        Get-WinEvent -ProviderName kube-proxy | Export-CSV $info_system/kube-proxy/kube-proxy-service.csv
         Write-Host "OK" -foregroundcolor "green"
     }
     catch{
@@ -303,7 +303,7 @@ Function get_docker_logs{
     Write-Host "Collecting Docker daemon logs"
     if (check_service_installed_and_running "docker") {
         try {
-            Get-EventLog -LogName Application -Source Docker | Export-CSV $info_system/docker_log/docker-daemon.csv
+            Get-WinEvent -ProviderName Docker | Export-CSV $info_system/docker_log/docker-daemon.csv
             Write-Host "OK" -foregroundcolor "green"
         }
         catch {
