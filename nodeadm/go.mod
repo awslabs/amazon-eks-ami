@@ -14,7 +14,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/mod v0.19.0
+	golang.org/x/mod v0.20.0
 	k8s.io/apimachinery v0.30.3
 	k8s.io/cri-api v0.30.3
 	k8s.io/kubelet v0.30.3
