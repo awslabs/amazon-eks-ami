@@ -140,6 +140,12 @@
     {
       "type": "shell",
       "inline": [
+        "sudo systemctl disable update-motd"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
         "sudo mkdir -p /etc/eks/log-collector-script/",
         "sudo cp -v {{user `working_dir`}}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"
       ]
