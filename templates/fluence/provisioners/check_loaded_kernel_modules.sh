@@ -6,4 +6,6 @@ if [[ "$ENABLE_FLUENCE_KERNEL_MODULES" == "true" ]]; then
   sudo lsmod
   echo "Check nat ftp module information"
   modinfo nf_nat_ftp
+  echo "Check module-load config"
+  ls -al /etc/modules-load.d
 fi
