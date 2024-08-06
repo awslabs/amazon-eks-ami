@@ -104,6 +104,20 @@ sudo systemctl restart sshd.service
 ### iptables ###################################################################
 ################################################################################
 
+# open access to kubelet
+iptables -A INPUT -p tcp -m tcp --dport 10250 -m state --state NEW -j ACCEPT
+
+# open access for NodePorts
+iptables -A INPUT -p tcp -m multiport --dports 30000:32767 -j ACCEPT
+
+# open input, output and forward by default
+iptables -P FORWARD ACCEPT
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+
+# save updated iptables
+bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
+
 sudo mv $WORKING_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 
 ################################################################################
