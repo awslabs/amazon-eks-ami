@@ -125,40 +125,9 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "inline": [
-        "mkdir -p {{user `working_dir`}}",
-        "mkdir -p {{user `working_dir`}}/log-collector-script"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-additional-repos.sh",
       "environment_vars": [
         "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
-      ]
-    },
-    {
-      "type": "file",
-      "source": "{{template_dir}}/../shared/runtime/",
-      "destination": "{{user `working_dir`}}"
-    },
-    {
-      "type": "file",
-      "source": "{{template_dir}}/runtime/",
-      "destination": "{{user `working_dir`}}"
-    },
-    {
-      "type": "file",
-      "source": "{{template_dir}}/../../log-collector-script/linux/",
-      "destination": "{{user `working_dir`}}/log-collector-script/"
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
-        "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
       ]
     },
     {
@@ -184,6 +153,37 @@
       "inline": ["sudo reboot"],
       "expect_disconnect": true,
       "pause_after": "90s"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "mkdir -p {{user `working_dir`}}",
+        "mkdir -p {{user `working_dir`}}/log-collector-script"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../shared/runtime/",
+      "destination": "{{user `working_dir`}}"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/runtime/",
+      "destination": "{{user `working_dir`}}"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../../log-collector-script/linux/",
+      "destination": "{{user `working_dir`}}/log-collector-script/"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
+        "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
+      ]
     },
     {
       "type": "shell",
