@@ -179,6 +179,13 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "inline": ["sudo reboot"],
+      "expect_disconnect": true,
+      "pause_after": "90s"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
@@ -201,13 +208,6 @@
       "environment_vars": [
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
       ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "inline": ["sudo reboot"],
-      "expect_disconnect": true,
-      "pause_after": "90s"
     },
     {
       "type": "shell",
