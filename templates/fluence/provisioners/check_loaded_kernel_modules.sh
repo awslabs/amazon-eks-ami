@@ -8,6 +8,4 @@ if [[ "$ENABLE_FLUENCE_KERNEL_MODULES" == "true" ]]; then
   modinfo nf_nat_ftp
   echo "Check module-load config"
   ls -al /etc/modules-load.d
-  echo "Check content of fluence.conf
-  cat /etc/modules-load.d/fluence.conf
 fi
