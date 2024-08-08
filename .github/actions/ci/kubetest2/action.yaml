@@ -49,6 +49,7 @@ runs:
         kubetest2 eksapi \
           --up \
           --down \
+          --emit-metrics \
           --kubernetes-version=${{ inputs.k8s_version }} \
           --generate-ssh-key \
           --unmanaged-nodes \
