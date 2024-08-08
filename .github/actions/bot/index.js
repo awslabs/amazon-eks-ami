@@ -183,22 +183,22 @@ class CICommand {
             repo: this.repository_name,
             pull_number: this.pr_number
         });
-        const osDistros = [];
+        const osDistros = new Set();
         for (const file of files.data) {
             for (const [prefix, osDistro] of Object.entries(this.osDistroPathPrefixHints)) {
                 if (file.filename.startsWith(prefix)) {
-                    osDistros.push(osDistro);
+                    osDistros.add(osDistro);
                 }
             }
         }
-        if (osDistros.includes('*')) {
+        if (osDistros.has('*')) {
             console.log("changed files matched a prefix mapped to the wildcard, not attempting to guess os_distros!");
             return null;
         }
-        if (osDistros.length == 0) {
+        if (osDistros.size == 0) {
             return null;
         }
-        return osDistros.join(',');
+        return Array.from(osDistros).join(',');
     }
 
     async run(author, github) {
