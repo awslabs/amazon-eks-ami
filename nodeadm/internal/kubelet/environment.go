@@ -30,12 +30,7 @@ func (k *kubelet) writeKubeletEnvironment(cfg *api.NodeConfig) error {
 	// write additional environment variables
 	var kubeletEnvironment []string
 	for eKey, eValue := range k.environment {
-		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf(`%s="%s"`, eKey, eValue))
+		kubeletEnvironment = append(kubeletEnvironment, fmt.Sprintf(`%s=%s`, eKey, eValue))
 	}
 	return util.WriteFileWithDir(kubeletEnvironmentFilePath, []byte(strings.Join(kubeletEnvironment, "\n")), kubeletConfigPerm)
-}
-
-// Add values to the environment variables map in a terse manner
-func (k *kubelet) setEnv(envName string, envArg string) {
-	k.environment[envName] = envArg
 }

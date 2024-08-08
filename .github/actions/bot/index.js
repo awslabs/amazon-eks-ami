@@ -154,6 +154,7 @@ class CICommand {
         this.repository_name = payload.repository.name;
         this.pr_number = payload.issue.number;
         this.comment_url = payload.comment.html_url;
+        this.comment_created_at = payload.comment.created_at;
         this.uuid = uuid;
         this.goal = "test";
         // "test" goal, which executes all CI stages, is the default when no goal is specified
@@ -165,6 +166,39 @@ class CICommand {
 
     addNamedArguments(goal, args) {
         this.goal_args[goal] = args;
+    }
+
+    // a map of file path prefixes to OS distros that are associated with the file paths
+    // a value of "*" implies multiple OS distros are associated with the path, and we should just rely on the workflow's default
+    osDistroPathPrefixHints = {
+        "templates/al2/": "al2",
+        "templates/al2023/": "al2023",
+        "templates/shared/": "*",
+        "nodeadm/": "al2023",
+    };
+
+    async guessOsDistrosForChangedFiles(github) {
+        const files = await github.rest.pulls.listFiles({
+            owner: this.repository_owner,
+            repo: this.repository_name,
+            pull_number: this.pr_number
+        });
+        const osDistros = [];
+        for (const file of files.data) {
+            for (const [prefix, osDistro] of Object.entries(this.osDistroPathPrefixHints)) {
+                if (file.filename.startsWith(prefix)) {
+                    osDistros.push(osDistro);
+                }
+            }
+        }
+        if (osDistros.includes('*')) {
+            console.log("changed files matched a prefix mapped to the wildcard, not attempting to guess os_distros!");
+            return null;
+        }
+        if (osDistros.length == 0) {
+            return null;
+        }
+        return osDistros.join(',');
     }
 
     async run(author, github) {
@@ -183,6 +217,14 @@ class CICommand {
             default:
                 throw new Error(`Unknown mergeable value: ${mergeable}`);
         }
+        const merge_commit = await github.rest.repos.getCommit({
+            owner: this.repository_owner,
+            repo: this.repository_name,
+            ref: pr.data.merge_commit_sha
+        });
+        if (new Date(this.comment_created_at) < new Date(merge_commit.data.commit.committer.date)) {
+            return `@${author} this PR has been updated since your request, you'll need to review the changes.`;
+        }
         const inputs = {
             uuid: this.uuid,
             pr_number: this.pr_number.toString(),
@@ -196,6 +238,12 @@ class CICommand {
                 inputs[goal.substring(this.workflow_goal_prefix.length)] = args;
             } else {
                 inputs[`${goal}_arguments`] = args;
+            }
+        }
+        if (!inputs.hasOwnProperty('os_distros')) {
+            const osDistros = await this.guessOsDistrosForChangedFiles(github);
+            if (osDistros != null) {
+                inputs['os_distros'] = osDistros;
             }
         }
         console.log(`Dispatching workflow with inputs: ${JSON.stringify(inputs)}`);

@@ -85,7 +85,7 @@
       ],
       "aws_polling": {
         "delay_seconds": 30,
-        "max_attempts": 90
+        "max_attempts": 480
       },
       "ami_regions": "{{user `ami_regions`}}",
       "iam_instance_profile": "{{user `iam_instance_profile`}}",

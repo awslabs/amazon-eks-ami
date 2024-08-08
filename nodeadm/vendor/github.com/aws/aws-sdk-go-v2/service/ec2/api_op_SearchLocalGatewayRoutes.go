@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -42,17 +41,24 @@ type SearchLocalGatewayRoutesInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - prefix-list-id - The ID of the prefix list.
+	//
 	//   - route-search.exact-match - The exact match of the specified filter.
+	//
 	//   - route-search.longest-prefix-match - The longest prefix that matches the
 	//   route.
+	//
 	//   - route-search.subnet-of-match - The routes with a subnet that match the
 	//   specified CIDR filter.
+	//
 	//   - route-search.supernet-of-match - The routes with a CIDR that encompass the
 	//   CIDR filter. For example, if you have 10.0.1.0/29 and 10.0.1.0/31 routes in your
 	//   route table and you specify supernet-of-match as 10.0.1.0/30, then the result
 	//   returns 10.0.1.0/29.
+	//
 	//   - state - The state of the route.
+	//
 	//   - type - The route type.
 	Filters []types.Filter
 
@@ -103,25 +109,25 @@ func (c *Client) addOperationSearchLocalGatewayRoutesMiddlewares(stack *middlewa
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -136,13 +142,19 @@ func (c *Client) addOperationSearchLocalGatewayRoutesMiddlewares(stack *middlewa
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = addOpSearchLocalGatewayRoutesValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opSearchLocalGatewayRoutes(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -159,14 +171,6 @@ func (c *Client) addOperationSearchLocalGatewayRoutesMiddlewares(stack *middlewa
 	}
 	return nil
 }
-
-// SearchLocalGatewayRoutesAPIClient is a client that implements the
-// SearchLocalGatewayRoutes operation.
-type SearchLocalGatewayRoutesAPIClient interface {
-	SearchLocalGatewayRoutes(context.Context, *SearchLocalGatewayRoutesInput, ...func(*Options)) (*SearchLocalGatewayRoutesOutput, error)
-}
-
-var _ SearchLocalGatewayRoutesAPIClient = (*Client)(nil)
 
 // SearchLocalGatewayRoutesPaginatorOptions is the paginator options for
 // SearchLocalGatewayRoutes
@@ -234,6 +238,9 @@ func (p *SearchLocalGatewayRoutesPaginator) NextPage(ctx context.Context, optFns
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.SearchLocalGatewayRoutes(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -252,6 +259,14 @@ func (p *SearchLocalGatewayRoutesPaginator) NextPage(ctx context.Context, optFns
 
 	return result, nil
 }
+
+// SearchLocalGatewayRoutesAPIClient is a client that implements the
+// SearchLocalGatewayRoutes operation.
+type SearchLocalGatewayRoutesAPIClient interface {
+	SearchLocalGatewayRoutes(context.Context, *SearchLocalGatewayRoutesInput, ...func(*Options)) (*SearchLocalGatewayRoutesOutput, error)
+}
+
+var _ SearchLocalGatewayRoutesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opSearchLocalGatewayRoutes(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

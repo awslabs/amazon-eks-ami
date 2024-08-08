@@ -6,13 +6,11 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
@@ -94,25 +92,25 @@ func (c *Client) addOperationDescribeImportSnapshotTasksMiddlewares(stack *middl
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -127,10 +125,16 @@ func (c *Client) addOperationDescribeImportSnapshotTasksMiddlewares(stack *middl
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeImportSnapshotTasks(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -148,107 +152,22 @@ func (c *Client) addOperationDescribeImportSnapshotTasksMiddlewares(stack *middl
 	return nil
 }
 
-// DescribeImportSnapshotTasksAPIClient is a client that implements the
-// DescribeImportSnapshotTasks operation.
-type DescribeImportSnapshotTasksAPIClient interface {
-	DescribeImportSnapshotTasks(context.Context, *DescribeImportSnapshotTasksInput, ...func(*Options)) (*DescribeImportSnapshotTasksOutput, error)
-}
-
-var _ DescribeImportSnapshotTasksAPIClient = (*Client)(nil)
-
-// DescribeImportSnapshotTasksPaginatorOptions is the paginator options for
-// DescribeImportSnapshotTasks
-type DescribeImportSnapshotTasksPaginatorOptions struct {
-	// The maximum number of results to return in a single call. To retrieve the
-	// remaining results, make another call with the returned NextToken value.
-	Limit int32
-
-	// Set to true if pagination should stop if the service returns a pagination token
-	// that matches the most recent token provided to the service.
-	StopOnDuplicateToken bool
-}
-
-// DescribeImportSnapshotTasksPaginator is a paginator for
-// DescribeImportSnapshotTasks
-type DescribeImportSnapshotTasksPaginator struct {
-	options   DescribeImportSnapshotTasksPaginatorOptions
-	client    DescribeImportSnapshotTasksAPIClient
-	params    *DescribeImportSnapshotTasksInput
-	nextToken *string
-	firstPage bool
-}
-
-// NewDescribeImportSnapshotTasksPaginator returns a new
-// DescribeImportSnapshotTasksPaginator
-func NewDescribeImportSnapshotTasksPaginator(client DescribeImportSnapshotTasksAPIClient, params *DescribeImportSnapshotTasksInput, optFns ...func(*DescribeImportSnapshotTasksPaginatorOptions)) *DescribeImportSnapshotTasksPaginator {
-	if params == nil {
-		params = &DescribeImportSnapshotTasksInput{}
-	}
-
-	options := DescribeImportSnapshotTasksPaginatorOptions{}
-	if params.MaxResults != nil {
-		options.Limit = *params.MaxResults
-	}
-
-	for _, fn := range optFns {
-		fn(&options)
-	}
-
-	return &DescribeImportSnapshotTasksPaginator{
-		options:   options,
-		client:    client,
-		params:    params,
-		firstPage: true,
-		nextToken: params.NextToken,
-	}
-}
-
-// HasMorePages returns a boolean indicating whether more pages are available
-func (p *DescribeImportSnapshotTasksPaginator) HasMorePages() bool {
-	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
-}
-
-// NextPage retrieves the next DescribeImportSnapshotTasks page.
-func (p *DescribeImportSnapshotTasksPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeImportSnapshotTasksOutput, error) {
-	if !p.HasMorePages() {
-		return nil, fmt.Errorf("no more pages available")
-	}
-
-	params := *p.params
-	params.NextToken = p.nextToken
-
-	var limit *int32
-	if p.options.Limit > 0 {
-		limit = &p.options.Limit
-	}
-	params.MaxResults = limit
-
-	result, err := p.client.DescribeImportSnapshotTasks(ctx, &params, optFns...)
-	if err != nil {
-		return nil, err
-	}
-	p.firstPage = false
-
-	prevToken := p.nextToken
-	p.nextToken = result.NextToken
-
-	if p.options.StopOnDuplicateToken &&
-		prevToken != nil &&
-		p.nextToken != nil &&
-		*prevToken == *p.nextToken {
-		p.nextToken = nil
-	}
-
-	return result, nil
-}
-
 // SnapshotImportedWaiterOptions are waiter options for SnapshotImportedWaiter
 type SnapshotImportedWaiterOptions struct {
 
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// SnapshotImportedWaiter will use default minimum delay of 15 seconds. Note that
@@ -265,12 +184,13 @@ type SnapshotImportedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeImportSnapshotTasksInput, *DescribeImportSnapshotTasksOutput, error) (bool, error)
 }
 
@@ -347,7 +267,16 @@ func (w *SnapshotImportedWaiter) WaitForOutput(ctx context.Context, params *Desc
 		}
 
 		out, err := w.client.DescribeImportSnapshotTasks(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -383,29 +312,21 @@ func (w *SnapshotImportedWaiter) WaitForOutput(ctx context.Context, params *Desc
 func snapshotImportedStateRetryable(ctx context.Context, input *DescribeImportSnapshotTasksInput, output *DescribeImportSnapshotTasksOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("ImportSnapshotTasks[].SnapshotTaskDetail.Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
-		expectedValue := "completed"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
+		v1 := output.ImportSnapshotTasks
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.SnapshotTaskDetail
+			v4 := v3.Status
+			if v4 != nil {
+				v2 = append(v2, *v4)
 			}
-
-			if string(*value) != expectedValue {
+		}
+		expectedValue := "completed"
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -415,31 +336,128 @@ func snapshotImportedStateRetryable(ctx context.Context, input *DescribeImportSn
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("ImportSnapshotTasks[].SnapshotTaskDetail.Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.ImportSnapshotTasks
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.SnapshotTaskDetail
+			v4 := v3.Status
+			if v4 != nil {
+				v2 = append(v2, *v4)
+			}
 		}
-
 		expectedValue := "error"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	return true, nil
 }
+
+// DescribeImportSnapshotTasksPaginatorOptions is the paginator options for
+// DescribeImportSnapshotTasks
+type DescribeImportSnapshotTasksPaginatorOptions struct {
+	// The maximum number of results to return in a single call. To retrieve the
+	// remaining results, make another call with the returned NextToken value.
+	Limit int32
+
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeImportSnapshotTasksPaginator is a paginator for
+// DescribeImportSnapshotTasks
+type DescribeImportSnapshotTasksPaginator struct {
+	options   DescribeImportSnapshotTasksPaginatorOptions
+	client    DescribeImportSnapshotTasksAPIClient
+	params    *DescribeImportSnapshotTasksInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeImportSnapshotTasksPaginator returns a new
+// DescribeImportSnapshotTasksPaginator
+func NewDescribeImportSnapshotTasksPaginator(client DescribeImportSnapshotTasksAPIClient, params *DescribeImportSnapshotTasksInput, optFns ...func(*DescribeImportSnapshotTasksPaginatorOptions)) *DescribeImportSnapshotTasksPaginator {
+	if params == nil {
+		params = &DescribeImportSnapshotTasksInput{}
+	}
+
+	options := DescribeImportSnapshotTasksPaginatorOptions{}
+	if params.MaxResults != nil {
+		options.Limit = *params.MaxResults
+	}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeImportSnapshotTasksPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.NextToken,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeImportSnapshotTasksPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeImportSnapshotTasks page.
+func (p *DescribeImportSnapshotTasksPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeImportSnapshotTasksOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.NextToken = p.nextToken
+
+	var limit *int32
+	if p.options.Limit > 0 {
+		limit = &p.options.Limit
+	}
+	params.MaxResults = limit
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeImportSnapshotTasks(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.NextToken
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeImportSnapshotTasksAPIClient is a client that implements the
+// DescribeImportSnapshotTasks operation.
+type DescribeImportSnapshotTasksAPIClient interface {
+	DescribeImportSnapshotTasks(context.Context, *DescribeImportSnapshotTasksInput, ...func(*Options)) (*DescribeImportSnapshotTasksOutput, error)
+}
+
+var _ DescribeImportSnapshotTasksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeImportSnapshotTasks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

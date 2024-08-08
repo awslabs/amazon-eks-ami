@@ -639,7 +639,7 @@ fi
 BOOTSTRAP_GPU_HELPER=/etc/eks/bootstrap-gpu.sh
 if [ -x "${BOOTSTRAP_GPU_HELPER}" ]; then
   log "INFO: starting GPU bootstrap helper..."
-  "${BOOTSTRAP_GPU_HELPER}"
+  $BOOTSTRAP_GPU_HELPER -r "$CONTAINER_RUNTIME"
   log "INFO: completed GPU bootstrap helper!"
 fi
 
