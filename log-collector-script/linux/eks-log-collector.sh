@@ -567,7 +567,7 @@ get_networking_info() {
   timeout 75 conntrack -L -f ipv6 >> "${COLLECT_DIR}"/networking/conntrack6.txt
 
   # ifconfig
-  timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
+  command -v ifconfig && timeout 75 ifconfig || timeout 75 ip addr show > "${COLLECT_DIR}"/networking/ifconfig.txt
 
   # ip rule show
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
@@ -692,10 +692,10 @@ get_system_services() {
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
   timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1
   timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
-  timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
+  command -v  netstat && timeout 75 netstat -plant || timeout 75 ss -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
   timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
   timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
-
+  timeout 75 nstat -rsz > "${COLLECT_DIR}"/system/nstat.txt 2>&1
   # collect pids which have large environments
   echo -e "PID\tCount" > "${COLLECT_DIR}/system/large_environments.txt"
   for i in /proc/*/environ; do
