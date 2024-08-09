@@ -474,6 +474,8 @@ get_k8s_info() {
 
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
+
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/kubelet-config.json "${COLLECT_DIR}"/kubelet/kubelet-config.json 2> /dev/null
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
