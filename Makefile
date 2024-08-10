@@ -92,7 +92,7 @@ validate: ## Validate packer config
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
-	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
+	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS)$(if $(PACKER_DEBUG),-debug) $(PACKER_TEMPLATE_FILE)
 
 # DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28
 # Use the `k8s` variable to specify a minor version instead
