@@ -37,6 +37,12 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
+
+	err = applyInstanceTypeMixins(cfg, &containerdConfig)
+	if err != nil {
+		return err
+	}
+
 	// because the logic in containerd's import merge decides to completely
 	// overwrite entire sections, we want to implement this merging ourselves.
 	// see: https://github.com/containerd/containerd/blob/a91b05d99ceac46329be06eb43f7ae10b89aad45/cmd/containerd/server/config/config.go#L407-L431

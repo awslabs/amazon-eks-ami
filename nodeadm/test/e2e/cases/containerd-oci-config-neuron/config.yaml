@@ -1,0 +1,18 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  containerd:
+    config: |
+      version = 2
+
+      [grpc]
+      address = "/run/foo/foo.sock"
+
+      [plugins."io.containerd.grpc.v1.cri".containerd]
+      discard_unpacked_layers = false

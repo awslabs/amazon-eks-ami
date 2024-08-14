@@ -1,0 +1,34 @@
+default_runtime_name = 'neuron'
+root = '/var/lib/containerd'
+state = '/run/containerd'
+version = 2
+
+[grpc]
+address = '/run/foo/foo.sock'
+
+[plugins]
+[plugins.'io.containerd.grpc.v1.cri']
+sandbox_image = '602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.5'
+
+[plugins.'io.containerd.grpc.v1.cri'.cni]
+bin_dir = '/opt/cni/bin'
+conf_dir = '/etc/cni/net.d'
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd]
+default_runtime_name = 'runc'
+discard_unpacked_layers = false
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron]
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron.options]
+BinaryName = '/opt/aws/neuron/bin/oci_neuron_hook_wrapper.sh'
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc]
+base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
+runtime_type = 'io.containerd.runc.v2'
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc.options]
+SystemdCgroup = true
+
+[plugins.'io.containerd.grpc.v1.cri'.registry]
+config_path = '/etc/containerd/certs.d:/etc/docker/certs.d'

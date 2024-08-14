@@ -14,6 +14,8 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
+ALLOWED_ACCELERATOR_VENDORS = nvidia neuron
+NVIDIA_MAJOR_DRIVER_VERSION_DEFAULT=555
 os_distro ?= al2
 arch ?= x86_64
 
@@ -28,6 +30,16 @@ else
 endif
 ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
+endif
+
+ifeq ($(os_distro), al2023)
+	ifdef accelerator_vendor
+		AMI_VARIANT := $(AMI_VARIANT)-$(accelerator_vendor)
+		ifeq ($(accelerator_vendor), nvidia)
+			nvidia_major_driver_version := $(NVIDIA_MAJOR_DRIVER_VERSION_DEFAULT)
+			AMI_VARIANT := $(AMI_VARIANT)-$(nvidia_major_driver_version)
+		endif
+	endif
 endif
 
 ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
@@ -91,7 +103,7 @@ validate: ## Validate packer config
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AMI
-	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
+	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(accelerator_vendor),accelerator_vendor=$(accelerator_vendor))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
 # DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28
