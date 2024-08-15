@@ -49,7 +49,7 @@ make k8s=1.29 os_distro=al2023 accelerator_vendor=neuron
 make k8s=1.29 os_distro=al2023 accelerator_vendor=nvidia
 
 # build Nvidia AMI with a specific Kubernetes version and a specific driver major version
-make k8s=1.29 os_distro=al2023 accelerator_vendor=nvidia nvidia_major_driver_version=550
+make k8s=1.29 os_distro=al2023 accelerator_vendor=nvidia nvidia_major_driver_version=555
 
 # check default value and options in help doc
 make help

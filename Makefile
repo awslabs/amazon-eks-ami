@@ -14,7 +14,6 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
-ALLOWED_ACCELERATOR_VENDORS = nvidia neuron
 NVIDIA_MAJOR_DRIVER_VERSION_DEFAULT=555
 os_distro ?= al2
 arch ?= x86_64
