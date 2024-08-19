@@ -1,4 +1,3 @@
-default_runtime_name = 'neuron'
 root = '/var/lib/containerd'
 state = '/run/containerd'
 version = 2
@@ -19,10 +18,6 @@ default_runtime_name = 'runc'
 discard_unpacked_layers = false
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron.options]
-BinaryName = '/opt/aws/neuron/bin/oci_neuron_hook_wrapper.sh'
-
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc]
 base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
 runtime_type = 'io.containerd.runc.v2'

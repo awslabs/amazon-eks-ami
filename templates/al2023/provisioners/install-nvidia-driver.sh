@@ -62,19 +62,6 @@ sudo mv ${WORKING_DIR}/gpu/bootstrap_gpu.service /etc/systemd/system/bootstrap_g
 sudo systemctl daemon-reload
 sudo systemctl enable bootstrap_gpu
 
-################################################################################
-### Install Cuda ###############################################################
-################################################################################
-
-declare -A NVIDIA_DRIVER_CUDA_VERSION_MAP=(["555"]="12-5" ["560"]="12-6")
-CUDA_VERSION=${NVIDIA_DRIVER_CUDA_VERSION_MAP[${NVIDIA_MAJOR_DRIVER_VERSION}]}
-
-if [ -z $CUDA_VERSION ]; then
-  echo "undefined CUDA version for Nvidia driver version: ${NVIDIA_MAJOR_DRIVER_VERSION}"
-  exit 1
-fi
-
-sudo dnf --setopt=install_weak_deps=False -y install cuda-toolkit-${CUDA_VERSION} cuda-*-${CUDA_VERSION}-*
 
 ################################################################################
 ### Install other dependencies #################################################

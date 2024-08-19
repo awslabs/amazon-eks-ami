@@ -29,7 +29,4 @@ metadata_expire=0" |sudo tee /etc/yum.repos.d/neuron.repo
 ################################################################################
 ### Install packages ###########################################################
 ################################################################################
-sudo dnf --setopt=install_weak_deps=False install -y \
-  aws-neuronx-dkms \
-  aws-neuronx-oci-hook \
-  oci-add-hooks
+sudo dnf --setopt=install_weak_deps=False install -y aws-neuronx-dkms

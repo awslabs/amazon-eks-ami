@@ -26,20 +26,6 @@ func (m MockFileWriter) WriteFileWithDir(filePath string, data []byte, perm fs.F
 }
 
 func TestApplyInstanceTypeMixins(t *testing.T) {
-	var neuronExpectedOutput = []byte(`default_runtime_name = 'neuron'
-version = 2
-
-[grpc]
-address = '/run/foo/foo.sock'
-
-[plugins]
-[plugins.'io.containerd.grpc.v1.cri']
-[plugins.'io.containerd.grpc.v1.cri'.containerd]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.neuron.options]
-BinaryName = '/opt/aws/neuron/bin/oci_neuron_hook_wrapper.sh'
-`)
 
 	var nvidiaExpectedOutput = []byte(`version = 2
 
@@ -73,8 +59,6 @@ address = '/run/foo/foo.sock'
 		expectedOutput []byte
 		expectedError  error
 	}{
-		{instanceType: "inf1.xlarge", expectedOutput: neuronExpectedOutput, expectedError: nil},
-		// code not implemented yet
 		{instanceType: "p5.xlarge", expectedOutput: nvidiaExpectedOutput, expectedError: nil},
 		// non accelerated instance
 		{instanceType: "m5.xlarge", expectedOutput: nonAcceleratedExpectedOutput, expectedError: nil},

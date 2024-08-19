@@ -27,20 +27,13 @@ func (m *instanceTypeMixin) matches(cfg *api.NodeConfig) bool {
 var (
 	// TODO: fetch this list dynamically
 	nvidiaInstances         = []string{"p3", "p3dn", "p4d", "p4de", "p5", "g4", "g4dn", "g5", "g6"}
-	neuronInstances         = []string{"inf1", "inf2", "trn1", "trn1n"}
 	NvidiaInstanceTypeMixin = instanceTypeMixin{
 		instanceFamilies: nvidiaInstances,
 		apply:            applyNvidia,
 	}
 
-	NeuronInstanceTypeMixin = instanceTypeMixin{
-		instanceFamilies: neuronInstances,
-		apply:            applyNeuron,
-	}
-
 	mixins = []instanceTypeMixin{
 		NvidiaInstanceTypeMixin,
-		NeuronInstanceTypeMixin,
 	}
 )
 
@@ -121,28 +114,5 @@ func applyNvidia(containerdConfig *[]byte) error {
 		}
 	}
 
-	return nil
-}
-
-// applyNeuron adds the needed Neuron containerd options as outlined here:
-// https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/tutorials/tutorial-oci-hook.html#for-containerd-runtime-setup-containerd-to-use-oci-neuron-oci-runtime
-func applyNeuron(containerdConfig *[]byte) error {
-	zap.L().Info("Configuring Neuron OCI hook..")
-	neuronOptions := `
-default_runtime_name = "neuron"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.neuron]
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.neuron.options]
-BinaryName = "/opt/aws/neuron/bin/oci_neuron_hook_wrapper.sh"
-`
-	if containerdConfig != nil {
-		containerdConfigMap, err := util.Merge(*containerdConfig, []byte(neuronOptions), toml.Marshal, toml.Unmarshal)
-		if err != nil {
-			return err
-		}
-		*containerdConfig, err = toml.Marshal(containerdConfigMap)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }

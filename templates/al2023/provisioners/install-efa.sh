@@ -44,7 +44,7 @@ fi
 ### Install and cleanup ##################################################################
 ##########################################################################################
 tar -xf ${EFA_PACKAGE} && cd aws-efa-installer
-sudo ./efa_installer.sh -y
+sudo ./efa_installer.sh --minimal -y
 
 cd -
 sudo rm -rf /tmp/efa-installer
