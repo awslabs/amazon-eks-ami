@@ -9,15 +9,20 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
   const payload = context.payload;
   const author = payload.comment.user.login;
   const authorized = ["OWNER", "MEMBER"].includes(payload.comment.author_association);
+  // Ensure that invoker is either a Owner or member of awslabs / amazon-eks-ami
   if (!authorized) {
     console.log(`Comment author is not authorized: ${author}`);
     return;
   }
   console.log(`Comment author is authorized: ${author}`);
+
   // Split the command into parts
   const parts = process.env.COMMENT_BODY.trim().split(' ');
 
-  // Initialize the result object with default values
+  // Commands can take three forms:
+  // /summarize owner repo issue_no (length 4)
+  // /summarize issue_no (length 2) (defaults owner & repo to context based)
+  // /summarize (default) (defaults owner, repo, & issue_no to context based)
   let issueContext = {
     owner: parts.length == 4 ? parts[1] : context.repo.owner,
     repo: parts.length == 4 ? parts[2] : context.repo.repo,
@@ -45,6 +50,7 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
 
   const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION });
 
+  // There can be a lot more prompt engineering done for the perfect summarizations, this one works really well however.
   const prompt = `Give me a short summary of this GitHub Issue reply chain. Include details on what the issue is, and what was the conclusion. The full comment history is below: ${commentLog}`;
 
   const messages = [
@@ -53,6 +59,7 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
       content: []
     }
   ];
+
   messages[0].content.push({
     type: "text",
     text: `
@@ -60,6 +67,7 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
       Assistant:
     `
   });
+
   const modelInput = {
     anthropic_version: "bedrock-2023-05-31",
     max_tokens: 16384, // Adjust this if issue comment chain is long.
@@ -79,7 +87,6 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
 
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
     const generation = responseBody.content[0].text;
-    //const generation = JSON.parse(responseBody).generation;
 
     console.log(`Raw response:\n${JSON.stringify(response)}`);
     console.log(`parsed response:\n${generation}`);
@@ -90,6 +97,7 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
       issue_number: context.issue.number,
       body: generation,
     });
+
     console.log("Finished!");
   } catch (error) {
     console.log(error)

@@ -1,27 +1,17 @@
-# This is a basic workflow that is manually triggered
-
 name: Summarizer
-
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
 on:
   issue_comment:
     types: [created]
-
 permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read  # This is required for actions/checkout
+  id-token: write
+  contents: read
   issues: write
-
-
 env:
   AWS_REGION : "us-west-2"
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   summarize:
     if: contains(github.event.comment.body, '/summarize')
     runs-on: ubuntu-latest
-
     steps:
         # Checkout the repo
       - name: Checkout repository
