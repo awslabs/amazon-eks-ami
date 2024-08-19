@@ -1,0 +1,54 @@
+# This is a basic workflow that is manually triggered
+
+name: Summarizer
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+  issues: write
+
+
+env:
+  AWS_REGION : "us-west-2"
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  summarize:
+    if: contains(github.event.comment.body, '/summarize')
+    runs-on: ubuntu-latest
+
+    steps:
+        # Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        # Get Nodejs lib
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+        # Install github actions lib
+      - name: Install github actions lib
+        run: npm install @actions/github@5.0.0
+      - name: Install core actions lib
+        run: npm install @actions/core
+      - name: Install aws bedrock lib
+        run: npm install @aws-sdk/client-bedrock-runtime
+        # Get AWS Credentials
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.BEDROCK_ACTION_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GITHUB_ACTION
+        # invoke Bedrock to summarize the issue
+      - name: Summarize issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODEL_ID    : "anthropic.claude-3-5-sonnet-20240620-v1:0"
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: node .github/actions/summarizer/index.js
