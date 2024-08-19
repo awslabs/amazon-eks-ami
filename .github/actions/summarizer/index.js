@@ -2,11 +2,11 @@ const github  = require('@actions/github');
 const core    = require('@actions/core');
 const token   = process.env.GITHUB_TOKEN;
 const octokit = new github.getOctokit(token);
-const context = github.context;
 const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-bedrock-runtime");
 
 (async () => {
-
+  const context = github.context;
+  const payload = context.payload;
   const author = payload.comment.user.login;
   const authorized = ["OWNER", "MEMBER"].includes(payload.comment.author_association);
   if (!authorized) {
@@ -60,7 +60,7 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
       Assistant:
     `
   });
-  const payload = {
+  const modelInput = {
     anthropic_version: "bedrock-2023-05-31",
     max_tokens: 16384, // Adjust this if issue comment chain is long.
     messages: messages
@@ -68,11 +68,11 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
 
   const command = new InvokeModelCommand({
     contentType: "application/json",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(modelInput),
     modelId: process.env.MODEL_ID,
   });
 
-  console.log("Prompting LLM with:\n" + JSON.stringify(payload));
+  console.log("Prompting LLM with:\n" + JSON.stringify(modelInput));
 
   try {
     const response = await client.send(command);
