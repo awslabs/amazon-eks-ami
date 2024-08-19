@@ -6,6 +6,14 @@ const context = github.context;
 const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-bedrock-runtime");
 
 (async () => {
+
+  const author = payload.comment.user.login;
+  const authorized = ["OWNER", "MEMBER"].includes(payload.comment.author_association);
+  if (!authorized) {
+    console.log(`Comment author is not authorized: ${author}`);
+    return;
+  }
+  console.log(`Comment author is authorized: ${author}`);
   // Split the command into parts
   const parts = process.env.COMMENT_BODY.trim().split(' ');
 

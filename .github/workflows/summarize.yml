@@ -19,9 +19,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   summarize:
-    if: |
-      contains(github.event.comment.body, '/summarize') && 
-      (github.event.pull_request.author_association == 'MEMBER' || github.event.pull_request.author_association == 'OWNER' )
+    if: contains(github.event.comment.body, '/summarize')
     runs-on: ubuntu-latest
 
     steps:
