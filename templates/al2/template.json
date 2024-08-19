@@ -44,7 +44,11 @@
     "temporary_security_group_source_cidrs": null,
     "user_data_file": null,
     "volume_type": null,
-    "working_dir": null
+    "working_dir": null,
+    "sysctl_test_throw_err": null,
+    "k8s_major_minor": "{{ split (user `kubernetes_version`) `.`  0}}{{split (user `kubernetes_version`) `.` 1}}",
+    "ami_type": null,
+    "ami_alias": "{{ user `k8s_major_minor` }}-al2-{{ user `arch` }}-{{ user `ami_type` }}"
   },
   "builders": [
     {
@@ -222,11 +226,21 @@
       ]
     },
     {
+      "destination": "/home/ec2-user/resources",
+      "source": "{{template_dir}}/../shared/resources",
+      "type": "file"
+    },
+    {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/validate.sh",
       "environment_vars": [
-        "KERNEL_VERSION={{user `kernel_version`}}"
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "AMI_NAME={{user `ami_name`}}",
+        "ARCH={{user `arch`}}",
+        "KERNEL_VERSION={{user `kernel_version`}}",
+        "AMI_ALIAS={{user `ami_alias`}}",
+        "SYSCTL_TEST_THROW_ERR={{user `sysctl_test_throw_err`}}"
       ]
     },
     {
@@ -243,6 +257,12 @@
       "direction": "download",
       "source": "{{user `working_dir`}}/version-info.json",
       "destination": "{{ user `ami_name` }}-version-info.json"
+    },
+    {
+      "type": "file",
+      "direction": "download",
+      "source": "/home/ec2-user/sysctl_log.txt",
+      "destination": "sysctl_logs/{{user `ami_alias`}}"
     },
     {
       "type": "shell",

@@ -31,6 +31,63 @@ validate_file_nonexists '/var/log/cloud-init.log'
 validate_file_nonexists '/var/log/secure'
 validate_file_nonexists '/var/log/wtmp'
 
+THROW_ERR=$SYSCTL_TEST_THROW_ERR
+K_VERSION_ARR=(${KUBERNETES_VERSION//./ })
+KUBERNETES_MINOR_VERSION="${K_VERSION_ARR[0]}${K_VERSION_ARR[1]}"
+
+if [[ $AMI_NAME == *"gpu"* ]]; then
+  AMI_FLAVOR="gpu"
+else
+  AMI_FLAVOR="standard"
+fi
+
+SYSCTL_TEST_FILE=$AMI_ALIAS
+
+if [ -f $(pwd)/resources/$SYSCTL_TEST_FILE ]; then
+  sysctl_cmd=$(eval sudo sysctl -a -e > ./sysctl_log.txt)
+  while [ ! -f $(pwd)/sysctl_log.txt ]; do sleep 10; done
+
+  sysctl_blacklist=()
+  while IFS= read -r line; do
+    sysctl_blacklist+=("$line")
+  done < "$(pwd)/resources/sysctl_blacklist"
+
+  diff_command="diff -b"
+  for pattern in "${sysctl_blacklist[@]}"; do
+    diff_command+=" -I \"$pattern\""
+  done
+
+  diff_command+=" $(pwd)/resources/$SYSCTL_TEST_FILE"
+  diff_command+=" $(pwd)/sysctl_log.txt"
+
+  if [ -f $(pwd)/sysctl_log.txt ]; then
+    echo "Executing diff command: $diff_command ..."
+    if ! eval $diff_command; then
+      echo "Compared $AMI_NAME : $SYSCTL_TEST_FILE with $(pwd)/sysctl_log.txt"
+      if $THROW_ERR ; then
+        echo "Failure: Sysctl has unexpected changes. Either include the new logs in templates/shared/resources/ or undo the kernel parameter changes..."
+        exit 1
+      else
+        echo "Warning: Sysctl has unexpected changes. Either include the new logs in templates/shared/resources/ or undo the kernel parameter changes..."
+      fi
+    else
+      echo "Success: Sysctl has no unexpected changes!"
+    fi
+  else
+    echo "Unhandled error: sysctl_log.txt not generated!"
+    if $THROW_ERR ; then
+      exit 1
+    fi
+  fi
+else
+  echo "Failure: $(pwd)/resources/$SYSCTL_TEST_FILE does not exist in the list of known AMIs."
+  if $THROW_ERR ; then
+    exit 1
+  fi
+fi
+
+echo "Done checking sysctl"
+
 actual_kernel=$(uname -r)
 echo "Verifying that kernel version $actual_kernel matches $KERNEL_VERSION..."
 
