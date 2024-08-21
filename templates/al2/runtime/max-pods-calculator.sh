@@ -116,7 +116,7 @@ if [[ "$CNI_MAJOR_VERSION" -gt 1 ]] || ([[ "$CNI_MAJOR_VERSION" = 1 ]] && [[ "$C
   PREFIX_DELEGATION_SUPPORTED=true
 fi
 
-DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type "${INSTANCE_TYPE}" --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus}' --output json)
+DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type "${INSTANCE_TYPE}" --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.NetworkCards[0].MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus}' --output json)
 
 HYPERVISOR_TYPE=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.Hypervisor')
 IS_NITRO=false
