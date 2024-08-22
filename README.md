@@ -60,12 +60,12 @@ For security issues or concerns, please do not open an issue or pull request on 
 
 This sample code is made available under a MIT-0 license. See the LICENSE file.
 
-Although this repository is released under the MIT license, when using Nvidia accelerated AMIs you agree to the NVIDIA Cloud End User License Agreement: https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf.
+Although this repository is released under the MIT license, when using NVIDIA accelerated AMIs you agree to the NVIDIA Cloud End User License Agreement: https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf.
 
-Although this repository is released under the MIT license, Nvidia accelerated AMIs  
+Although this repository is released under the MIT license, NVIDIA accelerated AMIs  
 use the third party [open-gpu-kernel-modules](https://github.com/NVIDIA/open-gpu-kernel-modules). The open-gpu-kernel-modules project's licensing includes the dual MIT/GPLv2 license.
 
-Although this repository is released under the MIT license, Nvidia accelerated AMIs  
+Although this repository is released under the MIT license, NVIDIA accelerated AMIs  
 use the third party [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit). The nvidia-container-toolkit project's licensing includes the Apache-2.0 license.
 
 Although this repository is released under the MIT license, Neuron accelerated AMIs  
