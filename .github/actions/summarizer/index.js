@@ -35,38 +35,42 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
 
   const { data: comments } = await octokit.rest.issues.listComments(issueContext);
 
-  let commentLog = "Comment Log:\n";
+  const commentLog = "Comment Log:\n" + 
+    `${issue.user.login} created the issue:\n ${issue.body}\n` + 
+    comments.filter(c => c.user.login != "github-actions[bot]")
+      .filter(c -> !c.body.startsWith("/"))
+      .map(c => `${c.user.login} says:\n "${c.body}"`)
+      .join('\n');
 
-  commentLog += `${issue.user.login} created the issue:\n "${issue.body}"\n`
-
-  for (const comment of comments) {
-    if(
-      (comment.user.login != "github-actions[bot]") && 
-      (!comment.body.startsWith("/"))
-    ){
-      commentLog += `${comment.user.login} says:\n"${comment.body}"\n`
-    }
-  }
+  //let commentLog = "Comment Log:\n";
+  //commentLog += `${issue.user.login} created the issue:\n "${issue.body}"\n`
+  //for (const comment of comments) {
+  //  if(
+  //    (comment.user.login != "github-actions[bot]") && 
+  //    (!comment.body.startsWith("/"))
+  //  ){
+  //    commentLog += `${comment.user.login} says:\n"${comment.body}"\n`
+  //  }
+  //}
 
   const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION });
 
   // There can be a lot more prompt engineering done for the perfect summarizations, this one works really well however.
   const prompt = `Give me a short summary of this GitHub Issue reply chain. Include details on what the issue is, and what was the conclusion. The full comment history is below: ${commentLog}`;
 
-  const messages = [
+  const content = [
     {
-      role: "user",
-      content: []
+      type: "text",
+      text: `Human: ${prompt}\nAssistant:`
     }
   ];
 
-  messages[0].content.push({
-    type: "text",
-    text: `
-      Human: ${prompt}
-      Assistant:
-    `
-  });
+  const messages = [
+    {
+      role: "user",
+      content,
+    }
+  ];
 
   const modelInput = {
     anthropic_version: "bedrock-2023-05-31",
@@ -84,23 +88,24 @@ const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-be
 
   try {
     const response = await client.send(command);
-
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-    const generation = responseBody.content[0].text;
-
-    console.log(`Raw response:\n${JSON.stringify(response)}`);
-    console.log(`parsed response:\n${generation}`);
-
-    await octokit.rest.issues.createComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: context.issue.number,
-      body: generation,
-    });
-
-    console.log("Finished!");
   } catch (error) {
-    console.log(error)
+    console.log("Failure: Unable to access Bedrock. Either invalid credentials or a service outage!");
     throw error;
   }
+
+  const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+  const generation = responseBody.content[0].text;
+
+  console.log(`Raw response:\n${JSON.stringify(response)}`);
+  console.log(`parsed response:\n${generation}`);
+
+  await octokit.rest.issues.createComment({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.issue.number,
+    body: generation,
+  });
+
+  console.log("Finished!");
+  return;
 })();
