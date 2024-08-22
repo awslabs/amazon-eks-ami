@@ -1,0 +1,36 @@
+{
+    "Hypervisor": "nitro",
+    "NetworkInfo": {
+        "NetworkPerformance": "200 Gigabit",
+        "MaximumNetworkInterfaces": 16,
+        "MaximumNetworkCards": 2,
+        "DefaultNetworkCardIndex": 0,
+        "NetworkCards": [
+            {
+                "NetworkCardIndex": 0,
+                "NetworkPerformance": "Up to 170 Gigabit",
+                "MaximumNetworkInterfaces": 8,
+                "BaselineBandwidthInGbps": 200.0,
+                "PeakBandwidthInGbps": 200.0
+            },
+            {
+                "NetworkCardIndex": 1,
+                "NetworkPerformance": "Up to 170 Gigabit",
+                "MaximumNetworkInterfaces": 8,
+                "BaselineBandwidthInGbps": 200.0,
+                "PeakBandwidthInGbps": 200.0
+            }
+        ],
+        "Ipv4AddressesPerInterface": 50,
+        "Ipv6AddressesPerInterface": 50,
+        "Ipv6Supported": true,
+        "EnaSupport": "required",
+        "EfaSupported": true,
+        "EfaInfo": {
+            "MaximumEfaInterfaces": 2
+        },
+        "EncryptionInTransitSupported": true,
+        "EnaSrdSupported": false
+    },
+    "CpuCount": 128
+}
