@@ -12,7 +12,7 @@ PARTITION=$(imds "/latest/meta-data/services/partition")
 
 if [ "$PARTITION" == "aws-iso" ] || [ "$PARTITION" == "aws-iso-b" ]; then
   echo "Neuron repository not vailable in isolated regions"
-  exit 0
+  exit 1
 fi
 
 ################################################################################
@@ -29,4 +29,4 @@ metadata_expire=0" |sudo tee /etc/yum.repos.d/neuron.repo
 ################################################################################
 ### Install packages ###########################################################
 ################################################################################
-sudo dnf --setopt=install_weak_deps=False install -y aws-neuronx-dkms
+sudo dnf install -y aws-neuronx-dkms

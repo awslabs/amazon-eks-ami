@@ -14,7 +14,6 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
-NVIDIA_MAJOR_DRIVER_VERSION_DEFAULT=555
 os_distro ?= al2
 arch ?= x86_64
 
@@ -34,10 +33,6 @@ endif
 ifeq ($(os_distro), al2023)
 	ifdef accelerator_vendor
 		AMI_VARIANT := $(AMI_VARIANT)-$(accelerator_vendor)
-		ifeq ($(accelerator_vendor), nvidia)
-			nvidia_major_driver_version := $(NVIDIA_MAJOR_DRIVER_VERSION_DEFAULT)
-			AMI_VARIANT := $(AMI_VARIANT)-$(nvidia_major_driver_version)
-		endif
 	endif
 endif
 

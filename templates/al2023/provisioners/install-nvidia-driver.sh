@@ -20,12 +20,15 @@ sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolki
 ################################################################################
 ### Install drivers ############################################################
 ################################################################################
+sudo mv ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
+sudo mv  ${WORKING_DIR}/gpu/kmod-util /usr/bin/
+
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
 sudo dnf -y install kernel-modules-extra.x86_64
 
 function archive-open-kmods(){
-  sudo dnf --setopt=install_weak_deps=False -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-open
+  sudo dnf -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-open
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
@@ -43,7 +46,7 @@ function archive-open-kmods(){
 } 
 
 function archive-proprietary-kmod(){
-  sudo dnf --setopt=install_weak_deps=False -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-dkms
+  sudo dnf -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-dkms
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
 }
@@ -52,51 +55,21 @@ archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
-### Prepare for nvidia bootstrap ###############################################
+### Prepare for nvidia init ####################################################
 ################################################################################
 
 sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/initialize_nvidia_clock.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/bootstrap_gpu.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/bootstrap_gpu.service /etc/systemd/system/bootstrap_gpu.service
+sudo mv ${WORKING_DIR}/gpu/initialize-nvidia-clock.sh /etc/eks/
+sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
+sudo mv ${WORKING_DIR}/gpu/initialize-nvidia-clock.service /etc/systemd/system/initialize-nvidia-clock.service
 sudo systemctl daemon-reload
-sudo systemctl enable bootstrap_gpu
-
+sudo systemctl enable nvidia-kmod-load.service
+sudo systemctl enable initialize-nvidia-clock.service
 
 ################################################################################
 ### Install other dependencies #################################################
 ################################################################################
-sudo dnf --setopt=install_weak_deps=False -y install nvidia-fabric-manager nvidia-container-toolkit
+sudo dnf -y install nvidia-fabric-manager nvidia-container-toolkit
 
 sudo systemctl enable nvidia-fabricmanager
 sudo systemctl enable nvidia-persistenced
-
-################################################################################
-### Display license agreement ##################################################
-################################################################################
-echo '#!/bin/sh
-
-echo -n "
-#############################################################
-By using the EKS GPU Optimized AMI, you agree to the NVIDIA Cloud End User License Agreement
-https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf.
-#############################################################
-"'| sudo tee /etc/eks/nvidia-eula
-
-sudo chmod +x /etc/eks/nvidia-eula
-
-echo "[Unit]
-Description=Display Nvidia driver EULA
-
-[Service]
-Type=oneshot
-ExecStart=/etc/eks/nvidia-eula
-
-[Install]
-WantedBy=basic.target
-"| sudo tee /etc/systemd/system/nvidia-eula.service
-
-sudo chmod +x /etc/systemd/system/nvidia-eula.service
-
-sudo systemctl daemon-reload
-sudo systemctl enable nvidia-eula

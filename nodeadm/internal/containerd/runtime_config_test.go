@@ -1,29 +1,11 @@
 package containerd
 
 import (
-	"io/fs"
 	"reflect"
 	"testing"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 )
-
-type MockCommandExecutor struct {
-	Output []byte
-	Err    error
-}
-
-func (m MockCommandExecutor) CombinedOutput(name string, arg ...string) ([]byte, error) {
-	return m.Output, m.Err
-}
-
-type MockFileWriter struct {
-	Err error
-}
-
-func (m MockFileWriter) WriteFileWithDir(filePath string, data []byte, perm fs.FileMode) error {
-	return m.Err
-}
 
 func TestApplyInstanceTypeMixins(t *testing.T) {
 
@@ -36,16 +18,16 @@ address = '/run/foo/foo.sock'
 [plugins.'io.containerd.grpc.v1.cri']
 [plugins.'io.containerd.grpc.v1.cri'.containerd]
 default_runtime_name = 'nvidia'
+discard_unpacked_layers = true
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia]
-privileged_without_host_devices = false
-runtime_engine = ''
-runtime_root = ''
+base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
 runtime_type = 'io.containerd.runc.v2'
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia.options]
 BinaryName = '/usr/bin/nvidia-container-runtime'
+SystemdCgroup = true
 `)
 
 	var nonAcceleratedExpectedOutput = []byte(`
@@ -69,36 +51,6 @@ version = 2
 [grpc]
 address = '/run/foo/foo.sock'
 `)
-		mockOutput := []byte(`
-version=2
-
-[plugins]
-
-[plugins."io.containerd.grpc.v1.cri"]
-
-[plugins."io.containerd.grpc.v1.cri".containerd]
-default_runtime_name="nvidia"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
-privileged_without_host_devices=false
-runtime_engine=""
-runtime_root=""
-runtime_type="io.containerd.runc.v2"
-
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-BinaryName="/usr/bin/nvidia-container-runtime"
-`)
-
-		execCommand = MockCommandExecutor{
-			Output: mockOutput,
-			Err:    nil,
-		}
-		fileWriter = MockFileWriter{
-			Err: nil,
-		}
-
 		err := applyInstanceTypeMixins(&api.NodeConfig{
 			Status: api.NodeConfigStatus{
 				Instance: api.InstanceDetails{

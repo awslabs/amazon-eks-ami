@@ -1,0 +1,12 @@
+[Unit]
+Description=Initialize Nvidia GPU clock rate
+After=nvidia-persistenced.service
+Requires=nvidia-persistenced.service nvidia-kmod-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/initialize-nvidia-clock.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

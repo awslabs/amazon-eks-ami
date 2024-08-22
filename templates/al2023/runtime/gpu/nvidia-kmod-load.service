@@ -1,0 +1,13 @@
+[Unit]
+Description=Loading Nvidia kernel modules
+After=nodeadm-run.service
+Requires=nodeadm-run.service
+Before=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/nvidia-kmod-load.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

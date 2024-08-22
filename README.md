@@ -42,21 +42,9 @@ make k8s=1.29
 # build an AMI with a specific Kubernetes version and a specific OS distro
 make k8s=1.29 os_distro=al2023
 
-# build Neuron AMI with a specific Kubernetes version
-make k8s=1.29 os_distro=al2023 accelerator_vendor=neuron
-
-# build Nvidia AMI with a specific Kubernetes version and default driver major version
-make k8s=1.29 os_distro=al2023 accelerator_vendor=nvidia
-
-# build Nvidia AMI with a specific Kubernetes version and a specific driver major version
-make k8s=1.29 os_distro=al2023 accelerator_vendor=nvidia nvidia_major_driver_version=555
-
 # check default value and options in help doc
 make help
 ```
-
-> **Note**
-> Accelerated AMIs (Neuron and Nvidia) are currently only supported for AL2023 operating system.
 
 The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
 
