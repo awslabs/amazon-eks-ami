@@ -1,7 +1,7 @@
 [Unit]
-Description=Loading Nvidia kernel modules
-After=nodeadm-run.service
-Requires=nodeadm-run.service
+Description=Loading NVIDIA kernel modules
+# load modules after cloud-init
+After=cloud-final.service
 Before=nvidia-persistenced.service
 
 [Service]

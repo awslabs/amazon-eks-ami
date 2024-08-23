@@ -20,12 +20,13 @@
     "enable_fips": null,
     "encrypted": null,
     "iam_instance_profile": null,
+    "install_efa": null,
     "instance_type": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
-    "nvidia_major_driver_version": null,
+    "nvidia_driver_major_version": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -182,9 +183,9 @@
     {
       "type": "shell",
       "expect_disconnect": true,
-      "script": "{{template_dir}}/runtime/bin/limit-c-states.sh",
+      "script": "{{template_dir}}/provisioners/limit-c-states.sh",
       "environment_vars": [
-        "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}"
+        "INSTALL_EFA={{user `install_efa`}}"
       ]
     },    
     {
@@ -229,7 +230,7 @@
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
         "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}",
-        "NVIDIA_MAJOR_DRIVER_VERSION={{user `nvidia_major_driver_version`}}",
+        "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },
@@ -248,7 +249,7 @@
       "script": "{{template_dir}}/provisioners/install-efa.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
-        "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}"
+        "INSTALL_EFA={{user `install_efa`}}"
       ]
     },
     {

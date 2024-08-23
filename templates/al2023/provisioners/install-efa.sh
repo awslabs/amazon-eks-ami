@@ -3,7 +3,7 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-if [ "$ACCELERATOR_VENDOR" != "neuron" ] && [ "$ACCELERATOR_VENDOR" != "nvidia" ]; then
+if [ "$INSTALL_EFA" != "true" ]; then
   exit 0
 fi
 

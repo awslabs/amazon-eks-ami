@@ -1,0 +1,12 @@
+[Unit]
+Description=Configure NVIDIA GPU clock rate
+After=nvidia-persistenced.service
+Requires=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/set-nvidia-clocks.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

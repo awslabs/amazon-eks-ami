@@ -7,7 +7,7 @@ set -o errexit
 if [ "$ACCELERATOR_VENDOR" != "nvidia" ]; then
   exit 0
 fi 
-echo "Configuring Nvidia End User License Agreement..."
+echo "Configuring NVIDIA End User License Agreement..."
 
 echo '#!/bin/sh
 
@@ -21,7 +21,7 @@ https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf.
 sudo chmod +x /etc/eks/nvidia-eula
 
 echo "[Unit]
-Description=Display Nvidia driver EULA
+Description=Display NVIDIA driver EULA
 
 [Service]
 Type=oneshot

@@ -29,4 +29,4 @@ metadata_expire=0" |sudo tee /etc/yum.repos.d/neuron.repo
 ################################################################################
 ### Install packages ###########################################################
 ################################################################################
-sudo dnf install -y aws-neuronx-dkms
+sudo dnf install -y aws-neuronx-dkms aws-neuronx-tools

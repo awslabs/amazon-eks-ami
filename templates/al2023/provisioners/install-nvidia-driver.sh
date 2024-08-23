@@ -7,7 +7,7 @@ set -o errexit
 if [ "$ACCELERATOR_VENDOR" != "nvidia" ]; then
   exit 0
 fi 
-echo "Installing Nvidia ${NVIDIA_MAJOR_DRIVER_VERSION} drivers..."
+echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
 ### Add repository #############################################################
@@ -28,7 +28,7 @@ echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee
 sudo dnf -y install kernel-modules-extra.x86_64
 
 function archive-open-kmods(){
-  sudo dnf -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-open
+  sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
@@ -46,7 +46,7 @@ function archive-open-kmods(){
 } 
 
 function archive-proprietary-kmod(){
-  sudo dnf -y module install nvidia-driver:${NVIDIA_MAJOR_DRIVER_VERSION}-dkms
+  sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
 }
@@ -59,12 +59,12 @@ archive-proprietary-kmod
 ################################################################################
 
 sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/initialize-nvidia-clock.sh /etc/eks/
+sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.sh /etc/eks/
 sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
-sudo mv ${WORKING_DIR}/gpu/initialize-nvidia-clock.service /etc/systemd/system/initialize-nvidia-clock.service
+sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
 sudo systemctl daemon-reload
 sudo systemctl enable nvidia-kmod-load.service
-sudo systemctl enable initialize-nvidia-clock.service
+sudo systemctl enable set-nvidia-clocks.service
 
 ################################################################################
 ### Install other dependencies #################################################
