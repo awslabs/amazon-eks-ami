@@ -1,6 +1,9 @@
 ---
 name: Bug Report
 about: Report a bug encountered using the EKS AMI
+title: 'bug($AREA): $HEADLINE'
+labels: bug
+assignees: ''
 
 ---
 
@@ -12,18 +15,11 @@ about: Report a bug encountered using the EKS AMI
 
 **How to reproduce it (as minimally and precisely as possible)**:
 
-**Anything else we need to know?**:
-
 **Environment**:
 - AWS Region:
 - Instance Type(s):
-- EKS Platform version (use `aws eks describe-cluster --name <name> --query cluster.platformVersion`):
-- Kubernetes version (use `aws eks describe-cluster --name <name> --query cluster.version`):
+- Cluster Kubernetes version:
+- Node Kubernetes version:
 - AMI Version:
-- Kernel (e.g. `uname -a`):
-- Release information (run `cat /etc/eks/release` on a node):
-<!-- Put release info in the triple backticks below-->
-```
-```
 
 <!-- If this is a security issue, please do not discuss on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/ -->
