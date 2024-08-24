@@ -4,19 +4,21 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"github.com/pelletier/go-toml/v2"
 	"go.uber.org/zap"
 )
 
-type instanceTypeMixin struct {
-	instanceFamilies []string
-	apply            func(*[]byte) error
+type instanceOptions struct {
+	RuntimeName       string
+	RuntimeBinaryName string
 }
 
-func (m *instanceTypeMixin) matches(cfg *api.NodeConfig) bool {
-	instanceFamily := strings.Split(cfg.Status.Instance.Type, ".")[0]
+type instanceTypeMixin struct {
+	instanceFamilies []string
+	apply            func() instanceOptions
+}
+
+func (m *instanceTypeMixin) matches(instanceType string) bool {
+	instanceFamily := strings.Split(instanceType, ".")[0]
 	return slices.Contains(m.instanceFamilies, instanceFamily)
 }
 
@@ -33,45 +35,31 @@ var (
 	}
 )
 
-const nvidiaOptions = `
-[plugins.'io.containerd.grpc.v1.cri'.containerd]
-default_runtime_name = 'nvidia'
-discard_unpacked_layers = true
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
-base_runtime_spec = "/etc/containerd/base-runtime-spec.json"
-runtime_type = "io.containerd.runc.v2"
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-BinaryName = "/usr/bin/nvidia-container-runtime"
-SystemdCgroup = true
-`
+const nvidiaRuntimeName = "nvidia"
+const nvidiaRuntimeBinaryName = "/usr/bin/nvidia-container-runtime"
+const defaultRuntimeName = "runc"
+const defaultRuntimeBinaryName = "/usr/sbin/runc"
 
 // applyInstanceTypeMixins adds the needed OCI hook options to containerd config.toml
 // based on the instance family
-func applyInstanceTypeMixins(cfg *api.NodeConfig, containerdConfig *[]byte) error {
+func applyInstanceTypeMixins(instanceType string) instanceOptions {
 	for _, mixin := range mixins {
-		if mixin.matches(cfg) {
-			if err := mixin.apply(containerdConfig); err != nil {
-				return err
-			}
-			return nil
+		if mixin.matches(instanceType) {
+			return mixin.apply()
 		}
 	}
-	zap.L().Info("No containerd OCI configuration needed..", zap.String("instanceType", cfg.Status.Instance.Type))
-	return nil
+	zap.L().Info("No instance specific containerd runtime configuration needed..", zap.String("instanceType", instanceType))
+	return applyDefault()
 }
 
-// applyNvidia adds the needed Nvidia containerd options
-func applyNvidia(containerdConfig *[]byte) error {
-	zap.L().Info("Configuring Nvidia OCI hook..")
+// applyNvidia adds the needed NVIDIA containerd options
+func applyNvidia() instanceOptions {
+	zap.L().Info("Configuring NVIDIA runtime..")
+	return instanceOptions{RuntimeName: nvidiaRuntimeName, RuntimeBinaryName: nvidiaRuntimeBinaryName}
+}
 
-	containerdConfigMap, err := util.Merge(*containerdConfig, []byte(nvidiaOptions), toml.Marshal, toml.Unmarshal)
-	if err != nil {
-		return err
-	}
-	*containerdConfig, err = toml.Marshal(containerdConfigMap)
-	if err != nil {
-		return err
-	}
-
-	return nil
+// applyDefault adds the default runc containerd options
+func applyDefault() instanceOptions {
+	zap.L().Info("Configuring default runtime..")
+	return instanceOptions{RuntimeName: defaultRuntimeName, RuntimeBinaryName: defaultRuntimeBinaryName}
 }

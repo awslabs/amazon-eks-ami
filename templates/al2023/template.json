@@ -1,7 +1,7 @@
 {
   "_comment": "All template variables are enumerated here; and most variables have a default value defined in a variables.json for each kubernetes minor version",
   "variables": {
-    "accelerator_vendor": null,
+    "enable_accelerator": null,
     "ami_component_description": null,
     "ami_description": null,
     "ami_name": null,
@@ -20,7 +20,7 @@
     "enable_fips": null,
     "encrypted": null,
     "iam_instance_profile": null,
-    "install_efa": null,
+    "enable_efa": null,
     "instance_type": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
@@ -185,7 +185,7 @@
       "expect_disconnect": true,
       "script": "{{template_dir}}/provisioners/limit-c-states.sh",
       "environment_vars": [
-        "INSTALL_EFA={{user `install_efa`}}"
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },    
     {
@@ -220,7 +220,7 @@
       "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
-        "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}"
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
       ]
     },
     {
@@ -229,17 +229,8 @@
       "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
-        "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
         "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
-        "WORKING_DIR={{user `working_dir`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/configure-nvidia-eula.sh",
-      "environment_vars": [
-        "ACCELERATOR_VENDOR={{user `accelerator_vendor`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },
@@ -249,7 +240,7 @@
       "script": "{{template_dir}}/provisioners/install-efa.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
-        "INSTALL_EFA={{user `install_efa`}}"
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {

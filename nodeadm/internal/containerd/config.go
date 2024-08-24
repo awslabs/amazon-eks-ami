@@ -25,7 +25,9 @@ var (
 )
 
 type containerdTemplateVars struct {
-	SandboxImage string
+	SandboxImage      string
+	RuntimeName       string
+	RuntimeBinaryName string
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
@@ -34,11 +36,6 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	}
 
 	containerdConfig, err := generateContainerdConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	err = applyInstanceTypeMixins(cfg, &containerdConfig)
 	if err != nil {
 		return err
 	}
@@ -62,8 +59,12 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
+	instanceOptions := applyInstanceTypeMixins(cfg.Status.Instance.Type)
+
 	configVars := containerdTemplateVars{
-		SandboxImage: cfg.Status.Defaults.SandboxImage,
+		SandboxImage:      cfg.Status.Defaults.SandboxImage,
+		RuntimeBinaryName: instanceOptions.RuntimeBinaryName,
+		RuntimeName:       instanceOptions.RuntimeName,
 	}
 	var buf bytes.Buffer
 	if err := containerdConfigTemplate.Execute(&buf, configVars); err != nil {

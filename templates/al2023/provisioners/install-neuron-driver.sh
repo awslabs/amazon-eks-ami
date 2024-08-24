@@ -4,7 +4,7 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-if [ "$ACCELERATOR_VENDOR" != "neuron" ]; then
+if [ "$ENABLE_ACCELERATOR" != "neuron" ]; then
   exit 0
 fi 
 

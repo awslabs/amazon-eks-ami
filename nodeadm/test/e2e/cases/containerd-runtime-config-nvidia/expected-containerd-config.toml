@@ -26,12 +26,5 @@ runtime_type = 'io.containerd.runc.v2'
 BinaryName = '/usr/bin/nvidia-container-runtime'
 SystemdCgroup = true
 
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc]
-base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
-runtime_type = 'io.containerd.runc.v2'
-
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc.options]
-SystemdCgroup = true
-
 [plugins.'io.containerd.grpc.v1.cri'.registry]
 config_path = '/etc/containerd/certs.d:/etc/docker/certs.d'

@@ -1,5 +1,5 @@
 {
-    "accelerator_vendor": "",
+    "enable_accelerator": "",
     "ami_component_description": "(k8s: {{ user `kubernetes_version` }}, containerd: {{ user `containerd_version` }})",
     "ami_description": "EKS-optimized Kubernetes node based on Amazon Linux 2023",
     "ami_regions": "",
@@ -17,7 +17,7 @@
     "encrypted": "false",
     "kms_key_id": "",
     "iam_instance_profile": "",
-    "install_efa": "false",
+    "enable_efa": "false",
     "launch_block_device_mappings_volume_size": "20",
     "nvidia_driver_major_version": "555",
     "remote_folder": "/tmp",

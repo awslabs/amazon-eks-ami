@@ -3,68 +3,29 @@ package containerd
 import (
 	"reflect"
 	"testing"
-
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 )
 
 func TestApplyInstanceTypeMixins(t *testing.T) {
 
-	var nvidiaExpectedOutput = []byte(`version = 2
+	var nvidiaExpectedOutput = instanceOptions{RuntimeName: "nvidia", RuntimeBinaryName: "/usr/bin/nvidia-container-runtime"}
+	var neuronExpectedOutput = instanceOptions{RuntimeName: "runc", RuntimeBinaryName: "/usr/sbin/runc"}
+	var nonAcceleratedExpectedOutput = instanceOptions{RuntimeName: "runc", RuntimeBinaryName: "/usr/sbin/runc"}
 
-[grpc]
-address = '/run/foo/foo.sock'
-
-[plugins]
-[plugins.'io.containerd.grpc.v1.cri']
-[plugins.'io.containerd.grpc.v1.cri'.containerd]
-default_runtime_name = 'nvidia'
-discard_unpacked_layers = true
-
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia]
-base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
-runtime_type = 'io.containerd.runc.v2'
-
-[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia.options]
-BinaryName = '/usr/bin/nvidia-container-runtime'
-SystemdCgroup = true
-`)
-
-	var nonAcceleratedExpectedOutput = []byte(`
-version = 2
-[grpc]
-address = '/run/foo/foo.sock'
-`)
 	var tests = []struct {
 		name           string
 		instanceType   string
-		expectedOutput []byte
-		expectedError  error
+		expectedOutput instanceOptions
 	}{
-		{instanceType: "p5.xlarge", expectedOutput: nvidiaExpectedOutput, expectedError: nil},
+		{name: "nvidia_test", instanceType: "p5.xlarge", expectedOutput: nvidiaExpectedOutput},
+		{name: "neuron_test", instanceType: "inf2.xlarge", expectedOutput: neuronExpectedOutput},
 		// non accelerated instance
-		{instanceType: "m5.xlarge", expectedOutput: nonAcceleratedExpectedOutput, expectedError: nil},
+		{name: "non_accelerated_test", instanceType: "m5.xlarge", expectedOutput: nonAcceleratedExpectedOutput},
 	}
 	for _, test := range tests {
-		var mockConfig = []byte(`
-version = 2
-[grpc]
-address = '/run/foo/foo.sock'
-`)
-		err := applyInstanceTypeMixins(&api.NodeConfig{
-			Status: api.NodeConfigStatus{
-				Instance: api.InstanceDetails{
-					Type: test.instanceType,
-				},
-			},
-		}, &mockConfig)
+		expected := applyInstanceTypeMixins(test.instanceType)
 
-		if err != test.expectedError {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if !reflect.DeepEqual(mockConfig, test.expectedOutput) {
-			t.Fatalf("unexpected output: %s, expecting: %s", mockConfig, test.expectedOutput)
+		if !reflect.DeepEqual(expected, test.expectedOutput) {
+			t.Fatalf("unexpected output in test case %s: %s, expecting: %s", test.name, expected, test.expectedOutput)
 		}
 	}
 }

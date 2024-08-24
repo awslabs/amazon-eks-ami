@@ -23,6 +23,7 @@ base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
 runtime_type = 'io.containerd.runc.v2'
 
 [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc.options]
+BinaryName = '/usr/sbin/runc'
 SystemdCgroup = true
 
 [plugins.'io.containerd.grpc.v1.cri'.registry]

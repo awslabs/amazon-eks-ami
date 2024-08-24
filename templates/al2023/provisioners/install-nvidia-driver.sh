@@ -4,7 +4,7 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-if [ "$ACCELERATOR_VENDOR" != "nvidia" ]; then
+if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
 fi 
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."

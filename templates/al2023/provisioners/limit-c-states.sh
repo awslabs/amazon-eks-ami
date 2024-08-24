@@ -3,7 +3,7 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-if [ "$INSTALL_EFA" != "true" ]; then
+if [ "$ENABLE_EFA" != "true" ]; then
   exit 0
 fi
 
