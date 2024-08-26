@@ -6,7 +6,7 @@ set -o errexit
 
 if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
-fi 
+fi
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
@@ -15,19 +15,19 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
 sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
 
-sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo 
+sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo
 
 ################################################################################
 ### Install drivers ############################################################
 ################################################################################
 sudo mv ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
-sudo mv  ${WORKING_DIR}/gpu/kmod-util /usr/bin/
+sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
 sudo dnf -y install kernel-modules-extra.x86_64
 
-function archive-open-kmods(){
+function archive-open-kmods() {
   sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
@@ -43,9 +43,9 @@ function archive-open-kmods(){
 
   sudo dnf -y module remove --all nvidia-driver
   sudo dnf -y module reset nvidia-driver
-} 
+}
 
-function archive-proprietary-kmod(){
+function archive-proprietary-kmod() {
   sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia

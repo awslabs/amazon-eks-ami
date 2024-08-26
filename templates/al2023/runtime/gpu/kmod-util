@@ -14,7 +14,7 @@ function log() {
 
 # get the version of a registered kernel module
 function module-version() {
-  ${DKMS} status -m "${1}" |tr -s ',' '/' |tr -d ' ' | awk -F '/' '{print $2}'
+  ${DKMS} status -m "${1}" | tr -s ',' '/' | tr -d ' ' | awk -F '/' '{print $2}'
 }
 
 # load a kernel module from the archives
@@ -25,7 +25,7 @@ function load() {
   ${DKMS} ldtarball ${MODULE_ARCHIVE}
   log "unpacked: ${MODULE_NAME}"
   log "installing: ${MODULE_NAME}"
-  local MODULE_VERSION=$(module-version "${MODULE_NAME}")  
+  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
   ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
   log "installed: ${MODULE_NAME}"
 }

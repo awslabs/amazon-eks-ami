@@ -34,4 +34,3 @@ elif [[ $GPUNAME == *"L40S"* ]]; then
 else
   echo "unsupported gpu"
 fi
-

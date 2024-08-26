@@ -20,7 +20,7 @@ INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
 # return the path of the file containing devices supported by the nvidia-open kmod
 # fail if the expected file doesn't exist
 function nvidia-open-supported-devices-file() {
-  local KMOD_MAJOR_VERSION=$(rpmquery kmod-nvidia-latest-dkms  --queryformat '%{VERSION}' | cut -d. -f1)
+  local KMOD_MAJOR_VERSION=$(rpmquery kmod-nvidia-latest-dkms --queryformat '%{VERSION}' | cut -d. -f1)
   local SUPPORTED_DEVICE_FILE="/etc/eks/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   if ! test -f "${SUPPORTED_DEVICE_FILE}"; then
     echo >&2 "Supported device file not found for ${KMOD_MAJOR_VERSION}: ${SUPPORTED_DEVICE_FILE}"
@@ -60,7 +60,7 @@ function disable-gsp() {
 # Disabling interactions with the GSP is a temporary workaround, and this is
 # only possible on the proprietary kmod.
 case "${INSTANCE_TYPE}" in
-  g4dn.*|g5.*|g5g.*)
+  g4dn.* | g5.* | g5g.*)
     echo "Disabling GSP for instance type: ${INSTANCE_TYPE}"
     disable-gsp
     echo "Using propreitary module for instance type: ${INSTANCE_TYPE}"

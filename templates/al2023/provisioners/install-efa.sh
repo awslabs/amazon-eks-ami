@@ -35,9 +35,9 @@ curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}
 
 curl -O ${EFA_DOMAIN}/aws-efa-installer.key && gpg --import aws-efa-installer.key
 curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}.sig
-if ! gpg --verify ./aws-efa-installer-${EFA_VERSION}.tar.gz.sig &> /dev/null ;then
-    echo "EFA Installer signature failed verification!"
-    exit 2
+if ! gpg --verify ./aws-efa-installer-${EFA_VERSION}.tar.gz.sig &> /dev/null; then
+  echo "EFA Installer signature failed verification!"
+  exit 2
 fi
 
 ##########################################################################################
