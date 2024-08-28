@@ -66,7 +66,6 @@ cache_container_images=true make 1.23
 When container image caching is enabled, the following images are cached:
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-eksbuild.<BUILD_VERSION>
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-minimal-eksbuild.<BUILD_VERSION>
- - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/pause:3.5
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni-init:<default and latest>
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni:<default and latest>
 
