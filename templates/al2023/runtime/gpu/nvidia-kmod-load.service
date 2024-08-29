@@ -1,0 +1,14 @@
+[Unit]
+Description=Loading NVIDIA kernel modules
+# load modules after cloud-init
+After=cloud-final.service
+Requires=cloud-final.service
+Before=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/nvidia-kmod-load.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
