@@ -23,7 +23,7 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
 	var token *ecr.GetAuthorizationTokenOutput
-	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+	err = util.RetryExponentialBackoff(2*time.Second, util.ConditionRetryCount(3), func() error {
 		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
 		return err
 	})
