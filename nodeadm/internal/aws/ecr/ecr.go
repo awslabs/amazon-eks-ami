@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
@@ -23,7 +22,7 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
 	var token *ecr.GetAuthorizationTokenOutput
-	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+	err = util.NewRetrier(util.WithBackoffExponential()).Retry(context.TODO(), func() error {
 		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
 		return err
 	})

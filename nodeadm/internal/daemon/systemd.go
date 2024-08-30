@@ -55,7 +55,7 @@ func (m *systemdDaemonManager) GetDaemonStatus(name string) (DaemonStatus, error
 	if err != nil {
 		return DaemonStatusUnknown, err
 	}
-	switch status.Value.String() {
+	switch status.Value.Value().(string) {
 	case "active":
 		return DaemonStatusRunning, nil
 	case "inactive":
