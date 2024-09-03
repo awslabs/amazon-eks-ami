@@ -1,6 +1,9 @@
 ---
 name: General Question
 about: Any question relating to the EKS AMI
+title: ''
+labels: ''
+assignees: ''
 
 ---
 
