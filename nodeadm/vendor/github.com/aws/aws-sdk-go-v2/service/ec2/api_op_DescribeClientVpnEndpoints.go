@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -40,7 +39,9 @@ type DescribeClientVpnEndpointsInput struct {
 	DryRun *bool
 
 	// One or more filters. Filter names and values are case-sensitive.
+	//
 	//   - endpoint-id - The ID of the Client VPN endpoint.
+	//
 	//   - transport-protocol - The transport protocol ( tcp | udp ).
 	Filters []types.Filter
 
@@ -92,25 +93,25 @@ func (c *Client) addOperationDescribeClientVpnEndpointsMiddlewares(stack *middle
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -125,10 +126,16 @@ func (c *Client) addOperationDescribeClientVpnEndpointsMiddlewares(stack *middle
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeClientVpnEndpoints(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -145,14 +152,6 @@ func (c *Client) addOperationDescribeClientVpnEndpointsMiddlewares(stack *middle
 	}
 	return nil
 }
-
-// DescribeClientVpnEndpointsAPIClient is a client that implements the
-// DescribeClientVpnEndpoints operation.
-type DescribeClientVpnEndpointsAPIClient interface {
-	DescribeClientVpnEndpoints(context.Context, *DescribeClientVpnEndpointsInput, ...func(*Options)) (*DescribeClientVpnEndpointsOutput, error)
-}
-
-var _ DescribeClientVpnEndpointsAPIClient = (*Client)(nil)
 
 // DescribeClientVpnEndpointsPaginatorOptions is the paginator options for
 // DescribeClientVpnEndpoints
@@ -222,6 +221,9 @@ func (p *DescribeClientVpnEndpointsPaginator) NextPage(ctx context.Context, optF
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeClientVpnEndpoints(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -240,6 +242,14 @@ func (p *DescribeClientVpnEndpointsPaginator) NextPage(ctx context.Context, optF
 
 	return result, nil
 }
+
+// DescribeClientVpnEndpointsAPIClient is a client that implements the
+// DescribeClientVpnEndpoints operation.
+type DescribeClientVpnEndpointsAPIClient interface {
+	DescribeClientVpnEndpoints(context.Context, *DescribeClientVpnEndpointsInput, ...func(*Options)) (*DescribeClientVpnEndpointsOutput, error)
+}
+
+var _ DescribeClientVpnEndpointsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeClientVpnEndpoints(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

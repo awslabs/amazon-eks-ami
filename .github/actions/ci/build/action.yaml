@@ -21,7 +21,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
       with:
         ref: ${{ inputs.git_sha }}
     - id: build
@@ -31,7 +31,7 @@ runs:
         AMI_NAME="amazon-eks-node-${{ inputs.os_distro }}-${{ inputs.k8s_version }}-${{ inputs.build_id }}"
         make k8s=${{ inputs.k8s_version }} os_distro=${{ inputs.os_distro }} ami_name=${AMI_NAME} ${{ inputs.additional_arguments }}
         echo "ami_id=$(jq -r .builds[0].artifact_id "${AMI_NAME}-manifest.json" | cut -d ':' -f 2)" >> $GITHUB_OUTPUT
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # 4.3.3
       with:
-        name: version-info
+        name: version-info-${{ inputs.k8s_version }}-${{ inputs.os_distro }}
         path: "*-version-info.json"

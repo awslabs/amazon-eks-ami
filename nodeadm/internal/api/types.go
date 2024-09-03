@@ -78,10 +78,8 @@ type KubeletOptions struct {
 type InlineDocument map[string]runtime.RawExtension
 
 type ContainerdOptions struct {
-	// Config is an inline containerd config toml document that can be provided
-	// by the user to override default generated configurations
-	// https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md
-	Config string `json:"config,omitempty"`
+	Config          string         `json:"config,omitempty"`
+	BaseRuntimeSpec InlineDocument `json:"baseRuntimeSpec,omitempty"`
 }
 
 type IPFamily string

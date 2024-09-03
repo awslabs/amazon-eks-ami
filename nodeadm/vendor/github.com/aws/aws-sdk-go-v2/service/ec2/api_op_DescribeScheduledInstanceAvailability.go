@@ -6,19 +6,20 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Finds available schedules that meet the specified criteria. You can search for
-// an available schedule no more than 3 months in advance. You must meet the
-// minimum required duration of 1,200 hours per year. For example, the minimum
-// daily schedule is 4 hours, the minimum weekly schedule is 24 hours, and the
-// minimum monthly schedule is 100 hours. After you find a schedule that meets your
-// needs, call PurchaseScheduledInstances to purchase Scheduled Instances with
-// that schedule.
+// Finds available schedules that meet the specified criteria.
+//
+// You can search for an available schedule no more than 3 months in advance. You
+// must meet the minimum required duration of 1,200 hours per year. For example,
+// the minimum daily schedule is 4 hours, the minimum weekly schedule is 24 hours,
+// and the minimum monthly schedule is 100 hours.
+//
+// After you find a schedule that meets your needs, call PurchaseScheduledInstances to purchase Scheduled
+// Instances with that schedule.
 func (c *Client) DescribeScheduledInstanceAvailability(ctx context.Context, params *DescribeScheduledInstanceAvailabilityInput, optFns ...func(*Options)) (*DescribeScheduledInstanceAvailabilityOutput, error) {
 	if params == nil {
 		params = &DescribeScheduledInstanceAvailabilityInput{}
@@ -54,8 +55,11 @@ type DescribeScheduledInstanceAvailabilityInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - availability-zone - The Availability Zone (for example, us-west-2a ).
+	//
 	//   - instance-type - The instance type (for example, c4.large ).
+	//
 	//   - platform - The platform ( Linux/UNIX or Windows ).
 	Filters []types.Filter
 
@@ -118,25 +122,25 @@ func (c *Client) addOperationDescribeScheduledInstanceAvailabilityMiddlewares(st
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -151,13 +155,19 @@ func (c *Client) addOperationDescribeScheduledInstanceAvailabilityMiddlewares(st
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDescribeScheduledInstanceAvailabilityValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeScheduledInstanceAvailability(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -174,14 +184,6 @@ func (c *Client) addOperationDescribeScheduledInstanceAvailabilityMiddlewares(st
 	}
 	return nil
 }
-
-// DescribeScheduledInstanceAvailabilityAPIClient is a client that implements the
-// DescribeScheduledInstanceAvailability operation.
-type DescribeScheduledInstanceAvailabilityAPIClient interface {
-	DescribeScheduledInstanceAvailability(context.Context, *DescribeScheduledInstanceAvailabilityInput, ...func(*Options)) (*DescribeScheduledInstanceAvailabilityOutput, error)
-}
-
-var _ DescribeScheduledInstanceAvailabilityAPIClient = (*Client)(nil)
 
 // DescribeScheduledInstanceAvailabilityPaginatorOptions is the paginator options
 // for DescribeScheduledInstanceAvailability
@@ -251,6 +253,9 @@ func (p *DescribeScheduledInstanceAvailabilityPaginator) NextPage(ctx context.Co
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeScheduledInstanceAvailability(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -269,6 +274,14 @@ func (p *DescribeScheduledInstanceAvailabilityPaginator) NextPage(ctx context.Co
 
 	return result, nil
 }
+
+// DescribeScheduledInstanceAvailabilityAPIClient is a client that implements the
+// DescribeScheduledInstanceAvailability operation.
+type DescribeScheduledInstanceAvailabilityAPIClient interface {
+	DescribeScheduledInstanceAvailability(context.Context, *DescribeScheduledInstanceAvailabilityInput, ...func(*Options)) (*DescribeScheduledInstanceAvailabilityOutput, error)
+}
+
+var _ DescribeScheduledInstanceAvailabilityAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeScheduledInstanceAvailability(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

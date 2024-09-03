@@ -1,11 +1,15 @@
 version: 2.1
 
+executors:
+  packer:
+    docker:
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0
+
 # workflow jobs definition
 jobs:
   prepare_env:
     # job to prepare build environment
-    docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
+    executor: packer
     working_directory: ~/aws_ecr_ami
     steps:
       - checkout:
@@ -15,10 +19,10 @@ jobs:
           paths:
             - aws_ecr_ami
   build:
-    docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.9.5
+    executor: packer
     environment:
-      K8S_VERSION: 1.25
+      K8S_VERSION: 1.26
+      os_distro: "al2023"
     steps:
       - attach_workspace:
             at: .
@@ -32,6 +36,9 @@ jobs:
       - run:
           name: Install aws cli
           command: apk add aws-cli
+      - run:
+          name: Install dependency for packer
+          command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
       - run:
           name: Packer validate and build AMI
           # AWS sometimes take really long to finish ami build.

@@ -20,7 +20,7 @@ _Appears in:_
 | `name` _string_ | Name is the name of your EKS cluster |
 | `apiServerEndpoint` _string_ | APIServerEndpoint is the URL of your EKS cluster's kube-apiserver. |
 | `certificateAuthority` _[byte](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#byte-v1-meta) array_ | CertificateAuthority is a base64-encoded string of your cluster's certificate authority chain. |
-| `cidr` _string_ | CIDR is your cluster's Pod IP CIDR. This value is used to infer your cluster's DNS address. |
+| `cidr` _string_ | CIDR is your cluster's service CIDR block. This value is used to infer your cluster's DNS address. |
 | `enableOutpost` _boolean_ | EnableOutpost determines how your node is configured when running on an AWS Outpost. |
 | `id` _string_ | ID is an identifier for your cluster; this is only used when your node is running on an AWS Outpost. |
 
@@ -33,7 +33,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `config` _string_ | Config is inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be [imported](https://github.com/containerd/containerd/blob/32169d591dbc6133ef7411329b29d0c0433f8c4d/docs/man/containerd-config.toml.5.md?plain=1#L146-L154) by the default configuration file. |
+| `config` _string_ | Config is an inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md) that will be merged with the defaults. |
+| `baseRuntimeSpec` _object (keys:string, values:RawExtension)_ | BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based. The provided spec will be merged with the default spec; so that a partial spec may be provided. For more information, see: https://github.com/opencontainers/runtime-spec |
 
 #### Feature
 
@@ -67,8 +68,8 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `config` _object (keys:string, values:RawExtension)_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1/) that will be merged with the defaults. |
-| `flags` _string array_ | Flags are [command-line `kubelet`` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). that will be appended to the defaults. |
+| `config` _object (keys:string, values:RawExtension)_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/) that will be merged with the defaults. |
+| `flags` _string array_ | Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). that will be appended to the defaults. |
 
 #### LocalStorageOptions
 
