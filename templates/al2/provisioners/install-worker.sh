@@ -379,6 +379,11 @@ fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+# ecr-credential-provider has support for public.ecr.aws in 1.27+
+if vercmp "${KUBERNETES_VERSION}" gteq "1.27.0"; then
+  ECR_CRED_PROVIDER_CONFIG_WITH_PUBLIC=$(cat $WORKING_DIR/ecr-credential-provider-config.json | jq '.providers[0].matchImages += ["public.ecr.aws"]')
+  echo "${ECR_CRED_PROVIDER_CONFIG_WITH_PUBLIC}" > $WORKING_DIR/ecr-credential-provider-config.json
+fi
 sudo mv $WORKING_DIR/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 
 ################################################################################
