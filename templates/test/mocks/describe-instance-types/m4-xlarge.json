@@ -1,6 +1,26 @@
 {
     "Hypervisor": "xen",
-    "EniCount": 4,
-    "PodsPerEniCount": 15,
+    "NetworkInfo": {
+        "NetworkPerformance": "High",
+        "MaximumNetworkInterfaces": 4,
+        "MaximumNetworkCards": 1,
+        "DefaultNetworkCardIndex": 0,
+        "NetworkCards": [
+            {
+                "NetworkCardIndex": 0,
+                "NetworkPerformance": "High",
+                "MaximumNetworkInterfaces": 4,
+                "BaselineBandwidthInGbps": 0.75,
+                "PeakBandwidthInGbps": 2.8
+            }
+        ],
+        "Ipv4AddressesPerInterface": 15,
+        "Ipv6AddressesPerInterface": 15,
+        "Ipv6Supported": true,
+        "EnaSupport": "unsupported",
+        "EfaSupported": false,
+        "EncryptionInTransitSupported": false,
+        "EnaSrdSupported": false
+    },
     "CpuCount": 4
 }

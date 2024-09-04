@@ -282,6 +282,14 @@ g6.48xlarge 737
 g6.4xlarge 234
 g6.8xlarge 234
 g6.xlarge 58
+g6e.12xlarge 292
+g6e.16xlarge 737
+g6e.24xlarge 492
+g6e.2xlarge 58
+g6e.48xlarge 492
+g6e.4xlarge 234
+g6e.8xlarge 234
+g6e.xlarge 58
 gr6.4xlarge 234
 gr6.8xlarge 234
 h1.16xlarge 394

@@ -116,15 +116,16 @@ if [[ "$CNI_MAJOR_VERSION" -gt 1 ]] || ([[ "$CNI_MAJOR_VERSION" = 1 ]] && [[ "$C
   PREFIX_DELEGATION_SUPPORTED=true
 fi
 
-DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type "${INSTANCE_TYPE}" --query 'InstanceTypes[0].{Hypervisor: Hypervisor, EniCount: NetworkInfo.MaximumNetworkInterfaces, PodsPerEniCount: NetworkInfo.Ipv4AddressesPerInterface, CpuCount: VCpuInfo.DefaultVCpus}' --output json)
-
+DESCRIBE_INSTANCES_RESULT=$(aws ec2 describe-instance-types --instance-type "${INSTANCE_TYPE}" --query 'InstanceTypes[0].{Hypervisor: Hypervisor, NetworkInfo: NetworkInfo, CpuCount: VCpuInfo.DefaultVCpus}' --output json)
 HYPERVISOR_TYPE=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.Hypervisor')
 IS_NITRO=false
 if [[ "$HYPERVISOR_TYPE" == "nitro" ]]; then
   IS_NITRO=true
 fi
-INSTANCE_MAX_ENIS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.EniCount')
-INSTANCE_MAX_ENIS_IPS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.PodsPerEniCount')
+# Only one network card is used for pods, the default network card which is usually the network card 0
+DEFAULT_NETWORK_CARD_INDEX=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.NetworkInfo.DefaultNetworkCardIndex')
+INSTANCE_MAX_ENIS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r ".NetworkInfo.NetworkCards[$DEFAULT_NETWORK_CARD_INDEX].MaximumNetworkInterfaces")
+INSTANCE_MAX_ENIS_IPS=$(echo $DESCRIBE_INSTANCES_RESULT | jq -r '.NetworkInfo.Ipv4AddressesPerInterface')
 
 if [ -z "$CNI_MAX_ENI" ]; then
   enis_for_pods=$INSTANCE_MAX_ENIS
