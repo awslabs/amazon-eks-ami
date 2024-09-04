@@ -244,3 +244,7 @@ sudo sed -i \
 # https://github.com/containerd/containerd/issues/8197
 # this was fixed in 1.2.x of libcni but containerd < 2.x are using libcni 1.1.x
 sudo systemctl enable cni-cache-reset
+
+# enabling service that will configure ip addresses and routes for the non primary interfaces
+# in the case multiple network cards exist on the instance.
+sudo systemctl enable configure-multicard-interfaces

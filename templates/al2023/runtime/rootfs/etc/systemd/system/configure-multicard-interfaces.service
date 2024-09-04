@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure multicard interfaces
+# we wait for nodeadm to add the primary interface drop-in files
+# so that the rest of the interfaces are unmanaged by systemd-network
+Requires=nodeadm-run.service
+After=nodeadm-run.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/configure-multicard-interfaces.sh
+
+[Install]
+WantedBy=multi-user.target
