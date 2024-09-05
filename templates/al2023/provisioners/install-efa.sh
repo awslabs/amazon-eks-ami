@@ -20,6 +20,10 @@ if [ ${PARTITION} == "aws-iso" ]; then
   EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.c2s.ic.gov"
 elif [ ${PARTITION} == "aws-iso-b" ]; then
   EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.sc2s.sgov.gov"
+elif [ ${PARTITION} == "aws-iso-e" ]; then
+  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.cloud.adc-e.uk"
+elif [ ${PARTITION} == "aws-iso-f" ]; then
+  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.csp.hci.ic.gov"
 fi
 
 mkdir -p /tmp/efa-installer
