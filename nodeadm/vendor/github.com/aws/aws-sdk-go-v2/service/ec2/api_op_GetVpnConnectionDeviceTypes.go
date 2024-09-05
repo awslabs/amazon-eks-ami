@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -14,9 +13,10 @@ import (
 
 // Obtain a list of customer gateway devices for which sample configuration files
 // can be provided. The request has no additional parameters. You can also see the
-// list of device types with sample configuration files available under Your
-// customer gateway device (https://docs.aws.amazon.com/vpn/latest/s2svpn/your-cgw.html)
-// in the Amazon Web Services Site-to-Site VPN User Guide.
+// list of device types with sample configuration files available under [Your customer gateway device]in the
+// Amazon Web Services Site-to-Site VPN User Guide.
+//
+// [Your customer gateway device]: https://docs.aws.amazon.com/vpn/latest/s2svpn/your-cgw.html
 func (c *Client) GetVpnConnectionDeviceTypes(ctx context.Context, params *GetVpnConnectionDeviceTypesInput, optFns ...func(*Options)) (*GetVpnConnectionDeviceTypesOutput, error) {
 	if params == nil {
 		params = &GetVpnConnectionDeviceTypesInput{}
@@ -99,25 +99,25 @@ func (c *Client) addOperationGetVpnConnectionDeviceTypesMiddlewares(stack *middl
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -132,10 +132,16 @@ func (c *Client) addOperationGetVpnConnectionDeviceTypesMiddlewares(stack *middl
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetVpnConnectionDeviceTypes(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -152,14 +158,6 @@ func (c *Client) addOperationGetVpnConnectionDeviceTypesMiddlewares(stack *middl
 	}
 	return nil
 }
-
-// GetVpnConnectionDeviceTypesAPIClient is a client that implements the
-// GetVpnConnectionDeviceTypes operation.
-type GetVpnConnectionDeviceTypesAPIClient interface {
-	GetVpnConnectionDeviceTypes(context.Context, *GetVpnConnectionDeviceTypesInput, ...func(*Options)) (*GetVpnConnectionDeviceTypesOutput, error)
-}
-
-var _ GetVpnConnectionDeviceTypesAPIClient = (*Client)(nil)
 
 // GetVpnConnectionDeviceTypesPaginatorOptions is the paginator options for
 // GetVpnConnectionDeviceTypes
@@ -233,6 +231,9 @@ func (p *GetVpnConnectionDeviceTypesPaginator) NextPage(ctx context.Context, opt
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetVpnConnectionDeviceTypes(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -251,6 +252,14 @@ func (p *GetVpnConnectionDeviceTypesPaginator) NextPage(ctx context.Context, opt
 
 	return result, nil
 }
+
+// GetVpnConnectionDeviceTypesAPIClient is a client that implements the
+// GetVpnConnectionDeviceTypes operation.
+type GetVpnConnectionDeviceTypesAPIClient interface {
+	GetVpnConnectionDeviceTypes(context.Context, *GetVpnConnectionDeviceTypesInput, ...func(*Options)) (*GetVpnConnectionDeviceTypesOutput, error)
+}
+
+var _ GetVpnConnectionDeviceTypesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetVpnConnectionDeviceTypes(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

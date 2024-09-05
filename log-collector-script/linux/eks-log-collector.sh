@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.7"
+readonly PROGRAM_VERSION="0.7.8"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -63,6 +63,7 @@ COMMON_DIRECTORIES=(
   kubelet       # eks
   nodeadm       # eks
   cni           # eks
+  gpu           # eks
 )
 
 COMMON_LOGS=(
@@ -282,10 +283,12 @@ collect() {
   get_networking_info
   get_cni_config
   get_cni_configuration_variables
+  get_network_policy_ebpf_info
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
   get_io_throttled_processes
+  get_nvidia_bug_report
 }
 
 pack() {
@@ -311,6 +314,7 @@ get_mounts_info() {
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
   vgs > "${COLLECT_DIR}"/storage/vgs.txt
+  cp --force /etc/fstab "${COLLECT_DIR}"/storage/fstab.txt
   mount -t xfs | awk '{print $1}' | xargs -I{} -- sh -c "xfs_info {}; xfs_db -r -c 'freesp -s' {}" > "${COLLECT_DIR}"/storage/xfs.txt
   mount | grep ^overlay | sed 's/.*upperdir=//' | sed 's/,.*//' | xargs -n 1 timeout 75 du -sh | grep -v ^0 > "${COLLECT_DIR}"/storage/pod_local_storage.txt
   ok
@@ -539,6 +543,18 @@ get_sysctls_info() {
   ok
 }
 
+get_network_policy_ebpf_info() {
+  try "collect network policy ebpf loaded data"
+  echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
+  LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
+
+  for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+    echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+    /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+  done
+  ok
+}
+
 get_networking_info() {
   try "collect networking infomation"
 
@@ -680,6 +696,16 @@ get_system_services() {
   timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
   timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
 
+  # collect pids which have large environments
+  echo -e "PID\tCount" > "${COLLECT_DIR}/system/large_environments.txt"
+  for i in /proc/*/environ; do
+    ENV_COUNT=$(tr '\0' '\n' < "$i" | grep -cv '^$')
+    if ((ENV_COUNT > 1000)); then
+      PID=$(echo "$i" | sed 's#/proc/##' | sed 's#/environ##')
+      echo -e "${PID}\t${ENV_COUNT}" >> "${COLLECT_DIR}/system/large_environments.txt"
+    fi
+  done
+
   ok
 }
 
@@ -769,6 +795,16 @@ get_io_throttled_processes() {
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
   command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  ok
+}
+
+get_nvidia_bug_report() {
+  try "Collect Nvidia Bug report"
+  if ! command -v nvidia-bug-report.sh &> /dev/null; then
+    echo "No Nvidia drivers found, nothing to do."
+  else
+    timeout 75 nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null
+  fi
   ok
 }
 

@@ -3,13 +3,16 @@ package ecr
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 // Returns the base64 encoded authorization token string for ECR of the format "AWS:XXXXX"
@@ -19,7 +22,11 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 		return "", err
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
-	token, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+	var token *ecr.GetAuthorizationTokenOutput
+	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
+		return err
+	})
 	if err != nil {
 		return "", err
 	}
@@ -43,10 +50,11 @@ func GetEKSRegistry(region string) (ECRRegistry, error) {
 	}
 	if fipsInstalled && fipsEnabled {
 		fipsRegistry := getRegistry(account, "ecr-fips", region, servicesDomain)
-		if addresses, err := net.LookupHost(fipsRegistry); err != nil {
-			return "", err
-		} else if len(addresses) > 0 {
+		addresses, err := net.LookupHost(fipsRegistry)
+		if err == nil && len(addresses) > 0 {
 			return ECRRegistry(fipsRegistry), nil
+		} else {
+			zap.L().Info("Fail to look up Fips registry for requested region, fall back to default", zap.String("fipsRegistry", fipsRegistry))
 		}
 	}
 	return ECRRegistry(getRegistry(account, "ecr", region, servicesDomain)), nil
@@ -95,6 +103,7 @@ var accountsByRegion = map[string]string{
 	"us-iso-west-1":  "608367168043",
 	"us-iso-east-1":  "725322719131",
 	"us-isob-east-1": "187977181151",
+	"eu-isoe-west-1": "249663109785",
 	"af-south-1":     "877085696533",
 	"ap-southeast-3": "296578399912",
 	"me-central-1":   "759879836304",
@@ -105,6 +114,7 @@ var accountsByRegion = map[string]string{
 	"ap-southeast-4": "491585149902",
 	"il-central-1":   "066635153087",
 	"ca-west-1":      "761377655185",
+	"ap-southeast-5": "151610086707",
 }
 
 // getEKSRegistryCoordinates returns an AWS region and account ID for the default EKS ECR container image registry
@@ -121,6 +131,8 @@ func getEKSRegistryCoordinates(region string) (string, string) {
 		return "725322719131", "us-iso-east-1"
 	} else if strings.HasPrefix(region, "us-isob-") {
 		return "187977181151", "us-isob-east-1"
+	} else if strings.HasPrefix(region, "eu-isoe-") {
+		return "249663109785", "eu-isoe-west-1"
 	}
 	return "602401143452", "us-west-2"
 }
