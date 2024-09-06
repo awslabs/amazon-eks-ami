@@ -10,7 +10,7 @@ fi
 
 PARTITION=$(imds "/latest/meta-data/services/partition")
 
-if [ "$PARTITION" == "aws-iso" ] || [ "$PARTITION" == "aws-iso-b" ]; then
+if [[ "$PARTITION" =~ ^aws-iso(-[bef])?$ ]]; then
   echo "Neuron repository not vailable in isolated regions"
   exit 1
 fi
