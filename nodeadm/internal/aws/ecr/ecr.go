@@ -3,6 +3,7 @@ package ecr
 import (
 	"context"
 	"fmt"
+	"go.uber.org/zap"
 	"net"
 	"strings"
 	"time"
@@ -49,10 +50,11 @@ func GetEKSRegistry(region string) (ECRRegistry, error) {
 	}
 	if fipsInstalled && fipsEnabled {
 		fipsRegistry := getRegistry(account, "ecr-fips", region, servicesDomain)
-		if addresses, err := net.LookupHost(fipsRegistry); err != nil {
-			return "", err
-		} else if len(addresses) > 0 {
+		addresses, err := net.LookupHost(fipsRegistry)
+		if err == nil && len(addresses) > 0 {
 			return ECRRegistry(fipsRegistry), nil
+		} else {
+			zap.L().Info("Fail to look up Fips registry for requested region, fall back to default", zap.String("fipsRegistry", fipsRegistry))
 		}
 	}
 	return ECRRegistry(getRegistry(account, "ecr", region, servicesDomain)), nil
@@ -112,6 +114,7 @@ var accountsByRegion = map[string]string{
 	"ap-southeast-4": "491585149902",
 	"il-central-1":   "066635153087",
 	"ca-west-1":      "761377655185",
+	"ap-southeast-5": "151610086707",
 }
 
 // getEKSRegistryCoordinates returns an AWS region and account ID for the default EKS ECR container image registry

@@ -1,6 +1,7 @@
 {
   "_comment": "All template variables are enumerated here; and most variables have a default value defined in a variables.json for each kubernetes minor version",
   "variables": {
+    "enable_accelerator": null,
     "ami_component_description": null,
     "ami_description": null,
     "ami_name": null,
@@ -20,11 +21,13 @@
     "encrypted": null,
     "hardened_image": null,
     "iam_instance_profile": null,
+    "enable_efa": null,
     "instance_type": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
+    "nvidia_driver_major_version": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -80,7 +83,7 @@
       ],
       "aws_polling": {
         "delay_seconds": 30,
-        "max_attempts": 90
+        "max_attempts": 480
       },
       "ami_regions": "{{user `ami_regions`}}",
       "ssh_username": "{{user `ssh_username`}}",
@@ -120,13 +123,19 @@
         "mkdir -p {{user `working_dir`}}/rootfs",
         "mkdir -p {{user `working_dir`}}/shared",
         "mkdir -p {{user `working_dir`}}/log-collector-script",
-        "mkdir -p {{user `working_dir`}}/nodeadm"
+        "mkdir -p {{user `working_dir`}}/nodeadm",
+        "mkdir -p {{user `working_dir`}}/gpu"
       ]
     },
     {
       "type": "file",
       "source": "{{template_dir}}/../shared/runtime/",
       "destination": "{{user `working_dir`}}/shared"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/runtime/gpu/",
+      "destination": "{{user `working_dir`}}/gpu"
     },
     {
       "type": "file",
@@ -160,7 +169,8 @@
       "type": "shell",
       "inline": [
         "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
-        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/"
+        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/",
+        "sudo chmod -R a+x {{user `working_dir`}}/gpu/*"
       ]
     },
     {
@@ -169,6 +179,14 @@
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/provisioners/limit-c-states.sh",
+      "environment_vars": [
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
@@ -203,6 +221,35 @@
       "script": "{{template_dir}}/provisioners/hardened-images.sh",
       "environment_vars": [
         "HARDENED_IMAGE={{user `hardened_image`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
+        "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-efa.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {

@@ -239,3 +239,8 @@ sudo chown -R root:root /etc/eks
 sudo sed -i \
   's/ - package-update-upgrade-install/# Removed so that nodes do not have version skew based on when the node was started.\n# - package-update-upgrade-install/' \
   /etc/cloud/cloud.cfg
+
+# the CNI results cache is not valid across reboots, and errant files can prevent cleanup of pod sandboxes
+# https://github.com/containerd/containerd/issues/8197
+# this was fixed in 1.2.x of libcni but containerd < 2.x are using libcni 1.1.x
+sudo systemctl enable cni-cache-reset
