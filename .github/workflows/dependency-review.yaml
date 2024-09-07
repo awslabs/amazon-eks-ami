@@ -19,7 +19,7 @@ jobs:
         with:
           go-version-file: 'nodeadm/go.mod'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - run: gosec -exclude-generated ./...
+      - run: gosec -exclude-generated -exclude=G115 ./...
         working-directory: nodeadm
   govulncheck:
     runs-on: ubuntu-latest

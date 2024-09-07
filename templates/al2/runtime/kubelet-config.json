@@ -26,8 +26,10 @@
   "readOnlyPort": 0,
   "cgroupDriver": "cgroupfs",
   "cgroupRoot": "/",
+  "failSwapOn": false,
   "featureGates": {
-    "RotateKubeletServerCertificate": true
+    "RotateKubeletServerCertificate": true,
+    "NodeSwap": false
   },
   "protectKernelDefaults": true,
   "serializeImagePulls": false,
