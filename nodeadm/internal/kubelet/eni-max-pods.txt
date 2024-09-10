@@ -567,6 +567,7 @@ p3dn.24xlarge 737
 p4d.24xlarge 737
 p4de.24xlarge 737
 p5.48xlarge 100
+p5e.48xlarge 100
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
