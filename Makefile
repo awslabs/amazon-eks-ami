@@ -46,7 +46,7 @@ else ifeq ($(aws_region), us-gov-west-1)
 endif
 
 # default to the latest supported Kubernetes version
-k8s=1.29
+k8s=1.28
 
 .PHONY: build
 build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI

@@ -1,13 +1,5 @@
 # Amazon EKS AMI Build Specification
 
-## ⚠️ The default branch of this repository is changing!
-
-Development will continue on `main`. The default branch of this repository will be changed to `main` on **February 29, 2024**. The `master` branch will be deleted on **March 30, 2024**.
-
-This change coincides with a reorganization of the project sources. You may continue using the `master` branch as you update your downstream dependencies, but you'll need to explicitly check out the `master` branch after February 29, 2024.
-
----
-
 This repository contains resources and configuration scripts for building a
 custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
 the same configuration that Amazon EKS uses to create the official Amazon
