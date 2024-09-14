@@ -66,7 +66,6 @@ cache_container_images=true make 1.23
 When container image caching is enabled, the following images are cached:
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-eksbuild.<BUILD_VERSION>
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/kube-proxy:<default and latest>-minimal-eksbuild.<BUILD_VERSION>
- - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/eks/pause:3.5
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni-init:<default and latest>
  - 602401143452.dkr.ecr.<AWS_REGION>.amazonaws.com/amazon-k8s-cni:<default and latest>
 
@@ -105,7 +104,7 @@ echo "$(jq ".registryPullQPS=20 | .registryBurst=40" /etc/kubernetes/kubelet/kub
 There are a couple of important caveats here:
 
 1. If you update the `kubelet` config file after `kubelet` has already started (i.e. `bootstrap.sh` already ran), you'll need to restart `kubelet` to pick up the latest configuration.
-2. [bootstrap.sh](https://github.com/awslabs/amazon-eks-ami/blob/main/src/runtime/bootstrap.sh) does modify a few fields, like `kubeReserved` and `evictionHard`, so you'd need to modify the config after the bootstrap script is run and restart `kubelet` to overwrite those properties.
+2. [bootstrap.sh](https://github.com/awslabs/amazon-eks-ami/blob/main/templates/al2/runtime/bootstrap.sh) does modify a few fields, like `kubeReserved` and `evictionHard`, so you'd need to modify the config after the bootstrap script is run and restart `kubelet` to overwrite those properties.
 
 **View active kubelet config**
 

@@ -38,6 +38,8 @@
 #
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI
 #
+# NOTE: For multi-card instance types (p5.48xlarge) the max limits is calculated only against the default network card at index (0).
+#
 a1.2xlarge 58
 a1.4xlarge 234
 a1.large 29
@@ -280,6 +282,14 @@ g6.48xlarge 737
 g6.4xlarge 234
 g6.8xlarge 234
 g6.xlarge 58
+g6e.12xlarge 292
+g6e.16xlarge 737
+g6e.24xlarge 492
+g6e.2xlarge 58
+g6e.48xlarge 492
+g6e.4xlarge 234
+g6e.8xlarge 234
+g6e.xlarge 58
 gr6.4xlarge 234
 gr6.8xlarge 234
 h1.16xlarge 394
@@ -557,6 +567,7 @@ p3dn.24xlarge 737
 p4d.24xlarge 737
 p4de.24xlarge 737
 p5.48xlarge 100
+p5e.48xlarge 100
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
@@ -749,6 +760,18 @@ r7iz.large 29
 r7iz.metal-16xl 737
 r7iz.metal-32xl 737
 r7iz.xlarge 58
+r8g.12xlarge 234
+r8g.16xlarge 737
+r8g.24xlarge 737
+r8g.2xlarge 58
+r8g.48xlarge 737
+r8g.4xlarge 234
+r8g.8xlarge 234
+r8g.large 29
+r8g.medium 8
+r8g.metal-24xl 737
+r8g.metal-48xl 737
+r8g.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35

@@ -16,7 +16,7 @@ hack/mkdocs.sh serve
 By default, the maximum number of pods able to be scheduled on a node is based off of the number of ENIs
 available, which is determined by the instance type. Larger instances generally have more ENIs. The
 number of ENIs limits how many IPV4 addresses are available on an instance, and we need one IP address
-per pod. You can [see this file](https://github.com/aws/amazon-vpc-cni-k8s/blob/main/scripts/gen_vpc_ip_limits.go)
+per pod. You can [see this file](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/scripts/gen_vpc_ip_limits.go)
 for the code that calculates the max pods for more information.
 
 As an optimization, the default value for all known instance types are available in a resource file

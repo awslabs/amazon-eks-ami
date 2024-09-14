@@ -2,7 +2,7 @@
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
 After=containerd.service
-Requires=containerd.service
+Wants=containerd.service
 
 [Service]
 Slice=runtime.slice

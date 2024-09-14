@@ -1,3 +1,44 @@
+# v1.27.30 (2024-08-23)
+
+* **Bug Fix**: Don't fail credentials unit tests if credentials are found on a file
+
+# v1.27.29 (2024-08-22)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.28 (2024-08-15)
+
+* **Dependency Update**: Bump minimum Go version to 1.21.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.27 (2024-07-18)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.26 (2024-07-10.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.25 (2024-07-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.24 (2024-07-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.23 (2024-06-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.22 (2024-06-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.27.21 (2024-06-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.27.20 (2024-06-18)
 
 * **Dependency Update**: Updated to the latest SDK module versions

@@ -63,6 +63,7 @@ COMMON_DIRECTORIES=(
   kubelet       # eks
   nodeadm       # eks
   cni           # eks
+  gpu           # eks
 )
 
 COMMON_LOGS=(
@@ -287,6 +288,8 @@ collect() {
   get_sandboxImage_info
   get_cpu_throttled_processes
   get_io_throttled_processes
+  get_reboot_history
+  get_nvidia_bug_report
 }
 
 pack() {
@@ -472,6 +475,8 @@ get_k8s_info() {
 
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
+
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/kubelet-config.json "${COLLECT_DIR}"/kubelet/kubelet-config.json 2> /dev/null
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
@@ -793,6 +798,22 @@ get_io_throttled_processes() {
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
   command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  ok
+}
+
+get_reboot_history() {
+  try "Collect reboot history"
+  timeout 75 last reboot > "${COLLECT_DIR}"/system/last_reboot.txt 2>&1 || echo -e "\tTimed out, ignoring \"reboot history output \" "
+  ok
+}
+
+get_nvidia_bug_report() {
+  try "Collect Nvidia Bug report"
+  if ! command -v nvidia-bug-report.sh &> /dev/null; then
+    echo "No Nvidia drivers found, nothing to do."
+  else
+    timeout 75 nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null
+  fi
   ok
 }
 

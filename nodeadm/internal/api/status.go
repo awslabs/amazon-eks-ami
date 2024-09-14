@@ -6,9 +6,9 @@ import (
 	"io"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go/aws"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
 )
 
@@ -59,7 +59,7 @@ func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	privateDNSName := aws.StringValue(out.Reservations[0].Instances[0].PrivateDnsName)
+	privateDNSName := aws.ToString(out.Reservations[0].Instances[0].PrivateDnsName)
 	return privateDNSName, nil
 }
 
@@ -67,5 +67,5 @@ func privateDNSNameAvailable(out *ec2.DescribeInstancesOutput) (bool, error) {
 	if out == nil || len(out.Reservations) != 1 || len(out.Reservations[0].Instances) != 1 {
 		return false, fmt.Errorf("reservation or instance not found")
 	}
-	return aws.StringValue(out.Reservations[0].Instances[0].PrivateDnsName) != "", nil
+	return aws.ToString(out.Reservations[0].Instances[0].PrivateDnsName) != "", nil
 }
