@@ -39,7 +39,7 @@ func (r *ECRRegistry) GetSandboxImage() string {
 
 func GetEKSRegistry(region string) (ECRRegistry, error) {
 	account, region := getEKSRegistryCoordinates(region)
-	servicesDomain, err := imds.GetProperty(imds.ServicesDomain)
+	servicesDomain, err := imds.GetProperty(context.TODO(), imds.ServicesDomain)
 	if err != nil {
 		return "", err
 	}
