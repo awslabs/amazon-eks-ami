@@ -2,12 +2,9 @@ package kubelet
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const KubeletDaemonName = "kubelet"
@@ -50,19 +47,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 }
 
 func (k *kubelet) EnsureRunning(ctx context.Context) error {
-	if err := k.daemonManager.StartDaemon(KubeletDaemonName); err != nil {
-		return err
-	}
-	return util.NewRetrier(util.WithRetryAlways(), util.WithBackoffFixed(250*time.Millisecond)).Retry(ctx, func() error {
-		status, err := k.daemonManager.GetDaemonStatus(KubeletDaemonName)
-		if err != nil {
-			return err
-		}
-		if status != daemon.DaemonStatusRunning {
-			return fmt.Errorf("%s status is not %q", KubeletDaemonName, daemon.DaemonStatusRunning)
-		}
-		return nil
-	})
+	return k.daemonManager.StartDaemon(KubeletDaemonName)
 }
 
 func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {

@@ -5,7 +5,9 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/coreos/go-systemd/v22/dbus"
 )
 
@@ -33,20 +35,26 @@ func NewDaemonManager() (DaemonManager, error) {
 
 func (m *systemdDaemonManager) StartDaemon(name string) error {
 	unitName := getServiceUnitName(name)
-	_, err := m.conn.StartUnitContext(context.TODO(), unitName, ModeReplace, nil)
-	return err
+	if _, err := m.conn.StartUnitContext(context.TODO(), unitName, ModeReplace, nil); err != nil {
+		return err
+	}
+	return m.waitForStatus(context.TODO(), unitName, DaemonStatusRunning)
 }
 
 func (m *systemdDaemonManager) StopDaemon(name string) error {
 	unitName := getServiceUnitName(name)
-	_, err := m.conn.StopUnitContext(context.TODO(), unitName, ModeReplace, nil)
-	return err
+	if _, err := m.conn.StopUnitContext(context.TODO(), unitName, ModeReplace, nil); err != nil {
+		return err
+	}
+	return m.waitForStatus(context.TODO(), unitName, DaemonStatusStopped)
 }
 
 func (m *systemdDaemonManager) RestartDaemon(name string) error {
 	unitName := getServiceUnitName(name)
-	_, err := m.conn.RestartUnitContext(context.TODO(), unitName, ModeReplace, nil)
-	return err
+	if _, err := m.conn.RestartUnitContext(context.TODO(), unitName, ModeReplace, nil); err != nil {
+		return err
+	}
+	return m.waitForStatus(context.TODO(), unitName, DaemonStatusRunning)
 }
 
 func (m *systemdDaemonManager) GetDaemonStatus(name string) (DaemonStatus, error) {
@@ -101,4 +109,20 @@ func (m *systemdDaemonManager) Close() {
 
 func getServiceUnitName(name string) string {
 	return fmt.Sprintf("%s.service", name)
+}
+
+func (m *systemdDaemonManager) waitForStatus(ctx context.Context, unitName string, targetStatus DaemonStatus) error {
+	return util.NewRetrier(
+		util.WithRetryAlways(),
+		util.WithBackoffFixed(250*time.Millisecond),
+	).Retry(ctx, func() error {
+		status, err := m.GetDaemonStatus(unitName)
+		if err != nil {
+			return err
+		}
+		if status != targetStatus {
+			return fmt.Errorf("%s status is not %q", unitName, targetStatus)
+		}
+		return nil
+	})
 }
