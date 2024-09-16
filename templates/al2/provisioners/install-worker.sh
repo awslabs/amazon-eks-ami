@@ -293,6 +293,7 @@ done
 # Verify that the aws-iam-authenticator is at last v0.5.9 or greater. Otherwise, nodes will be
 # unable to join clusters due to upgrading to client.authentication.k8s.io/v1beta1
 iam_auth_version=$(sudo /usr/bin/aws-iam-authenticator version | jq -r .Version)
+iam_auth_version="${iam_auth_version#*-}"
 if vercmp "$iam_auth_version" lt "v0.5.9"; then
   # To resolve this issue, you need to update the aws-iam-authenticator binary. Using binaries distributed by EKS
   # with kubernetes_build_date 2022-10-31 or later include v0.5.10 or greater.
