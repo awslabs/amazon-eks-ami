@@ -2,8 +2,6 @@ package init
 
 import (
 	"context"
-	"os"
-	"os/signal"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -48,9 +46,6 @@ func (c *initCmd) Flaggy() *flaggy.Subcommand {
 }
 
 func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
 	log.Info("Checking user is root..")
 	root, err := cli.IsRunningAsRoot()
 	if err != nil {
@@ -131,7 +126,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Ensuring daemon is running..", nameField)
-			if err := daemon.EnsureRunning(ctx); err != nil {
+			if err := daemon.EnsureRunning(); err != nil {
 				return err
 			}
 			log.Info("Daemon is running", nameField)

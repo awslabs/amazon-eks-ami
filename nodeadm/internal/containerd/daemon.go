@@ -1,8 +1,6 @@
 package containerd
 
 import (
-	"context"
-
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 )
@@ -25,7 +23,7 @@ func (cd *containerd) Configure(c *api.NodeConfig) error {
 	return writeContainerdConfig(c)
 }
 
-func (cd *containerd) EnsureRunning(ctx context.Context) error {
+func (cd *containerd) EnsureRunning() error {
 	return cd.daemonManager.StartDaemon(ContainerdDaemonName)
 }
 

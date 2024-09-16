@@ -1,8 +1,6 @@
 package kubelet
 
 import (
-	"context"
-
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 )
@@ -46,7 +44,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func (k *kubelet) EnsureRunning(ctx context.Context) error {
+func (k *kubelet) EnsureRunning() error {
 	return k.daemonManager.StartDaemon(KubeletDaemonName)
 }
 
