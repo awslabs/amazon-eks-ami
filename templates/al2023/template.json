@@ -1,7 +1,6 @@
 {
   "_comment": "All template variables are enumerated here; and most variables have a default value defined in a variables.json for each kubernetes minor version",
   "variables": {
-    "enable_accelerator": null,
     "ami_component_description": null,
     "ami_description": null,
     "ami_name": null,
@@ -17,15 +16,17 @@
     "binary_bucket_region": null,
     "containerd_version": null,
     "creator": null,
+    "enable_accelerator": null,
+    "enable_efa": null,
     "enable_fips": null,
     "encrypted": null,
     "iam_instance_profile": null,
-    "enable_efa": null,
     "instance_type": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
+    "nodeadm_build_image": null,
     "nvidia_driver_major_version": null,
     "remote_folder": null,
     "runc_version": null,
@@ -211,6 +212,7 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
+        "BUILD_IMAGE={{user `nodeadm_build_image`}}",
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
       ]
     },
