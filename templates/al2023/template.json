@@ -86,6 +86,7 @@
         "max_attempts": 480
       },
       "ami_regions": "{{user `ami_regions`}}",
+      "iam_instance_profile": "{{user `iam_instance_profile`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
