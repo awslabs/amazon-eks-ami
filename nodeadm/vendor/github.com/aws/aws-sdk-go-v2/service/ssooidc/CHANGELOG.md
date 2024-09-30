@@ -1,3 +1,15 @@
+# v1.27.3 (2024-09-27)
+
+* No change notes available for this release.
+
+# v1.27.2 (2024-09-25)
+
+* No change notes available for this release.
+
+# v1.27.1 (2024-09-23)
+
+* No change notes available for this release.
+
 # v1.27.0 (2024-09-20)
 
 * **Feature**: Add tracing and metrics support to service clients.
