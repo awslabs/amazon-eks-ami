@@ -9,37 +9,37 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
     - run: go install mvdan.cc/sh/v3/cmd/shfmt@latest
     - run: make lint
   templates-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: make test
   nodeadm-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: cd nodeadm && make build
   nodeadm-check-generate:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: hack/nodeadm-check-generate.sh
   nodeadm-check-vendor:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: hack/nodeadm-check-vendor.sh
   nodeadm-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: cd nodeadm && make test
   nodeadm-test-e2e:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # 4.2.0
     - run: cd nodeadm && make test-e2e
