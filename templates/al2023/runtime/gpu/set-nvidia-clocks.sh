@@ -31,6 +31,8 @@ elif [[ $GPUNAME == *"L4"* ]]; then
   nvidia-smi -ac 6251,2040
 elif [[ $GPUNAME == *"L40S"* ]]; then
   nvidia-smi -ac 9001,2520
+elif [[ $GPUNAME == *"H200"* ]]; then
+  nvidia-smi -ac 3201,1980
 else
   echo "unsupported gpu"
 fi
