@@ -49,5 +49,5 @@ func (p *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decompress user data: %v", err)
 	}
-	return parseMaybeMultipart(userData)
+	return ParseMaybeMultipart(userData)
 }

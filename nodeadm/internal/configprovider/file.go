@@ -35,5 +35,5 @@ func (fcs *fileConfigProvider) Provide() (*internalapi.NodeConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseMaybeMultipart(data)
+	return ParseMaybeMultipart(data)
 }
