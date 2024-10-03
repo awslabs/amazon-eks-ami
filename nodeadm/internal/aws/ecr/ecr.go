@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.uber.org/zap"
-	"net"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -49,8 +49,8 @@ func GetEKSRegistry(region string) (ECRRegistry, error) {
 	}
 	if fipsInstalled && fipsEnabled {
 		fipsRegistry := getRegistry(account, "ecr-fips", region, servicesDomain)
-		addresses, err := net.LookupHost(fipsRegistry)
-		if err == nil && len(addresses) > 0 {
+		resp, err := http.Get(fipsRegistry)
+		if err == nil && resp.StatusCode == 401 {
 			return ECRRegistry(fipsRegistry), nil
 		} else {
 			zap.L().Info("Fail to look up Fips registry for requested region, fall back to default", zap.String("fipsRegistry", fipsRegistry))
