@@ -27,9 +27,9 @@ const (
 )
 
 type core struct {
-	Id       int   `json:"core_id"`
-	Threads  []int `json:"thread_ids"`
-	SocketID int   `json:"socket_id"`
+	Id       int      `json:"core_id"`
+	Threads  []uint64 `json:"thread_ids"`
+	SocketID int      `json:"socket_id"`
 }
 
 func init() {
@@ -168,7 +168,7 @@ func getCoresInfo(cpuDirs []string) ([]core, error) {
 		desiredCore.SocketID = physicalPackageID
 
 		if len(desiredCore.Threads) == 0 {
-			desiredCore.Threads = []int{cpuID}
+			desiredCore.Threads = []uint64{cpuID}
 		} else {
 			desiredCore.Threads = append(desiredCore.Threads, cpuID)
 		}
@@ -177,12 +177,12 @@ func getCoresInfo(cpuDirs []string) ([]core, error) {
 	return cores, nil
 }
 
-func getCPUID(str string) (int, error) {
+func getCPUID(str string) (uint64, error) {
 	matches := cpuDirRegExp.FindStringSubmatch(str)
 	if len(matches) != 2 {
 		return 0, fmt.Errorf("failed to match regexp, str: %s", str)
 	}
-	valInt, err := strconv.Atoi(matches[1])
+	valInt, err := strconv.ParseUint(matches[1], 10, 16)
 	if err != nil {
 		return 0, err
 	}
@@ -199,7 +199,7 @@ func getCoreID(cpuPath string) (string, error) {
 	return strings.TrimSpace(string(coreID)), err
 }
 
-func IsCPUOnline(cpuID int) bool {
+func IsCPUOnline(cpuID uint64) bool {
 	cpuOnlinePath, err := filepath.Abs(cpusPath + "/online")
 	if err != nil {
 		zap.L().Info("Unable to get absolute path", zap.String("absolutPath", cpusPath+"/online"))
@@ -217,7 +217,7 @@ func IsCPUOnline(cpuID int) bool {
 			zap.Error(err))
 	}
 
-	isOnline, err := isCpuOnline(cpuOnlinePath, uint16(cpuID))
+	isOnline, err := isCpuOnline(cpuOnlinePath, cpuID)
 	if err != nil {
 		zap.L().Error("Unable to get online CPUs list", zap.Error(err))
 		return false
@@ -225,7 +225,7 @@ func IsCPUOnline(cpuID int) bool {
 	return isOnline
 }
 
-func isCpuOnline(path string, cpuID uint16) (bool, error) {
+func isCpuOnline(path string, cpuID uint64) (bool, error) {
 	// #nosec G304 // This path is cpuOnlinePath from isCPUOnline
 	fileContent, err := os.ReadFile(path)
 	if err != nil {
@@ -254,7 +254,7 @@ func isCpuOnline(path string, cpuID uint16) (bool, error) {
 				return false, fmt.Errorf("invalid values in %s", path)
 			}
 			// Return true, if the CPU under consideration is in the range of online CPUs.
-			if cpuID >= uint16(min) && cpuID <= uint16(max) {
+			if cpuID >= min && cpuID <= max {
 				return true, nil
 			}
 		case 1:
@@ -262,7 +262,7 @@ func isCpuOnline(path string, cpuID uint16) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			if uint16(value) == cpuID {
+			if value == cpuID {
 				return true, nil
 			}
 		}
