@@ -2,6 +2,7 @@ package init
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -46,6 +47,8 @@ func (c *initCmd) Flaggy() *flaggy.Subcommand {
 }
 
 func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+	start := time.Now()
+
 	log.Info("Checking user is root..")
 	root, err := cli.IsRunningAsRoot()
 	if err != nil {
@@ -138,6 +141,8 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			log.Info("Finished post-launch tasks", nameField)
 		}
 	}
+
+	log.Info("done!", zap.Duration("duration", time.Since(start)))
 
 	return nil
 }
