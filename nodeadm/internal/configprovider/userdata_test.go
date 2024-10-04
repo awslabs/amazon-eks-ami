@@ -101,6 +101,8 @@ func Test_Provide(t *testing.T) {
 				"    config:",
 				"      maxPods: 150",
 				"      podsPerCore: 20",
+				"      systemReserved:",
+				"        cpu: 150m",
 				"    flags:",
 				"      - --v=5",
 				"      - --node-labels=foo=baz",
@@ -117,9 +119,10 @@ func Test_Provide(t *testing.T) {
 					},
 					Kubelet: api.KubeletOptions{
 						Config: api.InlineDocument{
-							"maxPods":     runtime.RawExtension{Raw: []byte("150")},
-							"podsPerCore": runtime.RawExtension{Raw: []byte("20")},
-							"port":        runtime.RawExtension{Raw: []byte("1010")},
+							"maxPods":        runtime.RawExtension{Raw: []byte("150")},
+							"podsPerCore":    runtime.RawExtension{Raw: []byte("20")},
+							"port":           runtime.RawExtension{Raw: []byte("1010")},
+							"systemReserved": runtime.RawExtension{Raw: []byte(`{"cpu":"150m"}`)},
 						},
 						Flags: []string{
 							"--v=2",

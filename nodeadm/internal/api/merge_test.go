@@ -95,6 +95,9 @@ func TestMerge(t *testing.T) {
 							"verbosity": 5,
 						},
 						"podsPerCore": 20,
+						"systemReserved": map[string]interface{}{
+							"cpu": "150m",
+						},
 					}),
 					Flags: []string{
 						"--node-labels=nodegroup=example",
@@ -167,6 +170,9 @@ discard_unpacked_layers = false`),
 						},
 						"maxPods":     150,
 						"podsPerCore": 20,
+						"systemReserved": map[string]interface{}{
+							"cpu": "150m",
+						},
 					}),
 					Flags: []string{
 						"--node-labels=nodegroup=example",

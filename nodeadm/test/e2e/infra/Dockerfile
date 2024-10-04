@@ -34,8 +34,6 @@ COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 #     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
 #     cidr: 10.100.0.0/16
 COPY test/e2e/infra/aemm-default-config.json /etc/aemm-default-config.json
-COPY test/e2e/infra/aemm-inf1-config.json /etc/aemm-inf1-config.json
-COPY test/e2e/infra/aemm-g5-config.json /etc/aemm-g5-config.json
 COPY test/e2e/infra/nvidia-ctk /usr/bin/nvidia-ctk
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
 COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
