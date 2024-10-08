@@ -340,9 +340,13 @@ chown root:root /etc/systemd/system/configure-clocksource.service
 systemctl daemon-reload
 systemctl enable --now configure-clocksource
 
-ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
-PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
-PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
+PAUSE_CONTAINER=localhost/kubernetes/pause:0.1.0
+# if the user provided an account, then it needs to be resolved.
+if [ -n "${PAUSE_CONTAINER_ACCOUNT:-}" ]; then
+  ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
+  PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
+  PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
+fi
 
 ### kubelet kubeconfig
 
