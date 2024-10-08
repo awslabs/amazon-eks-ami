@@ -33,10 +33,6 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 	return *authData, nil
 }
 
-func (r *ECRRegistry) GetSandboxImage() string {
-	return r.GetImageReference("eks/pause", "3.5")
-}
-
 func GetEKSRegistry(region string) (ECRRegistry, error) {
 	account, region := getEKSRegistryCoordinates(region)
 	servicesDomain, err := imds.GetProperty(context.TODO(), imds.ServicesDomain)

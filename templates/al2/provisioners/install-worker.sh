@@ -368,6 +368,21 @@ sudo mv $WORKING_DIR/max-pods-calculator.sh /etc/eks/max-pods-calculator.sh
 sudo chmod +x /etc/eks/max-pods-calculator.sh
 
 ################################################################################
+### Pause Container ############################################################
+################################################################################
+
+# pull the pause container and cache it under localhost so that the regional
+# images do not matter from now on.
+
+sudo systemctl enable containerd --now
+PAUSE_CONTAINER="${ECR_URI}/eks/pause:${PAUSE_CONTAINER_VERSION}"
+sudo ctr --namespace k8s.io content fetch ${PAUSE_CONTAINER} --user AWS:$(aws ecr get-login-password --region $BINARY_BUCKET_REGION)
+sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER} "localhost/kubernetes/pause:0.1.0"
+sudo ctr --namespace k8s.io image rm ${PAUSE_CONTAINER}
+# might not be necessary
+sudo ctr --namespace=k8s.io image label "localhost/kubernetes/pause:0.1.0" io.cri-containerd.pinned=pinned
+
+################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
