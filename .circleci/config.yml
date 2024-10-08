@@ -58,10 +58,10 @@ workflows:
             - PACKER_OPERATIONS_0
           requires:
             - prepare_env
-          filters:
-            branches:
-              only:
-                - main
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
       - build:
           name: build dev
           context:
@@ -69,7 +69,7 @@ workflows:
             - PACKER_OPERATIONS_DEV_0
           requires:
             - prepare_env
-          # filters:
-          #   branches:
-          #     only:
-          #       - dev
+          filters:
+            branches:
+              only:
+                - dev
