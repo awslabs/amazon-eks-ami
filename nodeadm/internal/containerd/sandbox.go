@@ -15,6 +15,8 @@ import (
 	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
+const PauseContainerImageRef = "localhost/kubernetes/pause:0.1.0"
+
 var containerdSandboxImageRegex = regexp.MustCompile(`sandbox_image = "(.*)"`)
 
 func cacheSandboxImage(cfg *api.NodeConfig) error {
