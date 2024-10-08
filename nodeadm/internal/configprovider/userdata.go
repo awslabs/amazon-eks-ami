@@ -1,6 +1,7 @@
 package configprovider
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/api"
@@ -22,7 +23,7 @@ type userDataProvider interface {
 type imdsUserDataProvider struct{}
 
 func (p *imdsUserDataProvider) GetUserData() ([]byte, error) {
-	return imds.GetUserData()
+	return imds.GetUserData(context.TODO())
 }
 
 type userDataConfigProvider struct {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ecr"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -146,14 +146,18 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 // perform in-place updates when allowed by the user
 func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	log.Info("Fetching instance details..")
-	imdsClient := imds.New(imds.Options{})
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(), config.WithClientLogMode(aws.LogRetries), config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-		o.Client = imdsClient
-	}))
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithClientLogMode(aws.LogRetries),
+		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
+			// Use our pre-configured IMDS client to avoid hitting common retry
+			// issues with the default config.
+			o.Client = imds.Client
+		}),
+	)
 	if err != nil {
 		return err
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, imdsClient, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
 	if err != nil {
 		return err
 	}
