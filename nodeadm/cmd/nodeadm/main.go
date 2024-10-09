@@ -6,6 +6,7 @@ import (
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/config"
 	initcmd "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/init"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/runtime"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 )
 
@@ -20,6 +21,7 @@ func main() {
 	cmds := []cli.Command{
 		config.NewConfigCommand(),
 		initcmd.NewInitCommand(),
+		runtime.NewRuntimeCommand(),
 	}
 
 	for _, cmd := range cmds {
