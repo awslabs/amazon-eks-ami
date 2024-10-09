@@ -116,8 +116,7 @@ var accountsByRegion = map[string]string{
 
 // getEKSRegistryCoordinates returns an AWS region and account ID for the default EKS ECR container image registry
 func getEKSRegistryCoordinates(region string) (string, string) {
-	inRegionRegistry, ok := accountsByRegion[region]
-	if ok {
+	if inRegionRegistry, ok := accountsByRegion[region]; ok {
 		return inRegionRegistry, region
 	}
 	if strings.HasPrefix(region, "us-gov-") {
