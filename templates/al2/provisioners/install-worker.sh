@@ -272,8 +272,13 @@ elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
 elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
   S3_DOMAIN="csp.hci.ic.gov"
 fi
+
+# TODO: start deprecating these.
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+
+S3_HTTP_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN"
+S3_URI_BASE="s3://$BINARY_BUCKET_NAME"
 
 BINARIES=(
   kubelet
@@ -290,6 +295,7 @@ for binary in ${BINARIES[*]}; do
     sudo wget $S3_URL_BASE/$binary.sha256
   fi
   sudo sha256sum -c $binary.sha256
+  sudo rm $binary.sha256
   sudo chmod +x $binary
   sudo mv $binary /usr/bin/
 done
@@ -304,31 +310,35 @@ if vercmp "$iam_auth_version" lt "v0.5.9"; then
   exit 1
 fi
 
-# Since CNI 0.7.0, all releases are done in the plugins repo.
-CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
-
 if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
+  CNI_PLUGIN_FILENAME="cni-plugins-linux-${ARCH}-${CNI_PLUGIN_VERSION}"
+  # Since CNI 0.7.0, all releases are done in the plugins repo.
   echo "Downloading CNI plugins from Github"
   wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz"
   wget "https://github.com/containernetworking/plugins/releases/download/${CNI_PLUGIN_VERSION}/${CNI_PLUGIN_FILENAME}.tgz.sha512"
   sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
   rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
+  sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
+  rm "${CNI_PLUGIN_FILENAME}.tgz"
 else
+  CNI_PLUGIN_FILENAME="cni-plugins"
+  # TODO: this will eventually become a reused structure for all binaries. once
+  # that time comes, revisit implementing this path assembly in its own helper.
+  CNI_PLUGINS_PATH="bin/cni-plugins/${CNI_PLUGIN_VERSION}/linux/${ARCH}/${CNI_PLUGIN_FILENAME}.tgz"
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
+    aws s3 cp --region $BINARY_BUCKET_REGION "${S3_URI_BASE}/${CNI_PLUGINS_PATH}" .
+    aws s3 cp --region $BINARY_BUCKET_REGION "${S3_URI_BASE}/${CNI_PLUGINS_PATH}.sha256" .
   else
     echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
-    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
-    sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
+    sudo wget "${S3_HTTP_BASE}/${CNI_PLUGINS_PATH}"
+    sudo wget "${S3_HTTP_BASE}/${CNI_PLUGINS_PATH}.sha256"
   fi
   sudo sha256sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  rm "${CNI_PLUGIN_FILENAME}.tgz.sha256"
+  sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
+  rm "${CNI_PLUGIN_FILENAME}.tgz"
 fi
-sudo tar -xvf "${CNI_PLUGIN_FILENAME}.tgz" -C /opt/cni/bin
-rm "${CNI_PLUGIN_FILENAME}.tgz"
-
-sudo rm ./*.sha256
 
 sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
