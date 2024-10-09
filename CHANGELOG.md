@@ -5,12 +5,7 @@
 # AMI Release v20240928
 <!-- Release notes generated using configuration in .github/release.yaml at bb71c25ed2b26ae0a3e93446c970342bc274a8af -->
 > **Note**
-> AWS is aware of the disclosed issues in nvidia-container-toolkit assigned CVE identifier CVE-2024-0132 relating to EKS GPU AMI (both AL2 and AL2023).
->
-> Updated Amazon EKS AMIs will be made available by October 2, 2024. As a general security best practice, we recommend that EKS customers update their configurations to launch new worker nodes from the latest AMI version. Customers using Managed node groups can upgrade their node groups by referring to the EKS documentation [1]. Please refer to the EKS documentation to replace your existing instances with your self-managing worker nodes with the new AMI version [2].
->
-> [1] https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html
-> [2] https://docs.aws.amazon.com/eks/latest/userguide/update-workers.html
+> This release includes a security patch for the vulnerabilities CVE-2024-0132 and CVE-2024-0133 in the nvidia-container-toolkit package. The patch has been applied to the Amazon EKS Accelerated Amazon Machine Image (AMI) for both Amazon Linux 2 and Amazon Linux 2023 versions.
 
 ## What's Changed
 * Fix cn build by @Issacwww in https://github.com/awslabs/amazon-eks-ami/pull/1980
