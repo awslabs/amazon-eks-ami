@@ -216,7 +216,8 @@
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "AWS_REGION={{user `aws_region`}}"
+        "AWS_REGION={{user `aws_region`}}",
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}"
       ]
     },
     {
