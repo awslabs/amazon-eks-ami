@@ -4,16 +4,20 @@ set -o nounset
 set -o errexit
 set -o pipefail
 
-PAUSE_CONTAINER=${1}
-LOCAL_REF=${2:-"localhost/kubernetes/pause:0.1.0"}
+TAG="localhost/kubernetes/pause:0.1.0"
+EXPORT_PATH=/etc/eks/pause.tar
 
-sudo systemctl start containerd
+while getopts 'i:t:e:' OPTION; do
+  case "$OPTION" in
+    i) PAUSE_CONTAINER_IMAGE="$OPTARG" ;;
+    t) TAG="$OPTARG" ;;
+    e) EXPORT_PATH="$OPTARG" ;;
+  esac
+done
 
-sudo ctr --namespace k8s.io content fetch ${PAUSE_CONTAINER} --user AWS:$(aws ecr get-login-password)
-sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER} ${LOCAL_REF}
+sudo ctr --namespace k8s.io content fetch ${PAUSE_CONTAINER_IMAGE} --user AWS:$(aws ecr get-login-password)
+sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER_IMAGE} ${TAG}
 # store the archive locally just in case so that it can be imported in the future.
-sudo ctr --namespace k8s.io image export /etc/eks/pause.tar ${LOCAL_REF}
+sudo ctr --namespace k8s.io image export ${EXPORT_PATH} ${TAG}
 # labels the image using a CRI aware key. might not be necessary
-sudo ctr --namespace=k8s.io image label ${LOCAL_REF} io.cri-containerd.pinned=pinned
-
-sudo systemctl stop containerd
+sudo ctr --namespace k8s.io image label ${TAG} io.cri-containerd.pinned=pinned
