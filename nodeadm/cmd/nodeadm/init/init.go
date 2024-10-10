@@ -11,7 +11,6 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ecr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
@@ -164,12 +163,8 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	cfg.Status.Instance = *instanceDetails
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
 	log.Info("Fetching default options...")
-	eksRegistry, err := ecr.GetEKSRegistry(instanceDetails.Region)
-	if err != nil {
-		return err
-	}
 	cfg.Status.Defaults = api.DefaultOptions{
-		SandboxImage: eksRegistry.GetSandboxImage(),
+		SandboxImage: "localhost/kubernetes/pause:0.1.0",
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil
