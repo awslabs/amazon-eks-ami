@@ -169,7 +169,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
 	log.Info("Fetching default options...")
 	cfg.Status.Defaults = api.DefaultOptions{
-		SandboxImage: containerd.PauseContainerImageRef,
+		SandboxImage: "localhost/kubernetes/pause:0.1.0",
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil
