@@ -4,8 +4,8 @@ set -o nounset
 set -o errexit
 set -o pipefail
 
-LOCAL_REF=${LOCAL_REF:-"localhost/kubernetes/pause:0.1.0"}
-PAUSE_CONTAINER=${PAUSE_CONTAINER:-$(eval "${PAUSE_CONTAINER_CMD}")}
+PAUSE_CONTAINER=${1}
+LOCAL_REF=${2:-"localhost/kubernetes/pause:0.1.0"}
 
 sudo systemctl start containerd
 

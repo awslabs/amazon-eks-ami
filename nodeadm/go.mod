@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.187.1
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.5
 	github.com/aws/smithy-go v1.22.0
-	github.com/containerd/containerd v1.7.23
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/integrii/flaggy v1.5.2
 	github.com/pelletier/go-toml/v2 v2.2.3
@@ -16,20 +15,16 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.22.0
 	k8s.io/apimachinery v0.31.2
-	k8s.io/cri-api v0.31.2
 	k8s.io/kubelet v0.31.2
 	sigs.k8s.io/controller-runtime v0.19.1
 )
 
 require (
-	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/tools v0.22.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
-	google.golang.org/grpc v1.65.0 // indirect
 	k8s.io/component-base v0.31.2 // indirect
 )
 
