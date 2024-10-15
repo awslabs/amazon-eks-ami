@@ -11,7 +11,7 @@ wait::dbus-ready
 
 mock::kubelet 1.28.0
 nodeadm init --skip run --config-source file://config.yaml
-assert::file-contains /etc/eks/kubelet/environment '--pod-infra-container-image=localhost/kubernetes/pause:0.1.0'
+assert::file-contains /etc/eks/kubelet/environment '--pod-infra-container-image=localhost/kubernetes/pause'
 
 mock::kubelet 1.29.0
 nodeadm init --skip run --config-source file://config.yaml

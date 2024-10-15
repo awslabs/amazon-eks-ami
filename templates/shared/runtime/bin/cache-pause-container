@@ -4,8 +4,8 @@ set -o nounset
 set -o errexit
 set -o pipefail
 
-TAG="localhost/kubernetes/pause:0.1.0"
-EXPORT_PATH=/etc/eks/pause.tar
+TAG="localhost/kubernetes/pause:latest"
+EXPORT_PATH="/etc/eks/pause.tar"
 
 while getopts 'i:t:e:' OPTION; do
   case "$OPTION" in
@@ -15,9 +15,13 @@ while getopts 'i:t:e:' OPTION; do
   esac
 done
 
-sudo ctr --namespace k8s.io content fetch ${PAUSE_CONTAINER_IMAGE} --user AWS:$(aws ecr get-login-password)
+# pull the sandbox using aws credentials and tag it under a different name
+sudo ctr --namespace k8s.io image pull ${PAUSE_CONTAINER_IMAGE} --user AWS:$(aws ecr get-login-password)
 sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER_IMAGE} ${TAG}
-# store the archive locally just in case so that it can be imported in the future.
-sudo ctr --namespace k8s.io image export ${EXPORT_PATH} ${TAG}
-# labels the image using a CRI aware key. might not be necessary
+# label the image with CRI aware key for pinning to keep the image from being GC'd
+# see: https://github.com/containerd/containerd/blob/0abada6251993fd1e7f6b048cad92cee9fbf9805/internal/cri/labels/labels.go#L26-L27
 sudo ctr --namespace k8s.io image label ${TAG} io.cri-containerd.pinned=pinned
+# add a label with context about the tag's source image
+sudo ctr --namespace k8s.io image label ${TAG} io.cri-containerd.source=${PAUSE_CONTAINER_IMAGE}
+# store the archive locally so that it can be imported in the future in case of issues
+sudo ctr --namespace k8s.io image export ${EXPORT_PATH} ${TAG}
