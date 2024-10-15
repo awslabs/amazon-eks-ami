@@ -117,6 +117,7 @@ jobs:
           os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           aws_region: ${{ secrets.AWS_REGION }}
+          log_bucket: ${{ secrets.CI_LOG_BUCKET }}
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest
