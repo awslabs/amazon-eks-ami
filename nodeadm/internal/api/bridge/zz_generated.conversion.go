@@ -135,7 +135,7 @@ func Convert_api_ClusterDetails_To_v1alpha1_ClusterDetails(in *api.ClusterDetail
 }
 
 func autoConvert_v1alpha1_ContainerdOptions_To_api_ContainerdOptions(in *v1alpha1.ContainerdOptions, out *api.ContainerdOptions, s conversion.Scope) error {
-	out.Config = in.Config
+	out.Config = api.ContainerdConfig(in.Config)
 	out.BaseRuntimeSpec = *(*api.InlineDocument)(unsafe.Pointer(&in.BaseRuntimeSpec))
 	return nil
 }
@@ -146,7 +146,7 @@ func Convert_v1alpha1_ContainerdOptions_To_api_ContainerdOptions(in *v1alpha1.Co
 }
 
 func autoConvert_api_ContainerdOptions_To_v1alpha1_ContainerdOptions(in *api.ContainerdOptions, out *v1alpha1.ContainerdOptions, s conversion.Scope) error {
-	out.Config = in.Config
+	out.Config = string(in.Config)
 	out.BaseRuntimeSpec = *(*map[string]runtime.RawExtension)(unsafe.Pointer(&in.BaseRuntimeSpec))
 	return nil
 }
@@ -182,7 +182,7 @@ func Convert_api_InstanceOptions_To_v1alpha1_InstanceOptions(in *api.InstanceOpt
 
 func autoConvert_v1alpha1_KubeletOptions_To_api_KubeletOptions(in *v1alpha1.KubeletOptions, out *api.KubeletOptions, s conversion.Scope) error {
 	out.Config = *(*api.InlineDocument)(unsafe.Pointer(&in.Config))
-	out.Flags = *(*[]string)(unsafe.Pointer(&in.Flags))
+	out.Flags = *(*api.KubeletFlags)(unsafe.Pointer(&in.Flags))
 	return nil
 }
 
