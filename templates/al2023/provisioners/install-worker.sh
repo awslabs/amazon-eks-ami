@@ -187,6 +187,9 @@ done
 
 sudo rm ./*.sha256
 
+kubelet --version > "${WORKING_DIR}/kubelet-version.txt"
+sudo mv "${WORKING_DIR}/kubelet-version.txt" /etc/eks/kubelet-version.txt
+
 ################################################################################
 ### ECR Credential Provider Binary #############################################
 ################################################################################
