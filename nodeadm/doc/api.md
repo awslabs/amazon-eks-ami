@@ -94,7 +94,7 @@ _Appears in:_
 - [LocalStorageOptions](#localstorageoptions)
 
 .Validation:
-- Enum: [RAID0 Mount]
+- Enum: [RAID0 RAID10 Mount]
 
 #### NodeConfig
 
