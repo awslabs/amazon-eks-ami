@@ -692,6 +692,10 @@ get_system_services() {
       ;;
   esac
 
+  if [ "${INIT_TYPE}" = "systemd" ]; then
+    systemd-analyze plot > "${COLLECT_DIR}/system/systemd-analyze.svg" 2>&1
+  fi
+
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
   timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1
   timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
