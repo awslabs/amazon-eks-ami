@@ -1,6 +1,8 @@
 package kubelet
 
 import (
+	"errors"
+	"os"
 	"os/exec"
 	"regexp"
 )
@@ -10,17 +12,19 @@ func GetKubeletVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	version := parseSemVer(*rawVersion)
+	version := parseSemVer(string(rawVersion))
 	return version, nil
 }
 
-func GetKubeletVersionRaw() (*string, error) {
-	output, err := exec.Command("kubelet", "--version").Output()
-	if err != nil {
+const kubeletVersionFile = "/etc/eks/kubelet-version.txt"
+
+func GetKubeletVersionRaw() ([]byte, error) {
+	if _, err := os.Stat(kubeletVersionFile); errors.Is(err, os.ErrNotExist) {
+		return exec.Command("kubelet", "--version").Output()
+	} else if err != nil {
 		return nil, err
 	}
-	rawVersion := string(output)
-	return &rawVersion, nil
+	return os.ReadFile(kubeletVersionFile)
 }
 
 var semVerRegex = regexp.MustCompile(`v[0-9]+\.[0-9]+.[0-9]+`)

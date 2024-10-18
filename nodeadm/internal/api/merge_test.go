@@ -95,14 +95,17 @@ func TestMerge(t *testing.T) {
 							"verbosity": 5,
 						},
 						"podsPerCore": 20,
+						"systemReserved": map[string]interface{}{
+							"cpu": "150m",
+						},
 					}),
-					Flags: []string{
+					Flags: KubeletFlags{
 						"--node-labels=nodegroup=example",
 						"--register-with-taints=the=taint:NoSchedule",
 					},
 				},
 				Containerd: ContainerdOptions{
-					Config: tomlNormalize(`
+					Config: ContainerdConfig(tomlNormalize(`
 version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"
@@ -128,7 +131,7 @@ SystemdCgroup = true
 
 [plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"
-conf_dir = "/etc/cni/net.d"`),
+conf_dir = "/etc/cni/net.d"`)),
 				},
 			},
 			patchSpec: NodeConfigSpec{
@@ -139,18 +142,18 @@ conf_dir = "/etc/cni/net.d"`),
 						},
 						"maxPods": 150,
 					}),
-					Flags: []string{
+					Flags: KubeletFlags{
 						"--node-labels=nodegroup=user-set",
 					},
 				},
 				Containerd: ContainerdOptions{
-					Config: tomlNormalize(`
+					Config: ContainerdConfig(tomlNormalize(`
 version = 2
 [grpc]
 address = "/run/containerd/containerd.sock.2"
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
-discard_unpacked_layers = false`),
+discard_unpacked_layers = false`)),
 				},
 			},
 			expectedSpec: NodeConfigSpec{
@@ -167,6 +170,9 @@ discard_unpacked_layers = false`),
 						},
 						"maxPods":     150,
 						"podsPerCore": 20,
+						"systemReserved": map[string]interface{}{
+							"cpu": "150m",
+						},
 					}),
 					Flags: []string{
 						"--node-labels=nodegroup=example",
@@ -175,7 +181,7 @@ discard_unpacked_layers = false`),
 					},
 				},
 				Containerd: ContainerdOptions{
-					Config: tomlNormalize(`
+					Config: ContainerdConfig(tomlNormalize(`
 version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"
@@ -201,7 +207,47 @@ SystemdCgroup = true
 
 [plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"
-conf_dir = "/etc/cni/net.d"`),
+conf_dir = "/etc/cni/net.d"`)),
+				},
+			},
+		},
+		{
+			name: "containerd baseRuntimeSpec is merged correctly",
+			baseSpec: NodeConfigSpec{
+				Containerd: ContainerdOptions{
+					BaseRuntimeSpec: toInlineDocumentMust(map[string]interface{}{
+						"process": map[string]interface{}{
+							"rlimits": map[string]interface{}{
+								"type": "RLIMIT_NOFILE",
+								"soft": 1024,
+							},
+						},
+					}),
+				},
+			},
+			patchSpec: NodeConfigSpec{
+				Containerd: ContainerdOptions{
+					BaseRuntimeSpec: toInlineDocumentMust(map[string]interface{}{
+						"process": map[string]interface{}{
+							"rlimits": map[string]interface{}{
+								"type": "RLIMIT_NOFILE",
+								"hard": 1024,
+							},
+						},
+					}),
+				},
+			},
+			expectedSpec: NodeConfigSpec{
+				Containerd: ContainerdOptions{
+					BaseRuntimeSpec: toInlineDocumentMust(map[string]interface{}{
+						"process": map[string]interface{}{
+							"rlimits": map[string]interface{}{
+								"type": "RLIMIT_NOFILE",
+								"soft": 1024,
+								"hard": 1024,
+							},
+						},
+					}),
 				},
 			},
 		},

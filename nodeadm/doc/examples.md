@@ -25,7 +25,7 @@ spec:
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
     cidr: 10.100.0.0/16
 
---BOUNDARY--
+--BOUNDARY
 Content-Type: application/node.eks.aws
 
 ---

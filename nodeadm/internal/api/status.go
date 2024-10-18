@@ -3,34 +3,29 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
 // Fetch information about the ec2 instance using IMDS data.
 // This information is stored into the internal config to avoid redundant calls
 // to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, imdsClient *imds.Client, ec2Client *ec2.Client) (*InstanceDetails, error) {
-	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client) (*InstanceDetails, error) {
+	instanceIdenitityDocument, err := imds.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	macResponse, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{Path: "mac"})
-	if err != nil {
-		return nil, err
-	}
-	mac, err := io.ReadAll(macResponse.Content)
+	mac, err := imds.GetProperty(ctx, "mac")
 	if err != nil {
 		return nil, err
 	}
 
-	privateDNSName := ""
+	var privateDNSName string
 	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
 		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
 		if err != nil {

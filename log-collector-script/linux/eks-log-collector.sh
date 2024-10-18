@@ -350,6 +350,20 @@ get_iptables_info() {
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
+  if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
+    echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
+  else
+    # check that ip_vs module is loaded in get_modinfo()
+    try "collect ipvs information"
+    ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add:service/server \tprotocol \tvirtual-server \tscheduler algorithm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipset --list | tee "${COLLECT_DIR}"/networking/ipset.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+    ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+  fi
+
   ok
 }
 
@@ -412,6 +426,7 @@ get_kernel_info() {
 get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
+  lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
 }
 
 get_docker_logs() {
@@ -691,6 +706,10 @@ get_system_services() {
       warning "Unable to determine active services."
       ;;
   esac
+
+  if [ "${INIT_TYPE}" = "systemd" ]; then
+    systemd-analyze plot > "${COLLECT_DIR}/system/systemd-analyze.svg" 2>&1
+  fi
 
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
   timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1

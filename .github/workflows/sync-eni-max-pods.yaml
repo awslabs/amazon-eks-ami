@@ -18,12 +18,12 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_ENI_MAX_PODS }}
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
         with:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
           path: amazon-eks-ami/
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
         with:
           repository: aws/amazon-vpc-cni-k8s
           ref: refs/heads/master
@@ -35,7 +35,7 @@ jobs:
           make generate-limits
           cp misc/eni-max-pods.txt ../amazon-eks-ami/templates/shared/runtime/eni-max-pods.txt
           cp misc/eni-max-pods.txt ../amazon-eks-ami/nodeadm/internal/kubelet/eni-max-pods.txt
-      - uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # 6.1.0
+      - uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # 7.0.5
         with:
           branch: update-eni-max-pods
           path: amazon-eks-ami/
