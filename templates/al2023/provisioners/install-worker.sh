@@ -107,7 +107,7 @@ sudo systemctl restart sshd.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
-ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1}"
+ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1 us-isof-south-1}"
 if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
@@ -161,6 +161,8 @@ elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
   S3_DOMAIN="sc2s.sgov.gov"
 elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
   S3_DOMAIN="cloud.adc-e.uk"
+elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
+  S3_DOMAIN="csp.hci.ic.gov"
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
@@ -184,6 +186,9 @@ for binary in ${BINARIES[*]}; do
 done
 
 sudo rm ./*.sha256
+
+kubelet --version > "${WORKING_DIR}/kubelet-version.txt"
+sudo mv "${WORKING_DIR}/kubelet-version.txt" /etc/eks/kubelet-version.txt
 
 ################################################################################
 ### ECR Credential Provider Binary #############################################

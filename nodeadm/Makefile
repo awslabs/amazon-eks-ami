@@ -96,7 +96,7 @@ CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
 CODE_GENERATOR_VERSION ?= v0.28.1
-CRD_REF_DOCS_VERSION ?= cf959ab94ea543cb8efd25dc35081880b7ca6a81
+CRD_REF_DOCS_VERSION ?= v0.1.0
 
 tools: controller-gen conversion-gen crd-ref-docs ## Install the toolchain.
 

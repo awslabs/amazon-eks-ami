@@ -1,6 +1,7 @@
 package containerd
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"regexp"
@@ -44,7 +45,7 @@ func cacheSandboxImage(cfg *api.NodeConfig) error {
 	imageSpec := &v1.ImageSpec{Image: sandboxImage}
 	authConfig := &v1.AuthConfig{Auth: ecrUserToken}
 
-	return util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+	return util.NewRetrier(util.WithBackoffExponential()).Retry(context.TODO(), func() error {
 		zap.L().Info("Pulling sandbox image..", zap.String("image", sandboxImage))
 		imageRef, err := client.PullImage(imageSpec, authConfig, nil)
 		if err != nil {

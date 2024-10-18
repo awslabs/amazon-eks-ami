@@ -32,7 +32,7 @@ on:
         type: string
       k8s_versions:
         description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
-        default: "1.23,1.24,1.25,1.26,1.27,1.28,1.29,1.30"
+        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
         required: false
         type: string
       build_arguments:
@@ -89,7 +89,7 @@ jobs:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
         os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
         with:
           ref: 'main'
       - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
@@ -117,6 +117,7 @@ jobs:
           os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           aws_region: ${{ secrets.AWS_REGION }}
+          log_bucket: ${{ secrets.CI_LOG_BUCKET }}
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest

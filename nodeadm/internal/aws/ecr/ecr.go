@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
@@ -23,7 +22,7 @@ func GetAuthorizationToken(awsRegion string) (string, error) {
 	}
 	ecrClient := ecr.NewFromConfig(awsConfig)
 	var token *ecr.GetAuthorizationTokenOutput
-	err = util.RetryExponentialBackoff(3, 2*time.Second, func() error {
+	err = util.NewRetrier(util.WithBackoffExponential()).Retry(context.TODO(), func() error {
 		token, err = ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
 		return err
 	})
@@ -40,7 +39,7 @@ func (r *ECRRegistry) GetSandboxImage() string {
 
 func GetEKSRegistry(region string) (ECRRegistry, error) {
 	account, region := getEKSRegistryCoordinates(region)
-	servicesDomain, err := imds.GetProperty(imds.ServicesDomain)
+	servicesDomain, err := imds.GetProperty(context.TODO(), imds.ServicesDomain)
 	if err != nil {
 		return "", err
 	}
@@ -94,27 +93,29 @@ var accountsByRegion = map[string]string{
 	"us-east-2":      nonOptInRegionAccount,
 	"us-west-1":      nonOptInRegionAccount,
 	"us-west-2":      nonOptInRegionAccount,
-	"ap-east-1":      "800184023465",
-	"me-south-1":     "558608220178",
-	"cn-north-1":     "918309763551",
-	"cn-northwest-1": "961992271922",
-	"us-gov-west-1":  "013241004608",
-	"us-gov-east-1":  "151742754352",
-	"us-iso-west-1":  "608367168043",
-	"us-iso-east-1":  "725322719131",
-	"us-isob-east-1": "187977181151",
-	"eu-isoe-west-1": "249663109785",
-	"af-south-1":     "877085696533",
-	"ap-southeast-3": "296578399912",
-	"me-central-1":   "759879836304",
-	"eu-south-1":     "590381155156",
-	"eu-south-2":     "455263428931",
-	"eu-central-2":   "900612956339",
-	"ap-south-2":     "900889452093",
-	"ap-southeast-4": "491585149902",
-	"il-central-1":   "066635153087",
-	"ca-west-1":      "761377655185",
-	"ap-southeast-5": "151610086707",
+
+	"af-south-1":      "877085696533",
+	"ap-east-1":       "800184023465",
+	"ap-south-2":      "900889452093",
+	"ap-southeast-3":  "296578399912",
+	"ap-southeast-4":  "491585149902",
+	"ap-southeast-5":  "151610086707",
+	"ca-west-1":       "761377655185",
+	"cn-north-1":      "918309763551",
+	"cn-northwest-1":  "961992271922",
+	"eu-central-2":    "900612956339",
+	"eu-isoe-west-1":  "249663109785",
+	"eu-south-1":      "590381155156",
+	"eu-south-2":      "455263428931",
+	"il-central-1":    "066635153087",
+	"me-central-1":    "759879836304",
+	"me-south-1":      "558608220178",
+	"us-gov-east-1":   "151742754352",
+	"us-gov-west-1":   "013241004608",
+	"us-iso-east-1":   "725322719131",
+	"us-iso-west-1":   "608367168043",
+	"us-isob-east-1":  "187977181151",
+	"us-isof-south-1": "676585237158",
 }
 
 // getEKSRegistryCoordinates returns an AWS region and account ID for the default EKS ECR container image registry
@@ -133,6 +134,8 @@ func getEKSRegistryCoordinates(region string) (string, string) {
 		return "187977181151", "us-isob-east-1"
 	} else if strings.HasPrefix(region, "eu-isoe-") {
 		return "249663109785", "eu-isoe-west-1"
+	} else if strings.HasPrefix(region, "us-isof-") {
+		return "676585237158", "us-isof-south-1"
 	}
 	return "602401143452", "us-west-2"
 }
