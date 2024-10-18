@@ -66,7 +66,6 @@ archive-proprietary-kmod
 ################################################################################
 
 sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.sh /etc/eks/
 sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
 sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
 sudo systemctl daemon-reload
