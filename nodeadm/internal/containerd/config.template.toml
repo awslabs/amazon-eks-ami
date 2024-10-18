@@ -6,7 +6,7 @@ state = "/run/containerd"
 address = "/run/containerd/containerd.sock"
 
 [plugins."io.containerd.grpc.v1.cri".containerd]
-default_runtime_name = "runc"
+default_runtime_name = "{{.RuntimeName}}"
 discard_unpacked_layers = true
 
 [plugins."io.containerd.grpc.v1.cri"]
@@ -15,10 +15,12 @@ sandbox_image = "{{.SandboxImage}}"
 [plugins."io.containerd.grpc.v1.cri".registry]
 config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.{{.RuntimeName}}]
 runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/base-runtime-spec.json"
 
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.{{.RuntimeName}}.options]
+BinaryName = "{{.RuntimeBinaryName}}"
 SystemdCgroup = true
 
 [plugins."io.containerd.grpc.v1.cri".cni]

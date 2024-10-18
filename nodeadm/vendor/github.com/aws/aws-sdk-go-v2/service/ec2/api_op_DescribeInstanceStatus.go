@@ -7,34 +7,41 @@ import (
 	"errors"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	smithy "github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
 // Describes the status of the specified instances or all of your instances. By
 // default, only running instances are described, unless you specifically indicate
-// to return the status of all instances. Instance status includes the following
-// components:
+// to return the status of all instances.
+//
+// Instance status includes the following components:
+//
 //   - Status checks - Amazon EC2 performs status checks on running EC2 instances
-//     to identify hardware and software issues. For more information, see Status
-//     checks for your instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html)
-//     and Troubleshoot instances with failed status checks (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstances.html)
-//     in the Amazon EC2 User Guide.
+//     to identify hardware and software issues. For more information, see [Status checks for your instances]and [Troubleshoot instances with failed status checks]in
+//     the Amazon EC2 User Guide.
+//
 //   - Scheduled events - Amazon EC2 can schedule events (such as reboot, stop, or
 //     terminate) for your instances related to hardware issues, software updates, or
-//     system maintenance. For more information, see Scheduled events for your
-//     instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html)
-//     in the Amazon EC2 User Guide.
+//     system maintenance. For more information, see [Scheduled events for your instances]in the Amazon EC2 User Guide.
+//
 //   - Instance state - You can manage your instances from the moment you launch
-//     them through their termination. For more information, see Instance lifecycle (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html)
-//     in the Amazon EC2 User Guide.
+//     them through their termination. For more information, see [Instance lifecycle]in the Amazon EC2
+//     User Guide.
+//
+// The order of the elements in the response, including those within nested
+// structures, might vary. Applications should not assume the elements appear in a
+// particular order.
+//
+// [Troubleshoot instances with failed status checks]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstances.html
+// [Instance lifecycle]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html
+// [Status checks for your instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html
+// [Scheduled events for your instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-instances-status-check_sched.html
 func (c *Client) DescribeInstanceStatus(ctx context.Context, params *DescribeInstanceStatusInput, optFns ...func(*Options)) (*DescribeInstanceStatusOutput, error) {
 	if params == nil {
 		params = &DescribeInstanceStatusInput{}
@@ -52,55 +59,79 @@ func (c *Client) DescribeInstanceStatus(ctx context.Context, params *DescribeIns
 
 type DescribeInstanceStatusInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - availability-zone - The Availability Zone of the instance.
+	//
 	//   - event.code - The code for the scheduled event ( instance-reboot |
 	//   system-reboot | system-maintenance | instance-retirement | instance-stop ).
+	//
 	//   - event.description - A description of the event.
+	//
 	//   - event.instance-event-id - The ID of the event whose date and time you are
 	//   modifying.
+	//
 	//   - event.not-after - The latest end time for the scheduled event (for example,
 	//   2014-09-15T17:15:20.000Z ).
+	//
 	//   - event.not-before - The earliest start time for the scheduled event (for
 	//   example, 2014-09-15T17:15:20.000Z ).
+	//
 	//   - event.not-before-deadline - The deadline for starting the event (for
 	//   example, 2014-09-15T17:15:20.000Z ).
+	//
 	//   - instance-state-code - The code for the instance state, as a 16-bit unsigned
 	//   integer. The high byte is used for internal purposes and should be ignored. The
 	//   low byte is set based on the state represented. The valid values are 0
 	//   (pending), 16 (running), 32 (shutting-down), 48 (terminated), 64 (stopping), and
 	//   80 (stopped).
+	//
 	//   - instance-state-name - The state of the instance ( pending | running |
 	//   shutting-down | terminated | stopping | stopped ).
+	//
 	//   - instance-status.reachability - Filters on instance status where the name is
 	//   reachability ( passed | failed | initializing | insufficient-data ).
+	//
 	//   - instance-status.status - The status of the instance ( ok | impaired |
 	//   initializing | insufficient-data | not-applicable ).
+	//
 	//   - system-status.reachability - Filters on system status where the name is
 	//   reachability ( passed | failed | initializing | insufficient-data ).
+	//
 	//   - system-status.status - The system status of the instance ( ok | impaired |
 	//   initializing | insufficient-data | not-applicable ).
+	//
+	//   - attached-ebs-status.status - The status of the attached EBS volume for the
+	//   instance ( ok | impaired | initializing | insufficient-data | not-applicable ).
 	Filters []types.Filter
 
 	// When true , includes the health status for all instances. When false , includes
-	// the health status for running instances only. Default: false
+	// the health status for running instances only.
+	//
+	// Default: false
 	IncludeAllInstances *bool
 
-	// The instance IDs. Default: Describes all your instances. Constraints: Maximum
-	// 100 explicitly specified instance IDs.
+	// The instance IDs.
+	//
+	// Default: Describes all your instances.
+	//
+	// Constraints: Maximum 100 explicitly specified instance IDs.
 	InstanceIds []string
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// . You cannot specify this parameter and the instance IDs parameter in the same
+	// information, see [Pagination].
+	//
+	// You cannot specify this parameter and the instance IDs parameter in the same
 	// request.
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -147,25 +178,28 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -180,10 +214,16 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeInstanceStatus(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -198,102 +238,19 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
-}
-
-// DescribeInstanceStatusAPIClient is a client that implements the
-// DescribeInstanceStatus operation.
-type DescribeInstanceStatusAPIClient interface {
-	DescribeInstanceStatus(context.Context, *DescribeInstanceStatusInput, ...func(*Options)) (*DescribeInstanceStatusOutput, error)
-}
-
-var _ DescribeInstanceStatusAPIClient = (*Client)(nil)
-
-// DescribeInstanceStatusPaginatorOptions is the paginator options for
-// DescribeInstanceStatus
-type DescribeInstanceStatusPaginatorOptions struct {
-	// The maximum number of items to return for this request. To get the next page of
-	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// . You cannot specify this parameter and the instance IDs parameter in the same
-	// request.
-	Limit int32
-
-	// Set to true if pagination should stop if the service returns a pagination token
-	// that matches the most recent token provided to the service.
-	StopOnDuplicateToken bool
-}
-
-// DescribeInstanceStatusPaginator is a paginator for DescribeInstanceStatus
-type DescribeInstanceStatusPaginator struct {
-	options   DescribeInstanceStatusPaginatorOptions
-	client    DescribeInstanceStatusAPIClient
-	params    *DescribeInstanceStatusInput
-	nextToken *string
-	firstPage bool
-}
-
-// NewDescribeInstanceStatusPaginator returns a new DescribeInstanceStatusPaginator
-func NewDescribeInstanceStatusPaginator(client DescribeInstanceStatusAPIClient, params *DescribeInstanceStatusInput, optFns ...func(*DescribeInstanceStatusPaginatorOptions)) *DescribeInstanceStatusPaginator {
-	if params == nil {
-		params = &DescribeInstanceStatusInput{}
-	}
-
-	options := DescribeInstanceStatusPaginatorOptions{}
-	if params.MaxResults != nil {
-		options.Limit = *params.MaxResults
-	}
-
-	for _, fn := range optFns {
-		fn(&options)
-	}
-
-	return &DescribeInstanceStatusPaginator{
-		options:   options,
-		client:    client,
-		params:    params,
-		firstPage: true,
-		nextToken: params.NextToken,
-	}
-}
-
-// HasMorePages returns a boolean indicating whether more pages are available
-func (p *DescribeInstanceStatusPaginator) HasMorePages() bool {
-	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
-}
-
-// NextPage retrieves the next DescribeInstanceStatus page.
-func (p *DescribeInstanceStatusPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeInstanceStatusOutput, error) {
-	if !p.HasMorePages() {
-		return nil, fmt.Errorf("no more pages available")
-	}
-
-	params := *p.params
-	params.NextToken = p.nextToken
-
-	var limit *int32
-	if p.options.Limit > 0 {
-		limit = &p.options.Limit
-	}
-	params.MaxResults = limit
-
-	result, err := p.client.DescribeInstanceStatus(ctx, &params, optFns...)
-	if err != nil {
-		return nil, err
-	}
-	p.firstPage = false
-
-	prevToken := p.nextToken
-	p.nextToken = result.NextToken
-
-	if p.options.StopOnDuplicateToken &&
-		prevToken != nil &&
-		p.nextToken != nil &&
-		*prevToken == *p.nextToken {
-		p.nextToken = nil
-	}
-
-	return result, nil
 }
 
 // InstanceStatusOkWaiterOptions are waiter options for InstanceStatusOkWaiter
@@ -302,7 +259,16 @@ type InstanceStatusOkWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// InstanceStatusOkWaiter will use default minimum delay of 15 seconds. Note that
@@ -319,12 +285,13 @@ type InstanceStatusOkWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeInstanceStatusInput, *DescribeInstanceStatusOutput, error) (bool, error)
 }
 
@@ -401,7 +368,16 @@ func (w *InstanceStatusOkWaiter) WaitForOutput(ctx context.Context, params *Desc
 		}
 
 		out, err := w.client.DescribeInstanceStatus(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -437,29 +413,19 @@ func (w *InstanceStatusOkWaiter) WaitForOutput(ctx context.Context, params *Desc
 func instanceStatusOkStateRetryable(ctx context.Context, input *DescribeInstanceStatusInput, output *DescribeInstanceStatusOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("InstanceStatuses[].InstanceStatus.Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.InstanceStatuses
+		var v2 []types.SummaryStatus
+		for _, v := range v1 {
+			v3 := v.InstanceStatus
+			v4 := v3.Status
+			v2 = append(v2, v4)
 		}
-
 		expectedValue := "ok"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.SummaryStatus)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.SummaryStatus value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -489,7 +455,16 @@ type SystemStatusOkWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// SystemStatusOkWaiter will use default minimum delay of 15 seconds. Note that
@@ -506,12 +481,13 @@ type SystemStatusOkWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeInstanceStatusInput, *DescribeInstanceStatusOutput, error) (bool, error)
 }
 
@@ -588,7 +564,16 @@ func (w *SystemStatusOkWaiter) WaitForOutput(ctx context.Context, params *Descri
 		}
 
 		out, err := w.client.DescribeInstanceStatus(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -624,29 +609,19 @@ func (w *SystemStatusOkWaiter) WaitForOutput(ctx context.Context, params *Descri
 func systemStatusOkStateRetryable(ctx context.Context, input *DescribeInstanceStatusInput, output *DescribeInstanceStatusOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("InstanceStatuses[].SystemStatus.Status", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.InstanceStatuses
+		var v2 []types.SummaryStatus
+		for _, v := range v1 {
+			v3 := v.SystemStatus
+			v4 := v3.Status
+			v2 = append(v2, v4)
 		}
-
 		expectedValue := "ok"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.SummaryStatus)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.SummaryStatus value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -657,6 +632,107 @@ func systemStatusOkStateRetryable(ctx context.Context, input *DescribeInstanceSt
 
 	return true, nil
 }
+
+// DescribeInstanceStatusPaginatorOptions is the paginator options for
+// DescribeInstanceStatus
+type DescribeInstanceStatusPaginatorOptions struct {
+	// The maximum number of items to return for this request. To get the next page of
+	// items, make another request with the token returned in the output. For more
+	// information, see [Pagination].
+	//
+	// You cannot specify this parameter and the instance IDs parameter in the same
+	// request.
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	Limit int32
+
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeInstanceStatusPaginator is a paginator for DescribeInstanceStatus
+type DescribeInstanceStatusPaginator struct {
+	options   DescribeInstanceStatusPaginatorOptions
+	client    DescribeInstanceStatusAPIClient
+	params    *DescribeInstanceStatusInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeInstanceStatusPaginator returns a new DescribeInstanceStatusPaginator
+func NewDescribeInstanceStatusPaginator(client DescribeInstanceStatusAPIClient, params *DescribeInstanceStatusInput, optFns ...func(*DescribeInstanceStatusPaginatorOptions)) *DescribeInstanceStatusPaginator {
+	if params == nil {
+		params = &DescribeInstanceStatusInput{}
+	}
+
+	options := DescribeInstanceStatusPaginatorOptions{}
+	if params.MaxResults != nil {
+		options.Limit = *params.MaxResults
+	}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeInstanceStatusPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.NextToken,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeInstanceStatusPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeInstanceStatus page.
+func (p *DescribeInstanceStatusPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeInstanceStatusOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.NextToken = p.nextToken
+
+	var limit *int32
+	if p.options.Limit > 0 {
+		limit = &p.options.Limit
+	}
+	params.MaxResults = limit
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeInstanceStatus(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.NextToken
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeInstanceStatusAPIClient is a client that implements the
+// DescribeInstanceStatus operation.
+type DescribeInstanceStatusAPIClient interface {
+	DescribeInstanceStatus(context.Context, *DescribeInstanceStatusInput, ...func(*Options)) (*DescribeInstanceStatusOutput, error)
+}
+
+var _ DescribeInstanceStatusAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeInstanceStatus(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -6,15 +6,15 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
-// Describes Capacity Block offerings available for purchase. With Capacity
-// Blocks, you purchase a specific instance type for a period of time.
+// Describes Capacity Block offerings available for purchase in the Amazon Web
+// Services Region that you're currently using. With Capacity Blocks, you purchase
+// a specific instance type for a period of time.
 func (c *Client) DescribeCapacityBlockOfferings(ctx context.Context, params *DescribeCapacityBlockOfferingsInput, optFns ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error) {
 	if params == nil {
 		params = &DescribeCapacityBlockOfferingsInput{}
@@ -37,16 +37,6 @@ type DescribeCapacityBlockOfferingsInput struct {
 	// This member is required.
 	CapacityDurationHours *int32
 
-	// The number of instances for which to reserve capacity.
-	//
-	// This member is required.
-	InstanceCount *int32
-
-	// The type of instance for which the Capacity Block offering reserves capacity.
-	//
-	// This member is required.
-	InstanceType *string
-
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
@@ -56,10 +46,17 @@ type DescribeCapacityBlockOfferingsInput struct {
 	// The latest end date for the Capacity Block offering.
 	EndDateRange *time.Time
 
+	// The number of instances for which to reserve capacity.
+	InstanceCount *int32
+
+	// The type of instance for which the Capacity Block offering reserves capacity.
+	InstanceType *string
+
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token to use to retrieve the next page of results.
@@ -108,25 +105,28 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -141,13 +141,19 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = addOpDescribeCapacityBlockOfferingsValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeCapacityBlockOfferings(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -162,24 +168,29 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeCapacityBlockOfferingsAPIClient is a client that implements the
-// DescribeCapacityBlockOfferings operation.
-type DescribeCapacityBlockOfferingsAPIClient interface {
-	DescribeCapacityBlockOfferings(context.Context, *DescribeCapacityBlockOfferingsInput, ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error)
-}
-
-var _ DescribeCapacityBlockOfferingsAPIClient = (*Client)(nil)
 
 // DescribeCapacityBlockOfferingsPaginatorOptions is the paginator options for
 // DescribeCapacityBlockOfferings
 type DescribeCapacityBlockOfferingsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -242,6 +253,9 @@ func (p *DescribeCapacityBlockOfferingsPaginator) NextPage(ctx context.Context, 
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeCapacityBlockOfferings(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -260,6 +274,14 @@ func (p *DescribeCapacityBlockOfferingsPaginator) NextPage(ctx context.Context, 
 
 	return result, nil
 }
+
+// DescribeCapacityBlockOfferingsAPIClient is a client that implements the
+// DescribeCapacityBlockOfferings operation.
+type DescribeCapacityBlockOfferingsAPIClient interface {
+	DescribeCapacityBlockOfferings(context.Context, *DescribeCapacityBlockOfferingsInput, ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error)
+}
+
+var _ DescribeCapacityBlockOfferingsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeCapacityBlockOfferings(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

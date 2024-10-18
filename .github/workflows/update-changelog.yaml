@@ -21,12 +21,12 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
         with:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
           path: amazon-eks-ami/
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
         with:
           script: |
             const fs = require('fs');
@@ -45,9 +45,9 @@ jobs:
             const newEntry = `# ${release.data.name}\n${release.data.body}`;
             let updatedChangelog = changelog.replace(placeholder, placeholder + '\n\n' + newEntry + '\n---\n');
             // if the release notes are modified in the GitHub web editor, trailing spaces can be added accidentally
-            updatedChangelog = updatedChangelog.replace(/\s+$/, '');
+            updatedChangelog = updatedChangelog.split('\n').map(s => s.replace(/\s+$/, '')).join('\n');
             fs.writeFileSync(changelogPath, updatedChangelog);
-      - uses: peter-evans/create-pull-request@v4
+      - uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # 7.0.5
         with:
           branch: update-changelog
           path: amazon-eks-ami/

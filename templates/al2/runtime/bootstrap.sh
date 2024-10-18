@@ -46,6 +46,11 @@ function log {
 
 log "INFO: starting..."
 
+if [ "${EUID}" -ne 0 ]; then
+  log "ERROR: script must be run as root"
+  exit 1
+fi
+
 POSITIONAL=()
 
 while [[ $# -gt 0 ]]; do
@@ -554,15 +559,15 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
     log "WARNING: Flag --docker-config-json was set but will be ignored as it's not relevant to containerd"
   fi
 
-  sudo mkdir -p /etc/containerd
-  sudo mkdir -p /etc/containerd/config.d
-  sudo mkdir -p /etc/cni/net.d
+  mkdir -p /etc/containerd
+  mkdir -p /etc/containerd/config.d
+  mkdir -p /etc/cni/net.d
 
   if [[ -n "${CONTAINERD_CONFIG_FILE}" ]]; then
-    sudo cp -v "${CONTAINERD_CONFIG_FILE}" /etc/eks/containerd/containerd-config.toml
+    cp -v "${CONTAINERD_CONFIG_FILE}" /etc/eks/containerd/containerd-config.toml
   fi
 
-  sudo sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
+  sed -i s,SANDBOX_IMAGE,$PAUSE_CONTAINER,g /etc/eks/containerd/containerd-config.toml
 
   echo "$(jq '.cgroupDriver="systemd"' "${KUBELET_CONFIG}")" > "${KUBELET_CONFIG}"
   ##allow --reserved-cpus options via kubelet arg directly. Disable default reserved cgroup option in such cases
@@ -574,17 +579,17 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   # Check if the containerd config file is the same as the one used in the image build.
   # If different, then restart containerd w/ proper config
   if ! cmp -s /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml; then
-    sudo cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
-    sudo cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
-    sudo chown root:root /etc/systemd/system/sandbox-image.service
+    cp -v /etc/eks/containerd/containerd-config.toml /etc/containerd/config.toml
+    cp -v /etc/eks/containerd/sandbox-image.service /etc/systemd/system/sandbox-image.service
+    chown root:root /etc/systemd/system/sandbox-image.service
     systemctl daemon-reload
     systemctl enable containerd sandbox-image
     systemctl restart sandbox-image containerd
   fi
-  sudo cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
-  sudo chown root:root /etc/systemd/system/kubelet.service
+  cp -v /etc/eks/containerd/kubelet-containerd.service /etc/systemd/system/kubelet.service
+  chown root:root /etc/systemd/system/kubelet.service
   # Validate containerd config
-  sudo containerd config dump > /dev/null
+  containerd config dump > /dev/null
 
   # --container-runtime flag is gone in 1.27+
   # TODO: remove this when 1.26 is EOL
@@ -595,7 +600,7 @@ elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   mkdir -p /etc/docker
   bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"
   cp -v /etc/eks/iptables-restore.service /etc/systemd/system/iptables-restore.service
-  sudo chown root:root /etc/systemd/system/iptables-restore.service
+  chown root:root /etc/systemd/system/iptables-restore.service
   systemctl daemon-reload
   systemctl enable iptables-restore
 
@@ -634,7 +639,7 @@ fi
 BOOTSTRAP_GPU_HELPER=/etc/eks/bootstrap-gpu.sh
 if [ -x "${BOOTSTRAP_GPU_HELPER}" ]; then
   log "INFO: starting GPU bootstrap helper..."
-  "${BOOTSTRAP_GPU_HELPER}"
+  $BOOTSTRAP_GPU_HELPER -r "$CONTAINER_RUNTIME"
   log "INFO: completed GPU bootstrap helper!"
 fi
 
@@ -645,40 +650,6 @@ systemctl start kubelet
 if ! systemctl is-active --quiet kubelet; then
   log "ERROR: kubelet failed to start"
   exit 1
-fi
-
-# gpu boost clock
-if command -v nvidia-smi &> /dev/null; then
-  log "INFO: nvidia-smi found"
-
-  nvidia-smi -q > /tmp/nvidia-smi-check
-  if [[ "$?" == "0" ]]; then
-    sudo nvidia-smi -pm 1 # set persistence mode
-    sudo nvidia-smi --auto-boost-default=0
-
-    GPUNAME=$(nvidia-smi -L | head -n1)
-    log "INFO: GPU name: $GPUNAME"
-
-    # set application clock to maximum
-    if [[ $GPUNAME == *"A100"* ]]; then
-      nvidia-smi -ac 1215,1410
-    elif [[ $GPUNAME == *"V100"* ]]; then
-      nvidia-smi -ac 877,1530
-    elif [[ $GPUNAME == *"K80"* ]]; then
-      nvidia-smi -ac 2505,875
-    elif [[ $GPUNAME == *"T4"* ]]; then
-      nvidia-smi -ac 5001,1590
-    elif [[ $GPUNAME == *"M60"* ]]; then
-      nvidia-smi -ac 2505,1177
-    elif [[ $GPUNAME == *"H100"* ]]; then
-      nvidia-smi -ac 2619,1980
-    else
-      echo "unsupported gpu"
-    fi
-  else
-    log "ERROR: nvidia-smi check failed!"
-    cat /tmp/nvidia-smi-check
-  fi
 fi
 
 log "INFO: complete!"

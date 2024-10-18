@@ -1,8 +1,12 @@
 ---
 name: Feature Request
 about: Suggest a feature to the EKS AMI
+title: ''
+labels: ''
+assignees: ''
 
 ---
+
 <!-- Please only use this template for feature requests -->
 
 **What would you like to be added**:

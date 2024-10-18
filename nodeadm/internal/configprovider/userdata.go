@@ -1,17 +1,11 @@
 package configprovider
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"io"
-	"mime"
-	"mime/multipart"
-	"net/mail"
-	"strings"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/api"
 	internalapi "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	imds "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
@@ -22,86 +16,38 @@ const (
 	nodeConfigMediaType        = "application/" + api.GroupName
 )
 
-type userDataConfigProvider struct{}
+type userDataProvider interface {
+	GetUserData() ([]byte, error)
+}
+
+type imdsUserDataProvider struct{}
+
+func (p *imdsUserDataProvider) GetUserData() ([]byte, error) {
+	return imds.GetUserData(context.TODO())
+}
+
+type userDataConfigProvider struct {
+	userDataProvider userDataProvider
+}
 
 func NewUserDataConfigProvider() ConfigProvider {
-	return &userDataConfigProvider{}
-}
-
-func (ics *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
-	userData, err := imds.GetUserData()
-	if err != nil {
-		return nil, err
-	}
-	// if the MIME data fails to parse as a multipart document, then fall back
-	// to parsing the entire userdata as the node config.
-	if multipartReader, err := getMIMEMultipartReader(userData); err == nil {
-		config, err := parseMultipart(multipartReader)
-		if err != nil {
-			return nil, err
-		}
-		return config, nil
-	} else {
-		config, err := apibridge.DecodeNodeConfig(userData)
-		if err != nil {
-			return nil, err
-		}
-		return config, nil
+	return &userDataConfigProvider{
+		userDataProvider: &imdsUserDataProvider{},
 	}
 }
 
-func getMIMEMultipartReader(data []byte) (*multipart.Reader, error) {
-	msg, err := mail.ReadMessage(bytes.NewReader(data))
+func (p *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
+	userData, err := p.userDataProvider.GetUserData()
 	if err != nil {
 		return nil, err
 	}
-	mediaType, params, err := mime.ParseMediaType(msg.Header.Get(contentTypeHeader))
+	userData, err = decodeIfBase64(userData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode user data: %v", err)
 	}
-	if !strings.HasPrefix(mediaType, multipartContentTypePrefix) {
-		return nil, fmt.Errorf("MIME type is not multipart")
+	userData, err = decompressIfGZIP(userData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decompress user data: %v", err)
 	}
-	return multipart.NewReader(msg.Body, params[mimeBoundaryParam]), nil
-}
-
-func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, error) {
-	var nodeConfigs []*internalapi.NodeConfig
-	for {
-		part, err := userDataReader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		if partHeader := part.Header.Get(contentTypeHeader); len(partHeader) > 0 {
-			mediaType, _, err := mime.ParseMediaType(partHeader)
-			if err != nil {
-				return nil, err
-			}
-			if mediaType == nodeConfigMediaType {
-				nodeConfigPart, err := io.ReadAll(part)
-				if err != nil {
-					return nil, err
-				}
-				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart)
-				if err != nil {
-					return nil, err
-				}
-				nodeConfigs = append(nodeConfigs, decodedConfig)
-			}
-		}
-	}
-	if len(nodeConfigs) > 0 {
-		var config = nodeConfigs[0]
-		for _, nodeConfig := range nodeConfigs[1:] {
-			if err := config.Merge(nodeConfig); err != nil {
-				return nil, err
-			}
-		}
-		return config, nil
-	} else {
-		return nil, fmt.Errorf("Could not find NodeConfig within UserData")
-	}
+	return parseMaybeMultipart(userData)
 }

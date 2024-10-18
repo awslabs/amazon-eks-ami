@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/url"
 	"os"
@@ -20,10 +19,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/smithy-go/ptr"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -203,7 +202,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 }
 
 func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
-	nodeIp, err := getNodeIp(context.TODO(), imds.New(imds.Options{}), cfg)
+	nodeIp, err := getNodeIp(context.TODO(), cfg)
 	if err != nil {
 		return err
 	}
@@ -262,11 +261,11 @@ func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.Node
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]
-	if !ok {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
-	} else {
+	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
+		// #nosec G115 // known source from ec2 apis within int32 range
 		ksc.MaxPods = int32(maxPods)
+	} else {
+		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
@@ -379,7 +378,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		k.flags["config-dir"] = dirPath
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
-		k.setEnv("KUBELET_CONFIG_DROPIN_DIR_ALPHA", "on")
+		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
 		filePath := path.Join(dirPath, "00-nodeadm.conf")
 
 		// merge in default type metadata like kind and apiVersion in case the
@@ -407,36 +406,24 @@ func getProviderId(availabilityZone, instanceId string) string {
 }
 
 // Get the IP of the node depending on the ipFamily configured for the cluster
-func getNodeIp(ctx context.Context, imdsClient *imds.Client, cfg *api.NodeConfig) (string, error) {
+func getNodeIp(ctx context.Context, cfg *api.NodeConfig) (string, error) {
 	ipFamily, err := api.GetCIDRIpFamily(cfg.Spec.Cluster.CIDR)
 	if err != nil {
 		return "", err
 	}
 	switch ipFamily {
 	case api.IPFamilyIPv4:
-		ipv4Response, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{
-			Path: "local-ipv4",
-		})
+		ipv4, err := imds.GetProperty(ctx, "local-ipv4")
 		if err != nil {
 			return "", err
 		}
-		ip, err := io.ReadAll(ipv4Response.Content)
-		if err != nil {
-			return "", err
-		}
-		return string(ip), nil
+		return ipv4, nil
 	case api.IPFamilyIPv6:
-		ipv6Response, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{
-			Path: fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC),
-		})
+		ipv6, err := imds.GetProperty(ctx, imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC)))
 		if err != nil {
 			return "", err
 		}
-		ip, err := io.ReadAll(ipv6Response.Content)
-		if err != nil {
-			return "", err
-		}
-		return string(ip), nil
+		return ipv6, nil
 	default:
 		return "", fmt.Errorf("invalid ip-family. %s is not one of %v", ipFamily, []api.IPFamily{api.IPFamilyIPv4, api.IPFamilyIPv6})
 	}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
@@ -89,25 +88,28 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopesMiddlewares(stac
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -122,10 +124,16 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopesMiddlewares(stac
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeNetworkInsightsAccessScopes(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -140,16 +148,20 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopesMiddlewares(stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeNetworkInsightsAccessScopesAPIClient is a client that implements the
-// DescribeNetworkInsightsAccessScopes operation.
-type DescribeNetworkInsightsAccessScopesAPIClient interface {
-	DescribeNetworkInsightsAccessScopes(context.Context, *DescribeNetworkInsightsAccessScopesInput, ...func(*Options)) (*DescribeNetworkInsightsAccessScopesOutput, error)
-}
-
-var _ DescribeNetworkInsightsAccessScopesAPIClient = (*Client)(nil)
 
 // DescribeNetworkInsightsAccessScopesPaginatorOptions is the paginator options
 // for DescribeNetworkInsightsAccessScopes
@@ -218,6 +230,9 @@ func (p *DescribeNetworkInsightsAccessScopesPaginator) NextPage(ctx context.Cont
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeNetworkInsightsAccessScopes(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -236,6 +251,14 @@ func (p *DescribeNetworkInsightsAccessScopesPaginator) NextPage(ctx context.Cont
 
 	return result, nil
 }
+
+// DescribeNetworkInsightsAccessScopesAPIClient is a client that implements the
+// DescribeNetworkInsightsAccessScopes operation.
+type DescribeNetworkInsightsAccessScopesAPIClient interface {
+	DescribeNetworkInsightsAccessScopes(context.Context, *DescribeNetworkInsightsAccessScopesInput, ...func(*Options)) (*DescribeNetworkInsightsAccessScopesOutput, error)
+}
+
+var _ DescribeNetworkInsightsAccessScopesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeNetworkInsightsAccessScopes(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

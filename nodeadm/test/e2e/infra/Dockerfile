@@ -3,7 +3,7 @@ RUN go env -w GOPROXY=direct
 RUN GOBIN=/bin go install github.com/aws/amazon-ec2-metadata-mock/cmd@v1.11.2
 RUN mv /bin/cmd /imds-mock
 
-FROM golang:1.21 AS nodeadm-build
+FROM golang:1.22 AS nodeadm-build
 WORKDIR /go/src/github.com/awslabs/amazon-eks-ami/nodeadm
 COPY . .
 RUN make build
@@ -34,6 +34,7 @@ COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 #     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
 #     cidr: 10.100.0.0/16
 COPY test/e2e/infra/aemm-default-config.json /etc/aemm-default-config.json
+COPY test/e2e/infra/nvidia-ctk /usr/bin/nvidia-ctk
 COPY --from=nodeadm-build /nodeadm /usr/local/bin/nodeadm
 COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.service
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service

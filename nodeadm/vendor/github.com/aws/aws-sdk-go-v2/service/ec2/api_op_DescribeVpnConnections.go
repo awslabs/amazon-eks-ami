@@ -6,19 +6,20 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
-// Describes one or more of your VPN connections. For more information, see Amazon
-// Web Services Site-to-Site VPN (https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html)
-// in the Amazon Web Services Site-to-Site VPN User Guide.
+// Describes one or more of your VPN connections.
+//
+// For more information, see [Amazon Web Services Site-to-Site VPN] in the Amazon Web Services Site-to-Site VPN User
+// Guide.
+//
+// [Amazon Web Services Site-to-Site VPN]: https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html
 func (c *Client) DescribeVpnConnections(ctx context.Context, params *DescribeVpnConnectionsInput, optFns ...func(*Options)) (*DescribeVpnConnectionsOutput, error) {
 	if params == nil {
 		params = &DescribeVpnConnectionsInput{}
@@ -44,35 +45,48 @@ type DescribeVpnConnectionsInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - customer-gateway-configuration - The configuration information for the
 	//   customer gateway.
+	//
 	//   - customer-gateway-id - The ID of a customer gateway associated with the VPN
 	//   connection.
+	//
 	//   - state - The state of the VPN connection ( pending | available | deleting |
 	//   deleted ).
+	//
 	//   - option.static-routes-only - Indicates whether the connection has static
 	//   routes only. Used for devices that do not support Border Gateway Protocol (BGP).
 	//
 	//   - route.destination-cidr-block - The destination CIDR block. This corresponds
 	//   to the subnet used in a customer data center.
+	//
 	//   - bgp-asn - The BGP Autonomous System Number (ASN) associated with a BGP
 	//   device.
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
+	//
 	//   - type - The type of VPN connection. Currently the only supported type is
 	//   ipsec.1 .
+	//
 	//   - vpn-connection-id - The ID of the VPN connection.
+	//
 	//   - vpn-gateway-id - The ID of a virtual private gateway associated with the VPN
 	//   connection.
+	//
 	//   - transit-gateway-id - The ID of a transit gateway associated with the VPN
 	//   connection.
 	Filters []types.Filter
 
-	// One or more VPN connection IDs. Default: Describes your VPN connections.
+	// One or more VPN connection IDs.
+	//
+	// Default: Describes your VPN connections.
 	VpnConnectionIds []string
 
 	noSmithyDocumentSerde
@@ -112,25 +126,28 @@ func (c *Client) addOperationDescribeVpnConnectionsMiddlewares(stack *middleware
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -145,10 +162,16 @@ func (c *Client) addOperationDescribeVpnConnectionsMiddlewares(stack *middleware
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVpnConnections(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -163,16 +186,20 @@ func (c *Client) addOperationDescribeVpnConnectionsMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeVpnConnectionsAPIClient is a client that implements the
-// DescribeVpnConnections operation.
-type DescribeVpnConnectionsAPIClient interface {
-	DescribeVpnConnections(context.Context, *DescribeVpnConnectionsInput, ...func(*Options)) (*DescribeVpnConnectionsOutput, error)
-}
-
-var _ DescribeVpnConnectionsAPIClient = (*Client)(nil)
 
 // VpnConnectionAvailableWaiterOptions are waiter options for
 // VpnConnectionAvailableWaiter
@@ -181,7 +208,16 @@ type VpnConnectionAvailableWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// VpnConnectionAvailableWaiter will use default minimum delay of 15 seconds. Note
@@ -199,12 +235,13 @@ type VpnConnectionAvailableWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeVpnConnectionsInput, *DescribeVpnConnectionsOutput, error) (bool, error)
 }
 
@@ -281,7 +318,16 @@ func (w *VpnConnectionAvailableWaiter) WaitForOutput(ctx context.Context, params
 		}
 
 		out, err := w.client.DescribeVpnConnections(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -317,29 +363,18 @@ func (w *VpnConnectionAvailableWaiter) WaitForOutput(ctx context.Context, params
 func vpnConnectionAvailableStateRetryable(ctx context.Context, input *DescribeVpnConnectionsInput, output *DescribeVpnConnectionsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpnConnections[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpnConnections
+		var v2 []types.VpnState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "available"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpnState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpnState value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -349,50 +384,44 @@ func vpnConnectionAvailableStateRetryable(ctx context.Context, input *DescribeVp
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpnConnections[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpnConnections
+		var v2 []types.VpnState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "deleting"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpnState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpnState value, got %T", pathValue)
-			}
-
-			if string(value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpnConnections[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpnConnections
+		var v2 []types.VpnState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "deleted"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpnState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpnState value, got %T", pathValue)
-			}
-
-			if string(value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
@@ -406,7 +435,16 @@ type VpnConnectionDeletedWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// VpnConnectionDeletedWaiter will use default minimum delay of 15 seconds. Note
@@ -424,12 +462,13 @@ type VpnConnectionDeletedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeVpnConnectionsInput, *DescribeVpnConnectionsOutput, error) (bool, error)
 }
 
@@ -506,7 +545,16 @@ func (w *VpnConnectionDeletedWaiter) WaitForOutput(ctx context.Context, params *
 		}
 
 		out, err := w.client.DescribeVpnConnections(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -542,29 +590,18 @@ func (w *VpnConnectionDeletedWaiter) WaitForOutput(ctx context.Context, params *
 func vpnConnectionDeletedStateRetryable(ctx context.Context, input *DescribeVpnConnectionsInput, output *DescribeVpnConnectionsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpnConnections[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpnConnections
+		var v2 []types.VpnState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "deleted"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpnState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpnState value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -574,31 +611,36 @@ func vpnConnectionDeletedStateRetryable(ctx context.Context, input *DescribeVpnC
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpnConnections[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpnConnections
+		var v2 []types.VpnState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "pending"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpnState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpnState value, got %T", pathValue)
-			}
-
-			if string(value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	return true, nil
 }
+
+// DescribeVpnConnectionsAPIClient is a client that implements the
+// DescribeVpnConnections operation.
+type DescribeVpnConnectionsAPIClient interface {
+	DescribeVpnConnections(context.Context, *DescribeVpnConnectionsInput, ...func(*Options)) (*DescribeVpnConnectionsOutput, error)
+}
+
+var _ DescribeVpnConnectionsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVpnConnections(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -6,19 +6,20 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"time"
 )
 
-// Modifies a Capacity Reservation's capacity and the conditions under which it is
-// to be released. You cannot change a Capacity Reservation's instance type, EBS
-// optimization, instance store settings, platform, Availability Zone, or instance
-// eligibility. If you need to modify any of these attributes, we recommend that
-// you cancel the Capacity Reservation, and then create a new one with the required
-// attributes.
+// Modifies a Capacity Reservation's capacity, instance eligibility, and the
+// conditions under which it is to be released. You can't modify a Capacity
+// Reservation's instance type, EBS optimization, platform, instance store
+// settings, Availability Zone, or tenancy. If you need to modify any of these
+// attributes, we recommend that you cancel the Capacity Reservation, and then
+// create a new one with the required attributes. For more information, see [Modify an active Capacity Reservation].
+//
+// [Modify an active Capacity Reservation]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-modify.html
 func (c *Client) ModifyCapacityReservation(ctx context.Context, params *ModifyCapacityReservationInput, optFns ...func(*Options)) (*ModifyCapacityReservationOutput, error) {
 	if params == nil {
 		params = &ModifyCapacityReservationInput{}
@@ -56,17 +57,22 @@ type ModifyCapacityReservationInput struct {
 	// The date and time at which the Capacity Reservation expires. When a Capacity
 	// Reservation expires, the reserved capacity is released and you can no longer
 	// launch instances into it. The Capacity Reservation's state changes to expired
-	// when it reaches its end date and time. The Capacity Reservation is cancelled
-	// within an hour from the specified time. For example, if you specify 5/31/2019,
-	// 13:30:55, the Capacity Reservation is guaranteed to end between 13:30:55 and
-	// 14:30:55 on 5/31/2019. You must provide an EndDate value if EndDateType is
-	// limited . Omit EndDate if EndDateType is unlimited .
+	// when it reaches its end date and time.
+	//
+	// The Capacity Reservation is cancelled within an hour from the specified time.
+	// For example, if you specify 5/31/2019, 13:30:55, the Capacity Reservation is
+	// guaranteed to end between 13:30:55 and 14:30:55 on 5/31/2019.
+	//
+	// You must provide an EndDate value if EndDateType is limited . Omit EndDate if
+	// EndDateType is unlimited .
 	EndDate *time.Time
 
 	// Indicates the way in which the Capacity Reservation ends. A Capacity
 	// Reservation can have one of the following end types:
+	//
 	//   - unlimited - The Capacity Reservation remains active until you explicitly
 	//   cancel it. Do not provide an EndDate value if EndDateType is unlimited .
+	//
 	//   - limited - The Capacity Reservation expires automatically at a specified date
 	//   and time. You must provide an EndDate value if EndDateType is limited .
 	EndDateType types.EndDateType
@@ -74,6 +80,17 @@ type ModifyCapacityReservationInput struct {
 	// The number of instances for which to reserve capacity. The number of instances
 	// can't be increased or decreased by more than 1000 in a single request.
 	InstanceCount *int32
+
+	//  The matching criteria (instance eligibility) that you want to use in the
+	// modified Capacity Reservation. If you change the instance eligibility of an
+	// existing Capacity Reservation from targeted to open , any running instances that
+	// match the attributes of the Capacity Reservation, have the
+	// CapacityReservationPreference set to open , and are not yet running in the
+	// Capacity Reservation, will automatically use the modified Capacity Reservation.
+	//
+	// To modify the instance eligibility, the Capacity Reservation must be completely
+	// idle (zero usage).
+	InstanceMatchCriteria types.InstanceMatchCriteria
 
 	noSmithyDocumentSerde
 }
@@ -111,25 +128,28 @@ func (c *Client) addOperationModifyCapacityReservationMiddlewares(stack *middlew
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -144,13 +164,19 @@ func (c *Client) addOperationModifyCapacityReservationMiddlewares(stack *middlew
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = addOpModifyCapacityReservationValidationMiddleware(stack); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opModifyCapacityReservation(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -163,6 +189,18 @@ func (c *Client) addOperationModifyCapacityReservationMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

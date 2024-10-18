@@ -31,8 +31,8 @@ on:
         required: false
         type: string
       k8s_versions:
-        description: 'Kubernetes Versions (comma-separated, e.g., 1.21,1.22)'
-        default: "1.21,1.22,1.23,1.24,1.25,1.26,1.27,1.28,1.29,1.30"
+        description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
+        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
         required: false
         type: string
       build_arguments:
@@ -64,7 +64,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
         with:
           script: |
             github.rest.issues.createComment({
@@ -88,17 +88,11 @@ jobs:
       matrix:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
         os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
-        # al2023 is not supporting 1.22 and below, exclude them from CI
-        exclude:
-          - os_distro: al2023
-            k8s_version: 1.21
-          - os_distro: al2023
-            k8s_version: 1.22
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # 4.2.1
         with:
           ref: 'main'
-      - uses: aws-actions/configure-aws-credentials@v2
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
@@ -123,6 +117,7 @@ jobs:
           os_distro: ${{ matrix.os_distro }}
           build_id: ${{ needs.setup.outputs.build_id }}
           aws_region: ${{ secrets.AWS_REGION }}
+          log_bucket: ${{ secrets.CI_LOG_BUCKET }}
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -130,7 +125,7 @@ jobs:
       - setup
       - kubernetes-versions
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
         with:
           script: |
             const { data } = await github.rest.actions.listJobsForWorkflowRun({

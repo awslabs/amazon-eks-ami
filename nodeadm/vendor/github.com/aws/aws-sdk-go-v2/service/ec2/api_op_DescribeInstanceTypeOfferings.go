@@ -6,15 +6,14 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns a list of all instance types offered. The results can be filtered by
-// location (Region or Availability Zone). If no location is specified, the
-// instance types offered in the current Region are returned.
+// Lists the instance types that are offered for the specified location. If no
+// location is specified, the default is to list the instance types that are
+// offered in the current Region.
 func (c *Client) DescribeInstanceTypeOfferings(ctx context.Context, params *DescribeInstanceTypeOfferingsInput, optFns ...func(*Options)) (*DescribeInstanceTypeOfferingsOutput, error) {
 	if params == nil {
 		params = &DescribeInstanceTypeOfferingsInput{}
@@ -39,19 +38,35 @@ type DescribeInstanceTypeOfferingsInput struct {
 	DryRun *bool
 
 	// One or more filters. Filter names and values are case-sensitive.
-	//   - location - This depends on the location type. For example, if the location
-	//   type is region (default), the location is the Region code (for example,
-	//   us-east-2 .)
-	//   - instance-type - The instance type. For example, c5.2xlarge .
+	//
+	//   - instance-type - The instance type. For a list of possible values, see [Instance].
+	//
+	//   - location - The location. For a list of possible identifiers, see [Regions and Zones].
+	//
+	// [Instance]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_Instance.html
+	// [Regions and Zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
 	Filters []types.Filter
 
 	// The location type.
+	//
+	//   - availability-zone - The Availability Zone. When you specify a location
+	//   filter, it must be an Availability Zone for the current Region.
+	//
+	//   - availability-zone-id - The AZ ID. When you specify a location filter, it
+	//   must be an AZ ID for the current Region.
+	//
+	//   - outpost - The Outpost ARN. When you specify a location filter, it must be an
+	//   Outpost ARN for the current Region.
+	//
+	//   - region - The current Region. If you specify a location filter, it must match
+	//   the current Region.
 	LocationType types.LocationType
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -63,7 +78,7 @@ type DescribeInstanceTypeOfferingsInput struct {
 
 type DescribeInstanceTypeOfferingsOutput struct {
 
-	// The instance types offered.
+	// The instance types offered in the location.
 	InstanceTypeOfferings []types.InstanceTypeOffering
 
 	// The token to include in another request to get the next page of items. This
@@ -98,25 +113,28 @@ func (c *Client) addOperationDescribeInstanceTypeOfferingsMiddlewares(stack *mid
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -131,10 +149,16 @@ func (c *Client) addOperationDescribeInstanceTypeOfferingsMiddlewares(stack *mid
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeInstanceTypeOfferings(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -149,24 +173,29 @@ func (c *Client) addOperationDescribeInstanceTypeOfferingsMiddlewares(stack *mid
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeInstanceTypeOfferingsAPIClient is a client that implements the
-// DescribeInstanceTypeOfferings operation.
-type DescribeInstanceTypeOfferingsAPIClient interface {
-	DescribeInstanceTypeOfferings(context.Context, *DescribeInstanceTypeOfferingsInput, ...func(*Options)) (*DescribeInstanceTypeOfferingsOutput, error)
-}
-
-var _ DescribeInstanceTypeOfferingsAPIClient = (*Client)(nil)
 
 // DescribeInstanceTypeOfferingsPaginatorOptions is the paginator options for
 // DescribeInstanceTypeOfferings
 type DescribeInstanceTypeOfferingsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -229,6 +258,9 @@ func (p *DescribeInstanceTypeOfferingsPaginator) NextPage(ctx context.Context, o
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeInstanceTypeOfferings(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -247,6 +279,14 @@ func (p *DescribeInstanceTypeOfferingsPaginator) NextPage(ctx context.Context, o
 
 	return result, nil
 }
+
+// DescribeInstanceTypeOfferingsAPIClient is a client that implements the
+// DescribeInstanceTypeOfferings operation.
+type DescribeInstanceTypeOfferingsAPIClient interface {
+	DescribeInstanceTypeOfferings(context.Context, *DescribeInstanceTypeOfferingsInput, ...func(*Options)) (*DescribeInstanceTypeOfferingsOutput, error)
+}
+
+var _ DescribeInstanceTypeOfferingsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeInstanceTypeOfferings(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

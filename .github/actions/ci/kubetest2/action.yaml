@@ -15,6 +15,9 @@ inputs:
   aws_region:
     required: true
     type: string
+  log_bucket:
+    required: true
+    type: string
 runs:
   using: "composite"
   steps:
@@ -49,6 +52,8 @@ runs:
         kubetest2 eksapi \
           --up \
           --down \
+          --emit-metrics \
+          --log-bucket=${{ inputs.log_bucket }} \
           --kubernetes-version=${{ inputs.k8s_version }} \
           --generate-ssh-key \
           --unmanaged-nodes \

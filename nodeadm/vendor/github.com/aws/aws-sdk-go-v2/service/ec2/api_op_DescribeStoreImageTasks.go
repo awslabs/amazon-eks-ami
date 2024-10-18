@@ -6,27 +6,32 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
 // Describes the progress of the AMI store tasks. You can describe the store tasks
 // for specified AMIs. If you don't specify the AMIs, you get a paginated list of
-// store tasks from the last 31 days. For each AMI task, the response indicates if
-// the task is InProgress , Completed , or Failed . For tasks InProgress , the
-// response shows the estimated progress as a percentage. Tasks are listed in
-// reverse chronological order. Currently, only tasks from the past 31 days can be
-// viewed. To use this API, you must have the required permissions. For more
-// information, see Permissions for storing and restoring AMIs using Amazon S3 (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-store-restore.html#ami-s3-permissions)
-// in the Amazon EC2 User Guide. For more information, see Store and restore an
-// AMI using Amazon S3 (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-store-restore.html)
-// in the Amazon EC2 User Guide.
+// store tasks from the last 31 days.
+//
+// For each AMI task, the response indicates if the task is InProgress , Completed
+// , or Failed . For tasks InProgress , the response shows the estimated progress
+// as a percentage.
+//
+// Tasks are listed in reverse chronological order. Currently, only tasks from the
+// past 31 days can be viewed.
+//
+// To use this API, you must have the required permissions. For more information,
+// see [Permissions for storing and restoring AMIs using Amazon S3]in the Amazon EC2 User Guide.
+//
+// For more information, see [Store and restore an AMI using Amazon S3] in the Amazon EC2 User Guide.
+//
+// [Store and restore an AMI using Amazon S3]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-store-restore.html
+// [Permissions for storing and restoring AMIs using Amazon S3]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-store-restore.html#ami-s3-permissions
 func (c *Client) DescribeStoreImageTasks(ctx context.Context, params *DescribeStoreImageTasksInput, optFns ...func(*Options)) (*DescribeStoreImageTasksOutput, error) {
 	if params == nil {
 		params = &DescribeStoreImageTasksInput{}
@@ -51,10 +56,13 @@ type DescribeStoreImageTasksInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - task-state - Returns tasks in a certain state ( InProgress | Completed |
 	//   Failed )
+	//
 	//   - bucket - Returns task information for tasks that targeted a specific bucket.
 	//   For the filter value, specify the bucket name.
+	//
 	// When you specify the ImageIds parameter, any filters that you specify are
 	// ignored. To use the filters, you must remove the ImageIds parameter.
 	Filters []types.Filter
@@ -65,8 +73,11 @@ type DescribeStoreImageTasksInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// . You cannot specify this parameter and the ImageIds parameter in the same call.
+	// information, see [Pagination].
+	//
+	// You cannot specify this parameter and the ImageIds parameter in the same call.
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -113,25 +124,28 @@ func (c *Client) addOperationDescribeStoreImageTasksMiddlewares(stack *middlewar
 	if err = addSetLoggerMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddClientRequestIDMiddleware(stack); err != nil {
+	if err = addClientRequestID(stack); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddComputeContentLengthMiddleware(stack); err != nil {
+	if err = addComputeContentLength(stack); err != nil {
 		return err
 	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = v4.AddComputePayloadSHA256Middleware(stack); err != nil {
+	if err = addComputePayloadSHA256(stack); err != nil {
 		return err
 	}
-	if err = addRetryMiddlewares(stack, options); err != nil {
+	if err = addRetry(stack, options); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRawResponseToMetadata(stack); err != nil {
+	if err = addRawResponseToMetadata(stack); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecordResponseTiming(stack); err != nil {
+	if err = addRecordResponseTiming(stack); err != nil {
+		return err
+	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
 		return err
 	}
 	if err = addClientUserAgent(stack, options); err != nil {
@@ -146,10 +160,16 @@ func (c *Client) addOperationDescribeStoreImageTasksMiddlewares(stack *middlewar
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeStoreImageTasks(options.Region), middleware.Before); err != nil {
 		return err
 	}
-	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+	if err = addRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
@@ -164,102 +184,19 @@ func (c *Client) addOperationDescribeStoreImageTasksMiddlewares(stack *middlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
-}
-
-// DescribeStoreImageTasksAPIClient is a client that implements the
-// DescribeStoreImageTasks operation.
-type DescribeStoreImageTasksAPIClient interface {
-	DescribeStoreImageTasks(context.Context, *DescribeStoreImageTasksInput, ...func(*Options)) (*DescribeStoreImageTasksOutput, error)
-}
-
-var _ DescribeStoreImageTasksAPIClient = (*Client)(nil)
-
-// DescribeStoreImageTasksPaginatorOptions is the paginator options for
-// DescribeStoreImageTasks
-type DescribeStoreImageTasksPaginatorOptions struct {
-	// The maximum number of items to return for this request. To get the next page of
-	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// . You cannot specify this parameter and the ImageIds parameter in the same call.
-	Limit int32
-
-	// Set to true if pagination should stop if the service returns a pagination token
-	// that matches the most recent token provided to the service.
-	StopOnDuplicateToken bool
-}
-
-// DescribeStoreImageTasksPaginator is a paginator for DescribeStoreImageTasks
-type DescribeStoreImageTasksPaginator struct {
-	options   DescribeStoreImageTasksPaginatorOptions
-	client    DescribeStoreImageTasksAPIClient
-	params    *DescribeStoreImageTasksInput
-	nextToken *string
-	firstPage bool
-}
-
-// NewDescribeStoreImageTasksPaginator returns a new
-// DescribeStoreImageTasksPaginator
-func NewDescribeStoreImageTasksPaginator(client DescribeStoreImageTasksAPIClient, params *DescribeStoreImageTasksInput, optFns ...func(*DescribeStoreImageTasksPaginatorOptions)) *DescribeStoreImageTasksPaginator {
-	if params == nil {
-		params = &DescribeStoreImageTasksInput{}
-	}
-
-	options := DescribeStoreImageTasksPaginatorOptions{}
-	if params.MaxResults != nil {
-		options.Limit = *params.MaxResults
-	}
-
-	for _, fn := range optFns {
-		fn(&options)
-	}
-
-	return &DescribeStoreImageTasksPaginator{
-		options:   options,
-		client:    client,
-		params:    params,
-		firstPage: true,
-		nextToken: params.NextToken,
-	}
-}
-
-// HasMorePages returns a boolean indicating whether more pages are available
-func (p *DescribeStoreImageTasksPaginator) HasMorePages() bool {
-	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
-}
-
-// NextPage retrieves the next DescribeStoreImageTasks page.
-func (p *DescribeStoreImageTasksPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeStoreImageTasksOutput, error) {
-	if !p.HasMorePages() {
-		return nil, fmt.Errorf("no more pages available")
-	}
-
-	params := *p.params
-	params.NextToken = p.nextToken
-
-	var limit *int32
-	if p.options.Limit > 0 {
-		limit = &p.options.Limit
-	}
-	params.MaxResults = limit
-
-	result, err := p.client.DescribeStoreImageTasks(ctx, &params, optFns...)
-	if err != nil {
-		return nil, err
-	}
-	p.firstPage = false
-
-	prevToken := p.nextToken
-	p.nextToken = result.NextToken
-
-	if p.options.StopOnDuplicateToken &&
-		prevToken != nil &&
-		p.nextToken != nil &&
-		*prevToken == *p.nextToken {
-		p.nextToken = nil
-	}
-
-	return result, nil
 }
 
 // StoreImageTaskCompleteWaiterOptions are waiter options for
@@ -269,7 +206,16 @@ type StoreImageTaskCompleteWaiterOptions struct {
 	// Set of options to modify how an operation is invoked. These apply to all
 	// operations invoked for this client. Use functional options on operation call to
 	// modify this list for per operation behavior.
+	//
+	// Passing options here is functionally equivalent to passing values to this
+	// config's ClientOptions field that extend the inner client's APIOptions directly.
 	APIOptions []func(*middleware.Stack) error
+
+	// Functional options to be passed to all operations invoked by this client.
+	//
+	// Function values that modify the inner APIOptions are applied after the waiter
+	// config's own APIOptions modifiers.
+	ClientOptions []func(*Options)
 
 	// MinDelay is the minimum amount of time to delay between retries. If unset,
 	// StoreImageTaskCompleteWaiter will use default minimum delay of 5 seconds. Note
@@ -287,12 +233,13 @@ type StoreImageTaskCompleteWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state. By
-	// default service-modeled logic will populate this option. This option can thus be
-	// used to define a custom waiter state with fall-back to service-modeled waiter
-	// state mutators.The function returns an error in case of a failure state. In case
-	// of retry state, this function returns a bool value of true and nil error, while
-	// in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state.
+	//
+	// By default service-modeled logic will populate this option. This option can
+	// thus be used to define a custom waiter state with fall-back to service-modeled
+	// waiter state mutators.The function returns an error in case of a failure state.
+	// In case of retry state, this function returns a bool value of true and nil
+	// error, while in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeStoreImageTasksInput, *DescribeStoreImageTasksOutput, error) (bool, error)
 }
 
@@ -369,7 +316,16 @@ func (w *StoreImageTaskCompleteWaiter) WaitForOutput(ctx context.Context, params
 		}
 
 		out, err := w.client.DescribeStoreImageTasks(ctx, params, func(o *Options) {
+			baseOpts := []func(*Options){
+				addIsWaiterUserAgent,
+			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
+			for _, opt := range baseOpts {
+				opt(o)
+			}
+			for _, opt := range options.ClientOptions {
+				opt(o)
+			}
 		})
 
 		retryable, err := options.Retryable(ctx, params, out, err)
@@ -405,29 +361,20 @@ func (w *StoreImageTaskCompleteWaiter) WaitForOutput(ctx context.Context, params
 func storeImageTaskCompleteStateRetryable(ctx context.Context, input *DescribeStoreImageTasksInput, output *DescribeStoreImageTasksOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("StoreImageTaskResults[].StoreTaskState", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
-		expectedValue := "Completed"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
+		v1 := output.StoreImageTaskResults
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.StoreTaskState
+			if v3 != nil {
+				v2 = append(v2, *v3)
 			}
-
-			if string(*value) != expectedValue {
+		}
+		expectedValue := "Completed"
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -437,55 +384,154 @@ func storeImageTaskCompleteStateRetryable(ctx context.Context, input *DescribeSt
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("StoreImageTaskResults[].StoreTaskState", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.StoreImageTaskResults
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.StoreTaskState
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "Failed"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("StoreImageTaskResults[].StoreTaskState", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.StoreImageTaskResults
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.StoreTaskState
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
 		expectedValue := "InProgress"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(*string)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected *string value, got %T", pathValue)
-			}
-
-			if string(*value) == expectedValue {
-				return true, nil
-			}
+		if match {
+			return true, nil
 		}
 	}
 
 	return true, nil
 }
+
+// DescribeStoreImageTasksPaginatorOptions is the paginator options for
+// DescribeStoreImageTasks
+type DescribeStoreImageTasksPaginatorOptions struct {
+	// The maximum number of items to return for this request. To get the next page of
+	// items, make another request with the token returned in the output. For more
+	// information, see [Pagination].
+	//
+	// You cannot specify this parameter and the ImageIds parameter in the same call.
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	Limit int32
+
+	// Set to true if pagination should stop if the service returns a pagination token
+	// that matches the most recent token provided to the service.
+	StopOnDuplicateToken bool
+}
+
+// DescribeStoreImageTasksPaginator is a paginator for DescribeStoreImageTasks
+type DescribeStoreImageTasksPaginator struct {
+	options   DescribeStoreImageTasksPaginatorOptions
+	client    DescribeStoreImageTasksAPIClient
+	params    *DescribeStoreImageTasksInput
+	nextToken *string
+	firstPage bool
+}
+
+// NewDescribeStoreImageTasksPaginator returns a new
+// DescribeStoreImageTasksPaginator
+func NewDescribeStoreImageTasksPaginator(client DescribeStoreImageTasksAPIClient, params *DescribeStoreImageTasksInput, optFns ...func(*DescribeStoreImageTasksPaginatorOptions)) *DescribeStoreImageTasksPaginator {
+	if params == nil {
+		params = &DescribeStoreImageTasksInput{}
+	}
+
+	options := DescribeStoreImageTasksPaginatorOptions{}
+	if params.MaxResults != nil {
+		options.Limit = *params.MaxResults
+	}
+
+	for _, fn := range optFns {
+		fn(&options)
+	}
+
+	return &DescribeStoreImageTasksPaginator{
+		options:   options,
+		client:    client,
+		params:    params,
+		firstPage: true,
+		nextToken: params.NextToken,
+	}
+}
+
+// HasMorePages returns a boolean indicating whether more pages are available
+func (p *DescribeStoreImageTasksPaginator) HasMorePages() bool {
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
+}
+
+// NextPage retrieves the next DescribeStoreImageTasks page.
+func (p *DescribeStoreImageTasksPaginator) NextPage(ctx context.Context, optFns ...func(*Options)) (*DescribeStoreImageTasksOutput, error) {
+	if !p.HasMorePages() {
+		return nil, fmt.Errorf("no more pages available")
+	}
+
+	params := *p.params
+	params.NextToken = p.nextToken
+
+	var limit *int32
+	if p.options.Limit > 0 {
+		limit = &p.options.Limit
+	}
+	params.MaxResults = limit
+
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
+	result, err := p.client.DescribeStoreImageTasks(ctx, &params, optFns...)
+	if err != nil {
+		return nil, err
+	}
+	p.firstPage = false
+
+	prevToken := p.nextToken
+	p.nextToken = result.NextToken
+
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
+		p.nextToken = nil
+	}
+
+	return result, nil
+}
+
+// DescribeStoreImageTasksAPIClient is a client that implements the
+// DescribeStoreImageTasks operation.
+type DescribeStoreImageTasksAPIClient interface {
+	DescribeStoreImageTasks(context.Context, *DescribeStoreImageTasksInput, ...func(*Options)) (*DescribeStoreImageTasksOutput, error)
+}
+
+var _ DescribeStoreImageTasksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeStoreImageTasks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

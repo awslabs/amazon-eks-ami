@@ -3,34 +3,29 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go/aws"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
 // Fetch information about the ec2 instance using IMDS data.
 // This information is stored into the internal config to avoid redundant calls
 // to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, imdsClient *imds.Client, ec2Client *ec2.Client) (*InstanceDetails, error) {
-	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client) (*InstanceDetails, error) {
+	instanceIdenitityDocument, err := imds.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	macResponse, err := imdsClient.GetMetadata(ctx, &imds.GetMetadataInput{Path: "mac"})
-	if err != nil {
-		return nil, err
-	}
-	mac, err := io.ReadAll(macResponse.Content)
+	mac, err := imds.GetProperty(ctx, "mac")
 	if err != nil {
 		return nil, err
 	}
 
-	privateDNSName := ""
+	var privateDNSName string
 	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
 		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
 		if err != nil {
@@ -59,7 +54,7 @@ func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	privateDNSName := aws.StringValue(out.Reservations[0].Instances[0].PrivateDnsName)
+	privateDNSName := aws.ToString(out.Reservations[0].Instances[0].PrivateDnsName)
 	return privateDNSName, nil
 }
 
@@ -67,5 +62,5 @@ func privateDNSNameAvailable(out *ec2.DescribeInstancesOutput) (bool, error) {
 	if out == nil || len(out.Reservations) != 1 || len(out.Reservations[0].Instances) != 1 {
 		return false, fmt.Errorf("reservation or instance not found")
 	}
-	return aws.StringValue(out.Reservations[0].Instances[0].PrivateDnsName) != "", nil
+	return aws.ToString(out.Reservations[0].Instances[0].PrivateDnsName) != "", nil
 }

@@ -4,8 +4,6 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-BUILD_IMAGE=public.ecr.aws/eks-distro-build-tooling/golang:1.21
-
 sudo systemctl start containerd
 
 sudo nerdctl run \

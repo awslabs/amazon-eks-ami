@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.7"
+readonly PROGRAM_VERSION="0.7.8"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
@@ -63,6 +63,7 @@ COMMON_DIRECTORIES=(
   kubelet       # eks
   nodeadm       # eks
   cni           # eks
+  gpu           # eks
 )
 
 COMMON_LOGS=(
@@ -282,10 +283,13 @@ collect() {
   get_networking_info
   get_cni_config
   get_cni_configuration_variables
+  get_network_policy_ebpf_info
   get_docker_logs
   get_sandboxImage_info
   get_cpu_throttled_processes
   get_io_throttled_processes
+  get_reboot_history
+  get_nvidia_bug_report
 }
 
 pack() {
@@ -311,6 +315,7 @@ get_mounts_info() {
   lvs > "${COLLECT_DIR}"/storage/lvs.txt
   pvs > "${COLLECT_DIR}"/storage/pvs.txt
   vgs > "${COLLECT_DIR}"/storage/vgs.txt
+  cp --force /etc/fstab "${COLLECT_DIR}"/storage/fstab.txt
   mount -t xfs | awk '{print $1}' | xargs -I{} -- sh -c "xfs_info {}; xfs_db -r -c 'freesp -s' {}" > "${COLLECT_DIR}"/storage/xfs.txt
   mount | grep ^overlay | sed 's/.*upperdir=//' | sed 's/,.*//' | xargs -n 1 timeout 75 du -sh | grep -v ^0 > "${COLLECT_DIR}"/storage/pod_local_storage.txt
   ok
@@ -343,6 +348,20 @@ get_iptables_info() {
     ip6tables --wait 1 --numeric --verbose --list | tee "${COLLECT_DIR}"/networking/ip6tables.txt | sed '/^num\|^$\|^Chain\|^\ pkts.*.destination/d' | echo -e "=======\nTotal Number of Rules: $(wc -l)" >> "${COLLECT_DIR}"/networking/ip6tables.txt
     iptables-save > "${COLLECT_DIR}"/networking/iptables-save.txt
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
+  fi
+
+  if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
+    echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
+  else
+    # check that ip_vs module is loaded in get_modinfo()
+    try "collect ipvs information"
+    ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add:service/server \tprotocol \tvirtual-server \tscheduler algorithm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipset --list | tee "${COLLECT_DIR}"/networking/ipset.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+    ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
   fi
 
   ok
@@ -407,6 +426,7 @@ get_kernel_info() {
 get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
+  lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
 }
 
 get_docker_logs() {
@@ -470,6 +490,8 @@ get_k8s_info() {
 
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
       cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
+
+      cp --force --recursive --dereference /etc/kubernetes/kubelet/kubelet-config.json "${COLLECT_DIR}"/kubelet/kubelet-config.json 2> /dev/null
       ;;
     snap)
       timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
@@ -536,6 +558,18 @@ get_sysctls_info() {
   # dump all sysctls
   sysctl --all >> "${COLLECT_DIR}"/sysctls/sysctl_all.txt 2> /dev/null
 
+  ok
+}
+
+get_network_policy_ebpf_info() {
+  try "collect network policy ebpf loaded data"
+  echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
+  LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
+
+  for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+    echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+    /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+  done
   ok
 }
 
@@ -673,12 +707,26 @@ get_system_services() {
       ;;
   esac
 
+  if [ "${INIT_TYPE}" = "systemd" ]; then
+    systemd-analyze plot > "${COLLECT_DIR}/system/systemd-analyze.svg" 2>&1
+  fi
+
   timeout 75 top -b -n 1 > "${COLLECT_DIR}"/system/top.txt 2>&1
   timeout 75 ps fauxwww --headers > "${COLLECT_DIR}"/system/ps.txt 2>&1
   timeout 75 ps -eTF --headers > "${COLLECT_DIR}"/system/ps-threads.txt 2>&1
   timeout 75 netstat -plant > "${COLLECT_DIR}"/system/netstat.txt 2>&1
   timeout 75 cat /proc/stat > "${COLLECT_DIR}"/system/procstat.txt 2>&1
   timeout 75 cat /proc/[0-9]*/stat > "${COLLECT_DIR}"/system/allprocstat.txt 2>&1
+
+  # collect pids which have large environments
+  echo -e "PID\tCount" > "${COLLECT_DIR}/system/large_environments.txt"
+  for i in /proc/*/environ; do
+    ENV_COUNT=$(tr '\0' '\n' < "$i" | grep -cv '^$')
+    if ((ENV_COUNT > 1000)); then
+      PID=$(echo "$i" | sed 's#/proc/##' | sed 's#/environ##')
+      echo -e "${PID}\t${ENV_COUNT}" >> "${COLLECT_DIR}/system/large_environments.txt"
+    fi
+  done
 
   ok
 }
@@ -769,6 +817,22 @@ get_io_throttled_processes() {
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
   command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  ok
+}
+
+get_reboot_history() {
+  try "Collect reboot history"
+  timeout 75 last reboot > "${COLLECT_DIR}"/system/last_reboot.txt 2>&1 || echo -e "\tTimed out, ignoring \"reboot history output \" "
+  ok
+}
+
+get_nvidia_bug_report() {
+  try "Collect Nvidia Bug report"
+  if ! command -v nvidia-bug-report.sh &> /dev/null; then
+    echo "No Nvidia drivers found, nothing to do."
+  else
+    timeout 75 nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null
+  fi
   ok
 }
 
