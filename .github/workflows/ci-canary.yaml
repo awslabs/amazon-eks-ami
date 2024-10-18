@@ -1,0 +1,25 @@
+name: '[CI] Canary'
+on:
+  schedule:
+    # daily at midnight
+    - cron: "0 0 * * *"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.variables.outputs.timestamp }}
+    steps:
+    - id: variables
+      run: |
+        echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+  ci:
+    needs:
+      - setup
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      git_sha: "main"
+      run_name: "ci(canary): ${{ needs.setup.outputs.timestamp }}"
+      resource_id: "ci-canary-${{ needs.setup.outputs.timestamp }}"
