@@ -643,6 +643,8 @@ if [ -x "${BOOTSTRAP_GPU_HELPER}" ]; then
   log "INFO: completed GPU bootstrap helper!"
 fi
 
+set-nvidia-clocks
+
 systemctl daemon-reload
 systemctl enable kubelet
 systemctl start kubelet

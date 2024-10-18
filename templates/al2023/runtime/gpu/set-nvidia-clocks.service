@@ -5,7 +5,9 @@ Requires=nvidia-persistenced.service
 
 [Service]
 Type=oneshot
-ExecStart=/etc/eks/set-nvidia-clocks.sh
+# run a check on nvidia-smi presence
+ExecCondition=/usr/bin/nvidia-smi -q
+ExecStart=/usr/bin/set-nvidia-clocks
 RemainAfterExit=true
 
 [Install]
