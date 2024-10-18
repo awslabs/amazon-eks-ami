@@ -17,5 +17,6 @@ COPY al2/runtime/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 COPY al2/runtime/ecr-credential-provider-config.json /etc/eks/image-credential-provider/config.json
 COPY test/entrypoint.sh /entrypoint.sh
 COPY al2/runtime/bin/* /usr/bin/
+COPY shared/runtime/bin/* /usr/bin/
 COPY test/mocks/ /sbin/
 ENTRYPOINT ["/entrypoint.sh"]
