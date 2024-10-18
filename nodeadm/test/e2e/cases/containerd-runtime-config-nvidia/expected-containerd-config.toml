@@ -7,7 +7,7 @@ address = '/run/foo/foo.sock'
 
 [plugins]
 [plugins.'io.containerd.grpc.v1.cri']
-sandbox_image = '602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.5'
+sandbox_image = 'localhost/kubernetes/pause'
 
 [plugins.'io.containerd.grpc.v1.cri'.cni]
 bin_dir = '/opt/cni/bin'
