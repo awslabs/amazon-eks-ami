@@ -8,7 +8,7 @@ set -o nounset
 if ! nvidia-smi -q > /tmp/nvidia-smi-check; then
   echo >&2 "ERROR: nvidia-smi check failed!"
   cat /tmp/nvidia-smi-check
-  exit 0
+  exit 1
 fi
 
 # it's generally recommended to manually set clocks using max performance in
