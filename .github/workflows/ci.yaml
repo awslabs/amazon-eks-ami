@@ -88,6 +88,6 @@ jobs:
           ami_id: ${{ steps.build.outputs.ami_id }}
           k8s_version: ${{ matrix.k8s_version }}
           os_distro: ${{ matrix.os_distro }}
-          build_id: ${{ needs.setup.outputs.build_id }}
+          build_id: ${{ inputs.resource_id }}
           aws_region: ${{ secrets.AWS_REGION }}
           log_bucket: ${{ secrets.CI_LOG_BUCKET }}
