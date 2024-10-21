@@ -3,12 +3,12 @@ module github.com/awslabs/amazon-eks-ami/nodeadm
 go 1.22.5
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.27.43
+	github.com/aws/aws-sdk-go-v2/config v1.28.0
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.17
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.182.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.183.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.2
 	github.com/aws/smithy-go v1.22.0
-	github.com/containerd/containerd v1.7.22
+	github.com/containerd/containerd v1.7.23
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/integrii/flaggy v1.5.2
 	github.com/pelletier/go-toml/v2 v2.2.3
