@@ -8,7 +8,7 @@ sudo systemctl start containerd
 
 # if the image is from an ecr repository then try authenticate first
 if [[ "$BUILD_IMAGE" == *"dkr.ecr"* ]]; then
-  aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin "${BUILD_IMAGE%%/*}"
+  aws ecr get-login-password --region $AWS_REGION | nerdctl login --username AWS --password-stdin "${BUILD_IMAGE%%/*}"
 fi
 
 sudo nerdctl run \
