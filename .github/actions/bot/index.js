@@ -117,6 +117,8 @@ function buildCommand(uuid, payload, name, args) {
             return new EchoCommand(uuid, payload, args);
         case "ci":
             return new CICommand(uuid, payload, args);
+        case "summarize"
+            return new SummarizeCommand(uuid, payload, args);
         default:
             console.log(`Unknown command: ${name}`);
             return null;
@@ -147,6 +149,20 @@ class EchoCommand {
     }
 }
 
+class SummarizeCommand {
+    constructor(uuid, payload, args){ 
+        console.log("Constructor");
+        console.log(JSON.stringify(uuid));
+        console.log(JSON.stringify(payload));
+        console.log(JSON.stringify(args));
+    }
+
+    async run(author, github) {
+        console.log("Run!");
+        console.log(JSON.stringify(author));
+        console.log(JSON.stringify(github));
+    }
+}
 class CICommand {
     workflow_goal_prefix = "workflow:";
     constructor(uuid, payload, args) {
