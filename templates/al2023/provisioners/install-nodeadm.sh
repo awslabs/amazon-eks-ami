@@ -10,7 +10,7 @@ sudo systemctl start containerd
 if [[ "$BUILD_IMAGE" == *"dkr.ecr"* ]]; then
   # nerdctl needs the https:// prefix when logging in to the repository
   # see: https://github.com/containerd/nerdctl/issues/742
-  aws ecr get-login-password --region $AWS_REGION | nerdctl login --username AWS --password-stdin "https://${BUILD_IMAGE%%/*}"
+  aws ecr get-login-password --region $AWS_REGION | sudo nerdctl login --username AWS --password-stdin "https://${BUILD_IMAGE%%/*}"
 fi
 
 sudo nerdctl run \
