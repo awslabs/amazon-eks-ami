@@ -135,6 +135,10 @@ fi
 ################################################################################
 
 sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
+# this unit is safe to have regardless of variant because it will not run if
+# the required binaries are not present.
+sudo mv $WORKING_DIR/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
+sudo systemctl enable set-nvidia-clocks.service
 
 ###############################################################################
 ### Containerd setup ##########################################################
