@@ -107,6 +107,7 @@ spec:
                           an instance's local storage devices.
                         enum:
                         - RAID0
+                        - RAID10
                         - Mount
                         type: string
                     type: object

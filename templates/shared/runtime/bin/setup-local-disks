@@ -15,7 +15,7 @@ err_report() {
 trap 'err_report $LINENO' ERR
 
 print_help() {
-  echo "usage: $0 <raid0 | mount | none>"
+  echo "usage: $0 <raid0 | raid10 | mount | none>"
   echo "Sets up Amazon EC2 Instance Store NVMe disks"
   echo ""
   echo "-d, --dir directory to mount the filesystem(s) (default: /mnt/k8s-disks/)"
@@ -26,11 +26,18 @@ print_help() {
   echo "-h, --help print this help"
 }
 
-# Sets up a RAID-0 of NVMe instance storage disks, moves
-# the contents of /var/lib/kubelet and /var/lib/containerd
+# Sets up a RAID-0 or RAID-10 of NVMe instance storage disks,
+# moves the contents of /var/lib/kubelet and /var/lib/containerd
 # to the new mounted RAID, and bind mounts the kubelet and
 # containerd state directories.
-maybe_raid0() {
+#
+# Do not wait for initial resync: raid0 has no redundancy so there
+# is no initial resync. Raid10 does not strictly needed a resync,
+# while the time taken for 4 1.9TB disk raid10 would be in range of
+# 20 minutes to 20 days, depending on dev.raid.speed_limit_min and
+# dev.raid.speed_limit_max sysctl parameters.
+maybe_raid() {
+  local raid_level="$1"
   local md_name="kubernetes"
   local md_device="/dev/md/${md_name}"
   local md_config="/.aws/mdadm.conf"
@@ -40,14 +47,10 @@ maybe_raid0() {
   if [[ ! -s "${md_config}" ]]; then
     mdadm --create --force --verbose \
       "${md_device}" \
-      --level=0 \
+      --level="${raid_level}" \
       --name="${md_name}" \
       --raid-devices="${#EPHEMERAL_DISKS[@]}" \
       "${EPHEMERAL_DISKS[@]}"
-    while [ -n "$(mdadm --detail "${md_device}" | grep -ioE 'State :.*resyncing')" ]; do
-      echo "Raid is resyncing..."
-      sleep 1
-    done
     mdadm --detail --scan > "${md_config}"
   fi
 
@@ -63,7 +66,8 @@ maybe_raid0() {
     ## for the log stripe unit, but the max log stripe unit is 256k.
     ## So instead, we use 32k (8 blocks) to avoid a warning of breaching the max.
     ## mkfs.xfs defaults to 32k after logging the warning since the default log buffer size is 32k.
-    mkfs.xfs -l su=8b "${md_device}"
+    ## Instances are delivered with disks fully trimmed, so TRIM is skipped at creation time.
+    mkfs.xfs -K -l su=8b "${md_device}"
   fi
 
   ## Create the mount directory
@@ -231,8 +235,8 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 DISK_SETUP="$1"
 set -u
 
-if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "mount" && "${DISK_SETUP}" != "none" ]]; then
-  echo "Valid disk setup options are: raid0, mount, or none"
+if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "raid10" && "${DISK_SETUP}" != "mount" && "${DISK_SETUP}" != "none" ]]; then
+  echo "Valid disk setup options are: raid0, raid10, mount or none"
   exit 1
 fi
 
@@ -256,10 +260,20 @@ fi
 ## Get devices of NVMe instance storage ephemeral disks
 EPHEMERAL_DISKS=($(realpath "${disks[@]}" | sort -u))
 
+## Also bail early if there are not enough disks for raid10
+if [[ "${DISK_SETUP}" == "raid10" && "${#EPHEMERAL_DISKS[@]}" -lt 4 ]]; then
+  echo "raid10 requires at least 4 disks, but only ${#EPHEMERAL_DISKS[@]} found, can not continue!"
+  exit 1
+fi
+
 case "${DISK_SETUP}" in
   "raid0")
-    maybe_raid0
+    maybe_raid 0
     echo "Successfully setup RAID-0 consisting of ${EPHEMERAL_DISKS[@]}"
+    ;;
+  "raid10")
+    maybe_raid 10
+    echo "Successfully setup RAID-10 consisting of ${EPHEMERAL_DISKS[@]}"
     ;;
   "mount")
     maybe_mount
