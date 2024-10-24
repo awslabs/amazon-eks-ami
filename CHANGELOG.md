@@ -3,11 +3,6 @@
 <!--new-changelog-entry-placeholder-->
 
 # AMI Release v20241016
->  Note
->
-> The Amazon Linux 2-based AMIs have been updated to include NVIDIA driver version 550.118, addressing several vulnerabilities in the GPU display driver.
->
-> The Amazon Linux 2023-based AMIs are not affected, as they utilize NVIDIA driver version R560.
 <!-- Release notes generated using configuration in .github/release.yaml at 57d74d08e062eb94295c7dc20922ece9f1c4e022 -->
 
 ## What's Changed
