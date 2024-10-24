@@ -1,8 +1,8 @@
 name: '[CI] Canary'
 on:
   schedule:
-    # daily at midnight
-    - cron: "0 0 * * *"
+    # twice daily at 8pm and 8am PST
+    - cron: "0 3,15 * * *"
 
 jobs:
   setup:
