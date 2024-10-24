@@ -7,6 +7,45 @@ set -o errexit
 if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
 fi
+
+################################################################################
+### Add AL2023 Nvidia repository ###############################################
+################################################################################
+echo "[amzn2023-nvidia]
+name=Amazon Linux 2023 Nvidia repository
+mirrorlist=https://al2023-repos-$awsregion-de612dc2.s3.$awsregion.$awsdomain/nvidia/mirrors/$releasever/$basearch/mirror.list
+priority=20
+enabled=1
+repo_gpgcheck=0
+type=rpm
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-amazon-linux-2023" | sudo tee /etc/yum.repos.d/amzn2023-nvidia.repo
+
+# utility function for pulling rpms from an S3 bucket
+function rpm_install() {
+  local RPMS=($@)
+  echo "pulling and installing rpms: (${RPMS[@]}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
+  for RPM in ${RPMS[@]}; do
+    # we're pulling these rpms from the same bucket as the binaries, because those
+    # can be replicated up to highside easily
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    sudo yum localinstall -y ${WORKING_DIR}/${RPM} 
+    # the WORKING_DIR will be cleaned up at the end of the build
+  done
+}
+
+#Detect Isolated partitions
+function is-isolated-partition() {
+  PARTITION=$(imds /latest/meta-data/services/partition)
+  NON_ISOLATED_PARTITIONS=("aws" "aws-cn" "aws-us-gov")
+  for NON_ISOLATED_PARTITION in "${NON_ISOLATED_PARTITIONS[@]}"; do
+    if [ "${NON_ISOLATED_PARTITION}" = "${PARTITION}" ]; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
