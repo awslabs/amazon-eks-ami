@@ -3415,8 +3415,8 @@ type EbsBlockDevice struct {
 	// [instances built on the Nitro System]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#ec2-nitro-instances
 	Iops *int32
 
-	// Identifier (key ID, key alias, ID ARN, or alias ARN) for a customer managed CMK
-	// under which the EBS volume is encrypted.
+	// Identifier (key ID, key alias, key ARN, or alias ARN) of the customer managed
+	// KMS key to use for EBS encryption.
 	//
 	// This parameter is only supported on BlockDeviceMapping objects called by [RunInstances], [RequestSpotFleet],
 	// and [RequestSpotInstances].
@@ -3744,12 +3744,18 @@ type ElasticGpuSpecification struct {
 	noSmithyDocumentSerde
 }
 
-// Amazon Elastic Graphics reached end of life on January 8, 2024.
+// Deprecated.
 //
-// Describes an elastic GPU.
+// Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
+// that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
+// G4dn, or G5 instances.
 type ElasticGpuSpecificationResponse struct {
 
-	// The elastic GPU type.
+	// Deprecated.
+	//
+	// Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
+	// that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
+	// G4dn, or G5 instances.
 	Type *string
 
 	noSmithyDocumentSerde
@@ -5916,6 +5922,42 @@ type ImageDiskContainer struct {
 	noSmithyDocumentSerde
 }
 
+// Information about the AMI.
+type ImageMetadata struct {
+
+	// The date and time the AMI was created.
+	CreationDate *string
+
+	// The deprecation date and time of the AMI, in UTC, in the following format:
+	// YYYY-MM-DDTHH:MM:SSZ.
+	DeprecationTime *string
+
+	// The ID of the AMI.
+	ImageId *string
+
+	// The alias of the AMI owner.
+	//
+	// Valid values: amazon | aws-marketplace
+	ImageOwnerAlias *string
+
+	// Indicates whether the AMI has public launch permissions. A value of true means
+	// this AMI has public launch permissions, while false means it has only implicit
+	// (AMI owner) or explicit (shared with your account) launch permissions.
+	IsPublic *bool
+
+	// The name of the AMI.
+	Name *string
+
+	// The ID of the Amazon Web Services account that owns the AMI.
+	OwnerId *string
+
+	// The current state of the AMI. If the state is available , the AMI is
+	// successfully registered and can be used to launch an instance.
+	State ImageState
+
+	noSmithyDocumentSerde
+}
+
 // Information about an AMI that is currently in the Recycle Bin.
 type ImageRecycleBinInfo struct {
 
@@ -6703,6 +6745,39 @@ type InstanceFamilyCreditSpecification struct {
 	noSmithyDocumentSerde
 }
 
+// Information about the instance and the AMI used to launch the instance.
+type InstanceImageMetadata struct {
+
+	// The Availability Zone or Local Zone of the instance.
+	AvailabilityZone *string
+
+	// Information about the AMI used to launch the instance.
+	ImageMetadata *ImageMetadata
+
+	// The ID of the instance.
+	InstanceId *string
+
+	// The instance type.
+	InstanceType InstanceType
+
+	// The time the instance was launched.
+	LaunchTime *time.Time
+
+	// The ID of the Amazon Web Services account that owns the instance.
+	OwnerId *string
+
+	// The current state of the instance.
+	State *InstanceState
+
+	// Any tags assigned to the instance.
+	Tags []Tag
+
+	// The ID of the Availability Zone or Local Zone of the instance.
+	ZoneId *string
+
+	noSmithyDocumentSerde
+}
+
 // Information about an IPv4 prefix.
 type InstanceIpv4Prefix struct {
 
@@ -7235,14 +7310,13 @@ type InstancePrivateIpAddress struct {
 // use the launch template in the [launch instance wizard]or with the [RunInstances API], you can't specify
 // InstanceRequirements .
 //
-// For more information, see [Create a mixed instances group using attribute-based instance type selection] in the Amazon EC2 Auto Scaling User Guide, and also [Attribute-based instance type selection for EC2 Fleet]
-// , [Attribute-based instance type selection for Spot Fleet], and [Spot placement score] in the Amazon EC2 User Guide.
+// For more information, see [Create mixed instances group using attribute-based instance type selection] in the Amazon EC2 Auto Scaling User Guide, and also [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet]
+// and [Spot placement score]in the Amazon EC2 User Guide.
 //
-// [Attribute-based instance type selection for EC2 Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
+// [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
 // [RunInstances API]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunInstances.html
+// [Create mixed instances group using attribute-based instance type selection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-mixed-instances-group-attribute-based-instance-type-selection.html
 // [Spot placement score]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-placement-score.html
-// [Create a mixed instances group using attribute-based instance type selection]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-mixed-instances-group-attribute-based-instance-type-selection.html
-// [Attribute-based instance type selection for Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-attribute-based-instance-type-selection.html
 // [launch instance wizard]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-instance-wizard.html
 type InstanceRequirements struct {
 
@@ -7583,13 +7657,12 @@ type InstanceRequirements struct {
 // use the launch template in the [launch instance wizard], or with the [RunInstances] API or [AWS::EC2::Instance] Amazon Web Services
 // CloudFormation resource, you can't specify InstanceRequirements .
 //
-// For more information, see [Attribute-based instance type selection for EC2 Fleet], [Attribute-based instance type selection for Spot Fleet], and [Spot placement score] in the Amazon EC2 User Guide.
+// For more information, see [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet] and [Spot placement score] in the Amazon EC2 User Guide.
 //
-// [Attribute-based instance type selection for EC2 Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
+// [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
 // [AWS::EC2::Instance]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html
 // [RunInstances]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunInstances.html
 // [Spot placement score]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-placement-score.html
-// [Attribute-based instance type selection for Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-attribute-based-instance-type-selection.html
 // [launch instance wizard]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-instance-wizard.html
 type InstanceRequirementsRequest struct {
 
@@ -9821,7 +9894,8 @@ type LaunchTemplateEbsBlockDevice struct {
 	// The number of I/O operations per second (IOPS) that the volume supports.
 	Iops *int32
 
-	// The ARN of the Key Management Service (KMS) CMK used for encryption.
+	// Identifier (key ID, key alias, key ARN, or alias ARN) of the customer managed
+	// KMS key to use for EBS encryption.
 	KmsKeyId *string
 
 	// The ID of the snapshot.
@@ -9871,7 +9945,8 @@ type LaunchTemplateEbsBlockDeviceRequest struct {
 	// [instances built on the Nitro System]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html#ec2-nitro-instances
 	Iops *int32
 
-	// The ARN of the symmetric Key Management Service (KMS) CMK used for encryption.
+	// Identifier (key ID, key alias, key ARN, or alias ARN) of the customer managed
+	// KMS key to use for EBS encryption.
 	KmsKeyId *string
 
 	// The ID of the snapshot.
@@ -13792,12 +13867,26 @@ type RequestLaunchTemplateData struct {
 
 	// Deprecated.
 	//
-	// Amazon Elastic Graphics reached end of life on January 8, 2024.
+	// Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
+	// that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
+	// G4dn, or G5 instances.
 	ElasticGpuSpecifications []ElasticGpuSpecification
 
-	// Deprecated.
-	//
 	// Amazon Elastic Inference is no longer available.
+	//
+	// An elastic inference accelerator to associate with the instance. Elastic
+	// inference accelerators are a resource you can attach to your Amazon EC2
+	// instances to accelerate your Deep Learning (DL) inference workloads.
+	//
+	// You cannot specify accelerators from different generations in the same request.
+	//
+	// Starting April 15, 2023, Amazon Web Services will not onboard new customers to
+	// Amazon Elastic Inference (EI), and will help current customers migrate their
+	// workloads to options that offer better price and performance. After April 15,
+	// 2023, new customers will not be able to launch instances with Amazon EI
+	// accelerators in Amazon SageMaker, Amazon ECS, or Amazon EC2. However, customers
+	// who have used Amazon EI at least once during the past 30-day period are
+	// considered current customers and will be able to continue using the service.
 	ElasticInferenceAccelerators []LaunchTemplateElasticInferenceAccelerator
 
 	// Indicates whether the instance is enabled for Amazon Web Services Nitro
@@ -13897,13 +13986,12 @@ type RequestLaunchTemplateData struct {
 	// use the launch template in the [launch instance wizard], or with the [RunInstances] API or [AWS::EC2::Instance] Amazon Web Services
 	// CloudFormation resource, you can't specify InstanceRequirements .
 	//
-	// For more information, see [Attribute-based instance type selection for EC2 Fleet], [Attribute-based instance type selection for Spot Fleet], and [Spot placement score] in the Amazon EC2 User Guide.
+	// For more information, see [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet] and [Spot placement score] in the Amazon EC2 User Guide.
 	//
-	// [Attribute-based instance type selection for EC2 Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
+	// [Specify attributes for instance type selection for EC2 Fleet or Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-attribute-based-instance-type-selection.html
 	// [AWS::EC2::Instance]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-instance.html
 	// [RunInstances]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RunInstances.html
 	// [Spot placement score]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-placement-score.html
-	// [Attribute-based instance type selection for Spot Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-fleet-attribute-based-instance-type-selection.html
 	// [launch instance wizard]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-instance-wizard.html
 	InstanceRequirements *InstanceRequirementsRequest
 
@@ -14492,12 +14580,26 @@ type ResponseLaunchTemplateData struct {
 
 	// Deprecated.
 	//
-	// Amazon Elastic Graphics reached end of life on January 8, 2024.
+	// Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
+	// that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
+	// G4dn, or G5 instances.
 	ElasticGpuSpecifications []ElasticGpuSpecificationResponse
 
-	// Deprecated.
-	//
 	// Amazon Elastic Inference is no longer available.
+	//
+	// An elastic inference accelerator to associate with the instance. Elastic
+	// inference accelerators are a resource you can attach to your Amazon EC2
+	// instances to accelerate your Deep Learning (DL) inference workloads.
+	//
+	// You cannot specify accelerators from different generations in the same request.
+	//
+	// Starting April 15, 2023, Amazon Web Services will not onboard new customers to
+	// Amazon Elastic Inference (EI), and will help current customers migrate their
+	// workloads to options that offer better price and performance. After April 15,
+	// 2023, new customers will not be able to launch instances with Amazon EI
+	// accelerators in Amazon SageMaker, Amazon ECS, or Amazon EC2. However, customers
+	// who have used Amazon EI at least once during the past 30-day period are
+	// considered current customers and will be able to continue using the service.
 	ElasticInferenceAccelerators []LaunchTemplateElasticInferenceAcceleratorResponse
 
 	// Indicates whether the instance is enabled for Amazon Web Services Nitro
