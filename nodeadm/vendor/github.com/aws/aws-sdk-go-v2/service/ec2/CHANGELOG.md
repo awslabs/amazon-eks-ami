@@ -1,3 +1,15 @@
+# v1.186.0 (2024-10-24)
+
+* **Feature**: This release includes a new API to describe some details of the Amazon Machine Images (AMIs) that were used to launch EC2 instances, even if those AMIs are no longer available for use.
+
+# v1.185.0 (2024-10-23)
+
+* **Feature**: Amazon EC2 X8g, C8g and M8g instances are powered by AWS Graviton4 processors. X8g provide the lowest cost per GiB of memory among Graviton4 instances. C8g provide the best price performance for compute-intensive workloads. M8g provide the best price performance in for general purpose workloads.
+
+# v1.184.0 (2024-10-21)
+
+* **Feature**: Amazon EC2 now allows you to create network interfaces with just the EFA driver and no ENA driver by specifying the network interface type as efa-only.
+
 # v1.183.0 (2024-10-18)
 
 * **Feature**: RequestSpotInstances and RequestSpotFleet feature release.

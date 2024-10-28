@@ -5,7 +5,7 @@ go 1.22.5
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.28.0
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.17
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.183.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.186.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.2
 	github.com/aws/smithy-go v1.22.0
 	github.com/containerd/containerd v1.7.23
@@ -15,10 +15,10 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.21.0
-	k8s.io/apimachinery v0.31.1
-	k8s.io/cri-api v0.31.1
-	k8s.io/kubelet v0.31.1
-	sigs.k8s.io/controller-runtime v0.19.0
+	k8s.io/apimachinery v0.31.2
+	k8s.io/cri-api v0.31.2
+	k8s.io/kubelet v0.31.2
+	sigs.k8s.io/controller-runtime v0.19.1
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	golang.org/x/tools v0.22.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	google.golang.org/grpc v1.65.0 // indirect
-	k8s.io/component-base v0.31.1 // indirect
+	k8s.io/component-base v0.31.2 // indirect
 )
 
 require dario.cat/mergo v1.0.1 // direct
@@ -75,7 +75,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.31.1
+	k8s.io/api v0.31.2
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6 // direct
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
