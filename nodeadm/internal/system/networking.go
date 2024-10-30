@@ -4,12 +4,13 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"text/template"
+
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"go.uber.org/zap"
 )
 
 const (
@@ -28,6 +29,9 @@ var (
 	//go:embed _assets/10-eks_primary_eni_only.conf.template
 	eksPrimaryENIOnlyConfTemplateData string
 	eksPrimaryENIOnlyConfTemplate     = template.Must(template.New(eksPrimaryENIOnlyConfName).Parse(eksPrimaryENIOnlyConfTemplateData))
+
+	//go:embed _assets/interface.network.template
+	eksAdditionalENINetworkFileTemplate string
 )
 
 // NewNetworkingAspect constructs new networkingAspect.
@@ -49,6 +53,9 @@ func (a *networkingAspect) Name() string {
 func (a *networkingAspect) Setup(cfg *api.NodeConfig) error {
 	if err := a.ensureEKSNetworkConfiguration(cfg); err != nil {
 		return fmt.Errorf("failed to ensure eks network configuration: %w", err)
+	}
+	if err := a.ensureMulticardNetworkConfiguration(cfg); err != nil {
+		return fmt.Errorf("failed to ensure multicard network configuration: %w", err)
 	}
 	return nil
 }
@@ -89,9 +96,77 @@ func (a *networkingAspect) ensureEKSNetworkConfiguration(cfg *api.NodeConfig) er
 	return nil
 }
 
+func (a *networkingAspect) ensureMulticardNetworkConfiguration(cfg *api.NodeConfig) error {
+	var networkRestartRequired bool
+	routeTableId := 1001
+	routePriority := 32765
+
+	for _, card := range cfg.Status.Instance.NetworkCards {
+		if card.CardIndex == 0 {
+			continue
+		}
+
+		networkInterfaceConfName := fmt.Sprintf("80-card%d.network", card.CardIndex)
+		networkInterfaceConfPathName := fmt.Sprintf("%s/%s", administrationNetworkDir, networkInterfaceConfName)
+
+		if exists, err := util.IsFilePathExists(networkInterfaceConfPathName); err != nil {
+			return fmt.Errorf("failed to check configuration existance for %s: %w", networkInterfaceConfName, err)
+		} else if exists {
+			zap.L().Sugar().Infof("%s already exists, skipping configuration", networkInterfaceConfName)
+			continue
+		}
+
+		templateVars := networkInterfaceTemplateVars{
+			PermanentMACAddress: card.MAC,
+			IPAddress:           card.IpAddress,
+			RouteTableId:        int16(routeTableId),
+			RoutePriority:       int16(routePriority),
+		}
+		routeTableId++
+		routePriority--
+
+		interfaceConfigContent, err := a.generateNetworkConfigFile(networkInterfaceConfName, templateVars)
+		if err != nil {
+			return fmt.Errorf("failed to generate %s configuration: %w", networkInterfaceConfName, err)
+		}
+
+		if err := os.WriteFile(networkInterfaceConfPathName, interfaceConfigContent, networkConfFilePerms); err != nil {
+			return fmt.Errorf("failed to write %s configuration: %w", networkInterfaceConfName, err)
+		}
+		zap.L().Sugar().Infof("Multicard instance found, configuring card with index: %d, network file: %s", card.CardIndex, networkInterfaceConfPathName)
+		networkRestartRequired = true
+	}
+
+	if networkRestartRequired {
+		if err := a.reloadNetworkConfigurations(); err != nil {
+			return fmt.Errorf("failed to reload network configurations: %w", err)
+		}
+		zap.L().Sugar().Infof("Reloading network network..")
+	}
+	return nil
+}
+
+func (a *networkingAspect) generateNetworkConfigFile(interfaceConfName string, templateVars networkInterfaceTemplateVars) ([]byte, error) {
+	networkInterfaceConfTemplate := template.Must(template.New(interfaceConfName).Parse(eksAdditionalENINetworkFileTemplate))
+	var buf bytes.Buffer
+	if err := networkInterfaceConfTemplate.Execute(&buf, templateVars); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+
+}
+
 // eksPrimaryENIOnlyTemplateVars holds the variables for eksPrimaryENIOnlyConfTemplate
 type eksPrimaryENIOnlyTemplateVars struct {
 	PermanentMACAddress string
+}
+
+// networkInterfaceTemplateVars holds the variables for networkInterfaceConfTemplate
+type networkInterfaceTemplateVars struct {
+	PermanentMACAddress string
+	IPAddress           string
+	RouteTableId        int16
+	RoutePriority       int16
 }
 
 // generateEKSPrimaryENIOnlyConfiguration generates the eks primary eni only network configuration.

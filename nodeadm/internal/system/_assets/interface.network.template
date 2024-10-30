@@ -1,0 +1,23 @@
+[Match]
+Driver=ena ixgbevf vif
+PermanentMACAddress={{.PermanentMACAddress}}
+
+[Link]
+MTUBytes=9001
+
+[Network]
+DHCP=ipv4
+DNSDefaultRoute=yes
+IPv6AcceptRA=no
+
+[DHCPv4]
+UseHostname=no
+UseDNS=yes
+UseNTP=yes
+UseDomains=yes
+RouteTable={{.RouteTableId}}
+
+[RoutingPolicyRule]
+From={{.IPAddress}}
+Table={{.RouteTableId}}
+Priority={{.RoutePriority}}

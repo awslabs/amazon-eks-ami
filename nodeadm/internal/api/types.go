@@ -40,13 +40,20 @@ type NodeConfigStatus struct {
 	Defaults DefaultOptions  `json:"default,omitempty"`
 }
 
+type NetworkCardDetails struct {
+	MAC       string `json:"mac,omitempty"`
+	IpAddress string `json:"ipAddress,omitempty"`
+	CardIndex int    `json:"cardIndex,omitempty"`
+}
+
 type InstanceDetails struct {
-	ID               string `json:"id,omitempty"`
-	Region           string `json:"region,omitempty"`
-	Type             string `json:"type,omitempty"`
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
-	MAC              string `json:"mac,omitempty"`
-	PrivateDNSName   string `json:"privateDnsName,omitempty"`
+	ID               string               `json:"id,omitempty"`
+	Region           string               `json:"region,omitempty"`
+	Type             string               `json:"type,omitempty"`
+	AvailabilityZone string               `json:"availabilityZone,omitempty"`
+	MAC              string               `json:"mac,omitempty"`
+	PrivateDNSName   string               `json:"privateDnsName,omitempty"`
+	NetworkCards     []NetworkCardDetails `json:"networkCards,omitempty"`
 }
 
 type DefaultOptions struct {
