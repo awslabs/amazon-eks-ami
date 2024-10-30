@@ -7,22 +7,48 @@ set -o errexit
 if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
 fi
+
+#Detect Isolated partitions
+function is-isolated-partition() {
+  PARTITION=$(imds /latest/meta-data/services/partition)
+  NON_ISOLATED_PARTITIONS=("aws" "aws-cn" "aws-us-gov")
+  for NON_ISOLATED_PARTITION in "${NON_ISOLATED_PARTITIONS[@]}"; do
+    if [ "${NON_ISOLATED_PARTITION}" = "${PARTITION}" ]; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
 # Determine the domain based on the region
-if [[ $AWS_REGION == cn-* ]]; then
-  DOMAIN="nvidia.cn"
+if is-isolated-partition; then
+  echo '[amzn2023-nvidia]
+  name=Amazon Linux 2023 Nvidia repository
+  mirrorlist=https://al2023-repos-$awsregion-de612dc2.s3.$awsregion.$awsdomain/nvidia/mirrors/$releasever/$basearch/mirror.list
+  priority=20
+  enabled=1
+  repo_gpgcheck=0
+  type=rpm
+  gpgcheck=0
+  gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-amazon-linux-2023' | sudo tee /etc/yum.repos.d/amzn2023-nvidia.repo
+
 else
-  DOMAIN="nvidia.com"
+  if [[ $AWS_REGION == cn-* ]]; then
+    DOMAIN="nvidia.cn"
+  else
+    DOMAIN="nvidia.com"
+  fi
+
+  sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+  sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+
+  sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo
 fi
-
-sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
-sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
-
-sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo
 
 ################################################################################
 ### Install drivers ############################################################
