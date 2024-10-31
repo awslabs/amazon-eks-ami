@@ -17,6 +17,7 @@ var (
 `
 	multicardNoIpOnOneCard = `06:83:e7:fb:fb:fb/
 06:83:e7:fc:fc:fc/
+06:83:e7:fc:fc:fd/
 `
 	validTwoNetworkCardDetails = []NetworkCardDetails{
 		{MAC: "06:83:e7:fe:fe:fe", IpAddress: "1.2.3.4", CardIndex: 1},
@@ -77,11 +78,17 @@ func mockGetPropertyNoIp(ctx context.Context, prop imds.IMDSProperty) (string, e
 	if prop == "network/interfaces/macs/06:83:e7:fc:fc:fc/network-card" {
 		return "1", nil
 	}
+	if prop == "network/interfaces/macs/06:83:e7:fc:fc:fd/network-card" {
+		return "2", nil
+	}
 	if prop == "network/interfaces/macs/06:83:e7:fb:fb:fb/local-ipv4s" {
 		return "1.2.3.4", nil
 	}
 	if prop == "network/interfaces/macs/06:83:e7:fc:fc:fc/local-ipv4s" {
 		return "", imds404
+	}
+	if prop == "network/interfaces/macs/06:83:e7:fc:fc:fd/local-ipv4s" {
+		return "", nil
 	}
 
 	return "", nil

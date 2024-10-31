@@ -90,6 +90,11 @@ func getNetworkCardsDetails(ctx context.Context, imdsFunc func(ctx context.Conte
 			}
 			return nil, fmt.Errorf("failed to get network card details for MAC %s: %w", mac, err)
 		}
+		// ip address can be empty for efa-only cards
+		if cardDetails.IpAddress == "" {
+			continue
+		}
+
 		details = append(details, cardDetails)
 	}
 
@@ -107,7 +112,7 @@ func parseAvailableMacs(allMacs string) []string {
 func getNetworkCardDetail(ctx context.Context, imdsFunc func(ctx context.Context, prop imds.IMDSProperty) (string, error), mac string) (NetworkCardDetails, error) {
 	// imds will return 404 if we query network-card object for instance that doesn't support multiple cards
 	cardIndexPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/network-card", mac))
-	// imds will return 404 if we query local-ipv4s object if ip-address is not confirured on the interface from EC2
+	// imds will return 404 if we query local-ipv4s object if ip-address is not confirured on the interface from EC2 (efa-only)
 	ipAddressPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac))
 
 	cardIndex, err := imdsFunc(ctx, cardIndexPath)
