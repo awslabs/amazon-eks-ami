@@ -131,7 +131,7 @@ sudo dnf -y install nvidia-fabric-manager
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions
 if is-isolated-partition; then
-  patch-nvidia-container-toolkit
+  install-nvidia-container-toolkit
 else
   sudo dnf -y nvidia-container-toolkit
 fi
