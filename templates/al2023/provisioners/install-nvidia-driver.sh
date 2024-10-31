@@ -29,7 +29,7 @@ function rpm_install() {
   done
 }
 
-function patch-nvidia-container-toolkit(){
+function install-nvidia-container-toolkit(){
   # The order of these RPMs is important, as they have dependencies on each other
   RPMS=("libnvidia-container1-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-base-1.16.2-1.x86_64.rpm" "libnvidia-container-tools-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-1.16.2-1.x86_64.rpm")
   for RPM in ${RPMS[@]}; do
