@@ -25,7 +25,18 @@ function rpm_install() {
   echo "pulling and installing rpms: (${RPMS[@]}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
   for RPM in ${RPMS[@]}; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    sudo yum localinstall -y ${WORKING_DIR}/${RPM}
+    sudo dnf localinstall -y ${WORKING_DIR}/${RPM}
+  done
+}
+
+function patch-nvidia-container-toolkit(){
+  # The order of these RPMs is important, as they have dependencies on each other
+  RPMS=("libnvidia-container1-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-base-1.16.2-1.x86_64.rpm" "libnvidia-container-tools-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-1.16.2-1.x86_64.rpm")
+  for RPM in ${RPMS[@]}; do
+    echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    echo "installing rpm: ${WORKING_DIR}/${RPM}"
+    sudo rpm -ivh ${WORKING_DIR}/${RPM}
   done
 }
 
@@ -47,7 +58,7 @@ if is-isolated-partition; then
   gpgcheck=0
   gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-amazon-linux-2023' | sudo tee /etc/yum.repos.d/amzn2023-nvidia.repo
 
-  # these are required in order to build kmod-nvidia-open-dkms, and would
+  # these are required in order to build kmod-nvidia-open-dkms
   # normally be available from epel but that isn't reachable in isolated partitions
   rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
 
@@ -116,7 +127,14 @@ sudo systemctl enable set-nvidia-clocks.service
 ################################################################################
 ### Install other dependencies #################################################
 ################################################################################
-sudo dnf -y install nvidia-fabric-manager nvidia-container-toolkit
+sudo dnf -y install nvidia-fabric-manager
+
+# NVIDIA Container toolkit needs to be locally installed for isolated partitions
+if is-isolated-partition; then
+  patch-nvidia-container-toolkit
+else
+  sudo dnf -y nvidia-container-toolkit
+fi
 
 sudo systemctl enable nvidia-fabricmanager
 sudo systemctl enable nvidia-persistenced
