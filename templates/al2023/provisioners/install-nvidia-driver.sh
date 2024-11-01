@@ -22,17 +22,17 @@ function is-isolated-partition() {
 
 function rpm_install() {
   local RPMS=($@)
-  echo "pulling and installing rpms: (${RPMS[@]}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
-  for RPM in ${RPMS[@]}; do
+  echo "Pulling and installing local rpms from s3 bucket"
+  for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
     sudo dnf localinstall -y ${WORKING_DIR}/${RPM}
   done
 }
 
-function install-nvidia-container-toolkit(){
+function install-nvidia-container-toolkit() {
   # The order of these RPMs is important, as they have dependencies on each other
   RPMS=("libnvidia-container1-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-base-1.16.2-1.x86_64.rpm" "libnvidia-container-tools-1.16.2-1.x86_64.rpm" "nvidia-container-toolkit-1.16.2-1.x86_64.rpm")
-  for RPM in ${RPMS[@]}; do
+  for RPM in "${RPMS[@]}"; do
     echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
     echo "installing rpm: ${WORKING_DIR}/${RPM}"
