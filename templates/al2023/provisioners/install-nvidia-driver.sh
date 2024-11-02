@@ -40,6 +40,11 @@ function install-nvidia-container-toolkit() {
   done
 }
 
+# NVIDIA Drivers are on version behind in Isolated partitions.
+if is-isolated-partition; then
+  NVIDIA_DRIVER_MAJOR_VERSION = 555
+fi
+
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
