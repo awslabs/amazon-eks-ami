@@ -76,7 +76,11 @@ echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee
 sudo dnf -y install kernel-modules-extra.x86_64
 
 function archive-open-kmods() {
-  sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
+  if is-isolated-partition; then
+    sudo dnf -y install kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*
+  else
+    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
+  fi
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
@@ -89,12 +93,20 @@ function archive-open-kmods() {
 
   sudo kmod-util remove nvidia-open
 
-  sudo dnf -y module remove --all nvidia-driver
-  sudo dnf -y module reset nvidia-driver
+  if is-isolated-partition; then
+    sudo dnf -y remove --all nvidia-driver
+  else
+    sudo dnf -y module remove --all nvidia-driver
+    sudo dnf -y module reset nvidia-driver
+  fi
 }
 
 function archive-proprietary-kmod() {
-  sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
+  if is-isolated-partition; then
+    sudo dnf -y install kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*
+  else
+    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
+  fi
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
 }
