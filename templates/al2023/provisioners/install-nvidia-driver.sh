@@ -77,7 +77,7 @@ sudo dnf -y install kernel-modules-extra.x86_64
 
 function archive-open-kmods() {
   if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+    sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}*"
   else
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
   fi
@@ -103,7 +103,7 @@ function archive-open-kmods() {
 
 function archive-proprietary-kmod() {
   if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+    sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}*"
   else
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
   fi
