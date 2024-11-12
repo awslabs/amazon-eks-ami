@@ -24,7 +24,7 @@ func (m *instanceTypeMixin) matches(instanceType string) bool {
 
 var (
 	// TODO: fetch this list dynamically
-	nvidiaInstances         = []string{"p3", "p3dn", "p4d", "p4de", "p5", "p5e", "g4", "g4dn", "g5", "g6", "g6e"}
+	nvidiaInstances         = []string{"p3", "p3dn", "p4d", "p4de", "p5", "p5e", "p5en", "g4", "g4dn", "g5", "g6", "g6e"}
 	NvidiaInstanceTypeMixin = instanceTypeMixin{
 		instanceFamilies: nvidiaInstances,
 		apply:            applyNvidia,
