@@ -28,6 +28,7 @@
     "launch_block_device_mappings_volume_size": null,
     "nodeadm_build_image": null,
     "nvidia_driver_major_version": null,
+    "pause_container_image": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -219,6 +220,18 @@
         "AWS_REGION={{user `aws_region`}}",
         "BUILD_IMAGE={{user `nodeadm_build_image`}}",
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/cache-pause-container.sh",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "AWS_REGION={{user `aws_region`}}",
+        "PAUSE_CONTAINER_IMAGE={{user `pause_container_image`}}"
       ]
     },
     {

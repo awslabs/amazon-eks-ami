@@ -28,7 +28,7 @@ func (cd *containerd) EnsureRunning() error {
 }
 
 func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
-	return cacheSandboxImage(c)
+	return nil
 }
 
 func (cd *containerd) Name() string {
