@@ -1,0 +1,10 @@
+[Unit]
+Description=Initialize critical binary (%i) from an EBS filesystem
+After=basic.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ebs-initialize /usr/bin/%i
+
+[Install]
+WantedBy=multi-user.target

@@ -21,6 +21,7 @@
     "launch_block_device_mappings_volume_size": "20",
     "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.23",
     "nvidia_driver_major_version": "560",
+    "pause_container_image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.5",
     "remote_folder": "/tmp",
     "runc_version": "*",
     "security_group_id": "",
