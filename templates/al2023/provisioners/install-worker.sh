@@ -133,6 +133,8 @@ fi
 sudo dnf install -y runc-${RUNC_VERSION}
 sudo dnf install -y containerd-${CONTAINERD_VERSION}
 
+sudo systemctl enable ebs-initialize-bin@containerd
+
 ###############################################################################
 ### Nerdctl setup #############################################################
 ###############################################################################
@@ -189,6 +191,8 @@ sudo rm ./*.sha256
 
 kubelet --version > "${WORKING_DIR}/kubelet-version.txt"
 sudo mv "${WORKING_DIR}/kubelet-version.txt" /etc/eks/kubelet-version.txt
+
+sudo systemctl enable ebs-initialize-bin@kubelet
 
 ################################################################################
 ### ECR Credential Provider Binary #############################################
