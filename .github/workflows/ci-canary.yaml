@@ -6,6 +6,8 @@ on:
 
 jobs:
   setup:
+    # Don't run if this is on a fork
+    if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
     outputs:
       timestamp: ${{ steps.variables.outputs.timestamp }}
