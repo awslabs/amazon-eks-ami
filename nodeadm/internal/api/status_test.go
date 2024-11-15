@@ -20,12 +20,12 @@ var (
 06:83:e7:fc:fc:fd/
 `
 	validTwoNetworkCardDetails = []NetworkCardDetails{
-		{MAC: "06:83:e7:fe:fe:fe", IpAddress: "1.2.3.4", CardIndex: 1},
-		{MAC: "06:83:e7:ff:ff:ff", IpAddress: "5.6.7.8", CardIndex: 0},
+		{MAC: "06:83:e7:fe:fe:fe", IpV4Address: "1.2.3.4", CardIndex: 1},
+		{MAC: "06:83:e7:ff:ff:ff", IpV4Address: "5.6.7.8", CardIndex: 0},
 	}
 
 	validOneNetworkCardDetails = []NetworkCardDetails{
-		{MAC: "06:83:e7:fb:fb:fb", IpAddress: "1.2.3.4", CardIndex: 0},
+		{MAC: "06:83:e7:fb:fb:fb", IpV4Address: "1.2.3.4", CardIndex: 0},
 	}
 	imds404     = errors.New("http response error StatusCode: 404, request to EC2 IMDS failed")
 	imdsGeneric = errors.New("IMDS error")

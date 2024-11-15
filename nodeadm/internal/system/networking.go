@@ -57,6 +57,9 @@ func (a *networkingAspect) Setup(cfg *api.NodeConfig) error {
 	if err := a.ensureMulticardNetworkConfiguration(cfg); err != nil {
 		return fmt.Errorf("failed to ensure multicard network configuration: %w", err)
 	}
+	if err := a.reloadNetworkConfigurations(); err != nil {
+		return fmt.Errorf("failed to reload network configurations: %w", err)
+	}
 	return nil
 }
 
@@ -90,23 +93,22 @@ func (a *networkingAspect) ensureEKSNetworkConfiguration(cfg *api.NodeConfig) er
 	if err := os.WriteFile(eksPrimaryENIOnlyConfPathName, eksPrimaryENIOnlyConfContent, networkConfFilePerms); err != nil {
 		return fmt.Errorf("failed to write eks_primary_eni_only network configuration: %w", err)
 	}
-	if err := a.reloadNetworkConfigurations(); err != nil {
-		return fmt.Errorf("failed to reload network configurations: %w", err)
-	}
 	return nil
 }
 
+// ensureMulticardNetworkConfiguration configures the non-zero card interfaces in a way that mimics the
+// default AL2023 configuration. Non-zero card interfaces are not managed by vpc-cni and we're creating
+// systemd-networkd .network files for each interface.
 func (a *networkingAspect) ensureMulticardNetworkConfiguration(cfg *api.NodeConfig) error {
-	var networkRestartRequired bool
-	routeTableId := 1001
-	routePriority := 32765
+	routeTableId := 10101
+	routeTableMetric := 613
 
 	for _, card := range cfg.Status.Instance.NetworkCards {
 		if card.CardIndex == 0 {
 			continue
 		}
 
-		networkInterfaceConfName := fmt.Sprintf("80-card%d.network", card.CardIndex)
+		networkInterfaceConfName := fmt.Sprintf("70-%s.network", card.InterfaceId)
 		networkInterfaceConfPathName := fmt.Sprintf("%s/%s", administrationNetworkDir, networkInterfaceConfName)
 
 		if exists, err := util.IsFilePathExists(networkInterfaceConfPathName); err != nil {
@@ -118,12 +120,15 @@ func (a *networkingAspect) ensureMulticardNetworkConfiguration(cfg *api.NodeConf
 
 		templateVars := networkInterfaceTemplateVars{
 			PermanentMACAddress: card.MAC,
-			IPAddress:           card.IpAddress,
+			IpV4Address:         card.IpV4Address,
+			IpV4Subnet:          card.IpV4Subnet,
+			IpV6Address:         card.IpV6Address,
+			IpV6Subnet:          card.IpV6Subnet,
 			RouteTableId:        int16(routeTableId),
-			RoutePriority:       int16(routePriority),
+			RouteTableMetric:    int16(routeTableMetric),
 		}
-		routeTableId++
-		routePriority--
+		routeTableId += 100
+		routeTableMetric += 100
 
 		interfaceConfigContent, err := a.generateNetworkConfigFile(networkInterfaceConfName, templateVars)
 		if err != nil {
@@ -134,14 +139,6 @@ func (a *networkingAspect) ensureMulticardNetworkConfiguration(cfg *api.NodeConf
 			return fmt.Errorf("failed to write %s configuration: %w", networkInterfaceConfName, err)
 		}
 		zap.L().Sugar().Infof("Multicard instance found, configuring card with index: %d, network file: %s", card.CardIndex, networkInterfaceConfPathName)
-		networkRestartRequired = true
-	}
-
-	if networkRestartRequired {
-		if err := a.reloadNetworkConfigurations(); err != nil {
-			return fmt.Errorf("failed to reload network configurations: %w", err)
-		}
-		zap.L().Sugar().Infof("Reloading network network..")
 	}
 	return nil
 }
@@ -164,9 +161,12 @@ type eksPrimaryENIOnlyTemplateVars struct {
 // networkInterfaceTemplateVars holds the variables for networkInterfaceConfTemplate
 type networkInterfaceTemplateVars struct {
 	PermanentMACAddress string
-	IPAddress           string
+	IpV4Address         string
+	IpV4Subnet          string
+	IpV6Address         string
+	IpV6Subnet          string
 	RouteTableId        int16
-	RoutePriority       int16
+	RouteTableMetric    int16
 }
 
 // generateEKSPrimaryENIOnlyConfiguration generates the eks primary eni only network configuration.

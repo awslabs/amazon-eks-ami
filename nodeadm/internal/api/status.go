@@ -91,7 +91,7 @@ func getNetworkCardsDetails(ctx context.Context, imdsFunc func(ctx context.Conte
 			return nil, fmt.Errorf("failed to get network card details for MAC %s: %w", mac, err)
 		}
 		// ip address can be empty for efa-only cards
-		if cardDetails.IpAddress == "" {
+		if cardDetails.IpV4Address == "" {
 			continue
 		}
 
@@ -113,7 +113,11 @@ func getNetworkCardDetail(ctx context.Context, imdsFunc func(ctx context.Context
 	// imds will return 404 if we query network-card object for instance that doesn't support multiple cards
 	cardIndexPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/network-card", mac))
 	// imds will return 404 if we query local-ipv4s object if ip-address is not confirured on the interface from EC2 (efa-only)
-	ipAddressPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac))
+	ipV4AddressPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac))
+	ipV4SubnetPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv4-cidr-block", mac))
+	ipV6SubnetPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv6-cidr-blocks", mac))
+	ipV6AddressPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", mac))
+	interfaceIdPath := imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/interface-id", mac))
 
 	cardIndex, err := imdsFunc(ctx, cardIndexPath)
 	if err != nil {
@@ -124,15 +128,39 @@ func getNetworkCardDetail(ctx context.Context, imdsFunc func(ctx context.Context
 		return NetworkCardDetails{}, fmt.Errorf("invalid card index: %w", err)
 	}
 
-	ipAddress, err := imdsFunc(ctx, ipAddressPath)
+	ipV4Address, err := imdsFunc(ctx, ipV4AddressPath)
+	if err != nil {
+		return NetworkCardDetails{}, err
+	}
+
+	ipV4Subnet, err := imdsFunc(ctx, ipV4SubnetPath)
+	if err != nil {
+		return NetworkCardDetails{}, err
+	}
+
+	ipV6Address, err := imdsFunc(ctx, ipV6AddressPath)
+	if err != nil {
+		return NetworkCardDetails{}, err
+	}
+
+	ipV6Subnet, err := imdsFunc(ctx, ipV6SubnetPath)
+	if err != nil {
+		return NetworkCardDetails{}, err
+	}
+
+	interfaceId, err := imdsFunc(ctx, interfaceIdPath)
 	if err != nil {
 		return NetworkCardDetails{}, err
 	}
 
 	return NetworkCardDetails{
-		MAC:       mac,
-		CardIndex: cardIndexInt,
-		IpAddress: ipAddress,
+		MAC:         mac,
+		CardIndex:   cardIndexInt,
+		IpV4Address: ipV4Address,
+		IpV4Subnet:  ipV4Subnet,
+		IpV6Address: ipV6Address,
+		IpV6Subnet:  ipV6Subnet,
+		InterfaceId: interfaceId,
 	}, nil
 }
 

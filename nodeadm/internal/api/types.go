@@ -41,9 +41,13 @@ type NodeConfigStatus struct {
 }
 
 type NetworkCardDetails struct {
-	MAC       string `json:"mac,omitempty"`
-	IpAddress string `json:"ipAddress,omitempty"`
-	CardIndex int    `json:"cardIndex,omitempty"`
+	MAC         string `json:"mac,omitempty"`
+	IpV4Address string `json:"ipV4Address,omitempty"`
+	IpV4Subnet  string `json:"ipV4Subnet,omitempty"`
+	IpV6Address string `json:"ipV6Address,omitempty"`
+	IpV6Subnet  string `json:"ipV6Subnet,omitempty"`
+	CardIndex   int    `json:"cardIndex,omitempty"`
+	InterfaceId string `json:"interfaceId,omitempty"`
 }
 
 type InstanceDetails struct {
