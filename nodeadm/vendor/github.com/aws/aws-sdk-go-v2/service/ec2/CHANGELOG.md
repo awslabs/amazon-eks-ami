@@ -1,3 +1,11 @@
+# v1.189.0 (2024-11-15.2)
+
+* **Feature**: Remove non-functional enum variants for FleetCapacityReservationUsageStrategy
+
+# v1.188.0 (2024-11-13)
+
+* **Feature**: This release adds the source AMI details in DescribeImages API
+
 # v1.187.1 (2024-11-06)
 
 * **Dependency Update**: Updated to the latest SDK module versions
