@@ -31,7 +31,13 @@ function rpm_install() {
 
 function install-nvidia-container-toolkit() {
   # The order of these RPMs is important, as they have dependencies on each other
-  RPMS=("libnvidia-container1-1.17.1-1.x86_64.rpm" "nvidia-container-toolkit-base-1.17.1-1.x86_64.rpm" "libnvidia-container-tools-1.17.1-1.x86_64.rpm" "nvidia-container-toolkit-1.17.1-1.x86_64.rpm")
+  VERSION="1.17.2-1"
+  RPMS=(
+    "libnvidia-container1-${VERSION}.x86_64.rpm"
+    "nvidia-container-toolkit-base-${VERSION}.x86_64.rpm"
+    "libnvidia-container-tools-${VERSION}.x86_64.rpm"
+    "nvidia-container-toolkit-${VERSION}.x86_64.rpm"
+  )
   for RPM in "${RPMS[@]}"; do
     echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
     sudo -E aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
