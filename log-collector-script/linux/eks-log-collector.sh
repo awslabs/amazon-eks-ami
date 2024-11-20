@@ -312,9 +312,15 @@ get_mounts_info() {
   timeout 75 df --human-readable >> "${COLLECT_DIR}"/storage/mounts.txt
   timeout 75 df --inodes >> "${COLLECT_DIR}"/storage/inodes.txt
   lsblk > "${COLLECT_DIR}"/storage/lsblk.txt
-  lvs > "${COLLECT_DIR}"/storage/lvs.txt
-  pvs > "${COLLECT_DIR}"/storage/pvs.txt
-  vgs > "${COLLECT_DIR}"/storage/vgs.txt
+  if command -v lvs > /dev/null 2>&1; then
+    lvs > "${COLLECT_DIR}"/storage/lvs.txt
+  fi
+  if command -v pvs > /dev/null 2>&1; then
+    pvs > "${COLLECT_DIR}"/storage/pvs.txt
+  fi
+  if command -v vgs > /dev/null 2>&1; then
+    vgs > "${COLLECT_DIR}"/storage/vgs.txt
+  fi  
   cp --force /etc/fstab "${COLLECT_DIR}"/storage/fstab.txt
   mount -t xfs | awk '{print $1}' | xargs -I{} -- sh -c "xfs_info {}; xfs_db -r -c 'freesp -s' {}" > "${COLLECT_DIR}"/storage/xfs.txt
   mount | grep ^overlay | sed 's/.*upperdir=//' | sed 's/,.*//' | xargs -n 1 timeout 75 du -sh | grep -v ^0 > "${COLLECT_DIR}"/storage/pod_local_storage.txt
@@ -352,7 +358,7 @@ get_iptables_info() {
 
   if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
     echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
-  else
+  elif command -v ipvsadm > /dev/null 2>&1; then
     # check that ip_vs module is loaded in get_modinfo()
     try "collect ipvs information"
     ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add:service/server \tprotocol \tvirtual-server \tscheduler algorithm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
@@ -425,7 +431,7 @@ get_kernel_info() {
 # collect modinfo on specific modules for debugging purposes
 get_modinfo() {
   try "collect modinfo"
-  modinfo lustre > "${COLLECT_DIR}/modinfo/lustre"
+  modinfo lustre > "${COLLECT_DIR}/modinfo/lustre" 2> /dev/null
   lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
 }
 
@@ -483,20 +489,22 @@ get_k8s_info() {
   fi
 
   case "${INIT_TYPE}" in
-    systemd)
-      timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
+    systemd | snap)
+      timeout 75 snap list kubelet-eks > /dev/null 2>&1
+      if [ 0 -eq $? ]; then # Check if previous command was successful.
+        timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
 
-      systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
+        timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/kubelet-eks_service.txt 2>&1
+      else
+        timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
 
-      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
-      cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
+        systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
 
-      cp --force --recursive --dereference /etc/kubernetes/kubelet/kubelet-config.json "${COLLECT_DIR}"/kubelet/kubelet-config.json 2> /dev/null
-      ;;
-    snap)
-      timeout 75 snap logs kubelet-eks -n all > "${COLLECT_DIR}"/kubelet/kubelet.log
+        cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json "${COLLECT_DIR}"/kubelet/config.json 2> /dev/null
+        cp --force --recursive --dereference /etc/kubernetes/kubelet/config.json.d "${COLLECT_DIR}"/kubelet/config.json.d 2> /dev/null
 
-      timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/kubelet-eks_service.txt 2>&1
+        cp --force --recursive --dereference /etc/kubernetes/kubelet/kubelet-config.json "${COLLECT_DIR}"/kubelet/kubelet-config.json 2> /dev/null
+      fi
       ;;
     *)
       warning "The current operating system is not supported."
@@ -541,7 +549,9 @@ get_ipamd_info() {
   fi
 
   try "collect L-IPAMD checkpoint"
-  cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
+  if [[ -f /var/run/aws-node/ipam.json ]]; then
+    cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
+  fi
 
   ok
 }
@@ -563,13 +573,16 @@ get_sysctls_info() {
 
 get_network_policy_ebpf_info() {
   try "collect network policy ebpf loaded data"
-  echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
-  LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
+  if [[ -x /opt/cni/bin/aws-eks-na-cli ]]; then
+    echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
+    LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
 
-  for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
-    echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
-    /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
-  done
+    for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+      echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+      /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
+    done
+  fi
+
   ok
 }
 
@@ -577,15 +590,19 @@ get_networking_info() {
   try "collect networking infomation"
 
   # conntrack info
-  echo "*** Output of conntrack -S *** " >> "${COLLECT_DIR}"/networking/conntrack.txt
-  timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
-  echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
-  timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
-  echo "*** Output of conntrack -L -f ipv6 ***" >> "${COLLECT_DIR}"/networking/conntrack6.txt
-  timeout 75 conntrack -L -f ipv6 >> "${COLLECT_DIR}"/networking/conntrack6.txt
+  if command -v conntrack > /dev/null 2>&1; then
+    echo "*** Output of conntrack -S *** " >> "${COLLECT_DIR}"/networking/conntrack.txt
+    timeout 75 conntrack -S >> "${COLLECT_DIR}"/networking/conntrack.txt
+    echo "*** Output of conntrack -L ***" >> "${COLLECT_DIR}"/networking/conntrack.txt
+    timeout 75 conntrack -L >> "${COLLECT_DIR}"/networking/conntrack.txt
+    echo "*** Output of conntrack -L -f ipv6 ***" >> "${COLLECT_DIR}"/networking/conntrack6.txt
+    timeout 75 conntrack -L -f ipv6 >> "${COLLECT_DIR}"/networking/conntrack6.txt
+  fi
 
   # ifconfig
-  timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
+  if command -v ifconfig > /dev/null 2>&1; then
+    timeout 75 ifconfig > "${COLLECT_DIR}"/networking/ifconfig.txt
+  fi
 
   # ip rule show
   timeout 75 ip rule show > "${COLLECT_DIR}"/networking/iprule.txt
