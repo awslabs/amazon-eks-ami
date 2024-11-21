@@ -24,7 +24,7 @@ function rpm_install() {
   local RPMS=($@)
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
-    sudo -E aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
     sudo dnf localinstall -y ${WORKING_DIR}/${RPM}
   done
 }
@@ -40,7 +40,7 @@ function install-nvidia-container-toolkit() {
   )
   for RPM in "${RPMS[@]}"; do
     echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
-    sudo -E aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
     echo "installing rpm: ${WORKING_DIR}/${RPM}"
     sudo rpm -ivh ${WORKING_DIR}/${RPM}
   done
@@ -53,7 +53,7 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 ################################################################################
 # Determine the domain based on the region
 if is-isolated-partition; then
-  sudo -E aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/amzn2023-nvidia.repo ${WORKING_DIR}/amzn2023-nvidia.repo
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/amzn2023-nvidia.repo ${WORKING_DIR}/amzn2023-nvidia.repo
 
   sudo dnf config-manager --add-repo ${WORKING_DIR}/amzn2023-nvidia.repo
   rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
