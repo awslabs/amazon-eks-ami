@@ -56,7 +56,7 @@ sudo yum install -y \
   yum-plugin-versionlock
 
 # lock the version of the kernel and associated packages before we yum update
-sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r)
+sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel-tools-$(uname -r)
 
 # Update the OS to begin with to catch up to the latest packages.
 sudo yum update -y
