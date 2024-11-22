@@ -17,7 +17,7 @@ else
   sudo yum install -y "kernel-${KERNEL_VERSION}*"
 fi
 
-sudo yum install -y "kernel-headers-${KERNEL_VERSION}*" "kernel-devel-${KERNEL_VERSION}*"
+sudo yum install -y "kernel-headers-${KERNEL_VERSION}*" "kernel-devel-${KERNEL_VERSION}*" "kernel-tools-${KERNEL_VERSION}*"
 
 # enable pressure stall information
 sudo grubby \
