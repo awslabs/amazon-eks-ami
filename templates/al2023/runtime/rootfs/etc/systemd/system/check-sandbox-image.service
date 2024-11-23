@@ -1,0 +1,11 @@
+[Unit]
+Description=Check that the sandbox image is present in the containerd content store
+After=containerd.service
+Wants=containerd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ctr image import --namespace k8s.io /etc/eks/pause.tar
+
+[Install]
+WantedBy=multi-user.target

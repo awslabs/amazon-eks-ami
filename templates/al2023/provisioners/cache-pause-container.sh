@@ -7,3 +7,5 @@ set -o pipefail
 sudo systemctl start containerd
 cache-pause-container -i ${PAUSE_CONTAINER_IMAGE}
 sudo systemctl stop containerd
+
+sudo systemctl enable check-sandbox-image.timer

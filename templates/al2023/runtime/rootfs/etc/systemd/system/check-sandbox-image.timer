@@ -1,0 +1,13 @@
+[Unit]
+Description=Run check-sandbox-image periodically
+Requires=check-sandbox-image.service
+
+[Timer]
+Unit=check-sandbox-image.service
+# start 1 minute after boot
+OnBootSec=1min
+# run every 5 minutes
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
