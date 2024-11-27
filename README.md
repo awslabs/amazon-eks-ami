@@ -46,7 +46,7 @@ make k8s=1.29 os_distro=al2023
 make help
 ```
 
-The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
+The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](https://github.com/awslabs/amazon-eks-ami/blob/main/Makefile).
 
 > **Note**
 > The default instance type to build this AMI does not qualify for the AWS free tier.
@@ -54,7 +54,7 @@ The Makefile chooses a particular kubelet binary to use per Kubernetes version w
 
 ## 🔒 Security
 
-For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/
+For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to [AWS Security](https://aws.amazon.com/security/vulnerability-reporting/)
 
 ## ⚖️ License Summary
 
