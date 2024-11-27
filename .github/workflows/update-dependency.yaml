@@ -33,8 +33,8 @@ jobs:
         if: ${{ steps.update_deps.outputs.changes != '' }}
         uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # 7.0.5
         with:
-          title: 'Update dependencies'
-          commit-message: Update dependencies
+          title: "chore: update dependencies"
+          commit-message: "chore: update dependencies"
           committer: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           branch: dependencies/update

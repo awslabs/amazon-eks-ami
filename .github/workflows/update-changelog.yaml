@@ -52,10 +52,10 @@ jobs:
           branch: update-changelog
           path: amazon-eks-ami/
           add-paths: CHANGELOG.md
-          commit-message: "Update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
+          commit-message: "chore(docs): update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
           committer: "GitHub <noreply@github.com>"
           author: "GitHub <noreply@github.com>"
-          title: "Update CHANGELOG.md"
+          title: "chore(docs): update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
           labels: |
             changelog/exclude
           body: |
