@@ -54,7 +54,7 @@ The Makefile chooses a particular kubelet binary to use per Kubernetes version w
 
 ## 🔒 Security
 
-For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to [AWS Security](https://aws.amazon.com/security/vulnerability-reporting/)
+For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to [AWS Security](https://aws.amazon.com/security/vulnerability-reporting/).
 
 ## ⚖️ License Summary
 
