@@ -55,10 +55,7 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 if is-isolated-partition; then
   sudo dnf install -y nvidia-release
   sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
-  #Backup method for installing Nvidia repo in ADC regions
-  #aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/amzn2023-nvidia.repo ${WORKING_DIR}/amzn2023-nvidia.repo
 
-  #sudo dnf config-manager --add-repo ${WORKING_DIR}/amzn2023-nvidia.repo
   rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
 
 else
