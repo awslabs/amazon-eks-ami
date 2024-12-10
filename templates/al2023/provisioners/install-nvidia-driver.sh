@@ -29,23 +29,6 @@ function rpm_install() {
   done
 }
 
-function install-nvidia-container-toolkit() {
-  # The order of these RPMs is important, as they have dependencies on each other
-  VERSION="1.17.2-1"
-  RPMS=(
-    "libnvidia-container1-${VERSION}.x86_64.rpm"
-    "nvidia-container-toolkit-base-${VERSION}.x86_64.rpm"
-    "libnvidia-container-tools-${VERSION}.x86_64.rpm"
-    "nvidia-container-toolkit-${VERSION}.x86_64.rpm"
-  )
-  for RPM in "${RPMS[@]}"; do
-    echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    echo "installing rpm: ${WORKING_DIR}/${RPM}"
-    sudo rpm -ivh ${WORKING_DIR}/${RPM}
-  done
-}
-
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
@@ -101,6 +84,7 @@ function archive-open-kmods() {
 
   if is-isolated-partition; then
     sudo dnf -y remove --all nvidia-driver
+    sudo dnf -y remove --all "kmod-nvidia-open*"
   else
     sudo dnf -y module remove --all nvidia-driver
     sudo dnf -y module reset nvidia-driver
@@ -138,7 +122,7 @@ sudo dnf -y install nvidia-fabric-manager
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then
-  install-nvidia-container-toolkit
+  sudo dnf -y install nvidia-container-toolkit
   sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 else
   sudo dnf -y install nvidia-container-toolkit
