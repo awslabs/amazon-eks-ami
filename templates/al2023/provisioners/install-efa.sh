@@ -35,10 +35,16 @@ sudo dnf swap -y gnupg2-minimal gnupg2-full
 ##########################################################################################
 ### Download installer ###################################################################
 ##########################################################################################
-curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}
+if [ ${PARTITION} == "aws-iso-f" ] || [ ${PARTITION} == "aws-iso-e" ]; then
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE} .
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
+else
+  curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}
+  curl -O ${EFA_DOMAIN}/aws-efa-installer.key && gpg --import aws-efa-installer.key
+  curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}.sig
+fi
 
-curl -O ${EFA_DOMAIN}/aws-efa-installer.key && gpg --import aws-efa-installer.key
-curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}.sig
 if ! gpg --verify ./aws-efa-installer-${EFA_VERSION}.tar.gz.sig &> /dev/null; then
   echo "EFA Installer signature failed verification!"
   exit 2
