@@ -35,7 +35,7 @@ sudo dnf swap -y gnupg2-minimal gnupg2-full
 ##########################################################################################
 ### Download installer ###################################################################
 ##########################################################################################
-if [ ${PARTITION} == "aws-iso-f" ||  ${PARTITION} == "aws-iso-e" ]; then
+if [ ${PARTITION} == "aws-iso-f" ] || [ ${PARTITION} == "aws-iso-e" ]; then
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE} .
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
