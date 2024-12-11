@@ -78,8 +78,12 @@ build: ## Build binary.
 	go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
 
 .PHONY: run
-run: build ## Run binary
+run: build ## Run binary.
 	go run cmd/nodeadm/main.go $(args)
+
+.PHONY: wasm
+wasm: ## Build WASM binary.
+	GOOS=js GOARCH=wasm go build -o $(LOCALBIN)/nodeadm.wasm cmd/nodeadm-wasm/main.go
 
 ##@ Build Dependencies
 

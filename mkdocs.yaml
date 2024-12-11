@@ -20,6 +20,7 @@ nav:
       - 'Concepts': nodeadm/doc/api-concepts.md
       - 'Reference': nodeadm/doc/api.md
     - 'Examples': nodeadm/doc/examples.md
+    - 'Playground': nodeadm/doc/playground.md
 theme:
   name: material
   palette:
