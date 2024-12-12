@@ -124,6 +124,7 @@ sudo dnf -y install nvidia-fabric-manager
 if is-isolated-partition; then
   sudo dnf -y install nvidia-container-toolkit
   sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+  sudo dnf -y install "nvidia-driver"
 else
   sudo dnf -y install nvidia-container-toolkit
 fi
