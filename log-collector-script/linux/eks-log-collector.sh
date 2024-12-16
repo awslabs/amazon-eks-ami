@@ -320,7 +320,7 @@ get_mounts_info() {
   fi
   if command -v vgs > /dev/null 2>&1; then
     vgs > "${COLLECT_DIR}"/storage/vgs.txt
-  fi  
+  fi
   cp --force /etc/fstab "${COLLECT_DIR}"/storage/fstab.txt
   mount -t xfs | awk '{print $1}' | xargs -I{} -- sh -c "xfs_info {}; xfs_db -r -c 'freesp -s' {}" > "${COLLECT_DIR}"/storage/xfs.txt
   mount | grep ^overlay | sed 's/.*upperdir=//' | sed 's/,.*//' | xargs -n 1 timeout 75 du -sh | grep -v ^0 > "${COLLECT_DIR}"/storage/pod_local_storage.txt
