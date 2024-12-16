@@ -38,6 +38,7 @@ function imdscurl() {
     return $CODE
   fi
   cat $OUTPUT_FILE
+  printf "\n"
   rm $OUTPUT_FILE
 }
 
