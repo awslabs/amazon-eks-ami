@@ -362,9 +362,9 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
 
     aws eks wait cluster-active \
       --region=${AWS_DEFAULT_REGION} \
-      --name=${CLUSTER_NAME}
+      --name=${CLUSTER_NAME} || rc=$?
 
-    aws eks describe-cluster \
+    [[ $rc -eq 0 ]] && aws eks describe-cluster \
       --region=${AWS_DEFAULT_REGION} \
       --name=${CLUSTER_NAME} \
       --output=text \
