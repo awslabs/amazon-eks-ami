@@ -26,7 +26,7 @@ func NewGlobalOptions() *GlobalOptions {
 }
 
 func RegisterFlagConfigOutput(c *flaggy.Subcommand, configOutput *string) {
-	c.String(configOutput, "", "config-output", "File path to write the final resolved and enriched config to. JSON encoding is used.")
+	c.String(configOutput, "o", "config-output", "File path to write the final resolved config to. JSON encoding is used.")
 }
 
 // RegisterFlagConfigSources maps a command-line flag for config sources to the specified string slice for the specified command.
