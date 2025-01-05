@@ -49,6 +49,6 @@ spec: ...
 --BOUNDARY--
 ```
 
-A different source for the configuration object can be specified with the `--config-source` flag.
+The source for the configuration object can be specified with the `--config-source` flag. It accepts a URI with supported schemes: [imds, file]. The default source is `imds://user-data`, 
 
 The [API reference documentation](doc/api.md) contains the details of the configuration types.
