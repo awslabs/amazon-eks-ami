@@ -36,6 +36,8 @@ OPTIONS:
 
    --ignore_metrics Variable To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI
 
+   --eks_hybrid Variable To denote that the script is running on an EKS Hybrid node; This will skip IMDS queries for AWS region and instance ID
+
    --help  Show this help message.
 ```
 
