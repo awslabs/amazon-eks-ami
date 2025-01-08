@@ -26,7 +26,7 @@ runs:
       run: |
         export PATH=${PATH}:$(go env GOPATH)/bin
         go install sigs.k8s.io/kubetest2/...@latest
-        go install github.com/aws/aws-k8s-tester/kubetest2/...@latest
+        go install github.com/aws/aws-k8s-tester/...@latest
 
         case "${{ inputs.os_distro }}" in
           al2)
