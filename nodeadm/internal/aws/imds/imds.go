@@ -15,7 +15,7 @@ func init() {
 	Client = imds.New(imds.Options{
 		DisableDefaultTimeout: true,
 		Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
-			so.MaxAttempts = 15
+			so.MaxAttempts = 60
 			so.MaxBackoff = 1 * time.Second
 			so.Retryables = append(so.Retryables,
 				&retry.RetryableHTTPStatusCode{
