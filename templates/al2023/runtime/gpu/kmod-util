@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# /usr/sbin may not be on the PATH
+DKMS=/usr/sbin/dkms
+DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
+
+function log() {
+  echo >&2 "$(date '+%Y-%m-%dT%H:%M:%S%z')" "[kmod-util]" "$@"
+}
+
+# get the version of a registered kernel module
+function module-version() {
+  ${DKMS} status -m "${1}" | tr -s ',' '/' | tr -d ' ' | awk -F '/' '{print $2}'
+}
+
+# load a kernel module from the archives
+function load() {
+  local MODULE_NAME="${1}"
+  log "unpacking: ${MODULE_NAME}"
+  local MODULE_ARCHIVE="${DKMS_ARCHIVE_DIR}/${MODULE_NAME}/*.tar.gz"
+  ${DKMS} ldtarball ${MODULE_ARCHIVE}
+  log "unpacked: ${MODULE_NAME}"
+  log "installing: ${MODULE_NAME}"
+  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
+  log "installed: ${MODULE_NAME}"
+}
+
+# remove a kernel module
+function remove() {
+  local MODULE_NAME="${1}"
+  log "removing: ${MODULE_NAME}"
+  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  ${DKMS} remove -m "${MODULE_NAME}" -v "${MODULE_VERSION}" --all
+  log "removed: ${MODULE_NAME}"
+}
+
+# archive a kernel module
+function archive() {
+  local MODULE_NAME="${1}"
+  log "archiving: ${MODULE_NAME}"
+  mkdir -p "${DKMS_ARCHIVE_DIR}/${MODULE_NAME}"
+  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  ${DKMS} mktarball -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
+  cp /var/lib/dkms/${MODULE_NAME}/${MODULE_VERSION}/tarball/*.tar.gz "${DKMS_ARCHIVE_DIR}/${MODULE_NAME}/"
+  log "archived: ${MODULE_NAME}"
+}
+
+# build a kernel module
+function build() {
+  local MODULE_NAME="${1}"
+  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  ${DKMS} build -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
+}
+
+function usage() {
+  echo >&2 "usage: $0 COMMAND MODULE_NAME"
+  echo >&2
+  echo >&2 "Valid values for COMMAND:"
+  declare -F | awk '{print "\t" $3}' | echo >&2
+}
+
+if [ "$#" -ne 2 ]; then
+  usage
+  exit 1
+fi
+
+eval "${@}"

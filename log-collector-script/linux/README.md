@@ -36,6 +36,8 @@ OPTIONS:
 
    --ignore_metrics Variable To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI
 
+   --eks_hybrid Variable To denote that the script is running on an EKS Hybrid node; This will skip IMDS queries for AWS region and instance ID
+
    --help  Show this help message.
 ```
 
@@ -91,7 +93,7 @@ Trying to archive gathered information...
 
 * SSM agent should be installed and running on Worker Node(s). [How to Install SSM Agent link](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-manual-agent-install.html)
 
-* Worker Node(s) should have required permissions to communicate with SSM service. IAM managed role `AmazonSSMManagedInstanceCore` will have all the required permission for SSM agent to run on EC2 instances. The IAM managed role `AmazonSSMManagedInstanceCore` has `S3:PutObject` permission to all S3 resources.
+* Worker Node(s) should have required permissions to communicate with SSM service and upload data to your S3 Bucket. The IAM managed policy `AmazonSSMManagedInstanceCore` will have all the required permissions for SSM agent to run on EC2 instances. You will need `S3:PutObject` permission to your S3 resources accordingly.
 
 *Note:* For more granular control of the IAM permission check [Actions defined by AWS Systems Manager](https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awssystemsmanager.html%23awssystemsmanager-actions-as-permissions)
 

@@ -13,7 +13,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	jmespath "github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
@@ -56,7 +55,7 @@ type DescribeInternetGatewaysInput struct {
 	//   - owner-id - The ID of the Amazon Web Services account that owns the internet
 	//   gateway.
 	//
-	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
+	//   - tag - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
@@ -142,6 +141,9 @@ func (c *Client) addOperationDescribeInternetGatewaysMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -176,6 +178,18 @@ func (c *Client) addOperationDescribeInternetGatewaysMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -343,22 +357,23 @@ func (w *InternetGatewayExistsWaiter) WaitForOutput(ctx context.Context, params 
 func internetGatewayExistsStateRetryable(ctx context.Context, input *DescribeInternetGatewaysInput, output *DescribeInternetGatewaysOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(InternetGateways[].InternetGatewayId) > `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.InternetGateways
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.InternetGatewayId
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
+		v4 := len(v2)
+		v5 := 0
+		v6 := int64(v4) > int64(v5)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v6 == bv {
 			return false, nil
 		}
 	}

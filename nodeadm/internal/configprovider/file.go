@@ -6,7 +6,6 @@ import (
 	"os"
 
 	internalapi "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 )
 
 type fileConfigProvider struct {
@@ -36,9 +35,5 @@ func (fcs *fileConfigProvider) Provide() (*internalapi.NodeConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	config, err := apibridge.DecodeNodeConfig(data)
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
+	return ParseMaybeMultipart(data)
 }

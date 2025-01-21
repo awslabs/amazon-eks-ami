@@ -15,9 +15,14 @@ import (
 // the specified Amazon Web Services Region. After you disable block public access
 // for snapshots in a Region, users can publicly share snapshots in that Region.
 //
-// If block public access is enabled in block-all-sharing mode, and you disable
-// block public access, all snapshots that were previously publicly shared are no
-// longer treated as private and they become publicly accessible again.
+// Enabling block public access for snapshots in block-all-sharing mode does not
+// change the permissions for snapshots that are already publicly shared. Instead,
+// it prevents these snapshots from be publicly visible and publicly accessible.
+// Therefore, the attributes for these snapshots still indicate that they are
+// publicly shared, even though they are not publicly available.
+//
+// If you disable block public access , these snapshots will become publicly
+// available again.
 //
 // For more information, see [Block public access for snapshots] in the Amazon EBS User Guide .
 //
@@ -102,6 +107,9 @@ func (c *Client) addOperationDisableSnapshotBlockPublicAccessMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -136,6 +144,18 @@ func (c *Client) addOperationDisableSnapshotBlockPublicAccessMiddlewares(stack *
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

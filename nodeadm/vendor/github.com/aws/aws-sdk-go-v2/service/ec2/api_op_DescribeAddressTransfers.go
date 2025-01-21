@@ -20,8 +20,8 @@ import (
 // IP address transfer. During those seven days, the source account can view the
 // pending transfer by using this action. After seven days, the transfer expires
 // and ownership of the Elastic IP address returns to the source account. Accepted
-// transfers are visible to the source account for three days after the transfers
-// have been accepted.
+// transfers are visible to the source account for 14 days after the transfers have
+// been accepted.
 //
 // [Transfer Elastic IP addresses]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html#transfer-EIPs-intro
 func (c *Client) DescribeAddressTransfers(ctx context.Context, params *DescribeAddressTransfersInput, optFns ...func(*Options)) (*DescribeAddressTransfersOutput, error) {
@@ -118,6 +118,9 @@ func (c *Client) addOperationDescribeAddressTransfersMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -152,6 +155,18 @@ func (c *Client) addOperationDescribeAddressTransfersMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -1,0 +1,27 @@
+name: '[CI] Canary'
+on:
+  schedule:
+    # twice daily at 8pm and 8am PST
+    - cron: "0 3,15 * * *"
+
+jobs:
+  setup:
+    # Don't run if this is on a fork
+    if: github.repository == 'awslabs/amazon-eks-ami'
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.variables.outputs.timestamp }}
+    steps:
+    - id: variables
+      run: |
+        echo "timestamp=$(date +%s)" >> $GITHUB_OUTPUT
+
+  ci:
+    needs:
+      - setup
+    uses: ./.github/workflows/ci.yaml
+    secrets: inherit
+    with:
+      git_sha: "main"
+      run_name: "ci(canary): ${{ needs.setup.outputs.timestamp }}"
+      resource_id: "ci-canary-${{ needs.setup.outputs.timestamp }}"

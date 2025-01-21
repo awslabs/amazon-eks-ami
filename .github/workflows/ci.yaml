@@ -1,0 +1,93 @@
+name: '[CI]'
+run-name: "${{ inputs.run_name }}"
+on:
+  workflow_call:
+    inputs:
+      git_sha:
+        required: true
+        type: string
+      run_name:
+        required: true
+        type: string
+      resource_id:
+        required: true
+        type: string
+      goal:
+        required: false
+        type: string
+        default: "test"
+      os_distros:
+        description: 'Operating System Distributions (comma-separated, e.g., al2,al2023)'
+        default: "al2,al2023"
+        required: false
+        type: string
+      k8s_versions:
+        description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
+        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
+        required: false
+        type: string
+      build_arguments:
+        required: false
+        type: string
+    outputs:
+      ci_step_name_prefix:
+        description: "Prefix of job steps containing CI activities"
+        value: ${{ jobs.setup.outputs.ci_step_name_prefix }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
+      ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
+      os_distros: ${{ steps.variables.outputs.os_distros }}
+    steps:
+    - id: variables
+      run: |
+        echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
+        echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+        echo "os_distros=$(jq -Rn --arg input '${{ inputs.os_distros }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+  kubernetes-versions:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
+    needs:
+      - setup
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      # don't bail out of all sub-tasks if one fails
+      fail-fast: false
+      matrix:
+        k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
+        os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+        with:
+          ref: 'main'
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
+          # 2.5 hours (job usually completes within 2 hours)
+          role-duration-seconds: 9000
+      - name: "${{ needs.setup.outputs.ci_step_name_prefix }} Build"
+        id: build
+        uses: ./.github/actions/ci/build
+        with:
+          git_sha: ${{ inputs.git_sha }}
+          k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
+          build_id: ${{ inputs.resource_id }}
+          additional_arguments: ${{ inputs.build_arguments }}
+      - if: ${{ inputs.goal == 'test' }}
+        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
+        id: test
+        uses: ./.github/actions/ci/kubetest2
+        with:
+          ami_id: ${{ steps.build.outputs.ami_id }}
+          k8s_version: ${{ matrix.k8s_version }}
+          os_distro: ${{ matrix.os_distro }}
+          build_id: ${{ inputs.resource_id }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          log_bucket: ${{ secrets.CI_LOG_BUCKET }}

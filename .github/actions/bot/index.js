@@ -183,23 +183,22 @@ class CICommand {
             repo: this.repository_name,
             pull_number: this.pr_number
         });
-        const osDistros = [];
+        const osDistros = new Set();
         for (const file of files.data) {
-            for (const prefix of this.osDistroPathPrefixHints) {
+            for (const [prefix, osDistro] of Object.entries(this.osDistroPathPrefixHints)) {
                 if (file.filename.startsWith(prefix)) {
-                    const osDistro = this.osDistroPathPrefixHints[prefix];
-                    osDistros.push(osDistro);
+                    osDistros.add(osDistro);
                 }
             }
         }
-        if (osDistros.includes('*')) {
+        if (osDistros.has('*')) {
             console.log("changed files matched a prefix mapped to the wildcard, not attempting to guess os_distros!");
             return null;
         }
-        if (osDistros.length == 0) {
+        if (osDistros.size == 0) {
             return null;
         }
-        return osDistros.join(',');
+        return Array.from(osDistros).join(',');
     }
 
     async run(author, github) {
@@ -218,12 +217,12 @@ class CICommand {
             default:
                 throw new Error(`Unknown mergeable value: ${mergeable}`);
         }
-        const merge_commit = await github.rest.commits.get({
+        const merge_commit = await github.rest.repos.getCommit({
             owner: this.repository_owner,
             repo: this.repository_name,
             ref: pr.data.merge_commit_sha
         });
-        if (new Date(this.comment_created_at) < new Date(merge_commit.data.author.date)) {
+        if (new Date(this.comment_created_at) < new Date(merge_commit.data.commit.committer.date)) {
             return `@${author} this PR has been updated since your request, you'll need to review the changes.`;
         }
         const inputs = {

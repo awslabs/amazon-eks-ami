@@ -66,6 +66,16 @@ type CopySnapshotInput struct {
 	// This member is required.
 	SourceSnapshotId *string
 
+	// Specify a completion duration, in 15 minute increments, to initiate a
+	// time-based snapshot copy. Time-based snapshot copy operations complete within
+	// the specified duration. For more information, see [Time-based copies].
+	//
+	// If you do not specify a value, the snapshot copy operation is completed on a
+	// best-effort basis.
+	//
+	// [Time-based copies]: https://docs.aws.amazon.com/ebs/latest/userguide/time-based-copies.html
+	CompletionDurationMinutes *int32
+
 	// A description for the EBS snapshot.
 	Description *string
 
@@ -199,6 +209,9 @@ func (c *Client) addOperationCopySnapshotMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -239,6 +252,18 @@ func (c *Client) addOperationCopySnapshotMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -237,7 +237,7 @@ if [[ "${DISK_SETUP}" != "raid0" && "${DISK_SETUP}" != "mount" && "${DISK_SETUP}
 fi
 
 if [ "${DISK_SETUP}" = "none" ]; then
-  "disk setup is 'none', nothing to do!"
+  echo "disk setup is 'none', nothing to do!"
   exit 0
 fi
 

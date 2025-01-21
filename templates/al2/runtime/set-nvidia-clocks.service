@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure NVIDIA GPU clock rate
+After=nvidia-persistenced.service
+Requires=nvidia-persistenced.service
+
+ConditionPathExists=/usr/bin/nvidia-smi
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/set-nvidia-clocks
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
