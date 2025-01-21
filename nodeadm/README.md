@@ -49,6 +49,6 @@ spec: ...
 --BOUNDARY--
 ```
 
-The source for the configuration object can be specified with the `--config-source` flag. It accepts a URI with supported schemes: [imds, file]. The default source is `imds://user-data`, 
+The source for the configuration object can be specified with the `--config-source` flag and follows a URI format. The default is `imds://user-data`, which pulls from EC2 instance userdata, but you may provide a file path with `file://...`.
 
 The [API reference documentation](doc/api.md) contains the details of the configuration types.
