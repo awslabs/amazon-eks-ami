@@ -11,7 +11,7 @@ At a high level, you run this script on your Kubernetes node, and it will collec
 * Run this project as the root user
 
 ```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/linux/eks-log-collector.sh
+curl -O https://amazon-eks.s3.amazonaws.com/support/log-collector-script/linux/eks-log-collector.sh
 sudo bash eks-log-collector.sh
 ```
 
@@ -104,7 +104,7 @@ Trying to archive gathered information...
 1. Create the SSM document named "EKSLogCollector" using the following commands:
 
 ```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/linux/eks-ssm-content.json
+curl -O https://amazon-eks.s3.amazonaws.com/support/log-collector-script/linux/eks-ssm-content.json
 aws ssm create-document \
   --name "EKSLogCollectorLinux" \
   --document-type "Command" \
