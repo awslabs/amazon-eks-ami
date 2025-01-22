@@ -31,14 +31,11 @@ jobs:
           command: |
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
-            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')"
+            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')-test"
             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
       - run:
           name: Install aws cli
-          command: apk add aws-cli
-      - run:
-          name: Install Make
-          command: apk add make    
+          command: apk add aws-cli 
       - run:
           name: Install dependency for packer
           command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
