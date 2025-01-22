@@ -35,7 +35,7 @@ jobs:
             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
       - run:
           name: Install aws cli
-          command: apk add aws-cli 
+          command: apk add aws-cli
       - run:
           name: Install dependency for packer
           command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
