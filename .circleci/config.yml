@@ -3,7 +3,7 @@ version: 2.1
 executors:
   packer:
     docker:
-      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0
+      - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0.release-release
 
 # workflow jobs definition
 jobs:
