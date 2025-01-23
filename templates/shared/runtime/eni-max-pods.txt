@@ -208,6 +208,8 @@ c7gn.large 29
 c7gn.medium 8
 c7gn.metal 737
 c7gn.xlarge 58
+c7i-flex.12xlarge 234
+c7i-flex.16xlarge 737
 c7i-flex.2xlarge 58
 c7i-flex.4xlarge 234
 c7i-flex.8xlarge 234
@@ -258,10 +260,6 @@ f1.2xlarge 58
 f1.4xlarge 234
 f2.12xlarge 234
 f2.48xlarge 737
-g3.16xlarge 737
-g3.4xlarge 234
-g3.8xlarge 234
-g3s.xlarge 58
 g4ad.16xlarge 234
 g4ad.2xlarge 8
 g4ad.4xlarge 29
@@ -568,6 +566,8 @@ m7gd.large 29
 m7gd.medium 8
 m7gd.metal 737
 m7gd.xlarge 58
+m7i-flex.12xlarge 234
+m7i-flex.16xlarge 737
 m7i-flex.2xlarge 58
 m7i-flex.4xlarge 234
 m7i-flex.8xlarge 234
