@@ -284,6 +284,11 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/bb-devmapper-reload.sh"
     },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/bb-containerd.sh"
+    },
 
     {
       "type": "shell",
