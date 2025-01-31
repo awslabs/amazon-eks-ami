@@ -273,6 +273,13 @@
         "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
+
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/bb-devmapper-create.sh"
+    },
+
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
