@@ -4,7 +4,7 @@ set -ex
 DATA_DIR=/var/lib/containerd/io.containerd.snapshotter.v1.devmapper
 POOL_NAME=devpool
 
-mkdir -p ${DATA_DIR}
+sudo mkdir -p ${DATA_DIR}
 # Create data file
 sudo touch "${DATA_DIR}/data"
 sudo truncate -s 100G "${DATA_DIR}/data"
@@ -16,6 +16,8 @@ sudo truncate -s 40G "${DATA_DIR}/meta"
 # Allocate loop devices
 DATA_DEV=$(sudo losetup --find --show "${DATA_DIR}/data")
 META_DEV=$(sudo losetup --find --show "${DATA_DIR}/meta")
+
+sudo dnf -y install bc
 
 # Define thin-pool parameters.
 # See https://www.kernel.org/doc/Documentation/device-mapper/thin-provisioning.txt for details.
