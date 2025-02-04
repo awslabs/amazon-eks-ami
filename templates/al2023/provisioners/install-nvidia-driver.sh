@@ -119,6 +119,7 @@ sudo systemctl enable set-nvidia-clocks.service
 ### Install other dependencies #################################################
 ################################################################################
 sudo dnf -y install nvidia-fabric-manager
+sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then
