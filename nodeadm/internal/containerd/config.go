@@ -30,11 +30,15 @@ type containerdTemplateVars struct {
 	RuntimeBinaryName string
 }
 
-func writeContainerdConfig(cfg *api.NodeConfig) error {
-	if err := writeBaseRuntimeSpec(cfg); err != nil {
-		return err
-	}
+type modifier interface {
+	// Modify mutates a given containerd template configuration.
+	Modify(*containerdTemplateVars)
 
+	// Matches determines whether the configurator is relevant to the current instance.
+	Matches(*api.NodeConfig) bool
+}
+
+func writeContainerdConfig(cfg *api.NodeConfig) error {
 	containerdConfig, err := generateContainerdConfig(cfg)
 	if err != nil {
 		return err
@@ -59,12 +63,17 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
-	instanceOptions := applyInstanceTypeMixins(cfg.Status.Instance.Type)
-
 	configVars := containerdTemplateVars{
 		SandboxImage:      cfg.Status.Defaults.SandboxImage,
-		RuntimeBinaryName: instanceOptions.RuntimeBinaryName,
-		RuntimeName:       instanceOptions.RuntimeName,
+		RuntimeBinaryName: "/usr/sbin/runc",
+		RuntimeName:       "runc",
+	}
+	for _, configurator := range []modifier{
+		NewNvidiaModifier(),
+	} {
+		if configurator.Matches(cfg) {
+			configurator.Modify(&configVars)
+		}
 	}
 	var buf bytes.Buffer
 	if err := containerdConfigTemplate.Execute(&buf, configVars); err != nil {
