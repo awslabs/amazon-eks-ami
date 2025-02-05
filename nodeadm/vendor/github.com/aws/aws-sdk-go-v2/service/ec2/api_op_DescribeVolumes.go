@@ -76,11 +76,16 @@ type DescribeVolumesInput struct {
 	//
 	//   - encrypted - Indicates whether the volume is encrypted ( true | false )
 	//
+	//   - fast-restored - Indicates whether the volume was created from a snapshot
+	//   that is enabled for fast snapshot restore ( true | false ).
+	//
 	//   - multi-attach-enabled - Indicates whether the volume is enabled for
 	//   Multi-Attach ( true | false )
 	//
-	//   - fast-restored - Indicates whether the volume was created from a snapshot
-	//   that is enabled for fast snapshot restore ( true | false ).
+	//   - operator.managed - A Boolean that indicates whether this is a managed volume.
+	//
+	//   - operator.principal - The principal that manages the volume. Only valid for
+	//   managed volumes, where managed is true .
 	//
 	//   - size - The size of the volume, in GiB.
 	//
@@ -433,6 +438,9 @@ func volumeAvailableStateRetryable(ctx context.Context, input *DescribeVolumesIn
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -628,6 +636,9 @@ func volumeDeletedStateRetryable(ctx context.Context, input *DescribeVolumesInpu
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -831,6 +842,9 @@ func volumeInUseStateRetryable(ctx context.Context, input *DescribeVolumesInput,
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

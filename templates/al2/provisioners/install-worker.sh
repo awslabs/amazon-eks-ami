@@ -140,6 +140,12 @@ sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 sudo mv $WORKING_DIR/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
 sudo systemctl enable set-nvidia-clocks.service
 
+# backporting removal of default dummy0 network interface in systemd v236
+# https://github.com/systemd/systemd/blob/16ac586e5a77942bf1147bc9eae684d544ded88f/NEWS#L11139-L11144
+cat << EOF | sudo tee /lib/modprobe.d/10-no-dummies.conf
+options dummy numdummies=0
+EOF
+
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################

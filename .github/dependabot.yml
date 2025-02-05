@@ -7,3 +7,5 @@ updates:
     labels:
       - "dependencies"
       - "changelog/exclude"
+    commit-message:
+      prefix: "chore"

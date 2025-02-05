@@ -47,15 +47,15 @@ jobs:
             // if the release notes are modified in the GitHub web editor, trailing spaces can be added accidentally
             updatedChangelog = updatedChangelog.split('\n').map(s => s.replace(/\s+$/, '')).join('\n');
             fs.writeFileSync(changelogPath, updatedChangelog);
-      - uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # 7.0.5
+      - uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         with:
           branch: update-changelog
           path: amazon-eks-ami/
           add-paths: CHANGELOG.md
-          commit-message: "Update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
+          commit-message: "chore(docs): update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
           committer: "GitHub <noreply@github.com>"
           author: "GitHub <noreply@github.com>"
-          title: "Update CHANGELOG.md"
+          title: "chore(docs): update CHANGELOG.md for release ${{ needs.setup.outputs.tag_name }}"
           labels: |
             changelog/exclude
           body: |

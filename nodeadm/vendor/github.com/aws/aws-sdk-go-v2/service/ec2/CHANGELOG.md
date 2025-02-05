@@ -1,3 +1,101 @@
+# v1.202.2 (2025-01-31)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.202.1 (2025-01-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.202.0 (2025-01-28)
+
+* **Feature**: This release changes the CreateFleet CLI and SDK's such that if you do not specify a client token, a randomly generated token is used for the request to ensure idempotency.
+
+# v1.201.1 (2025-01-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+* **Dependency Update**: Upgrade to smithy-go v1.22.2.
+
+# v1.201.0 (2025-01-23)
+
+* **Feature**: Added "future" allocation type for future dated capacity reservation
+
+# v1.200.0 (2025-01-17)
+
+* **Feature**: Release u7i-6tb.112xlarge, u7i-8tb.112xlarge, u7inh-32tb.480xlarge, p5e.48xlarge, p5en.48xlarge, f2.12xlarge, f2.48xlarge, trn2.48xlarge instance types.
+* **Bug Fix**: Fix bug where credentials weren't refreshed during retry loop.
+
+# v1.199.2 (2025-01-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.199.1 (2025-01-14)
+
+* **Bug Fix**: Fix issue where waiters were not failing on unmatched errors as they should. This may have breaking behavioral changes for users in fringe cases. See [this announcement](https://github.com/aws/aws-sdk-go-v2/discussions/2954) for more information.
+* **Bug Fix**: Fix nil dereference panic in certain waiters.
+
+# v1.199.0 (2025-01-13)
+
+* **Feature**: Add support for DisconnectOnSessionTimeout flag in CreateClientVpnEndpoint and ModifyClientVpnEndpoint requests and DescribeClientVpnEndpoints responses
+
+# v1.198.3 (2025-01-09)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.198.2 (2025-01-08)
+
+* No change notes available for this release.
+
+# v1.198.1 (2024-12-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.198.0 (2024-12-16)
+
+* **Feature**: This release adds support for EBS local snapshots in AWS Dedicated Local Zones, which allows you to store snapshots of EBS volumes locally in Dedicated Local Zones.
+
+# v1.197.0 (2024-12-13)
+
+* **Feature**: This release adds GroupId to the response for DeleteSecurityGroup.
+
+# v1.196.0 (2024-12-09)
+
+* **Feature**: This release includes a new API for modifying instance network-performance-options after launch.
+
+# v1.195.0 (2024-12-02)
+
+* **Feature**: Adds support for declarative policies that allow you to enforce desired configuration across an AWS organization through configuring account attributes. Adds support for Allowed AMIs that allows you to limit the use of AMIs in AWS accounts. Adds support for connectivity over non-HTTP protocols.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.194.0 (2024-11-26)
+
+* **Feature**: Adds support for Time-based Copy for EBS Snapshots and Cross Region PrivateLink. Time-based Copy ensures that EBS Snapshots are copied within and across AWS Regions in a specified timeframe. Cross Region PrivateLink enables customers to connect to VPC endpoint services hosted in other AWS Regions.
+
+# v1.193.0 (2024-11-21)
+
+* **Feature**: Adds support for requesting future-dated Capacity Reservations with a minimum commitment duration, enabling IPAM for organizational units within AWS Organizations, reserving EC2 Capacity Blocks that start in 30 minutes, and extending the end date of existing Capacity Blocks.
+
+# v1.192.0 (2024-11-20)
+
+* **Feature**: With this release, customers can express their desire to launch instances only in an ODCR or ODCR group rather than OnDemand capacity. Customers can express their baseline instances' CPU-performance in attribute-based Instance Requirements configuration by referencing an instance family.
+
+# v1.191.0 (2024-11-19)
+
+* **Feature**: This release adds VPC Block Public Access (VPC BPA), a new declarative control which blocks resources in VPCs and subnets that you own in a Region from reaching or being reached from the internet through internet gateways and egress-only internet gateways.
+
+# v1.190.0 (2024-11-18)
+
+* **Feature**: Adding request and response elements for managed resources.
+* **Dependency Update**: Update to smithy-go v1.22.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.189.0 (2024-11-15.2)
+
+* **Feature**: Remove non-functional enum variants for FleetCapacityReservationUsageStrategy
+
+# v1.188.0 (2024-11-13)
+
+* **Feature**: This release adds the source AMI details in DescribeImages API
+
 # v1.187.1 (2024-11-06)
 
 * **Dependency Update**: Updated to the latest SDK module versions

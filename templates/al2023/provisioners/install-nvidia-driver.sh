@@ -29,17 +29,6 @@ function rpm_install() {
   done
 }
 
-function install-nvidia-container-toolkit() {
-  # The order of these RPMs is important, as they have dependencies on each other
-  RPMS=("libnvidia-container1-1.17.1-1.x86_64.rpm" "nvidia-container-toolkit-base-1.17.1-1.x86_64.rpm" "libnvidia-container-tools-1.17.1-1.x86_64.rpm" "nvidia-container-toolkit-1.17.1-1.x86_64.rpm")
-  for RPM in "${RPMS[@]}"; do
-    echo "pulling and installing rpms: (${RPM}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    echo "installing rpm: ${WORKING_DIR}/${RPM}"
-    sudo rpm -ivh ${WORKING_DIR}/${RPM}
-  done
-}
-
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
 ################################################################################
@@ -47,9 +36,9 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 ################################################################################
 # Determine the domain based on the region
 if is-isolated-partition; then
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/amzn2023-nvidia.repo ${WORKING_DIR}/amzn2023-nvidia.repo
+  sudo dnf install -y nvidia-release
+  sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
 
-  sudo dnf config-manager --add-repo ${WORKING_DIR}/amzn2023-nvidia.repo
   rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
 
 else
@@ -95,6 +84,7 @@ function archive-open-kmods() {
 
   if is-isolated-partition; then
     sudo dnf -y remove --all nvidia-driver
+    sudo dnf -y remove --all "kmod-nvidia-open*"
   else
     sudo dnf -y module remove --all nvidia-driver
     sudo dnf -y module reset nvidia-driver
@@ -130,9 +120,11 @@ sudo systemctl enable set-nvidia-clocks.service
 ################################################################################
 sudo dnf -y install nvidia-fabric-manager
 
-# NVIDIA Container toolkit needs to be locally installed for isolated partitions
+# NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then
-  install-nvidia-container-toolkit
+  sudo dnf -y install nvidia-container-toolkit
+  sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+  sudo dnf -y install "nvidia-driver"
 else
   sudo dnf -y install nvidia-container-toolkit
 fi

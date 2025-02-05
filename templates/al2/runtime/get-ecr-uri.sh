@@ -75,6 +75,12 @@ else
     ap-southeast-5)
       acct="151610086707"
       ;;
+    ap-southeast-7)
+      acct="121268973566"
+      ;;
+    mx-central-1)
+      acct="730335286997"
+      ;;
     # This sections includes all commercial non-opt-in regions, which use
     # the same account for ECR pause container images, but still have in-region
     # registries.
