@@ -31,7 +31,7 @@ jobs:
           command: |
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
-            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')-test"
+            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')-go-0.33"
             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
       - run:
           name: Install aws cli
