@@ -27,15 +27,7 @@ function try-set-clocksource() {
   fi
 }
 
-case "$(imds /latest/meta-data/system)" in
-  nitro)
-    CLOCKSOURCE="kvm-clock"
-    ;;
-
-  **)
-    CLOCKSOURCE="tsc"
-    ;;
-esac
+CLOCKSOURCE="tsc"
 
 log "desired clocksource: ${CLOCKSOURCE}"
 
