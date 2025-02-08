@@ -40,6 +40,9 @@ jobs:
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
       os_distros: ${{ steps.variables.outputs.os_distros }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9 # 4.0.3
       with:
