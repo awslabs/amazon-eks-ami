@@ -41,6 +41,10 @@ jobs:
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
       os_distros: ${{ steps.variables.outputs.os_distros }}
     steps:
+    - uses: aws-actions/configure-aws-credentials@4fc4975a852c8cd99761e2de1f4ba73402e44dd9 # 4.0.3
+      with:
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
     - id: variables
       run: |
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
