@@ -33,10 +33,6 @@ type containerdTemplateVars struct {
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
-	if err := writeBaseRuntimeSpec(cfg); err != nil {
-		return err
-	}
-
 	containerdConfig, err := generateContainerdConfig(cfg)
 	if err != nil {
 		return err
@@ -61,12 +57,12 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 }
 
 func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
-	instanceOptions := applyInstanceTypeMixins(cfg.Status.Instance.Type)
+	runtimeOptions := getRuntimeOptions(cfg)
 
 	configVars := containerdTemplateVars{
 		SandboxImage:      cfg.Status.Defaults.SandboxImage,
-		RuntimeBinaryName: instanceOptions.RuntimeBinaryName,
-		RuntimeName:       instanceOptions.RuntimeName,
+		RuntimeBinaryName: runtimeOptions.RuntimeBinaryPath,
+		RuntimeName:       runtimeOptions.RuntimeName,
 		EnableCDI:         semver.Compare(cfg.Status.KubeletVersion, "v1.32.0") >= 0,
 	}
 	var buf bytes.Buffer
