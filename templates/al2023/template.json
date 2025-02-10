@@ -61,9 +61,7 @@
           "state": "available",
           "virtualization-type": "hvm"
         },
-        "owners": [
-          "{{user `source_ami_owners`}}"
-        ],
+        "owners": ["{{user `source_ami_owners`}}"],
         "most_recent": true
       },
       "instance_type": "{{user `instance_type`}}",
@@ -165,9 +163,7 @@
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
-      ]
+      "inline": ["sudo cp -rv {{user `working_dir`}}/rootfs/* /"]
     },
     {
       "type": "shell",
@@ -181,17 +177,13 @@
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
-      "environment_vars": [
-        "ENABLE_FIPS={{user `enable_fips`}}"
-      ]
+      "environment_vars": ["ENABLE_FIPS={{user `enable_fips`}}"]
     },
     {
       "type": "shell",
       "expect_disconnect": true,
       "script": "{{template_dir}}/provisioners/limit-c-states.sh",
-      "environment_vars": [
-        "ENABLE_EFA={{user `enable_efa`}}"
-      ]
+      "environment_vars": ["ENABLE_EFA={{user `enable_efa`}}"]
     },
     {
       "type": "shell",
@@ -284,11 +276,6 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/bb-devmapper-reload.sh"
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/bb-containerd.sh"
     },
 
@@ -316,9 +303,7 @@
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo rm -rf {{user `working_dir`}}"
-      ]
+      "inline": ["sudo rm -rf {{user `working_dir`}}"]
     }
   ],
   "post-processors": [

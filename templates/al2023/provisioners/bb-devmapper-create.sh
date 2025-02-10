@@ -1,32 +1,46 @@
 #!/bin/bash
 set -ex
 
-DATA_DIR=/var/lib/containerd/io.containerd.snapshotter.v1.devmapper
+sudo dnf install -y git make
+
+# Block device to use for devmapper thin-pool
+BLOCK_DEV=/dev/sdf
 POOL_NAME=devpool
+VG_NAME=containerd
 
-sudo mkdir -p ${DATA_DIR}
-# Create data file
-sudo touch "${DATA_DIR}/data"
-sudo truncate -s 100G "${DATA_DIR}/data"
+# Install container-storage-setup tool
+git clone https://github.com/projectatomic/container-storage-setup.git
+cd container-storage-setup/
+sudo make install-core
+echo "Using version $(container-storage-setup -v)"
 
-# Create metadata file
-sudo touch "${DATA_DIR}/meta"
-sudo truncate -s 40G "${DATA_DIR}/meta"
+cd ../
+rm -rf container-storage-setup
 
-# Allocate loop devices
-DATA_DEV=$(sudo losetup --find --show "${DATA_DIR}/data")
-META_DEV=$(sudo losetup --find --show "${DATA_DIR}/meta")
+# Create configuration file
+# Refer to `man container-storage-setup` to see available options
+sudo tee /etc/sysconfig/containerd-storage-setup << EOF
+DEVS=${BLOCK_DEV}
+VG=${VG_NAME}
+CONTAINER_THINPOOL=${POOL_NAME}
+EOF
 
-sudo dnf -y install bc
+# Run the script
+sudo container-storage-setup
 
-# Define thin-pool parameters.
-# See https://www.kernel.org/doc/Documentation/device-mapper/thin-provisioning.txt for details.
-SECTOR_SIZE=512
-DATA_SIZE="$(sudo blockdev --getsize64 -q ${DATA_DEV})"
-LENGTH_IN_SECTORS=$(bc <<< "${DATA_SIZE}/${SECTOR_SIZE}")
-DATA_BLOCK_SIZE=128
-LOW_WATER_MARK=32768
+sudo tee /usr/lib/systemd/system/containerd-storage-setup.service << EOF
+[Unit]
+Description=Containerd Storage Setup
+After=cloud-init.service
+Before=containerd.service
 
-# Create a thin-pool device
-sudo dmsetup create "${POOL_NAME}" \
-    --table "0 ${LENGTH_IN_SECTORS} thin-pool ${META_DEV} ${DATA_DEV} ${DATA_BLOCK_SIZE} ${LOW_WATER_MARK}"
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/container-storage-setup
+EnvironmentFile=-/etc/sysconfig/containerd-storage-setup
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable /usr/lib/systemd/system/containerd-storage-setup.service
