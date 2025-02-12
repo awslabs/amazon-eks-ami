@@ -178,6 +178,11 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../shared/provisioners/set-clocksource.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
