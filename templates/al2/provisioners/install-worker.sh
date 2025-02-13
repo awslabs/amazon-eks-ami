@@ -20,6 +20,7 @@ validate_env_set() {
   )
 }
 
+validate_env_set AWS_REGION
 validate_env_set BINARY_BUCKET_NAME
 validate_env_set BINARY_BUCKET_REGION
 validate_env_set CACHE_CONTAINER_IMAGES
@@ -123,6 +124,14 @@ else
   echo "Installing awscli package"
   sudo yum install -y awscli
 fi
+
+################################################################################
+### AWS credentials ############################################################
+################################################################################
+
+# check for AWS credentials and store result in AWS_CREDS_OK
+AWS_CREDS_OK=$(aws sts get-caller-identity >/dev/null 2>&1 && echo true || echo false)
+echo "AWS credentials available: ${AWS_CREDS_OK}"
 
 ################################################################################
 ### systemd ####################################################################
@@ -275,17 +284,23 @@ fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
+# pass in the --no-sign-request flag if crossing partitions from a us-gov region to a non us-gov region
+NO_SIGN_REQUEST=""
+if [[ "$AWS_REGION" == *"us-gov"* ]] && [[ "$BINARY_BUCKET_REGION" != *"us-gov"* ]]; then
+  NO_SIGN_REQUEST="--no-sign-request"
+fi
+
 BINARIES=(
   kubelet
   aws-iam-authenticator
 )
 for binary in ${BINARIES[*]}; do
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary.sha256 .
+  if [ "$AWS_CREDS_OK" = "true" ]; then
+    echo "AWS credentials present - using them to copy binaries from s3."
+    aws s3 cp --region $BINARY_BUCKET_REGION $NO_SIGN_REQUEST $S3_PATH/$binary .
+    aws s3 cp --region $BINARY_BUCKET_REGION $NO_SIGN_REQUEST $S3_PATH/$binary.sha256 .
   else
-    echo "AWS cli missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
+    echo "AWS credentials missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
     sudo wget $S3_URL_BASE/$binary
     sudo wget $S3_URL_BASE/$binary.sha256
   fi
@@ -314,12 +329,12 @@ if [ "$PULL_CNI_FROM_GITHUB" = "true" ]; then
   sudo sha512sum -c "${CNI_PLUGIN_FILENAME}.tgz.sha512"
   rm "${CNI_PLUGIN_FILENAME}.tgz.sha512"
 else
-  if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "AWS cli present - using it to copy binaries from s3."
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
+  if [ "$AWS_CREDS_OK" = "true" ]; then
+    echo "AWS credentials present - using them to copy binaries from s3."
+    aws s3 cp --region $BINARY_BUCKET_REGION $NO_SIGN_REQUEST $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz .
+    aws s3 cp --region $BINARY_BUCKET_REGION $NO_SIGN_REQUEST $S3_PATH/${CNI_PLUGIN_FILENAME}.tgz.sha256 .
   else
-    echo "AWS cli missing - using wget to fetch cni binaries from s3. Note: This won't work for private bucket."
+    echo "AWS credentials missing - using wget to fetch binaries from s3. Note: This won't work for private bucket."
     sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz"
     sudo wget "$S3_URL_BASE/${CNI_PLUGIN_FILENAME}.tgz.sha256"
   fi
@@ -374,12 +389,14 @@ sudo chmod +x /etc/eks/max-pods-calculator.sh
 ################################################################################
 ### ECR CREDENTIAL PROVIDER ####################################################
 ################################################################################
+
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
-if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
-  echo "AWS cli present - using it to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
-  aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
+
+if [ "$AWS_CREDS_OK" = "true" ]; then
+  echo "AWS credentials present - using them to copy ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3."
+  aws s3 cp --region $BINARY_BUCKET_REGION $NO_SIGN_REQUEST $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
 else
-  echo "AWS cli missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
+  echo "AWS credentials missing - using wget to fetch ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3. Note: This won't work for private bucket."
   sudo wget "$S3_URL_BASE/$ECR_CREDENTIAL_PROVIDER_BINARY"
 fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
@@ -505,7 +522,7 @@ if yum list installed | grep amazon-ssm-agent; then
 else
   if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
     echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
-    sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+    sudo yum install -y https://s3.${AWS_REGION}.${S3_DOMAIN}/amazon-ssm-${AWS_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
     echo "Installing amazon-ssm-agent from AL core repository"
     sudo yum install -y amazon-ssm-agent

@@ -16,6 +16,9 @@ AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
 os_distro ?= al2
 arch ?= x86_64
+aws_region ?= us-west-2
+binary_bucket_region ?= us-west-2
+binary_bucket_name ?= amazon-eks
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
@@ -41,7 +44,7 @@ ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
 # ami owner overrides for cn/gov-cloud
 ifeq ($(aws_region), cn-northwest-1)
 	source_ami_owners ?= 141808717104
-else ifeq ($(aws_region), us-gov-west-1)
+else ifneq ($(filter $(aws_region),us-gov-west-1 us-gov-east-1),)
 	source_ami_owners ?= 045324592363
 endif
 
@@ -50,7 +53,7 @@ k8s=1.28
 
 .PHONY: build
 build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
-	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s))
+	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s) $(aws_region) $(binary_bucket_region) $(binary_bucket_name))
 
 .PHONY: fmt
 fmt: ## Format the source files

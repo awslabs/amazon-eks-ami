@@ -198,6 +198,7 @@
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_REGION={{user `aws_region`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
