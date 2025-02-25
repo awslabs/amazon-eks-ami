@@ -32,7 +32,7 @@ function print_help {
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
-  echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
+  echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods <mount | raid0 | raid10>"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
