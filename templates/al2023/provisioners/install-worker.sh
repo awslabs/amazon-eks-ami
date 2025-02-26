@@ -129,10 +129,10 @@ sudo dnf install -y containerd-${CONTAINERD_VERSION}
 sudo systemctl enable ebs-initialize-bin@containerd
 
 ###############################################################################
-### Nerdctl setup #############################################################
+### Container tools ###########################################################
 ###############################################################################
 
-sudo dnf install -y nerdctl
+sudo dnf install -y nerdctl cri-tools
 
 # TODO: are these necessary? What do they do?
 sudo dnf install -y device-mapper-persistent-data lvm2
