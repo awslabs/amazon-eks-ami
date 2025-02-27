@@ -260,6 +260,7 @@ f1.2xlarge 58
 f1.4xlarge 234
 f2.12xlarge 234
 f2.48xlarge 737
+f2.6xlarge 234
 g4ad.16xlarge 234
 g4ad.2xlarge 8
 g4ad.4xlarge 29

@@ -17,6 +17,10 @@ sudo bash eks-log-collector.sh
 
 Confirm if the tarball file was successfully created (it can be .tgz or .tar.gz)
 
+> [!NOTE]
+> If you plan to provide this log bundle to another party, please review the
+> contents of the bundle and redact anything you wish not to be accessible.
+
 #### Retrieving the logs
 
 Download the tarball using your favorite Secure Copy tool.

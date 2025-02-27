@@ -48,10 +48,14 @@ else
     DOMAIN="nvidia.com"
   fi
 
-  sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+  if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
+    sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
+  else
+    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/$(uname -m)/cuda-amzn2023.repo
+  fi
   sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
-
-  sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo
+  # update all current .repo sources to enable gpgcheck
+  sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
 
 ################################################################################
@@ -62,7 +66,7 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
-sudo dnf -y install kernel-modules-extra.x86_64
+sudo dnf -y install kernel-modules-extra
 
 function archive-open-kmods() {
   if is-isolated-partition; then
@@ -119,6 +123,7 @@ sudo systemctl enable set-nvidia-clocks.service
 ### Install other dependencies #################################################
 ################################################################################
 sudo dnf -y install nvidia-fabric-manager
+sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then
