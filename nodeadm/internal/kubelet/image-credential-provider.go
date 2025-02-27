@@ -26,10 +26,22 @@ const (
 )
 
 var (
-	//go:embed image-credential-provider.template.json
+	//go:embed image-credential-provider.json.tpl
 	imageCredentialProviderTemplateData string
 	imageCredentialProviderTemplate     = template.Must(template.New("image-credential-provider").Parse(imageCredentialProviderTemplateData))
 	imageCredentialProviderConfigPath   = path.Join(imageCredentialProviderRoot, imageCredentialProviderConfig)
+
+	matchImages = []string{"*.dkr.ecr.*.amazonaws.com",
+		"*.dkr-ecr.*.on.aws",
+		"*.dkr.ecr.*.amazonaws.com.cn",
+		"*.dkr-ecr.*.on.amazonwebservices.com.cn",
+		"*.dkr.ecr-fips.*.amazonaws.com",
+		"*.dkr-ecr-fips.*.on.aws",
+		"*.dkr.ecr.*.c2s.ic.gov",
+		"*.dkr.ecr.*.sc2s.sgov.gov",
+		"*.dkr.ecr.*.cloud.adc-e.uk",
+		"*.dkr.ecr.*.csp.hci.ic.gov",
+	}
 )
 
 func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error {
@@ -58,11 +70,13 @@ type imageCredentialProviderTemplateVars struct {
 	ConfigApiVersion   string
 	ProviderApiVersion string
 	EcrProviderName    string
+	MatchImages        []string
 }
 
 func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialProviderBinPath string) ([]byte, error) {
 	templateVars := imageCredentialProviderTemplateVars{
 		EcrProviderName: filepath.Base(ecrCredentialProviderBinPath),
+		MatchImages:     matchImages,
 	}
 	kubeletVersion, err := GetKubeletVersion()
 	if err != nil {
@@ -74,6 +88,8 @@ func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialPro
 	} else {
 		templateVars.ConfigApiVersion = "kubelet.config.k8s.io/v1"
 		templateVars.ProviderApiVersion = "credentialprovider.kubelet.k8s.io/v1"
+		// ecr-credential-provider has support for public.ecr.aws in 1.27+
+		templateVars.MatchImages = append(templateVars.MatchImages, "public.ecr.aws")
 	}
 	var buf bytes.Buffer
 	if err := imageCredentialProviderTemplate.Execute(&buf, templateVars); err != nil {
