@@ -13,7 +13,11 @@ fi
 OUTPUT_FILE="$1"
 
 # packages
-sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > "$OUTPUT_FILE"
+sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
+
+# Get ENA driver version
+ENA_VERSION=$(sudo modinfo ena | grep -i "^version:" | awk '{print $2}')
+echo $(jq ".kernel_modules.ena = \"$ENA_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
 
 # binaries
 KUBELET_VERSION=$(kubelet --version | awk '{print $2}')
