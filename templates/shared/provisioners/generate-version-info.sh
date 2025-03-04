@@ -13,11 +13,11 @@ fi
 OUTPUT_FILE="$1"
 
 # packages
-packages=$(sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}')
+sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
+
 # Get ENA driver version
-network_interface=$(sudo ip link show | awk -F': ' '$2 ~ /^eth|^ens/ {print $2}' | head -n1)
-ena_version=$(sudo ethtool -i $network_interface | awk '/version:/ {print $2}')
-echo "$packages" | jq --arg ena_version "$ena_version" '.packages["ena"] = $ena_version'  > $OUTPUT_FILE
+ENA_VERSION=$(sudo modinfo ena | grep -i "^version:" | awk '{print $2}')
+echo $(jq ".kernel_modules.ena = \"$ENA_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
 
 # binaries
 KUBELET_VERSION=$(kubelet --version | awk '{print $2}')
