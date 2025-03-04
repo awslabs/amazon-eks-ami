@@ -242,8 +242,7 @@
       "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
       "environment_vars": [
-        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
-        "VARIANT=al2"
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
       ]
     },
     {

@@ -15,11 +15,8 @@ OUTPUT_FILE="$1"
 # packages
 packages=$(sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}')
 # Get ENA driver version
-if [ "${VARIANT:-}" = "al2" ]; then
-  ena_version=$(sudo ethtool -i eth0 | awk '/version:/ {print $2}')
-else
-  ena_version=$(sudo ethtool -i ens5 | awk '/version:/ {print $2}')
-fi
+network_interface=$(sudo ip link show | awk -F': ' '$2 ~ /^eth|^ens/ {print $2}' | head -n1)
+ena_version=$(sudo ethtool -i $network_interface | awk '/version:/ {print $2}')
 echo "$packages" | jq --arg ena_version "$ena_version" '.packages["ena"] = $ena_version'  > $OUTPUT_FILE
 
 # binaries
