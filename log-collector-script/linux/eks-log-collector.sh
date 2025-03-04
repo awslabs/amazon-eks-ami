@@ -250,10 +250,27 @@ get_region() {
 is_diskfull() {
   local threshold
   local result
+  local grep_version
 
   # 1.5GB in KB
   threshold=1500000
-  result=$(timeout 75 df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
+
+  # Check if grep is GNU grep and supports --invert-match
+  grep_version=$(grep --version 2>/dev/null | grep -o 'GNU grep [0-9]\+\.[0-9]\+')
+
+  if [[ -z "$grep_version" ]]; then
+    # If grep --version fails or doesn't contain "GNU grep", try grep -v
+    result=$(timeout 75 df / | grep -v "Filesystem" | awk '{ print $4 }')
+  else
+    # GNU grep is available, use --invert-match
+    result=$(timeout 75 df / | grep --invert-match "Filesystem" | awk '{ print $4 }')
+  fi
+
+  # Check if grep -v worked, if not, then error out.
+  if [[ -z "$result" ]]; then
+    echo "Error: grep --invert-match or grep -v failed. Please ensure you have GNU grep installed or that your system's df output is standard."
+    exit 1
+  fi
 
   # If "result" is less than or equal to "threshold", fail.
   if [[ "${result}" -le "${threshold}" ]]; then
