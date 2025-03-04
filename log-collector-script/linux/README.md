@@ -20,6 +20,11 @@ Confirm if the tarball file was successfully created (it can be .tgz or .tar.gz)
 > [!NOTE]
 > If you plan to provide this log bundle to another party, please review the
 > contents of the bundle and redact anything you wish not to be accessible.
+>
+> The following are sources you might potentially want to obfuscate:
+> * `/system/ps.txt` contains process command line arguments from `ps`.
+> * `/var/log/cloud-init-output.log` contains output from scripts that are run from ec2 userdata.
+> * `/cni/cni-configuration-variables-containerd.json` contains container info (read via `ctr`) which includes environment variables.
 
 #### Retrieving the logs
 
