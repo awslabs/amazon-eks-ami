@@ -13,7 +13,14 @@ fi
 OUTPUT_FILE="$1"
 
 # packages
-sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > "$OUTPUT_FILE"
+packages=$(sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}')
+# Get ENA driver version
+if [ "${VARIANT:-}" = "al2" ]; then
+  ena_version=$(sudo ethtool -i eth0 | awk '/version:/ {print $2}')
+else
+  ena_version=$(sudo ethtool -i ens5 | awk '/version:/ {print $2}')
+fi
+echo "$packages" | jq --arg ena_version "$ena_version" '.packages["ena"] = $ena_version'  > $OUTPUT_FILE
 
 # binaries
 KUBELET_VERSION=$(kubelet --version | awk '{print $2}')

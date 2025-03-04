@@ -294,7 +294,10 @@
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
-      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json"
+      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
+      "environment_vars": [
+        "VARIANT=al2023"
+      ]
     },
     {
       "type": "file",
