@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -110,7 +109,7 @@ func generateImageCredentialProviderConfig(ecrCredentialProviderBinPath string) 
 	}
 	gvk, err := apiutil.GVKForObject(cfg, scheme)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	cfg.GetObjectKind().SetGroupVersionKind(gvk)
 	serializer := k8sjson.NewSerializerWithOptions(k8sjson.DefaultMetaFactory, scheme, scheme, k8sjson.SerializerOptions{Pretty: true})
@@ -118,7 +117,7 @@ func generateImageCredentialProviderConfig(ecrCredentialProviderBinPath string) 
 	var buf bytes.Buffer
 	err = serializer.Encode(cfg, &buf)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	return buf.Bytes(), nil
 }
