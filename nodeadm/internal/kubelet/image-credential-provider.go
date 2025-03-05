@@ -82,7 +82,6 @@ func generateImageCredentialProviderConfig(ecrCredentialProviderBinPath string) 
 		if err != nil {
 			return nil, err
 		}
-		k8sconfigv1.AddToScheme(scheme)
 		cfg = &k8sconfigv1alpha1.CredentialProviderConfig{
 			Providers: []k8sconfigv1alpha1.CredentialProvider{
 				{
