@@ -64,11 +64,7 @@ func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialPro
 	templateVars := imageCredentialProviderTemplateVars{
 		EcrProviderName: filepath.Base(ecrCredentialProviderBinPath),
 	}
-	kubeletVersion, err := GetKubeletVersion()
-	if err != nil {
-		return nil, err
-	}
-	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
 		templateVars.ConfigApiVersion = "kubelet.config.k8s.io/v1alpha1"
 		templateVars.ProviderApiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"
 	} else {

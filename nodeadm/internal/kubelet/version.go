@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+
+	"go.uber.org/zap"
 )
 
 func GetKubeletVersion() (string, error) {
@@ -20,10 +22,12 @@ const kubeletVersionFile = "/etc/eks/kubelet-version.txt"
 
 func GetKubeletVersionRaw() ([]byte, error) {
 	if _, err := os.Stat(kubeletVersionFile); errors.Is(err, os.ErrNotExist) {
+		zap.L().Info("Reading kubelet version from executable")
 		return exec.Command("kubelet", "--version").Output()
 	} else if err != nil {
 		return nil, err
 	}
+	zap.L().Info("Reading kubelet version from file", zap.String("path", kubeletVersionFile))
 	return os.ReadFile(kubeletVersionFile)
 }
 

@@ -11,6 +11,7 @@ discard_unpacked_layers = true
 
 [plugins."io.containerd.grpc.v1.cri"]
 sandbox_image = "{{.SandboxImage}}"
+enable_cdi = {{.EnableCDI}}
 
 [plugins."io.containerd.grpc.v1.cri".registry]
 config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"

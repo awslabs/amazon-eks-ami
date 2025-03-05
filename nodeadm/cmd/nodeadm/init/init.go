@@ -149,6 +149,13 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 // Various initializations and verifications of the NodeConfig and
 // perform in-place updates when allowed by the user
 func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
+	log.Info("Fetching kubelet version..")
+	kubeletVersion, err := kubelet.GetKubeletVersion()
+	if err != nil {
+		return err
+	}
+	cfg.Status.KubeletVersion = kubeletVersion
+	log.Info("Fetched kubelet version", zap.String("version", kubeletVersion))
 	log.Info("Fetching instance details..")
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithClientLogMode(aws.LogRetries),
