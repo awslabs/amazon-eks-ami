@@ -13,7 +13,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	jmespath "github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
@@ -204,6 +203,9 @@ func (c *Client) addOperationDescribeSecurityGroupsMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -238,6 +240,18 @@ func (c *Client) addOperationDescribeSecurityGroupsMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -405,22 +419,23 @@ func (w *SecurityGroupExistsWaiter) WaitForOutput(ctx context.Context, params *D
 func securityGroupExistsStateRetryable(ctx context.Context, input *DescribeSecurityGroupsInput, output *DescribeSecurityGroupsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(SecurityGroups[].GroupId) > `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.SecurityGroups
+		var v2 []string
+		for _, v := range v1 {
+			v3 := v.GroupId
+			if v3 != nil {
+				v2 = append(v2, *v3)
+			}
 		}
-
+		v4 := len(v2)
+		v5 := 0
+		v6 := int64(v4) > int64(v5)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v6 == bv {
 			return false, nil
 		}
 	}

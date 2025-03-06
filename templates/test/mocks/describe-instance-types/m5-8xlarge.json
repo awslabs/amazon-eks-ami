@@ -1,6 +1,26 @@
 {
     "Hypervisor": "nitro",
-    "EniCount": 8,
-    "PodsPerEniCount": 30,
+    "NetworkInfo": {
+        "NetworkPerformance": "10 Gigabit",
+        "MaximumNetworkInterfaces": 8,
+        "MaximumNetworkCards": 1,
+        "DefaultNetworkCardIndex": 0,
+        "NetworkCards": [
+            {
+                "NetworkCardIndex": 0,
+                "NetworkPerformance": "10 Gigabit",
+                "MaximumNetworkInterfaces": 8,
+                "BaselineBandwidthInGbps": 10.0,
+                "PeakBandwidthInGbps": 10.0
+            }
+        ],
+        "Ipv4AddressesPerInterface": 30,
+        "Ipv6AddressesPerInterface": 30,
+        "Ipv6Supported": true,
+        "EnaSupport": "required",
+        "EfaSupported": false,
+        "EncryptionInTransitSupported": false,
+        "EnaSrdSupported": false
+    },
     "CpuCount": 32
 }

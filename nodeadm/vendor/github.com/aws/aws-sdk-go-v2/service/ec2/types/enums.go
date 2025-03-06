@@ -695,6 +695,27 @@ func (BgpStatus) Values() []BgpStatus {
 	}
 }
 
+type BlockPublicAccessMode string
+
+// Enum values for BlockPublicAccessMode
+const (
+	BlockPublicAccessModeOff                BlockPublicAccessMode = "off"
+	BlockPublicAccessModeBlockBidirectional BlockPublicAccessMode = "block-bidirectional"
+	BlockPublicAccessModeBlockIngress       BlockPublicAccessMode = "block-ingress"
+)
+
+// Values returns all known values for BlockPublicAccessMode. Note that this can
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (BlockPublicAccessMode) Values() []BlockPublicAccessMode {
+	return []BlockPublicAccessMode{
+		"off",
+		"block-bidirectional",
+		"block-ingress",
+	}
+}
+
 type BootModeType string
 
 // Enum values for BootModeType
@@ -816,6 +837,25 @@ func (ByoipCidrState) Values() []ByoipCidrState {
 	}
 }
 
+type CallerRole string
+
+// Enum values for CallerRole
+const (
+	CallerRoleOdcrOwner                     CallerRole = "odcr-owner"
+	CallerRoleUnusedReservationBillingOwner CallerRole = "unused-reservation-billing-owner"
+)
+
+// Values returns all known values for CallerRole. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CallerRole) Values() []CallerRole {
+	return []CallerRole{
+		"odcr-owner",
+		"unused-reservation-billing-owner",
+	}
+}
+
 type CancelBatchErrorCode string
 
 // Enum values for CancelBatchErrorCode
@@ -862,6 +902,76 @@ func (CancelSpotInstanceRequestState) Values() []CancelSpotInstanceRequestState 
 		"closed",
 		"cancelled",
 		"completed",
+	}
+}
+
+type CapacityBlockExtensionStatus string
+
+// Enum values for CapacityBlockExtensionStatus
+const (
+	CapacityBlockExtensionStatusPaymentPending   CapacityBlockExtensionStatus = "payment-pending"
+	CapacityBlockExtensionStatusPaymentFailed    CapacityBlockExtensionStatus = "payment-failed"
+	CapacityBlockExtensionStatusPaymentSucceeded CapacityBlockExtensionStatus = "payment-succeeded"
+)
+
+// Values returns all known values for CapacityBlockExtensionStatus. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityBlockExtensionStatus) Values() []CapacityBlockExtensionStatus {
+	return []CapacityBlockExtensionStatus{
+		"payment-pending",
+		"payment-failed",
+		"payment-succeeded",
+	}
+}
+
+type CapacityReservationBillingRequestStatus string
+
+// Enum values for CapacityReservationBillingRequestStatus
+const (
+	CapacityReservationBillingRequestStatusPending   CapacityReservationBillingRequestStatus = "pending"
+	CapacityReservationBillingRequestStatusAccepted  CapacityReservationBillingRequestStatus = "accepted"
+	CapacityReservationBillingRequestStatusRejected  CapacityReservationBillingRequestStatus = "rejected"
+	CapacityReservationBillingRequestStatusCancelled CapacityReservationBillingRequestStatus = "cancelled"
+	CapacityReservationBillingRequestStatusRevoked   CapacityReservationBillingRequestStatus = "revoked"
+	CapacityReservationBillingRequestStatusExpired   CapacityReservationBillingRequestStatus = "expired"
+)
+
+// Values returns all known values for CapacityReservationBillingRequestStatus.
+// Note that this can be expanded in the future, and so it is only as up to date as
+// the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityReservationBillingRequestStatus) Values() []CapacityReservationBillingRequestStatus {
+	return []CapacityReservationBillingRequestStatus{
+		"pending",
+		"accepted",
+		"rejected",
+		"cancelled",
+		"revoked",
+		"expired",
+	}
+}
+
+type CapacityReservationDeliveryPreference string
+
+// Enum values for CapacityReservationDeliveryPreference
+const (
+	CapacityReservationDeliveryPreferenceFixed       CapacityReservationDeliveryPreference = "fixed"
+	CapacityReservationDeliveryPreferenceIncremental CapacityReservationDeliveryPreference = "incremental"
+)
+
+// Values returns all known values for CapacityReservationDeliveryPreference. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityReservationDeliveryPreference) Values() []CapacityReservationDeliveryPreference {
+	return []CapacityReservationDeliveryPreference{
+		"fixed",
+		"incremental",
 	}
 }
 
@@ -955,8 +1065,9 @@ type CapacityReservationPreference string
 
 // Enum values for CapacityReservationPreference
 const (
-	CapacityReservationPreferenceOpen CapacityReservationPreference = "open"
-	CapacityReservationPreferenceNone CapacityReservationPreference = "none"
+	CapacityReservationPreferenceCapacityReservationsOnly CapacityReservationPreference = "capacity-reservations-only"
+	CapacityReservationPreferenceOpen                     CapacityReservationPreference = "open"
+	CapacityReservationPreferenceNone                     CapacityReservationPreference = "none"
 )
 
 // Values returns all known values for CapacityReservationPreference. Note that
@@ -966,6 +1077,7 @@ const (
 // The ordering of this slice is not guaranteed to be stable across updates.
 func (CapacityReservationPreference) Values() []CapacityReservationPreference {
 	return []CapacityReservationPreference{
+		"capacity-reservations-only",
 		"open",
 		"none",
 	}
@@ -983,6 +1095,9 @@ const (
 	CapacityReservationStateScheduled      CapacityReservationState = "scheduled"
 	CapacityReservationStatePaymentPending CapacityReservationState = "payment-pending"
 	CapacityReservationStatePaymentFailed  CapacityReservationState = "payment-failed"
+	CapacityReservationStateAssessing      CapacityReservationState = "assessing"
+	CapacityReservationStateDelayed        CapacityReservationState = "delayed"
+	CapacityReservationStateUnsupported    CapacityReservationState = "unsupported"
 )
 
 // Values returns all known values for CapacityReservationState. Note that this
@@ -999,6 +1114,9 @@ func (CapacityReservationState) Values() []CapacityReservationState {
 		"scheduled",
 		"payment-pending",
 		"payment-failed",
+		"assessing",
+		"delayed",
+		"unsupported",
 	}
 }
 
@@ -1337,6 +1455,7 @@ const (
 	CpuManufacturerIntel             CpuManufacturer = "intel"
 	CpuManufacturerAmd               CpuManufacturer = "amd"
 	CpuManufacturerAmazonWebServices CpuManufacturer = "amazon-web-services"
+	CpuManufacturerApple             CpuManufacturer = "apple"
 )
 
 // Values returns all known values for CpuManufacturer. Note that this can be
@@ -1348,6 +1467,7 @@ func (CpuManufacturer) Values() []CpuManufacturer {
 		"intel",
 		"amd",
 		"amazon-web-services",
+		"apple",
 	}
 }
 
@@ -3963,6 +4083,50 @@ const (
 	InstanceTypeR8gMetal24xl      InstanceType = "r8g.metal-24xl"
 	InstanceTypeR8gMetal48xl      InstanceType = "r8g.metal-48xl"
 	InstanceTypeMac2M1ultraMetal  InstanceType = "mac2-m1ultra.metal"
+	InstanceTypeG6eXlarge         InstanceType = "g6e.xlarge"
+	InstanceTypeG6e2xlarge        InstanceType = "g6e.2xlarge"
+	InstanceTypeG6e4xlarge        InstanceType = "g6e.4xlarge"
+	InstanceTypeG6e8xlarge        InstanceType = "g6e.8xlarge"
+	InstanceTypeG6e12xlarge       InstanceType = "g6e.12xlarge"
+	InstanceTypeG6e16xlarge       InstanceType = "g6e.16xlarge"
+	InstanceTypeG6e24xlarge       InstanceType = "g6e.24xlarge"
+	InstanceTypeG6e48xlarge       InstanceType = "g6e.48xlarge"
+	InstanceTypeC8gMedium         InstanceType = "c8g.medium"
+	InstanceTypeC8gLarge          InstanceType = "c8g.large"
+	InstanceTypeC8gXlarge         InstanceType = "c8g.xlarge"
+	InstanceTypeC8g2xlarge        InstanceType = "c8g.2xlarge"
+	InstanceTypeC8g4xlarge        InstanceType = "c8g.4xlarge"
+	InstanceTypeC8g8xlarge        InstanceType = "c8g.8xlarge"
+	InstanceTypeC8g12xlarge       InstanceType = "c8g.12xlarge"
+	InstanceTypeC8g16xlarge       InstanceType = "c8g.16xlarge"
+	InstanceTypeC8g24xlarge       InstanceType = "c8g.24xlarge"
+	InstanceTypeC8g48xlarge       InstanceType = "c8g.48xlarge"
+	InstanceTypeC8gMetal24xl      InstanceType = "c8g.metal-24xl"
+	InstanceTypeC8gMetal48xl      InstanceType = "c8g.metal-48xl"
+	InstanceTypeM8gMedium         InstanceType = "m8g.medium"
+	InstanceTypeM8gLarge          InstanceType = "m8g.large"
+	InstanceTypeM8gXlarge         InstanceType = "m8g.xlarge"
+	InstanceTypeM8g2xlarge        InstanceType = "m8g.2xlarge"
+	InstanceTypeM8g4xlarge        InstanceType = "m8g.4xlarge"
+	InstanceTypeM8g8xlarge        InstanceType = "m8g.8xlarge"
+	InstanceTypeM8g12xlarge       InstanceType = "m8g.12xlarge"
+	InstanceTypeM8g16xlarge       InstanceType = "m8g.16xlarge"
+	InstanceTypeM8g24xlarge       InstanceType = "m8g.24xlarge"
+	InstanceTypeM8g48xlarge       InstanceType = "m8g.48xlarge"
+	InstanceTypeM8gMetal24xl      InstanceType = "m8g.metal-24xl"
+	InstanceTypeM8gMetal48xl      InstanceType = "m8g.metal-48xl"
+	InstanceTypeX8gMedium         InstanceType = "x8g.medium"
+	InstanceTypeX8gLarge          InstanceType = "x8g.large"
+	InstanceTypeX8gXlarge         InstanceType = "x8g.xlarge"
+	InstanceTypeX8g2xlarge        InstanceType = "x8g.2xlarge"
+	InstanceTypeX8g4xlarge        InstanceType = "x8g.4xlarge"
+	InstanceTypeX8g8xlarge        InstanceType = "x8g.8xlarge"
+	InstanceTypeX8g12xlarge       InstanceType = "x8g.12xlarge"
+	InstanceTypeX8g16xlarge       InstanceType = "x8g.16xlarge"
+	InstanceTypeX8g24xlarge       InstanceType = "x8g.24xlarge"
+	InstanceTypeX8g48xlarge       InstanceType = "x8g.48xlarge"
+	InstanceTypeX8gMetal24xl      InstanceType = "x8g.metal-24xl"
+	InstanceTypeX8gMetal48xl      InstanceType = "x8g.metal-48xl"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -4791,6 +4955,50 @@ func (InstanceType) Values() []InstanceType {
 		"r8g.metal-24xl",
 		"r8g.metal-48xl",
 		"mac2-m1ultra.metal",
+		"g6e.xlarge",
+		"g6e.2xlarge",
+		"g6e.4xlarge",
+		"g6e.8xlarge",
+		"g6e.12xlarge",
+		"g6e.16xlarge",
+		"g6e.24xlarge",
+		"g6e.48xlarge",
+		"c8g.medium",
+		"c8g.large",
+		"c8g.xlarge",
+		"c8g.2xlarge",
+		"c8g.4xlarge",
+		"c8g.8xlarge",
+		"c8g.12xlarge",
+		"c8g.16xlarge",
+		"c8g.24xlarge",
+		"c8g.48xlarge",
+		"c8g.metal-24xl",
+		"c8g.metal-48xl",
+		"m8g.medium",
+		"m8g.large",
+		"m8g.xlarge",
+		"m8g.2xlarge",
+		"m8g.4xlarge",
+		"m8g.8xlarge",
+		"m8g.12xlarge",
+		"m8g.16xlarge",
+		"m8g.24xlarge",
+		"m8g.48xlarge",
+		"m8g.metal-24xl",
+		"m8g.metal-48xl",
+		"x8g.medium",
+		"x8g.large",
+		"x8g.xlarge",
+		"x8g.2xlarge",
+		"x8g.4xlarge",
+		"x8g.8xlarge",
+		"x8g.12xlarge",
+		"x8g.16xlarge",
+		"x8g.24xlarge",
+		"x8g.48xlarge",
+		"x8g.metal-24xl",
+		"x8g.metal-48xl",
 	}
 }
 
@@ -4848,6 +5056,47 @@ func (InterfaceProtocolType) Values() []InterfaceProtocolType {
 	return []InterfaceProtocolType{
 		"VLAN",
 		"GRE",
+	}
+}
+
+type InternetGatewayBlockMode string
+
+// Enum values for InternetGatewayBlockMode
+const (
+	InternetGatewayBlockModeOff                InternetGatewayBlockMode = "off"
+	InternetGatewayBlockModeBlockBidirectional InternetGatewayBlockMode = "block-bidirectional"
+	InternetGatewayBlockModeBlockIngress       InternetGatewayBlockMode = "block-ingress"
+)
+
+// Values returns all known values for InternetGatewayBlockMode. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (InternetGatewayBlockMode) Values() []InternetGatewayBlockMode {
+	return []InternetGatewayBlockMode{
+		"off",
+		"block-bidirectional",
+		"block-ingress",
+	}
+}
+
+type InternetGatewayExclusionMode string
+
+// Enum values for InternetGatewayExclusionMode
+const (
+	InternetGatewayExclusionModeAllowBidirectional InternetGatewayExclusionMode = "allow-bidirectional"
+	InternetGatewayExclusionModeAllowEgress        InternetGatewayExclusionMode = "allow-egress"
+)
+
+// Values returns all known values for InternetGatewayExclusionMode. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (InternetGatewayExclusionMode) Values() []InternetGatewayExclusionMode {
+	return []InternetGatewayExclusionMode{
+		"allow-bidirectional",
+		"allow-egress",
 	}
 }
 
@@ -5061,6 +5310,7 @@ const (
 	IpamPoolAllocationResourceTypeEc2PublicIpv4Pool IpamPoolAllocationResourceType = "ec2-public-ipv4-pool"
 	IpamPoolAllocationResourceTypeCustom            IpamPoolAllocationResourceType = "custom"
 	IpamPoolAllocationResourceTypeSubnet            IpamPoolAllocationResourceType = "subnet"
+	IpamPoolAllocationResourceTypeEip               IpamPoolAllocationResourceType = "eip"
 )
 
 // Values returns all known values for IpamPoolAllocationResourceType. Note that
@@ -5075,6 +5325,7 @@ func (IpamPoolAllocationResourceType) Values() []IpamPoolAllocationResourceType 
 		"ec2-public-ipv4-pool",
 		"custom",
 		"subnet",
+		"eip",
 	}
 }
 
@@ -5280,6 +5531,7 @@ const (
 	IpamPublicAddressTypeServiceManagedIp    IpamPublicAddressType = "service-managed-ip"
 	IpamPublicAddressTypeServiceManagedByoip IpamPublicAddressType = "service-managed-byoip"
 	IpamPublicAddressTypeAmazonOwnedEip      IpamPublicAddressType = "amazon-owned-eip"
+	IpamPublicAddressTypeAmazonOwnedContig   IpamPublicAddressType = "amazon-owned-contig"
 	IpamPublicAddressTypeByoip               IpamPublicAddressType = "byoip"
 	IpamPublicAddressTypeEc2PublicIp         IpamPublicAddressType = "ec2-public-ip"
 )
@@ -5293,8 +5545,30 @@ func (IpamPublicAddressType) Values() []IpamPublicAddressType {
 		"service-managed-ip",
 		"service-managed-byoip",
 		"amazon-owned-eip",
+		"amazon-owned-contig",
 		"byoip",
 		"ec2-public-ip",
+	}
+}
+
+type IpamResourceCidrIpSource string
+
+// Enum values for IpamResourceCidrIpSource
+const (
+	IpamResourceCidrIpSourceAmazon IpamResourceCidrIpSource = "amazon"
+	IpamResourceCidrIpSourceByoip  IpamResourceCidrIpSource = "byoip"
+	IpamResourceCidrIpSourceNone   IpamResourceCidrIpSource = "none"
+)
+
+// Values returns all known values for IpamResourceCidrIpSource. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IpamResourceCidrIpSource) Values() []IpamResourceCidrIpSource {
+	return []IpamResourceCidrIpSource{
+		"amazon",
+		"byoip",
+		"none",
 	}
 }
 
@@ -5511,6 +5785,46 @@ func (IpamTier) Values() []IpamTier {
 	return []IpamTier{
 		"free",
 		"advanced",
+	}
+}
+
+type IpSource string
+
+// Enum values for IpSource
+const (
+	IpSourceAmazon IpSource = "amazon"
+	IpSourceByoip  IpSource = "byoip"
+	IpSourceNone   IpSource = "none"
+)
+
+// Values returns all known values for IpSource. Note that this can be expanded in
+// the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IpSource) Values() []IpSource {
+	return []IpSource{
+		"amazon",
+		"byoip",
+		"none",
+	}
+}
+
+type Ipv6AddressAttribute string
+
+// Enum values for Ipv6AddressAttribute
+const (
+	Ipv6AddressAttributePublic  Ipv6AddressAttribute = "public"
+	Ipv6AddressAttributePrivate Ipv6AddressAttribute = "private"
+)
+
+// Values returns all known values for Ipv6AddressAttribute. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (Ipv6AddressAttribute) Values() []Ipv6AddressAttribute {
+	return []Ipv6AddressAttribute{
+		"public",
+		"private",
 	}
 }
 
@@ -6192,9 +6506,10 @@ type NetworkInterfaceCreationType string
 
 // Enum values for NetworkInterfaceCreationType
 const (
-	NetworkInterfaceCreationTypeEfa    NetworkInterfaceCreationType = "efa"
-	NetworkInterfaceCreationTypeBranch NetworkInterfaceCreationType = "branch"
-	NetworkInterfaceCreationTypeTrunk  NetworkInterfaceCreationType = "trunk"
+	NetworkInterfaceCreationTypeEfa     NetworkInterfaceCreationType = "efa"
+	NetworkInterfaceCreationTypeEfaOnly NetworkInterfaceCreationType = "efa-only"
+	NetworkInterfaceCreationTypeBranch  NetworkInterfaceCreationType = "branch"
+	NetworkInterfaceCreationTypeTrunk   NetworkInterfaceCreationType = "trunk"
 )
 
 // Values returns all known values for NetworkInterfaceCreationType. Note that
@@ -6205,6 +6520,7 @@ const (
 func (NetworkInterfaceCreationType) Values() []NetworkInterfaceCreationType {
 	return []NetworkInterfaceCreationType{
 		"efa",
+		"efa-only",
 		"branch",
 		"trunk",
 	}
@@ -6266,6 +6582,7 @@ const (
 	NetworkInterfaceTypeInterface                     NetworkInterfaceType = "interface"
 	NetworkInterfaceTypeNatGateway                    NetworkInterfaceType = "natGateway"
 	NetworkInterfaceTypeEfa                           NetworkInterfaceType = "efa"
+	NetworkInterfaceTypeEfaOnly                       NetworkInterfaceType = "efa-only"
 	NetworkInterfaceTypeTrunk                         NetworkInterfaceType = "trunk"
 	NetworkInterfaceTypeLoadBalancer                  NetworkInterfaceType = "load_balancer"
 	NetworkInterfaceTypeNetworkLoadBalancer           NetworkInterfaceType = "network_load_balancer"
@@ -6291,6 +6608,7 @@ func (NetworkInterfaceType) Values() []NetworkInterfaceType {
 		"interface",
 		"natGateway",
 		"efa",
+		"efa-only",
 		"trunk",
 		"load_balancer",
 		"network_load_balancer",
@@ -7043,7 +7361,6 @@ const (
 	ResourceTypeVerifiedAccessTrustProvider                            ResourceType = "verified-access-trust-provider"
 	ResourceTypeVpnConnectionDeviceType                                ResourceType = "vpn-connection-device-type"
 	ResourceTypeVpcBlockPublicAccessExclusion                          ResourceType = "vpc-block-public-access-exclusion"
-	ResourceTypeVpcEncryptionControl                                   ResourceType = "vpc-encryption-control"
 	ResourceTypeIpamResourceDiscovery                                  ResourceType = "ipam-resource-discovery"
 	ResourceTypeIpamResourceDiscoveryAssociation                       ResourceType = "ipam-resource-discovery-association"
 	ResourceTypeInstanceConnectEndpoint                                ResourceType = "instance-connect-endpoint"
@@ -7139,7 +7456,6 @@ func (ResourceType) Values() []ResourceType {
 		"verified-access-trust-provider",
 		"vpn-connection-device-type",
 		"vpc-block-public-access-exclusion",
-		"vpc-encryption-control",
 		"ipam-resource-discovery",
 		"ipam-resource-discovery-association",
 		"instance-connect-endpoint",
@@ -7310,6 +7626,34 @@ func (SecurityGroupReferencingSupportValue) Values() []SecurityGroupReferencingS
 	return []SecurityGroupReferencingSupportValue{
 		"enable",
 		"disable",
+	}
+}
+
+type SecurityGroupVpcAssociationState string
+
+// Enum values for SecurityGroupVpcAssociationState
+const (
+	SecurityGroupVpcAssociationStateAssociating          SecurityGroupVpcAssociationState = "associating"
+	SecurityGroupVpcAssociationStateAssociated           SecurityGroupVpcAssociationState = "associated"
+	SecurityGroupVpcAssociationStateAssociationFailed    SecurityGroupVpcAssociationState = "association-failed"
+	SecurityGroupVpcAssociationStateDisassociating       SecurityGroupVpcAssociationState = "disassociating"
+	SecurityGroupVpcAssociationStateDisassociated        SecurityGroupVpcAssociationState = "disassociated"
+	SecurityGroupVpcAssociationStateDisassociationFailed SecurityGroupVpcAssociationState = "disassociation-failed"
+)
+
+// Values returns all known values for SecurityGroupVpcAssociationState. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SecurityGroupVpcAssociationState) Values() []SecurityGroupVpcAssociationState {
+	return []SecurityGroupVpcAssociationState{
+		"associating",
+		"associated",
+		"association-failed",
+		"disassociating",
+		"disassociated",
+		"disassociation-failed",
 	}
 }
 
@@ -8158,6 +8502,25 @@ func (TrafficType) Values() []TrafficType {
 		"ACCEPT",
 		"REJECT",
 		"ALL",
+	}
+}
+
+type TransferType string
+
+// Enum values for TransferType
+const (
+	TransferTypeTimeBased TransferType = "time-based"
+	TransferTypeStandard  TransferType = "standard"
+)
+
+// Values returns all known values for TransferType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransferType) Values() []TransferType {
+	return []TransferType{
+		"time-based",
+		"standard",
 	}
 }
 
@@ -9013,6 +9376,63 @@ func (VpcAttributeName) Values() []VpcAttributeName {
 		"enableDnsSupport",
 		"enableDnsHostnames",
 		"enableNetworkAddressUsageMetrics",
+	}
+}
+
+type VpcBlockPublicAccessExclusionState string
+
+// Enum values for VpcBlockPublicAccessExclusionState
+const (
+	VpcBlockPublicAccessExclusionStateCreateInProgress  VpcBlockPublicAccessExclusionState = "create-in-progress"
+	VpcBlockPublicAccessExclusionStateCreateComplete    VpcBlockPublicAccessExclusionState = "create-complete"
+	VpcBlockPublicAccessExclusionStateCreateFailed      VpcBlockPublicAccessExclusionState = "create-failed"
+	VpcBlockPublicAccessExclusionStateUpdateInProgress  VpcBlockPublicAccessExclusionState = "update-in-progress"
+	VpcBlockPublicAccessExclusionStateUpdateComplete    VpcBlockPublicAccessExclusionState = "update-complete"
+	VpcBlockPublicAccessExclusionStateUpdateFailed      VpcBlockPublicAccessExclusionState = "update-failed"
+	VpcBlockPublicAccessExclusionStateDeleteInProgress  VpcBlockPublicAccessExclusionState = "delete-in-progress"
+	VpcBlockPublicAccessExclusionStateDeleteComplete    VpcBlockPublicAccessExclusionState = "delete-complete"
+	VpcBlockPublicAccessExclusionStateDisableInProgress VpcBlockPublicAccessExclusionState = "disable-in-progress"
+	VpcBlockPublicAccessExclusionStateDisableComplete   VpcBlockPublicAccessExclusionState = "disable-complete"
+)
+
+// Values returns all known values for VpcBlockPublicAccessExclusionState. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (VpcBlockPublicAccessExclusionState) Values() []VpcBlockPublicAccessExclusionState {
+	return []VpcBlockPublicAccessExclusionState{
+		"create-in-progress",
+		"create-complete",
+		"create-failed",
+		"update-in-progress",
+		"update-complete",
+		"update-failed",
+		"delete-in-progress",
+		"delete-complete",
+		"disable-in-progress",
+		"disable-complete",
+	}
+}
+
+type VpcBlockPublicAccessState string
+
+// Enum values for VpcBlockPublicAccessState
+const (
+	VpcBlockPublicAccessStateDefaultState     VpcBlockPublicAccessState = "default-state"
+	VpcBlockPublicAccessStateUpdateInProgress VpcBlockPublicAccessState = "update-in-progress"
+	VpcBlockPublicAccessStateUpdateComplete   VpcBlockPublicAccessState = "update-complete"
+)
+
+// Values returns all known values for VpcBlockPublicAccessState. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (VpcBlockPublicAccessState) Values() []VpcBlockPublicAccessState {
+	return []VpcBlockPublicAccessState{
+		"default-state",
+		"update-in-progress",
+		"update-complete",
 	}
 }
 

@@ -90,6 +90,9 @@ type CreateVpcEndpointInput struct {
 	// default security group for the VPC.
 	SecurityGroupIds []string
 
+	// The Region where the service is hosted. The default is the current Region.
+	ServiceRegion *string
+
 	// The subnet configurations for the endpoint.
 	SubnetConfigurations []types.SubnetConfiguration
 
@@ -167,6 +170,9 @@ func (c *Client) addOperationCreateVpcEndpointMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -204,6 +210,18 @@ func (c *Client) addOperationCreateVpcEndpointMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

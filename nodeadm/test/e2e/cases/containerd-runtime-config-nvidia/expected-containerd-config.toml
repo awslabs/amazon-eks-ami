@@ -1,0 +1,30 @@
+root = '/var/lib/containerd'
+state = '/run/containerd'
+version = 2
+
+[grpc]
+address = '/run/foo/foo.sock'
+
+[plugins]
+[plugins.'io.containerd.grpc.v1.cri']
+sandbox_image = 'localhost/kubernetes/pause'
+
+[plugins.'io.containerd.grpc.v1.cri'.cni]
+bin_dir = '/opt/cni/bin'
+conf_dir = '/etc/cni/net.d'
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd]
+default_runtime_name = 'nvidia'
+discard_unpacked_layers = false
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia]
+base_runtime_spec = '/etc/containerd/base-runtime-spec.json'
+runtime_type = 'io.containerd.runc.v2'
+
+[plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.nvidia.options]
+BinaryName = '/usr/bin/nvidia-container-runtime'
+SystemdCgroup = true
+
+[plugins.'io.containerd.grpc.v1.cri'.registry]
+config_path = '/etc/containerd/certs.d:/etc/docker/certs.d'

@@ -73,8 +73,8 @@ type DescribeRouteTablesInput struct {
 	//   - route.destination-ipv6-cidr-block - The IPv6 CIDR range specified in a route
 	//   in the route table.
 	//
-	//   - route.destination-prefix-list-id - The ID (prefix) of the Amazon Web Service
-	//   specified in a route in the table.
+	//   - route.destination-prefix-list-id - The ID (prefix) of the Amazon Web
+	//   Services service specified in a route in the table.
 	//
 	//   - route.egress-only-internet-gateway-id - The ID of an egress-only Internet
 	//   gateway specified in a route in the route table.
@@ -101,7 +101,7 @@ type DescribeRouteTablesInput struct {
 	//   - route.vpc-peering-connection-id - The ID of a VPC peering connection
 	//   specified in a route in the table.
 	//
-	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
+	//   - tag - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
@@ -188,6 +188,9 @@ func (c *Client) addOperationDescribeRouteTablesMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -222,6 +225,18 @@ func (c *Client) addOperationDescribeRouteTablesMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

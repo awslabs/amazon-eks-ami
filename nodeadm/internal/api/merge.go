@@ -15,44 +15,21 @@ func (dst *NodeConfig) Merge(src *NodeConfig) error {
 	return mergo.Merge(dst, src, mergo.WithOverride, mergo.WithTransformers(nodeConfigTransformer{}))
 }
 
-const (
-	kubeletFlagsName  = "Flags"
-	kubeletConfigName = "Config"
-
-	containerdConfigName = "Config"
-)
-
 type nodeConfigTransformer struct{}
 
 func (t nodeConfigTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
-	if typ == reflect.TypeOf(ContainerdOptions{}) {
-		return func(dst, src reflect.Value) error {
-			return t.transformContainerdConfig(
-				dst.FieldByName(containerdConfigName),
-				src.FieldByName(containerdConfigName),
-			)
-		}
-	} else if typ == reflect.TypeOf(KubeletOptions{}) {
-		return func(dst, src reflect.Value) error {
-			t.transformKubeletFlags(
-				dst.FieldByName(kubeletFlagsName),
-				src.FieldByName(kubeletFlagsName),
-			)
-
-			if err := t.transformKubeletConfig(
-				dst.FieldByName(kubeletConfigName),
-				src.FieldByName(kubeletConfigName),
-			); err != nil {
-				return err
-			}
-
-			return nil
-		}
+	switch typ {
+	case reflect.TypeOf(ContainerdConfig("")):
+		return t.mergeContainerdConfig
+	case reflect.TypeOf(KubeletFlags{}):
+		return t.mergeKubeletFlags
+	case reflect.TypeOf(InlineDocument{}):
+		return t.mergeInlineDocument
 	}
 	return nil
 }
 
-func (t nodeConfigTransformer) transformKubeletFlags(dst, src reflect.Value) {
+func (t nodeConfigTransformer) mergeKubeletFlags(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		// kubelet flags are parsed using https://github.com/spf13/pflag, where
 		// flag order determines precedence. For single-value flags this is
@@ -64,41 +41,20 @@ func (t nodeConfigTransformer) transformKubeletFlags(dst, src reflect.Value) {
 		// this field and no other slices.
 		dst.Set(reflect.AppendSlice(dst, src))
 	}
-}
-
-func (t nodeConfigTransformer) transformKubeletConfig(dst, src reflect.Value) error {
-	if dst.CanSet() {
-		if dst.Len() <= 0 {
-			// if the destination is empty just use the source data
-			dst.Set(src)
-		} else if src.Len() > 0 {
-			// kubelet config in an inline document here, so we explicitly
-			// perform a merge with dst and src data.
-			mergedMap, err := util.Merge(dst.Interface(), src.Interface(), json.Marshal, json.Unmarshal)
-			if err != nil {
-				return err
-			}
-			rawMap, err := toInlineDocument(mergedMap)
-			if err != nil {
-				return err
-			}
-			dst.Set(reflect.ValueOf(rawMap))
-		}
-	}
 	return nil
 }
 
-func (t nodeConfigTransformer) transformContainerdConfig(dst, src reflect.Value) error {
+func (t nodeConfigTransformer) mergeContainerdConfig(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		if dst.Len() <= 0 {
 			// if the destination is empty just use the source data
 			dst.Set(src)
 		} else if src.Len() > 0 {
-			// containerd config is a string an inline string here, so we
-			// explicitly perform a merge with dst and src data.
-			dstConfig := []byte(dst.String())
-			srcConfig := []byte(src.String())
-			configBytes, err := util.Merge(dstConfig, srcConfig, toml.Marshal, toml.Unmarshal)
+			// containerd config is an inline string in TOML format
+			configBytes, err := util.Merge(
+				[]byte(dst.String()), []byte(src.String()),
+				toml.Marshal, toml.Unmarshal,
+			)
 			if err != nil {
 				return err
 			}
@@ -107,6 +63,29 @@ func (t nodeConfigTransformer) transformContainerdConfig(dst, src reflect.Value)
 				return err
 			}
 			dst.SetString(string(config))
+		}
+	}
+	return nil
+}
+
+func (t nodeConfigTransformer) mergeInlineDocument(dst, src reflect.Value) error {
+	if dst.CanSet() {
+		if dst.Len() <= 0 {
+			// if the destination is empty just use the source data
+			dst.Set(src)
+		} else if src.Len() > 0 {
+			mergedMap, err := util.Merge(
+				dst.Interface(), src.Interface(),
+				json.Marshal, json.Unmarshal,
+			)
+			if err != nil {
+				return err
+			}
+			rawMap, err := toInlineDocument(mergedMap)
+			if err != nil {
+				return err
+			}
+			dst.Set(reflect.ValueOf(rawMap))
 		}
 	}
 	return nil

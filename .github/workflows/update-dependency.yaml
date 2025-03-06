@@ -17,8 +17,8 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
-      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # 5.0.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+      - uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # 5.2.0
         with:
           go-version-file: 'nodeadm/go.mod'
       - name: Update Nodeadm Dependencies
@@ -31,10 +31,10 @@ jobs:
           echo 'EOF' >> $GITHUB_OUTPUT
       - name: Create PR
         if: ${{ steps.update_deps.outputs.changes != '' }}
-        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # 6.1.0
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
         with:
-          title: 'Update dependencies'
-          commit-message: Update dependencies
+          title: "chore: update dependencies"
+          commit-message: "chore: update dependencies"
           committer: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           author: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
           branch: dependencies/update

@@ -16,6 +16,8 @@
     "binary_bucket_region": null,
     "containerd_version": null,
     "creator": null,
+    "enable_accelerator": null,
+    "enable_efa": null,
     "enable_fips": null,
     "enable_fluence_kernel_modules": null,
     "encrypted": null,
@@ -25,6 +27,9 @@
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
+    "nodeadm_build_image": null,
+    "nvidia_driver_major_version": null,
+    "pause_container_image": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -80,9 +85,10 @@
       ],
       "aws_polling": {
         "delay_seconds": 30,
-        "max_attempts": 90
+        "max_attempts": 480
       },
       "ami_regions": "{{user `ami_regions`}}",
+      "iam_instance_profile": "{{user `iam_instance_profile`}}",
       "ssh_username": "{{user `ssh_username`}}",
       "ssh_interface": "{{user `ssh_interface`}}",
       "temporary_security_group_source_cidrs": "{{user `temporary_security_group_source_cidrs`}}",
@@ -120,13 +126,19 @@
         "mkdir -p {{user `working_dir`}}/rootfs",
         "mkdir -p {{user `working_dir`}}/shared",
         "mkdir -p {{user `working_dir`}}/log-collector-script",
-        "mkdir -p {{user `working_dir`}}/nodeadm"
+        "mkdir -p {{user `working_dir`}}/nodeadm",
+        "mkdir -p {{user `working_dir`}}/gpu"
       ]
     },
     {
       "type": "file",
       "source": "{{template_dir}}/../shared/runtime/",
       "destination": "{{user `working_dir`}}/shared"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/runtime/gpu/",
+      "destination": "{{user `working_dir`}}/gpu"
     },
     {
       "type": "file",
@@ -165,7 +177,8 @@
       "type": "shell",
       "inline": [
         "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
-        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/"
+        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/",
+        "sudo chmod -R a+x {{user `working_dir`}}/gpu/*"
       ]
     },
     {
@@ -174,6 +187,14 @@
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/provisioners/limit-c-states.sh",
+      "environment_vars": [
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
@@ -199,7 +220,63 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
       "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "AWS_REGION={{user `aws_region`}}",
+        "BUILD_IMAGE={{user `nodeadm_build_image`}}",
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/cache-pause-container.sh",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "AWS_REGION={{user `aws_region`}}",
+        "PAUSE_CONTAINER_IMAGE={{user `pause_container_image`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
+        "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-efa.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `aws_region`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {

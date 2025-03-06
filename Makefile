@@ -30,6 +30,12 @@ ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
 endif
 
+ifeq ($(os_distro), al2023)
+	ifdef enable_accelerator
+		AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
+	endif
+endif
+
 ifeq ($(aws_region), cn-northwest-1)
 	source_ami_owners ?= 141808717104
 else ifeq ($(aws_region), us-gov-west-1)
@@ -94,7 +100,7 @@ validate: ## Validate packer config
 
 .PHONY: k8s
 k8s: validate ## Build default K8s version of EKS Optimized AMI
-	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch)]"
+	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(enable_accelerator),enable_accelerator=$(enable_accelerator))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
 # DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28

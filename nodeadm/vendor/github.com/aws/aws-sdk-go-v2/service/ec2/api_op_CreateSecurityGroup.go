@@ -14,8 +14,8 @@ import (
 // Creates a security group.
 //
 // A security group acts as a virtual firewall for your instance to control
-// inbound and outbound traffic. For more information, see [Amazon EC2 security groups]in the Amazon Elastic
-// Compute Cloud User Guide and [Security groups for your VPC]in the Amazon Virtual Private Cloud User Guide.
+// inbound and outbound traffic. For more information, see [Amazon EC2 security groups]in the Amazon EC2 User
+// Guide and [Security groups for your VPC]in the Amazon VPC User Guide.
 //
 // When you create a security group, you specify a friendly name of your choice.
 // You can't have two security groups for the same VPC with the same name.
@@ -87,6 +87,9 @@ type CreateSecurityGroupOutput struct {
 	// The ID of the security group.
 	GroupId *string
 
+	// The security group ARN.
+	SecurityGroupArn *string
+
 	// The tags assigned to the security group.
 	Tags []types.Tag
 
@@ -139,6 +142,9 @@ func (c *Client) addOperationCreateSecurityGroupMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -176,6 +182,18 @@ func (c *Client) addOperationCreateSecurityGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

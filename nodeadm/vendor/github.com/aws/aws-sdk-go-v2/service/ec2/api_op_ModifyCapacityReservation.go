@@ -12,12 +12,30 @@ import (
 	"time"
 )
 
-// Modifies a Capacity Reservation's capacity and the conditions under which it is
-// to be released. You cannot change a Capacity Reservation's instance type, EBS
-// optimization, instance store settings, platform, Availability Zone, or instance
-// eligibility. If you need to modify any of these attributes, we recommend that
-// you cancel the Capacity Reservation, and then create a new one with the required
-// attributes.
+// Modifies a Capacity Reservation's capacity, instance eligibility, and the
+// conditions under which it is to be released. You can't modify a Capacity
+// Reservation's instance type, EBS optimization, platform, instance store
+// settings, Availability Zone, or tenancy. If you need to modify any of these
+// attributes, we recommend that you cancel the Capacity Reservation, and then
+// create a new one with the required attributes. For more information, see [Modify an active Capacity Reservation].
+//
+// The allowed modifications depend on the state of the Capacity Reservation:
+//
+//   - assessing or scheduled state - You can modify the tags only.
+//
+//   - pending state - You can't modify the Capacity Reservation in any way.
+//
+//   - active state but still within the commitment duration - You can't decrease
+//     the instance count or set an end date that is within the commitment duration.
+//     All other modifications are allowed.
+//
+//   - active state with no commitment duration or elapsed commitment duration -
+//     All modifications are allowed.
+//
+//   - expired , cancelled , unsupported , or failed state - You can't modify the
+//     Capacity Reservation in any way.
+//
+// [Modify an active Capacity Reservation]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/capacity-reservations-modify.html
 func (c *Client) ModifyCapacityReservation(ctx context.Context, params *ModifyCapacityReservationInput, optFns ...func(*Options)) (*ModifyCapacityReservationOutput, error) {
 	if params == nil {
 		params = &ModifyCapacityReservationInput{}
@@ -79,6 +97,17 @@ type ModifyCapacityReservationInput struct {
 	// can't be increased or decreased by more than 1000 in a single request.
 	InstanceCount *int32
 
+	//  The matching criteria (instance eligibility) that you want to use in the
+	// modified Capacity Reservation. If you change the instance eligibility of an
+	// existing Capacity Reservation from targeted to open , any running instances that
+	// match the attributes of the Capacity Reservation, have the
+	// CapacityReservationPreference set to open , and are not yet running in the
+	// Capacity Reservation, will automatically use the modified Capacity Reservation.
+	//
+	// To modify the instance eligibility, the Capacity Reservation must be completely
+	// idle (zero usage).
+	InstanceMatchCriteria types.InstanceMatchCriteria
+
 	noSmithyDocumentSerde
 }
 
@@ -136,6 +165,9 @@ func (c *Client) addOperationModifyCapacityReservationMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -173,6 +205,18 @@ func (c *Client) addOperationModifyCapacityReservationMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

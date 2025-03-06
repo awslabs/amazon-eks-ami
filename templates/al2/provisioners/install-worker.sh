@@ -111,7 +111,7 @@ sudo mv $WORKING_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
-ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1}"
+ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1 us-isof-south-1}"
 if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
@@ -135,6 +135,16 @@ fi
 ################################################################################
 
 sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
+# this unit is safe to have regardless of variant because it will not run if
+# the required binaries are not present.
+sudo mv $WORKING_DIR/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
+sudo systemctl enable set-nvidia-clocks.service
+
+# backporting removal of default dummy0 network interface in systemd v236
+# https://github.com/systemd/systemd/blob/16ac586e5a77942bf1147bc9eae684d544ded88f/NEWS#L11139-L11144
+cat << EOF | sudo tee /lib/modprobe.d/10-no-dummies.conf
+options dummy numdummies=0
+EOF
 
 ###############################################################################
 ### Containerd setup ##########################################################
@@ -265,6 +275,8 @@ elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
   S3_DOMAIN="sc2s.sgov.gov"
 elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
   S3_DOMAIN="cloud.adc-e.uk"
+elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
+  S3_DOMAIN="csp.hci.ic.gov"
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
@@ -446,6 +458,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   REGIONS=$(aws ec2 describe-regions --all-regions --output text --query 'Regions[].[RegionName]')
 
   for img in "${CACHE_IMGS[@]:-}"; do
+    if [ -z "${img}" ]; then continue; fi
     ## only kube-proxy-minimal is vended for K8s 1.24+
     if [[ "${img}" == *"kube-proxy:"* ]] && [[ "${img}" != *"-minimal-"* ]] && vercmp "${K8S_MINOR_VERSION}" gteq "1.24"; then
       continue
@@ -458,6 +471,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
     ## iterate through decrementing the build version each time
     for build_version in $(seq "${eksbuild_version}" -1 1); do
       img=$(echo "${img}" | sed -E "s/eksbuild.[0-9]+/eksbuild.${build_version}/")
+      echo "Pulling image [${img}]"
       if /etc/eks/containerd/pull-image.sh "${img}"; then
         PULLED_IMGS+=("${img}")
         break
@@ -470,6 +484,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   #### Tag the pulled down image for all other regions in the partition
   for region in ${REGIONS[*]}; do
     for img in "${PULLED_IMGS[@]:-}"; do
+      if [ -z "${img}" ]; then continue; fi
       region_uri=$(/etc/eks/get-ecr-uri.sh "${region}" "${AWS_DOMAIN}")
       regional_img="${img/$ECR_URI/$region_uri}"
       sudo ctr -n k8s.io image tag "${img}" "${regional_img}" || :
