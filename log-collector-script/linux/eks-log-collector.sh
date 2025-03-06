@@ -878,6 +878,16 @@ get_nvidia_bug_report() {
   ok
 }
 
+banner() {
+  echo >&2 "\
+****************************************************************************************
+* WARNING: The log bundle collected by this script may contain sensitive information.  *
+*                                                                                      *
+* Please review the contents of the log bundle carefully and redact or obfuscate       *
+* any information you do not wish to be accessible before sharing it with others.      *
+****************************************************************************************"
+}
+
 # -----------------------------------------------------------------------------
 # Entrypoint
 parse_options "$@"
@@ -885,3 +895,4 @@ parse_options "$@"
 collect
 pack
 finished
+banner
