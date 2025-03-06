@@ -13,6 +13,17 @@ import (
 // Cancels the specified Capacity Reservation, releases the reserved capacity, and
 // changes the Capacity Reservation's state to cancelled .
 //
+// You can cancel a Capacity Reservation that is in the following states:
+//
+//   - assessing
+//
+//   - active and there is no commitment duration or the commitment duration has
+//     elapsed. You can't cancel a future-dated Capacity Reservation during the
+//     commitment duration.
+//
+// If a future-dated Capacity Reservation enters the delayed state, the commitment
+// duration is waived, and you can cancel it as soon as it enters the active state.
+//
 // Instances running in the reserved capacity continue running until you stop
 // them. Stopped instances that target the Capacity Reservation can no longer
 // launch. Modify these instances to either target a different Capacity
@@ -103,6 +114,9 @@ func (c *Client) addOperationCancelCapacityReservationMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,6 +154,18 @@ func (c *Client) addOperationCancelCapacityReservationMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

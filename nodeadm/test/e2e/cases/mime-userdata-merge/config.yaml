@@ -1,0 +1,41 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="//"
+
+--//
+Content-Type: application/node.eks.aws
+
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  kubelet:
+    config:
+      maxPods: 58
+      clusterDNS:
+      - 10.100.0.10
+
+--//
+Content-Type: application/node.eks.aws
+
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  kubelet:
+    config:
+      systemReserved:
+        cpu: 150m
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+
+#!/bin/bash
+
+echo "hello!"
+
+--//--

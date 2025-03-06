@@ -31,8 +31,8 @@ on:
         required: false
         type: string
       k8s_versions:
-        description: 'Kubernetes Versions (comma-separated, e.g., 1.21,1.22)'
-        default: "1.21,1.22,1.23,1.24,1.25,1.26,1.27,1.28,1.29,1.30"
+        description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
+        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
         required: false
         type: string
       build_arguments:
@@ -45,19 +45,11 @@ jobs:
     outputs:
       git_sha_short: ${{ steps.variables.outputs.git_sha_short }}
       workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}
-      kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
-      build_id: ${{ steps.variables.outputs.build_id }}
-      ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
-      os_distros: ${{ steps.variables.outputs.os_distros }}
     steps:
     - id: variables
       run: |
         echo "git_sha_short=$(echo ${{ inputs.git_sha }} | rev | cut -c-7 | rev)" >> $GITHUB_OUTPUT
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-        echo "build_id=ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}" >> $GITHUB_OUTPUT
-        echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
-        echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
-        echo "os_distros=$(jq -Rn --arg input '${{ inputs.os_distros }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
 
   notify-start:
     runs-on: ubuntu-latest
@@ -73,62 +65,27 @@ jobs:
               issue_number: ${{ inputs.pr_number }},
               body: `@${{ inputs.requester }} roger [that](${{ inputs.comment_url }})! I've dispatched a [workflow](${{ needs.setup.outputs.workflow_run_url }}). 👍`
             });
-  kubernetes-versions:
-    runs-on: ubuntu-latest
-    name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
+  ci:
+    uses: ./.github/workflows/ci.yaml
     needs:
       - setup
       - notify-start
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      # don't bail out of all sub-tasks if one fails
-      fail-fast: false
-      matrix:
-        k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
-        os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
-        # al2023 is not supporting 1.22 and below, exclude them from CI
-        exclude:
-          - os_distro: al2023
-            k8s_version: 1.21
-          - os_distro: al2023
-            k8s_version: 1.22
-    steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
-        with:
-          ref: 'main'
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
-          # 2.5 hours (job usually completes within 2 hours)
-          role-duration-seconds: 9000
-      - name: "${{ needs.setup.outputs.ci_step_name_prefix }} Build"
-        id: build
-        uses: ./.github/actions/ci/build
-        with:
-          git_sha: ${{ inputs.git_sha }}
-          k8s_version: ${{ matrix.k8s_version }}
-          os_distro: ${{ matrix.os_distro }}
-          build_id: ${{ needs.setup.outputs.build_id }}
-          additional_arguments: ${{ inputs.build_arguments }}
-      - if: ${{ inputs.goal == 'test' }}
-        name: "${{ needs.setup.outputs.ci_step_name_prefix }} Test"
-        id: test
-        uses: ./.github/actions/ci/kubetest2
-        with:
-          ami_id: ${{ steps.build.outputs.ami_id }}
-          k8s_version: ${{ matrix.k8s_version }}
-          os_distro: ${{ matrix.os_distro }}
-          build_id: ${{ needs.setup.outputs.build_id }}
-          aws_region: ${{ secrets.AWS_REGION }}
+    secrets: inherit
+    with:
+      k8s_versions: ${{ inputs.k8s_versions }}
+      os_distros: ${{ inputs.os_distros }}
+      git_sha: ${{ inputs.git_sha }}
+      build_arguments: ${{ inputs.build-arguments }}
+      resource_id: "ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}"
+      run_name: "ci(#${{ inputs.pr_number }}@${{ needs.setup.outputs.git_sha_short }}): ${{ inputs.uuid }}"
+      goal: "${{ inputs.goal }}"
+
   notify-outcome:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     needs:
       - setup
-      - kubernetes-versions
+      - ci
     steps:
       - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
         with:
@@ -146,16 +103,19 @@ jobs:
             };
             const uniqueStepNames = new Set();
             const stepConclusionsByJob = new Map();
-            const ciStepNamePrefix = "${{ needs.setup.outputs.ci_step_name_prefix }}";
+            const ciStepNamePrefix = "${{ needs.ci.outputs.ci_step_name_prefix }}";
             for (const job of data.jobs) {
-              if (/^\d+\.\d+/.test(job.name)) {
+              // look for jobs named "ci / k8sVersion / osDistro"
+              if (/^ci \/ \d+\.\d+/.test(job.name)) {
+                // remove the "ci /" prefix
+                const jobName = job.name.substring("ci /".length).trim();
                 for (const step of job.steps) {
                   if (step.name.startsWith(ciStepNamePrefix)) {
                     const stepName = step.name.substring(ciStepNamePrefix.length).trim();
-                    let stepConclusions = stepConclusionsByJob.get(job.name);
+                    let stepConclusions = stepConclusionsByJob.get(jobName);
                     if (!stepConclusions) {
                       stepConclusions = new Map();
-                      stepConclusionsByJob.set(job.name, stepConclusions);
+                      stepConclusionsByJob.set(jobName, stepConclusions);
                     }
                     stepConclusions.set(stepName, step.conclusion);
                     uniqueStepNames.add(stepName);

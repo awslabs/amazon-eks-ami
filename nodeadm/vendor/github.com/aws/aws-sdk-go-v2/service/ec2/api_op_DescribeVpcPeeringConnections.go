@@ -13,7 +13,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	jmespath "github.com/jmespath/go-jmespath"
 	"time"
 )
 
@@ -69,7 +68,7 @@ type DescribeVpcPeeringConnectionsInput struct {
 	//   - status-message - A message that provides more information about the status
 	//   of the VPC peering connection, if applicable.
 	//
-	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
+	//   - tag - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
@@ -157,6 +156,9 @@ func (c *Client) addOperationDescribeVpcPeeringConnectionsMiddlewares(stack *mid
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -191,6 +193,18 @@ func (c *Client) addOperationDescribeVpcPeeringConnectionsMiddlewares(stack *mid
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -360,29 +374,19 @@ func (w *VpcPeeringConnectionDeletedWaiter) WaitForOutput(ctx context.Context, p
 func vpcPeeringConnectionDeletedStateRetryable(ctx context.Context, input *DescribeVpcPeeringConnectionsInput, output *DescribeVpcPeeringConnectionsOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("VpcPeeringConnections[].Status.Code", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.VpcPeeringConnections
+		var v2 []types.VpcPeeringConnectionStateReasonCode
+		for _, v := range v1 {
+			v3 := v.Status
+			v4 := v3.Code
+			v2 = append(v2, v4)
 		}
-
 		expectedValue := "deleted"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.VpcPeeringConnectionStateReasonCode)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.VpcPeeringConnectionStateReasonCode value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 

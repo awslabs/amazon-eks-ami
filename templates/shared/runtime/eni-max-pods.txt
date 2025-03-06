@@ -38,6 +38,8 @@
 #
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI
 #
+# NOTE: For multi-card instance types (p5.48xlarge) the max limits is calculated only against the default network card at index (0).
+#
 a1.2xlarge 58
 a1.4xlarge 234
 a1.large 29
@@ -222,6 +224,18 @@ c7i.large 29
 c7i.metal-24xl 737
 c7i.metal-48xl 737
 c7i.xlarge 58
+c8g.12xlarge 234
+c8g.16xlarge 737
+c8g.24xlarge 737
+c8g.2xlarge 58
+c8g.48xlarge 737
+c8g.4xlarge 234
+c8g.8xlarge 234
+c8g.large 29
+c8g.medium 8
+c8g.metal-24xl 737
+c8g.metal-48xl 737
+c8g.xlarge 58
 cr1.8xlarge 234
 d2.2xlarge 58
 d2.4xlarge 234
@@ -242,6 +256,8 @@ dl2q.24xlarge 737
 f1.16xlarge 394
 f1.2xlarge 58
 f1.4xlarge 234
+f2.12xlarge 234
+f2.48xlarge 737
 g3.16xlarge 737
 g3.4xlarge 234
 g3.8xlarge 234
@@ -280,6 +296,14 @@ g6.48xlarge 737
 g6.4xlarge 234
 g6.8xlarge 234
 g6.xlarge 58
+g6e.12xlarge 292
+g6e.16xlarge 737
+g6e.24xlarge 492
+g6e.2xlarge 58
+g6e.48xlarge 492
+g6e.4xlarge 234
+g6e.8xlarge 234
+g6e.xlarge 58
 gr6.4xlarge 234
 gr6.8xlarge 234
 h1.16xlarge 394
@@ -331,6 +355,24 @@ i4i.8xlarge 234
 i4i.large 29
 i4i.metal 737
 i4i.xlarge 58
+i7ie.12xlarge 394
+i7ie.18xlarge 737
+i7ie.24xlarge 737
+i7ie.2xlarge 58
+i7ie.3xlarge 58
+i7ie.48xlarge 737
+i7ie.6xlarge 234
+i7ie.large 29
+i7ie.xlarge 58
+i8g.12xlarge 234
+i8g.16xlarge 737
+i8g.24xlarge 737
+i8g.2xlarge 58
+i8g.4xlarge 234
+i8g.8xlarge 234
+i8g.large 29
+i8g.metal-24xl 737
+i8g.xlarge 58
 im4gn.16xlarge 737
 im4gn.2xlarge 58
 im4gn.4xlarge 234
@@ -542,6 +584,18 @@ m7i.large 29
 m7i.metal-24xl 737
 m7i.metal-48xl 737
 m7i.xlarge 58
+m8g.12xlarge 234
+m8g.16xlarge 737
+m8g.24xlarge 737
+m8g.2xlarge 58
+m8g.48xlarge 737
+m8g.4xlarge 234
+m8g.8xlarge 234
+m8g.large 29
+m8g.medium 8
+m8g.metal-24xl 737
+m8g.metal-48xl 737
+m8g.xlarge 58
 mac1.metal 234
 mac2-m1ultra.metal 234
 mac2-m2.metal 234
@@ -557,6 +611,8 @@ p3dn.24xlarge 737
 p4d.24xlarge 737
 p4de.24xlarge 737
 p5.48xlarge 100
+p5e.48xlarge 100
+p5en.48xlarge 198
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
@@ -793,6 +849,7 @@ t4g.xlarge 58
 trn1.2xlarge 58
 trn1.32xlarge 247
 trn1n.32xlarge 247
+trn2.48xlarge 100
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.112xlarge 737
@@ -806,6 +863,8 @@ u-6tb1.metal 147
 u-9tb1.112xlarge 737
 u-9tb1.metal 147
 u7i-12tb.224xlarge 737
+u7i-6tb.112xlarge 737
+u7i-8tb.112xlarge 737
 u7in-16tb.224xlarge 394
 u7in-24tb.224xlarge 394
 u7in-32tb.224xlarge 394
@@ -847,6 +906,18 @@ x2iezn.4xlarge 234
 x2iezn.6xlarge 234
 x2iezn.8xlarge 234
 x2iezn.metal 737
+x8g.12xlarge 234
+x8g.16xlarge 737
+x8g.24xlarge 737
+x8g.2xlarge 58
+x8g.48xlarge 737
+x8g.4xlarge 234
+x8g.8xlarge 234
+x8g.large 29
+x8g.medium 8
+x8g.metal-24xl 737
+x8g.metal-48xl 737
+x8g.xlarge 58
 z1d.12xlarge 737
 z1d.2xlarge 58
 z1d.3xlarge 234

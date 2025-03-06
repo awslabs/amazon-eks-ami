@@ -76,6 +76,9 @@ type CreateVpcEndpointServiceConfigurationInput struct {
 	// The supported IP address types. The possible values are ipv4 and ipv6 .
 	SupportedIpAddressTypes []string
 
+	// The Regions from which service consumers can access the service.
+	SupportedRegions []string
+
 	// The tags to associate with the service.
 	TagSpecifications []types.TagSpecification
 
@@ -140,6 +143,9 @@ func (c *Client) addOperationCreateVpcEndpointServiceConfigurationMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -174,6 +180,18 @@ func (c *Client) addOperationCreateVpcEndpointServiceConfigurationMiddlewares(st
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

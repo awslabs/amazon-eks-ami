@@ -13,7 +13,6 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	jmespath "github.com/jmespath/go-jmespath"
 	"strconv"
 	"time"
 )
@@ -121,10 +120,10 @@ type DescribeImagesInput struct {
 	//
 	//   - name - The name of the AMI (provided during image creation).
 	//
-	//   - owner-alias - The owner alias ( amazon | aws-marketplace ). The valid
-	//   aliases are defined in an Amazon-maintained list. This is not the Amazon Web
-	//   Services account alias that can be set using the IAM console. We recommend that
-	//   you use the Owner request parameter instead of this filter.
+	//   - owner-alias - The owner alias ( amazon | aws-backup-vault | aws-marketplace
+	//   ). The valid aliases are defined in an Amazon-maintained list. This is not the
+	//   Amazon Web Services account alias that can be set using the IAM console. We
+	//   recommend that you use the Owner request parameter instead of this filter.
 	//
 	//   - owner-id - The Amazon Web Services account ID of the owner. We recommend
 	//   that you use the Owner request parameter instead of this filter.
@@ -156,7 +155,7 @@ type DescribeImagesInput struct {
 	//   - sriov-net-support - A value of simple indicates that enhanced networking
 	//   with the Intel 82599 VF interface is enabled.
 	//
-	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
+	//   - tag: - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
@@ -199,9 +198,9 @@ type DescribeImagesInput struct {
 	NextToken *string
 
 	// Scopes the results to images with the specified owners. You can specify a
-	// combination of Amazon Web Services account IDs, self , amazon , and
-	// aws-marketplace . If you omit this parameter, the results include all images for
-	// which you have launch permissions, regardless of ownership.
+	// combination of Amazon Web Services account IDs, self , amazon , aws-backup-vault
+	// , and aws-marketplace . If you omit this parameter, the results include all
+	// images for which you have launch permissions, regardless of ownership.
 	Owners []string
 
 	noSmithyDocumentSerde
@@ -265,6 +264,9 @@ func (c *Client) addOperationDescribeImagesMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -299,6 +301,18 @@ func (c *Client) addOperationDescribeImagesMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -464,29 +478,18 @@ func (w *ImageAvailableWaiter) WaitForOutput(ctx context.Context, params *Descri
 func imageAvailableStateRetryable(ctx context.Context, input *DescribeImagesInput, output *DescribeImagesOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("Images[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.Images
+		var v2 []types.ImageState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "available"
-		var match = true
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
-		}
-
-		if len(listOfValues) == 0 {
-			match = false
-		}
-		for _, v := range listOfValues {
-			value, ok := v.(types.ImageState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.ImageState value, got %T", pathValue)
-			}
-
-			if string(value) != expectedValue {
+		match := len(v2) > 0
+		for _, v := range v2 {
+			if string(v) != expectedValue {
 				match = false
+				break
 			}
 		}
 
@@ -496,26 +499,23 @@ func imageAvailableStateRetryable(ctx context.Context, input *DescribeImagesInpu
 	}
 
 	if err == nil {
-		pathValue, err := jmespath.Search("Images[].State", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
+		v1 := output.Images
+		var v2 []types.ImageState
+		for _, v := range v1 {
+			v3 := v.State
+			v2 = append(v2, v3)
 		}
-
 		expectedValue := "failed"
-		listOfValues, ok := pathValue.([]interface{})
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		var match bool
+		for _, v := range v2 {
+			if string(v) == expectedValue {
+				match = true
+				break
+			}
 		}
 
-		for _, v := range listOfValues {
-			value, ok := v.(types.ImageState)
-			if !ok {
-				return false, fmt.Errorf("waiter comparator expected types.ImageState value, got %T", pathValue)
-			}
-
-			if string(value) == expectedValue {
-				return false, fmt.Errorf("waiter state transitioned to Failure")
-			}
+		if match {
+			return false, fmt.Errorf("waiter state transitioned to Failure")
 		}
 	}
 
@@ -681,22 +681,16 @@ func (w *ImageExistsWaiter) WaitForOutput(ctx context.Context, params *DescribeI
 func imageExistsStateRetryable(ctx context.Context, input *DescribeImagesInput, output *DescribeImagesOutput, err error) (bool, error) {
 
 	if err == nil {
-		pathValue, err := jmespath.Search("length(Images[]) > `0`", output)
-		if err != nil {
-			return false, fmt.Errorf("error evaluating waiter state: %w", err)
-		}
-
+		v1 := output.Images
+		v2 := len(v1)
+		v3 := 0
+		v4 := int64(v2) > int64(v3)
 		expectedValue := "true"
 		bv, err := strconv.ParseBool(expectedValue)
 		if err != nil {
 			return false, fmt.Errorf("error parsing boolean from string %w", err)
 		}
-		value, ok := pathValue.(bool)
-		if !ok {
-			return false, fmt.Errorf("waiter comparator expected bool value got %T", pathValue)
-		}
-
-		if value == bv {
+		if v4 == bv {
 			return false, nil
 		}
 	}

@@ -72,6 +72,13 @@ type ModifySubnetAttributeInput struct {
 
 	// Indicates whether DNS queries made to the Amazon-provided DNS Resolver in this
 	// subnet should return synthetic IPv6 addresses for IPv4-only destinations.
+	//
+	// You must first configure a NAT gateway in a public subnet (separate from the
+	// subnet containing the IPv6-only workloads). For example, the subnet containing
+	// the NAT gateway should have a 0.0.0.0/0 route pointing to the internet gateway.
+	// For more information, see [Configure DNS64 and NAT64]in the Amazon VPC User Guide.
+	//
+	// [Configure DNS64 and NAT64]: https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-nat64-dns64.html#nat-gateway-nat64-dns64-walkthrough
 	EnableDns64 *types.AttributeBooleanValue
 
 	//  Indicates the device position for local network interfaces in this subnet. For
@@ -165,6 +172,9 @@ func (c *Client) addOperationModifySubnetAttributeMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -202,6 +212,18 @@ func (c *Client) addOperationModifySubnetAttributeMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
