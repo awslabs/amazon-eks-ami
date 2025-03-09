@@ -41,13 +41,24 @@ type NodeConfigStatus struct {
 	KubeletVersion string          `json:"kubeletVersion,omitempty"`
 }
 
+type NetworkCardDetails struct {
+	MAC         string `json:"mac,omitempty"`
+	IpV4Address string `json:"ipV4Address,omitempty"`
+	IpV4Subnet  string `json:"ipV4Subnet,omitempty"`
+	IpV6Address string `json:"ipV6Address,omitempty"`
+	IpV6Subnet  string `json:"ipV6Subnet,omitempty"`
+	CardIndex   int    `json:"cardIndex,omitempty"`
+	InterfaceId string `json:"interfaceId,omitempty"`
+}
+
 type InstanceDetails struct {
-	ID               string `json:"id,omitempty"`
-	Region           string `json:"region,omitempty"`
-	Type             string `json:"type,omitempty"`
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
-	MAC              string `json:"mac,omitempty"`
-	PrivateDNSName   string `json:"privateDnsName,omitempty"`
+	ID               string               `json:"id,omitempty"`
+	Region           string               `json:"region,omitempty"`
+	Type             string               `json:"type,omitempty"`
+	AvailabilityZone string               `json:"availabilityZone,omitempty"`
+	MAC              string               `json:"mac,omitempty"`
+	PrivateDNSName   string               `json:"privateDnsName,omitempty"`
+	NetworkCards     []NetworkCardDetails `json:"networkCards,omitempty"`
 }
 
 type DefaultOptions struct {
