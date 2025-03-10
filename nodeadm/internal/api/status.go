@@ -11,16 +11,16 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
-// Fetch information about the ec2 instance using IMDS data.
-// This information is stored into the internal config to avoid redundant calls
-// to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client) (*InstanceDetails, error) {
-	instanceIdenitityDocument, err := imds.GetInstanceIdentityDocument(ctx)
+// Fetch information about the ec2 instance using IMDS data. This information is
+// stored into the internal config to avoid redundant calls to IMDS when looking
+// for instance metadata.
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client, imdsClient imds.IMDSClient) (*InstanceDetails, error) {
+	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	mac, err := imds.GetProperty(ctx, "mac")
+	mac, err := imdsClient.GetProperty(ctx, imds.MAC)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,8 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2C
 
 const privateDNSNameAvailableTimeout = 10 * time.Minute
 
-// GetPrivateDNSName returns this instance's private DNS name as reported by the EC2 API, waiting until it's available if necessary.
+// GetPrivateDNSName returns this instance's private DNS name as reported by the
+// EC2 API, waiting until it's available if necessary.
 func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error) {
 	w := ec2extra.NewInstanceConditionWaiter(ec2Client, privateDNSNameAvailable, func(opts *ec2extra.InstanceConditionWaiterOptions) {
 		opts.LogWaitAttempts = true

@@ -46,10 +46,8 @@ sudo nerdctl rmi \
 # cleanup dangling images
 sudo nerdctl image prune --force
 
-# move the nodeadm binary into bin folder
-sudo chmod a+x \
-  $PROJECT_DIR/_bin/nodeadm \
-  $PROJECT_DIR/_bin/nodeadm-internal
+# move the nodeadm binaries into bin folder
+sudo chmod a+x $PROJECT_DIR/_bin/*
 sudo mv \
   $PROJECT_DIR/_bin/nodeadm \
   $PROJECT_DIR/_bin/nodeadm-internal \
@@ -57,6 +55,5 @@ sudo mv \
 
 # enable nodeadm bootstrap systemd units
 sudo systemctl enable \
-  nodeadm-boot-hook \
   nodeadm-config \
   nodeadm-run
