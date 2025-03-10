@@ -3,6 +3,7 @@ package configprovider
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"testing"
 
@@ -53,7 +54,7 @@ type testUserDataProvider struct {
 	err      error
 }
 
-func (p *testUserDataProvider) GetUserData() ([]byte, error) {
+func (p *testUserDataProvider) GetUserData(_ context.Context) ([]byte, error) {
 	return p.userData, p.err
 }
 

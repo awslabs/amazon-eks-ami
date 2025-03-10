@@ -2,50 +2,44 @@ package system
 
 import (
 	_ "embed"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"reflect"
 	"testing"
+
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/stretchr/testify/assert"
 )
 
-//go:embed _assets/test_10-eks_primary_eni_only.conf
-var testEKSPrimaryENIOnlyConfTemplateData []byte
-
 func Test_networkingAspect_generateEKSPrimaryENIOnlyConfiguration(t *testing.T) {
-	type args struct {
-		cfg *api.NodeConfig
-	}
-	tests := []struct {
+	testCases := []struct {
 		name    string
-		args    args
+		cfg     api.NodeConfig
 		want    []byte
 		wantErr bool
 	}{
 		{
 			name: "mac is 0e:f7:72:74:2d:43",
-			args: args{
-				cfg: &api.NodeConfig{
-					Status: api.NodeConfigStatus{
-						Instance: api.InstanceDetails{
-							MAC: "0e:f7:72:74:2d:43",
-						},
+			cfg: api.NodeConfig{
+				Status: api.NodeConfigStatus{
+					Instance: api.InstanceDetails{
+						MAC: "0e:f7:72:74:2d:43",
 					},
 				},
 			},
-			want:    testEKSPrimaryENIOnlyConfTemplateData,
-			wantErr: false,
+			want: []byte(`[Match]
+PermanentMACAddress=0e:f7:72:74:2d:43
+
+[DHCPv4]
+RouteMetric=512
+
+[IPv6AcceptRA]
+RouteMetric=512
+UseGateway=true`),
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := &networkingAspect{}
-			got, err := a.generateEKSPrimaryENIOnlyConfiguration(tt.args.cfg)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("generateEKSPrimaryENIOnlyConfiguration() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("generateEKSPrimaryENIOnlyConfiguration() got = %v, want %v", got, tt.want)
-			}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := generatePrimaryInterfaceNetworkConfiguration(&testCase.cfg)
+			assert.Equal(t, testCase.wantErr, err != nil, "error does not match wantErr=%v", testCase.wantErr)
+			assert.Equal(t, testCase.want, got)
 		})
 	}
 }
