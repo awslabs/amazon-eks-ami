@@ -75,6 +75,11 @@ sudo dnf install -y iptables-nft
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
 
+# Log udev events
+echo "udev_log=debug" | sudo tee --append /etc/udev/udev.conf
+# udev runs in initramfs, make sure the config applies there
+sudo dracut --regenerate-all --force
+
 # Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
 sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
 cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
