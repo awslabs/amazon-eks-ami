@@ -1,3 +1,15 @@
+# v1.208.0 (2025-03-07)
+
+* **Feature**: Add serviceManaged field to DescribeAddresses API response.
+
+# v1.207.1 (2025-03-04.2)
+
+* **Bug Fix**: Add assurance test for operation order.
+
+# v1.207.0 (2025-03-04)
+
+* **Feature**: Update the DescribeVpcs response
+
 # v1.206.0 (2025-02-27)
 
 * **Feature**: Track credential providers via User-Agent Feature ids

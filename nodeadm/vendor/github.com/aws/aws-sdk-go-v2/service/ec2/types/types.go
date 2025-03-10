@@ -324,6 +324,11 @@ type Address struct {
 	// The ID of an address pool.
 	PublicIpv4Pool *string
 
+	// The service that manages the elastic IP address.
+	//
+	// The only option supported today is alb .
+	ServiceManaged ServiceManaged
+
 	// Any tags assigned to the Elastic IP address.
 	Tags []Tag
 
@@ -21409,6 +21414,8 @@ type Vpc struct {
 	// The ID of the set of DHCP options you've associated with the VPC.
 	DhcpOptionsId *string
 
+	EncryptionControl *VpcEncryptionControl
+
 	// The allowed tenancy of instances launched into the VPC.
 	InstanceTenancy Tenancy
 
@@ -21590,6 +21597,46 @@ type VpcClassicLink struct {
 
 	// The ID of the VPC.
 	VpcId *string
+
+	noSmithyDocumentSerde
+}
+
+type VpcEncryptionControl struct {
+	Mode VpcEncryptionControlMode
+
+	ResourceExclusions *VpcEncryptionControlExclusions
+
+	State VpcEncryptionControlState
+
+	StateMessage *string
+
+	Tags []Tag
+
+	VpcEncryptionControlId *string
+
+	VpcId *string
+
+	noSmithyDocumentSerde
+}
+
+type VpcEncryptionControlExclusion struct {
+	State VpcEncryptionControlExclusionState
+
+	StateMessage *string
+
+	noSmithyDocumentSerde
+}
+
+type VpcEncryptionControlExclusions struct {
+	EgressOnlyInternetGateway *VpcEncryptionControlExclusion
+
+	InternetGateway *VpcEncryptionControlExclusion
+
+	NatGateway *VpcEncryptionControlExclusion
+
+	VirtualPrivateGateway *VpcEncryptionControlExclusion
+
+	VpcPeering *VpcEncryptionControlExclusion
 
 	noSmithyDocumentSerde
 }
