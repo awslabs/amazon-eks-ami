@@ -524,6 +524,8 @@ echo "$(jq --arg mebibytes_to_reserve "${mebibytes_to_reserve}Mi" --arg cpu_mill
 
 if [[ "$USE_MAX_PODS" = "true" ]]; then
   echo "$(jq ".maxPods=$MAX_PODS" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+  #set registryPullQPS to match MAX_PODS to prevent startup problems when nodes failover
+  echo "$(jq --arg MAX_PODS $MAX_PODS '.+= {"registryPullQPS":$MAX_PODS}' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
 KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
