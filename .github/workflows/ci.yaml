@@ -30,7 +30,7 @@ on:
         type: string
       test_arguments:
         required: false
-        type string
+        type: string
     outputs:
       ci_step_name_prefix:
         description: "Prefix of job steps containing CI activities"
