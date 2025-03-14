@@ -28,6 +28,9 @@ on:
       build_arguments:
         required: false
         type: string
+      test_arguments:
+        required: false
+        type string
     outputs:
       ci_step_name_prefix:
         description: "Prefix of job steps containing CI activities"
@@ -101,3 +104,4 @@ jobs:
           build_id: ${{ inputs.resource_id }}
           aws_region: ${{ secrets.AWS_REGION }}
           log_bucket: ${{ secrets.CI_LOG_BUCKET }}
+          additional_arguments: ${{ inputs.test_arguments }}
