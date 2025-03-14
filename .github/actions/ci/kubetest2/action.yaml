@@ -55,7 +55,6 @@ runs:
           --emit-metrics \
           --log-bucket=${{ inputs.log_bucket }} \
           --kubernetes-version=${{ inputs.k8s_version }} \
-          --generate-ssh-key \
           --unmanaged-nodes \
           --ami=${{ inputs.ami_id }} \
           --region=${{ inputs.aws_region }} \
