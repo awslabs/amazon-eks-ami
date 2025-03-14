@@ -37,6 +37,9 @@ on:
       build_arguments:
         required: false
         type: string
+      test_arguments:
+        required: false
+        type: string
 
 jobs:
   setup:
@@ -75,6 +78,7 @@ jobs:
       os_distros: ${{ inputs.os_distros }}
       git_sha: ${{ inputs.git_sha }}
       build_arguments: ${{ inputs.build_arguments }}
+      test_arguments: ${{ inputs.test_arguments }}
       resource_id: "ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}"
       run_name: "ci(#${{ inputs.pr_number }}@${{ needs.setup.outputs.git_sha_short }}): ${{ inputs.uuid }}"
       goal: "${{ inputs.goal }}"
