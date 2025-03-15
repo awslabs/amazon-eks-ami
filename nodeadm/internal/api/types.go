@@ -42,12 +42,23 @@ type NodeConfigStatus struct {
 }
 
 type InstanceDetails struct {
-	ID               string `json:"id,omitempty"`
-	Region           string `json:"region,omitempty"`
-	Type             string `json:"type,omitempty"`
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
-	MAC              string `json:"mac,omitempty"`
-	PrivateDNSName   string `json:"privateDnsName,omitempty"`
+	ID               string               `json:"id,omitempty"`
+	Region           string               `json:"region,omitempty"`
+	Type             string               `json:"type,omitempty"`
+	AvailabilityZone string               `json:"availabilityZone,omitempty"`
+	MAC              string               `json:"mac,omitempty"`
+	PrivateDNSName   string               `json:"privateDnsName,omitempty"`
+	NetworkCards     []NetworkCardDetails `json:"networkCards,omitempty"`
+}
+
+type NetworkCardDetails struct {
+	MAC         string `json:"mac,omitempty" imds:"network/interfaces/macs/{{.MAC}}/mac"`
+	IpV4Address string `json:"ipV4Address,omitempty" imds:"network/interfaces/macs/{{.MAC}}/local-ipv4s"`
+	IpV4Subnet  string `json:"ipV4Subnet,omitempty" imds:"network/interfaces/macs/{{.MAC}}/subnet-ipv4-cidr-block"`
+	IpV6Address string `json:"ipV6Address,omitempty" imds:"network/interfaces/macs/{{.MAC}}/ipv6s"`
+	IpV6Subnet  string `json:"ipV6Subnet,omitempty" imds:"network/interfaces/macs/{{.MAC}}/subnet-ipv6-cidr-blocks"`
+	Index       int    `json:"cardIndex,omitempty" imds:"network/interfaces/macs/{{.MAC}}/network-card-index"`
+	InterfaceId string `json:"interfaceId,omitempty" imds:"network/interfaces/macs/{{.MAC}}/interface-id"`
 }
 
 type DefaultOptions struct {
