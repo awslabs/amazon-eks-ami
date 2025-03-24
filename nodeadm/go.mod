@@ -7,7 +7,7 @@ toolchain go1.23.5
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.208.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.210.1
 	github.com/aws/smithy-go v1.22.3
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/integrii/flaggy v1.5.2
@@ -15,8 +15,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/mod v0.24.0
-	k8s.io/apimachinery v0.32.2
-	k8s.io/kubelet v0.32.2
+	k8s.io/apimachinery v0.32.3
+	k8s.io/kubelet v0.32.3
 	sigs.k8s.io/controller-runtime v0.20.3
 )
 
@@ -27,7 +27,7 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/otel v1.28.0 // indirect
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
-	k8s.io/component-base v0.32.2 // indirect
+	k8s.io/component-base v0.32.3 // indirect
 )
 
 require dario.cat/mergo v1.0.1 // direct
@@ -70,9 +70,9 @@ require (
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.32.2
+	k8s.io/api v0.32.3
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/utils v0.0.0-20241210054802-24370beab758 // direct
+	k8s.io/utils v0.0.0-20250321185631-1f6e0b77f77e // direct
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
