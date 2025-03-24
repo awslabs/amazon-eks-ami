@@ -1,3 +1,15 @@
+# v1.210.1 (2025-03-19)
+
+* **Documentation**: Doc-only updates for EC2 for March 2025.
+
+# v1.210.0 (2025-03-13)
+
+* **Feature**: This release changes the CreateLaunchTemplate, CreateLaunchTemplateVersion, ModifyLaunchTemplate CLI and SDKs such that if you do not specify a client token, a randomly generated token is used for the request to ensure idempotency.
+
+# v1.209.0 (2025-03-11)
+
+* **Feature**: This release adds the GroupLongName field to the response of the DescribeAvailabilityZones API.
+
 # v1.208.0 (2025-03-07)
 
 * **Feature**: Add serviceManaged field to DescribeAddresses API response.
