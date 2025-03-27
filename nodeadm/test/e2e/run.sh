@@ -6,6 +6,13 @@ set -o pipefail
 
 cd $(dirname $0)/../..
 
+NODEADM=$PWD/_bin/nodeadm
+
+if [ ! -f "${NODEADM}" ]; then
+  echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
+  exit 1
+fi
+
 printf "🛠️ Building test infra image..."
 TEST_IMAGE=$(docker build -q -f test/e2e/infra/Dockerfile .)
 echo "done! Test image: $TEST_IMAGE"
@@ -19,6 +26,7 @@ for CASE_DIR in $(ls -d test/e2e/cases/*); do
     -d \
     --rm \
     --privileged \
+    -v $NODEADM:/usr/local/bin/nodeadm \
     -v $PWD/$CASE_DIR:/test-case \
     $TEST_IMAGE)
   LOG_FILE=$(mktemp)
