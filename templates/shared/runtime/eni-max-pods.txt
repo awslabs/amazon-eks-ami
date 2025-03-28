@@ -603,9 +603,6 @@ mac2-m1ultra.metal 234
 mac2-m2.metal 234
 mac2-m2pro.metal 234
 mac2.metal 234
-p2.16xlarge 234
-p2.8xlarge 234
-p2.xlarge 58
 p3.16xlarge 234
 p3.2xlarge 58
 p3.8xlarge 234
