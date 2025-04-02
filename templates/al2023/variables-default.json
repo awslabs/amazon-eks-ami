@@ -26,7 +26,7 @@
     "remote_folder": "/tmp",
     "runc_version": "*",
     "security_group_id": "",
-    "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.1*",
+    "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.1-*",
     "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "ssh_interface": "",

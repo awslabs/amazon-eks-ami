@@ -66,7 +66,11 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
-sudo dnf -y install kernel-modules-extra
+sudo dnf -y install \
+  kernel-devel-$(uname -r) \
+  kernel-headers-$(uname -r) \
+  kernel-modules-extra-$(uname -r) \
+  kernel-modules-extra-common-$(uname -r)
 
 function archive-open-kmods() {
   if is-isolated-partition; then
