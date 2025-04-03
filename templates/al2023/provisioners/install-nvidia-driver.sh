@@ -54,6 +54,10 @@ else
     sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/$(uname -m)/cuda-amzn2023.repo
   fi
 
+  if [[ $AWS_REGION != cn-* ]]; then
+    sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+  fi
+
   # update all current .repo sources to enable gpgcheck
   sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
