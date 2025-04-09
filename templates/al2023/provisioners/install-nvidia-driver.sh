@@ -70,10 +70,16 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
+
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  sudo dnf -y install kernel6.12-modules-extra-$(uname -r)
+else
+  sudo dnf -y install kernel-modules-extra-$(uname -r)
+fi
+
 sudo dnf -y install \
   kernel-devel-$(uname -r) \
   kernel-headers-$(uname -r) \
-  kernel-modules-extra-$(uname -r) \
   kernel-modules-extra-common-$(uname -r)
 
 function archive-open-kmods() {
