@@ -80,13 +80,14 @@ endif
 # then store variables that are defined in the Makefile's execution context
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
 PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
-# read & construct Packer arguments in order from the following sources:
-# 1. default variable files
+# Set Packer arguments in descending order of precedence from the following sources:
+# 1. variables specified in the Make context
 # 2. (optional) user-specified variable file
-# 3. variables specified in the Make context
-PACKER_ARGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
+# 2. (optional) k8s-version variable file
+# 4. default variable files
+PACKER_ARGS := $(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
 	$(if $(PACKER_OPTIONAL_K8S_VARIABLE_FILE),-var-file=$(PACKER_OPTIONAL_K8S_VARIABLE_FILE),) \
-	$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
+	-var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
 	$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
 .PHONY: validate
