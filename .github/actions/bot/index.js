@@ -165,7 +165,7 @@ class ClearCommand {
             // TODO: implement pagination?
             // we're unlikely to have >100 comments, so not necessary for now
         });
-        for (const comment of comments) {
+        for (const comment of comments.data) {
             if (comment.user.login == 'github-actions[bot]') {
                 await github.rest.issues.deleteComment({
                     owner: this.repository_owner,
