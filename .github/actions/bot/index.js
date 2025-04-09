@@ -115,6 +115,8 @@ function buildCommand(uuid, payload, name, args) {
     switch (name) {
         case "echo":
             return new EchoCommand(uuid, payload, args);
+        case "clear":
+            return new ClearCommand(uuid, payload, args);
         case "ci":
             return new CICommand(uuid, payload, args);
         default:
@@ -144,6 +146,35 @@ class EchoCommand {
 
     run(author) {
         return `@${author} *${this.phrase}*`;
+    }
+}
+
+class ClearCommand {
+    constructor(uuid, payload, args) {
+        this.repository_owner = payload.repository.owner.login;
+        this.repository_name = payload.repository.name;
+        this.pr_number = payload.issue.number;
+    }
+
+    async run(author, github) {
+        const comments = await github.rest.issues.listComments({
+            owner: this.repository_owner,
+            repo: this.repository_name,
+            issue_number: this.pr_number,
+            per_page: 100 // max allowed
+            // TODO: implement pagination?
+            // we're unlikely to have >100 comments, so not necessary for now
+        });
+        for (const comment of comments) {
+            if (comment.user.login == 'github-actions[bot]') {
+                await github.rest.issues.deleteComment({
+                    owner: this.repository_owner,
+                    repo: this.repository_name,
+                    comment_id: comment.id
+                });
+            }
+        }
+        return null;
     }
 }
 
