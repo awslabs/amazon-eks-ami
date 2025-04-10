@@ -28,6 +28,8 @@ runs:
       shell: bash
       run: |
         export PATH=${PATH}:$(go env GOPATH)/bin
+        # old versions of packages are sometimes cached by the proxy, just disable it
+        GOPROXY=direct
         go install sigs.k8s.io/kubetest2/...@latest
         go install github.com/aws/aws-k8s-tester/...@HEAD
 
