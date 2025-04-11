@@ -362,6 +362,8 @@ i7ie.3xlarge 58
 i7ie.48xlarge 737
 i7ie.6xlarge 234
 i7ie.large 29
+i7ie.metal-24xl 737
+i7ie.metal-48xl 737
 i7ie.xlarge 58
 i8g.12xlarge 234
 i8g.16xlarge 737
