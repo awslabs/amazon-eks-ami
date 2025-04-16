@@ -85,7 +85,11 @@ ManageForeignRoutingPolicyRules=no
 EOF
 
 # Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-sudo sed -i "s/^MACAddressPolicy=.*/MACAddressPolicy=none/" /usr/lib/systemd/network/99-default.link || true
+sudo mkdir -p /etc/systemd/network/99-default.link.d/
+cat << EOF | sudo tee /etc/systemd/network/99-default.link.d/no-policy.conf
+[Link]
+MACAddressPolicy=none
+EOF
 
 ################################################################################
 ### SSH ########################################################################
