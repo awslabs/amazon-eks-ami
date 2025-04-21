@@ -15,9 +15,13 @@ OUTPUT_FILE="$1"
 # packages
 sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
 
-# Get ENA driver version
-ENA_VERSION=$(sudo modinfo ena | grep -i "^version:" | awk '{print $2}')
-echo $(jq ".kernel_modules.ena = \"$ENA_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
+# kernel modules
+for modname in $(sudo lsmod | cut -d' ' -f 1 | tail -n +2); do
+  MOD_VERSION=$(sudo modinfo ${modname} --field version)
+  if [ -n "$MOD_VERSION" ]; then
+    echo $(jq ".kernel_modules.${modname} = \"$MOD_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
+  fi
+done
 
 # binaries
 KUBELET_VERSION=$(kubelet --version | awk '{print $2}')
