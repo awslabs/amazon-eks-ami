@@ -61,3 +61,14 @@ if sudo ip link | grep nerdctl0; then
   echo "nerdctl0 interface should be removed."
   exit 1
 fi
+
+#############################
+### dkms ####################
+#############################
+
+if command -v dkms > /dev/null; then
+  if ! diff <(sudo dkms status | grep 'installed') <(sudo dkms status); then
+    echo "At least one dkms module is not installed."
+    exit 1
+  fi
+fi
