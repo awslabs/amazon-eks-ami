@@ -146,12 +146,11 @@ function rpm_install() {
 }
 
 # if k8sVersion >= 1.33, use the containerd 2.0 from s3 bucket
-echo "wwvela: ${KUBERNETES_VERSION}"
 if vercmp "$KUBERNETES_VERSION" gteq "1.33.0"; then
-  echo "wwvela: install from s3"
+  echo "install from containerd 2.0 from s3"
   rpm_install "containerd-2.0.4-1.amzn2023.0.1.x86_64.rpm"
 else
-  echo "wwvela: install 1.7.* containerd"
+  echo "install 1.7.* containerd"
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
 
