@@ -37,7 +37,7 @@ type containerdTemplateVars struct {
 	RuntimeBinaryName string
 }
 
-func generateContainerdConfigTemplate() (*template.Template, error) {
+func getContainerdConfigTemplate() (*template.Template, error) {
 	version, err := GetContainerdVersion()
 	if err != nil {
 		return &template.Template{}, err
