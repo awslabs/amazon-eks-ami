@@ -3,7 +3,9 @@ package containerd
 import (
 	"bytes"
 	_ "embed"
+	"errors"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"text/template"
@@ -50,12 +52,23 @@ func getContainerdConfigTemplate() (*template.Template, error) {
 }
 
 func GetContainerdVersion() (string, error) {
-	rawVersion, err := os.ReadFile(containerdVersionFile)
+	rawVersion, err := GetContainerdVersionRaw()
 	if err != nil {
 		return "", err
 	}
 	semVerRegex := regexp.MustCompile(`[0-9]+\.[0-9]+.[0-9]+`)
 	return semVerRegex.FindString(string(rawVersion)), nil
+}
+
+func GetContainerdVersionRaw() ([]byte, error) {
+	if _, err := os.Stat(containerdVersionFile); errors.Is(err, os.ErrNotExist) {
+		zap.L().Info("Reading containerd version from executable")
+		return exec.Command("containerd", "--version").Output()
+	} else if err != nil {
+		return nil, err
+	}
+	zap.L().Info("Reading containerd version from file", zap.String("path", containerdVersionFile))
+	return os.ReadFile(containerdVersionFile)
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
@@ -96,7 +109,7 @@ func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
 		EnableCDI:         semver.Compare(cfg.Status.KubeletVersion, "v1.32.0") >= 0,
 	}
 	var buf bytes.Buffer
-	containerdConfigTemplate, err := generateContainerdConfigTemplate()
+	containerdConfigTemplate, err := getContainerdConfigTemplate()
 	if err != nil {
 		return nil, err
 	}
