@@ -19,7 +19,7 @@ const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 
 const (
 	containerdConfigFile  = "/etc/containerd/config.toml"
-	containerdVersionFile = "/etc/containerd/containerd-version.txt"
+	containerdVersionFile = "/etc/eks/containerd-version.txt"
 	containerdConfigPerm  = 0644
 )
 
