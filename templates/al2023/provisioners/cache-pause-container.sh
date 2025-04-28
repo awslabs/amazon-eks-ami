@@ -5,7 +5,7 @@ set -o errexit
 set -o pipefail
 
 if vercmp "$KUBERNETES_VERSION" gteq "1.33.0"; then
-    exit 0
+  exit 0
 fi
 
 sudo systemctl start containerd

@@ -135,13 +135,10 @@ sudo dnf install -y runc-${RUNC_VERSION}
 # utility function for pulling rpms from an S3 bucket
 function rpm_install() {
   local RPMS=($@)
-  echo "pulling and installing rpms: (${RPMS[@]}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
-  for RPM in ${RPMS[@]}; do
-    # we're pulling these rpms from the same bucket as the binaries, because those
-    # can be replicated up to highside easily
+  echo "Pulling and installing local rpms from s3 bucket"
+  for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    sudo yum localinstall -y ${WORKING_DIR}/${RPM} 
-    # the WORKING_DIR will be cleaned up at the end of the build
+    sudo yum localinstall -y ${WORKING_DIR}/${RPM}
   done
 }
 
