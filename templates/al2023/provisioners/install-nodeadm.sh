@@ -6,6 +6,10 @@ set -o errexit
 
 sudo systemctl start containerd
 
+# generate and store containerd version in file /etc/containerd/containerd-version.txt
+CONTAINERD_VERSION=$(yum list installed | grep containerd | awk '{print $2}')
+echo $CONTAINERD_VERSION | sudo tee /etc/containerd/containerd-version.txt
+
 # if the image is from an ecr repository then try authenticate first
 if [[ "$BUILD_IMAGE" == *"dkr.ecr"* ]]; then
   # nerdctl needs the https:// prefix when logging in to the repository

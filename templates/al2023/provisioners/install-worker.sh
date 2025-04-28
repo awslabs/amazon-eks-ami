@@ -131,7 +131,29 @@ fi
 ###############################################################################
 
 sudo dnf install -y runc-${RUNC_VERSION}
-sudo dnf install -y containerd-${CONTAINERD_VERSION}
+
+# utility function for pulling rpms from an S3 bucket
+function rpm_install() {
+  local RPMS=($@)
+  echo "pulling and installing rpms: (${RPMS[@]}) from s3 bucket: (${BINARY_BUCKET_NAME}) in region: (${BINARY_BUCKET_REGION})"
+  for RPM in ${RPMS[@]}; do
+    # we're pulling these rpms from the same bucket as the binaries, because those
+    # can be replicated up to highside easily
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    sudo yum localinstall -y ${WORKING_DIR}/${RPM} 
+    # the WORKING_DIR will be cleaned up at the end of the build
+  done
+}
+
+# if k8sVersion >= 1.33, use the containerd 2.0 from s3 bucket
+echo "wwvela: ${KUBERNETES_VERSION}"
+if vercmp "$KUBERNETES_VERSION" gteq "1.33.0"; then
+  echo "wwvela: install from s3"
+  rpm_install "containerd-2.0.4-1.amzn2023.0.1.x86_64.rpm"
+else
+  echo "wwvela: install 1.7.* containerd"
+  sudo dnf install -y containerd-${CONTAINERD_VERSION}
+fi
 
 sudo systemctl enable ebs-initialize-bin@containerd
 
