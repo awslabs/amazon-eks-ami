@@ -29,4 +29,9 @@ metadata_expire=0" | sudo tee /etc/yum.repos.d/neuron.repo
 ################################################################################
 ### Install packages ###########################################################
 ################################################################################
+
+sudo dnf -y install \
+  kernel-devel-$(uname -r) \
+  kernel-headers-$(uname -r)
+
 sudo dnf install -y aws-neuronx-dkms aws-neuronx-tools
