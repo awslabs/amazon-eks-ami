@@ -145,9 +145,7 @@ function rpm_install() {
 # if k8sVersion >= 1.33, use the containerd 2.0 from s3 bucket
 # TO-DO: Currently using scratch build of containerd 2.0.4 for AL2023 in s3, change to use dnf install once it support
 if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
-  if sudo dnf install -y "containerd-2.0.*"; then
-    echo "Successfully installed containerd 2.0.* via dnf."
-  else
+  if ! sudo dnf install -y "containerd-2.0.*"; then
     echo "Falling back to install containerd 2.0 rpm from S3."
     rpm_install "containerd-2.0.4-1.amzn2023.0.1.$(uname -m).rpm"
   fi
