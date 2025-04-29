@@ -149,8 +149,7 @@ if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
     echo "Successfully installed containerd 2.0.* via dnf."
   else
     echo "Falling back to install containerd 2.0 rpm from S3."
-    arch=$(uname -m)
-    rpm_install "containerd-2.0.4-1.amzn2023.0.1.${arch}.rpm"
+    rpm_install "containerd-2.0.4-1.amzn2023.0.1.$(uname -m).rpm"
   fi
 else
   echo "install containerd v1"
