@@ -7,8 +7,7 @@ set -o errexit
 sudo systemctl start containerd
 
 # generate and store containerd version in file /etc/containerd/containerd-version.txt
-CONTAINERD_VERSION=$(containerd --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
-echo $CONTAINERD_VERSION | sudo tee /etc/eks/containerd-version.txt
+containerd --version | sudo tee /etc/eks/containerd-version.txt
 
 # if the image is from an ecr repository then try authenticate first
 if [[ "$BUILD_IMAGE" == *"dkr.ecr"* ]]; then
