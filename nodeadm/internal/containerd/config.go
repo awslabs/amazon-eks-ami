@@ -3,10 +3,6 @@ package containerd
 import (
 	"bytes"
 	_ "embed"
-	"errors"
-	"os"
-	"os/exec"
-	"regexp"
 	"strings"
 	"text/template"
 
@@ -20,9 +16,8 @@ import (
 const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 
 const (
-	containerdConfigFile  = "/etc/containerd/config.toml"
-	containerdVersionFile = "/etc/eks/containerd-version.txt"
-	containerdConfigPerm  = 0644
+	containerdConfigFile = "/etc/containerd/config.toml"
+	containerdConfigPerm = 0644
 )
 
 var (
@@ -49,26 +44,6 @@ func getContainerdConfigTemplate() (*template.Template, error) {
 		return template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData2)), nil
 	}
 	return template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData)), nil
-}
-
-func GetContainerdVersion() (string, error) {
-	rawVersion, err := GetContainerdVersionRaw()
-	if err != nil {
-		return "", err
-	}
-	semVerRegex := regexp.MustCompile(`[0-9]+\.[0-9]+.[0-9]+`)
-	return semVerRegex.FindString(string(rawVersion)), nil
-}
-
-func GetContainerdVersionRaw() ([]byte, error) {
-	if _, err := os.Stat(containerdVersionFile); errors.Is(err, os.ErrNotExist) {
-		zap.L().Info("Reading containerd version from executable")
-		return exec.Command("containerd", "--version").Output()
-	} else if err != nil {
-		return nil, err
-	}
-	zap.L().Info("Reading containerd version from file", zap.String("path", containerdVersionFile))
-	return os.ReadFile(containerdVersionFile)
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
