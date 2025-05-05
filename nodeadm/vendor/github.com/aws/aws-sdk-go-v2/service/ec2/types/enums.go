@@ -5394,6 +5394,25 @@ func (IpamManagementState) Values() []IpamManagementState {
 	}
 }
 
+type IpamMeteredAccount string
+
+// Enum values for IpamMeteredAccount
+const (
+	IpamMeteredAccountIpamOwner     IpamMeteredAccount = "ipam-owner"
+	IpamMeteredAccountResourceOwner IpamMeteredAccount = "resource-owner"
+)
+
+// Values returns all known values for IpamMeteredAccount. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IpamMeteredAccount) Values() []IpamMeteredAccount {
+	return []IpamMeteredAccount{
+		"ipam-owner",
+		"resource-owner",
+	}
+}
+
 type IpamNetworkInterfaceAttachmentStatus string
 
 // Enum values for IpamNetworkInterfaceAttachmentStatus
@@ -8154,8 +8173,9 @@ type ServiceManaged string
 
 // Enum values for ServiceManaged
 const (
-	ServiceManagedAlb ServiceManaged = "alb"
-	ServiceManagedNlb ServiceManaged = "nlb"
+	ServiceManagedAlb  ServiceManaged = "alb"
+	ServiceManagedNlb  ServiceManaged = "nlb"
+	ServiceManagedRnat ServiceManaged = "rnat"
 )
 
 // Values returns all known values for ServiceManaged. Note that this can be
@@ -8166,6 +8186,7 @@ func (ServiceManaged) Values() []ServiceManaged {
 	return []ServiceManaged{
 		"alb",
 		"nlb",
+		"rnat",
 	}
 }
 
