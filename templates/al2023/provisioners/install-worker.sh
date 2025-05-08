@@ -142,10 +142,9 @@ function rpm_install() {
   done
 }
 
-# TO-DO: Currently using scratch build of containerd 2.0.4 for AL2023 in s3, change to use dnf install once it support
 if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
   if ! sudo dnf install -y "containerd-2.0.*"; then
-    rpm_install "containerd-2.0.4-1.amzn2023.0.1.$(uname -m).rpm"
+    sudo dnf install -y containerd-1.7.*
   fi
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
