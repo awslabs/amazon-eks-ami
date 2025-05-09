@@ -160,15 +160,13 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithClientLogMode(aws.LogRetries),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
+			o.Client = imds.NewClient(true /* treat 404's as retryable to make credential chain more resilient */)
 		}),
 	)
 	if err != nil {
 		return err
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
 	if err != nil {
 		return err
 	}
