@@ -18,9 +18,10 @@ fi
 
 sudo nerdctl run \
   --rm \
-  --network host \
+  --network none \
   --workdir /workdir \
   --volume $PROJECT_DIR:/workdir \
+  --env GOTOOLCHAIN=local \
   $BUILD_IMAGE \
   make build
 
