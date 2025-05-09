@@ -27,6 +27,19 @@ runs:
     - id: build
       shell: bash
       run: |
+        exit_code=0
+        ECR_SCRIPT_PATH=templates/al2/runtime/get-ecr-uri.sh
+        for region in $(aws account list-regions| jq '.Regions[].RegionName' -r); do
+            if ! grep -q $region $ECR_SCRIPT_PATH; then
+            echo "missing ECR account for $region in $ECR_SCRIPT_PATH"
+            exit_code=1
+            fi
+        done
+
+        if (($exit_code)); then
+            exit $exit_code;
+        fi
+
         PACKER_GITHUB_API_TOKEN="${{ github.token }}" packer plugins install github.com/hashicorp/amazon
         AMI_NAME="amazon-eks-node-${{ inputs.os_distro }}-${{ inputs.k8s_version }}-${{ inputs.build_id }}"
         make k8s=${{ inputs.k8s_version }} os_distro=${{ inputs.os_distro }} ami_name=${AMI_NAME} ${{ inputs.additional_arguments }}
