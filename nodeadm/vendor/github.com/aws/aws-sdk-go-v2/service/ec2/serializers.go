@@ -48093,6 +48093,18 @@ func awsEc2query_serializeDocumentClientLoginBannerOptions(v *types.ClientLoginB
 	return nil
 }
 
+func awsEc2query_serializeDocumentClientRouteEnforcementOptions(v *types.ClientRouteEnforcementOptions, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.Enforced != nil {
+		objectKey := object.Key("Enforced")
+		objectKey.Boolean(*v.Enforced)
+	}
+
+	return nil
+}
+
 func awsEc2query_serializeDocumentClientVpnAuthenticationRequest(v *types.ClientVpnAuthenticationRequest, value query.Value) error {
 	object := value.Object()
 	_ = object
@@ -59911,6 +59923,13 @@ func awsEc2query_serializeOpDocumentCreateClientVpnEndpointInput(v *CreateClient
 		}
 	}
 
+	if v.ClientRouteEnforcementOptions != nil {
+		objectKey := object.Key("ClientRouteEnforcementOptions")
+		if err := awsEc2query_serializeDocumentClientRouteEnforcementOptions(v.ClientRouteEnforcementOptions, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.ClientToken != nil {
 		objectKey := object.Key("ClientToken")
 		objectKey.String(*v.ClientToken)
@@ -60670,6 +60689,11 @@ func awsEc2query_serializeOpDocumentCreateIpamInput(v *CreateIpamInput, value qu
 	if v.EnablePrivateGua != nil {
 		objectKey := object.Key("EnablePrivateGua")
 		objectKey.Boolean(*v.EnablePrivateGua)
+	}
+
+	if len(v.MeteredAccount) > 0 {
+		objectKey := object.Key("MeteredAccount")
+		objectKey.String(string(v.MeteredAccount))
 	}
 
 	if v.OperatingRegions != nil {
@@ -74335,6 +74359,13 @@ func awsEc2query_serializeOpDocumentModifyClientVpnEndpointInput(v *ModifyClient
 		}
 	}
 
+	if v.ClientRouteEnforcementOptions != nil {
+		objectKey := object.Key("ClientRouteEnforcementOptions")
+		if err := awsEc2query_serializeDocumentClientRouteEnforcementOptions(v.ClientRouteEnforcementOptions, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.ClientVpnEndpointId != nil {
 		objectKey := object.Key("ClientVpnEndpointId")
 		objectKey.String(*v.ClientVpnEndpointId)
@@ -75168,6 +75199,11 @@ func awsEc2query_serializeOpDocumentModifyIpamInput(v *ModifyIpamInput, value qu
 	if v.IpamId != nil {
 		objectKey := object.Key("IpamId")
 		objectKey.String(*v.IpamId)
+	}
+
+	if len(v.MeteredAccount) > 0 {
+		objectKey := object.Key("MeteredAccount")
+		objectKey.String(string(v.MeteredAccount))
 	}
 
 	if v.RemoveOperatingRegions != nil {
