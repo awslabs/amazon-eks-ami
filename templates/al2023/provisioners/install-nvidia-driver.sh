@@ -119,6 +119,20 @@ archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
+### Install NVLSM ##############################################################
+################################################################################
+# https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
+
+# TODO: install unconditionally once availability is guaranteed
+if ! is-isolated-partition; then
+  echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
+  sudo dnf -y install \
+    libibumad \
+    infiniband-diags \
+    nvlsm
+fi
+
+################################################################################
 ### Prepare for nvidia init ####################################################
 ################################################################################
 
