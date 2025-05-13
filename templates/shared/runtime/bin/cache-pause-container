@@ -20,7 +20,7 @@ PULL_ARGS=""
 if [[ "${PAUSE_CONTAINER_IMAGE}" == *"dkr.ecr"* ]]; then
   PULL_ARGS="${PULL_ARGS} --user AWS:$(aws ecr get-login-password)"
 fi
-sudo ctr --namespace k8s.io image pull ${PULL_ARGS} ${PAUSE_CONTAINER_IMAGE}
+sudo ctr --namespace k8s.io image pull ${PAUSE_CONTAINER_IMAGE} ${PULL_ARGS}
 sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER_IMAGE} ${TAG}
 # label the image with CRI aware key for pinning to keep the image from being GC'd
 # see: https://github.com/containerd/containerd/blob/0abada6251993fd1e7f6b048cad92cee9fbf9805/internal/cri/labels/labels.go#L26-L27
