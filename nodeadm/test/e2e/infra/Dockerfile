@@ -10,18 +10,12 @@ RUN dnf -y update && \
     dnf -y install systemd jq python3 awscli tar && \
     dnf clean all
 # Install containerd from upstream release
-RUN if [ -n "$CONTAINERD_VERSION" ]; then \
-    echo "🔧 Installing containerd $CONTAINERD_VERSION from GitHub..."; \
+RUN echo "🔧 Installing containerd $CONTAINERD_VERSION from GitHub..."; \
     curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz && \
     mkdir -p /tmp/containerd && \
     tar -C /tmp/containerd -xzf /tmp/containerd.tar.gz && \
     cp /tmp/containerd/bin/* /usr/local/bin/ && \
-    rm -rf /tmp/containerd /tmp/containerd.tar.gz; \
-  else \
-    echo "📦 No CONTAINERD_VERSION passed — installing via dnf..."; \
-    dnf -y install containerd && \
-    dnf clean all; \
-  fi
+    rm -rf /tmp/containerd /tmp/containerd.tar.gz
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py
