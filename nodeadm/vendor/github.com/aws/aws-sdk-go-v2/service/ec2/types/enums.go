@@ -2551,6 +2551,25 @@ func (FleetType) Values() []FleetType {
 	}
 }
 
+type FlexibleEnaQueuesSupport string
+
+// Enum values for FlexibleEnaQueuesSupport
+const (
+	FlexibleEnaQueuesSupportUnsupported FlexibleEnaQueuesSupport = "unsupported"
+	FlexibleEnaQueuesSupportSupported   FlexibleEnaQueuesSupport = "supported"
+)
+
+// Values returns all known values for FlexibleEnaQueuesSupport. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (FlexibleEnaQueuesSupport) Values() []FlexibleEnaQueuesSupport {
+	return []FlexibleEnaQueuesSupport{
+		"unsupported",
+		"supported",
+	}
+}
+
 type FlowLogsResourceType string
 
 // Enum values for FlowLogsResourceType
@@ -5394,6 +5413,25 @@ func (IpamManagementState) Values() []IpamManagementState {
 	}
 }
 
+type IpamMeteredAccount string
+
+// Enum values for IpamMeteredAccount
+const (
+	IpamMeteredAccountIpamOwner     IpamMeteredAccount = "ipam-owner"
+	IpamMeteredAccountResourceOwner IpamMeteredAccount = "resource-owner"
+)
+
+// Values returns all known values for IpamMeteredAccount. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (IpamMeteredAccount) Values() []IpamMeteredAccount {
+	return []IpamMeteredAccount{
+		"ipam-owner",
+		"resource-owner",
+	}
+}
+
 type IpamNetworkInterfaceAttachmentStatus string
 
 // Enum values for IpamNetworkInterfaceAttachmentStatus
@@ -6272,6 +6310,56 @@ func (LocalGatewayRouteType) Values() []LocalGatewayRouteType {
 	return []LocalGatewayRouteType{
 		"static",
 		"propagated",
+	}
+}
+
+type LocalGatewayVirtualInterfaceConfigurationState string
+
+// Enum values for LocalGatewayVirtualInterfaceConfigurationState
+const (
+	LocalGatewayVirtualInterfaceConfigurationStatePending   LocalGatewayVirtualInterfaceConfigurationState = "pending"
+	LocalGatewayVirtualInterfaceConfigurationStateAvailable LocalGatewayVirtualInterfaceConfigurationState = "available"
+	LocalGatewayVirtualInterfaceConfigurationStateDeleting  LocalGatewayVirtualInterfaceConfigurationState = "deleting"
+	LocalGatewayVirtualInterfaceConfigurationStateDeleted   LocalGatewayVirtualInterfaceConfigurationState = "deleted"
+)
+
+// Values returns all known values for
+// LocalGatewayVirtualInterfaceConfigurationState. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (LocalGatewayVirtualInterfaceConfigurationState) Values() []LocalGatewayVirtualInterfaceConfigurationState {
+	return []LocalGatewayVirtualInterfaceConfigurationState{
+		"pending",
+		"available",
+		"deleting",
+		"deleted",
+	}
+}
+
+type LocalGatewayVirtualInterfaceGroupConfigurationState string
+
+// Enum values for LocalGatewayVirtualInterfaceGroupConfigurationState
+const (
+	LocalGatewayVirtualInterfaceGroupConfigurationStatePending    LocalGatewayVirtualInterfaceGroupConfigurationState = "pending"
+	LocalGatewayVirtualInterfaceGroupConfigurationStateIncomplete LocalGatewayVirtualInterfaceGroupConfigurationState = "incomplete"
+	LocalGatewayVirtualInterfaceGroupConfigurationStateAvailable  LocalGatewayVirtualInterfaceGroupConfigurationState = "available"
+	LocalGatewayVirtualInterfaceGroupConfigurationStateDeleting   LocalGatewayVirtualInterfaceGroupConfigurationState = "deleting"
+	LocalGatewayVirtualInterfaceGroupConfigurationStateDeleted    LocalGatewayVirtualInterfaceGroupConfigurationState = "deleted"
+)
+
+// Values returns all known values for
+// LocalGatewayVirtualInterfaceGroupConfigurationState. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (LocalGatewayVirtualInterfaceGroupConfigurationState) Values() []LocalGatewayVirtualInterfaceGroupConfigurationState {
+	return []LocalGatewayVirtualInterfaceGroupConfigurationState{
+		"pending",
+		"incomplete",
+		"available",
+		"deleting",
+		"deleted",
 	}
 }
 
@@ -7496,6 +7584,7 @@ const (
 	ResourceTypeNetworkInsightsPath                                    ResourceType = "network-insights-path"
 	ResourceTypeNetworkInsightsAccessScope                             ResourceType = "network-insights-access-scope"
 	ResourceTypeNetworkInsightsAccessScopeAnalysis                     ResourceType = "network-insights-access-scope-analysis"
+	ResourceTypeOutpostLag                                             ResourceType = "outpost-lag"
 	ResourceTypePlacementGroup                                         ResourceType = "placement-group"
 	ResourceTypePrefixList                                             ResourceType = "prefix-list"
 	ResourceTypeReplaceRootVolumeTask                                  ResourceType = "replace-root-volume-task"
@@ -7503,6 +7592,7 @@ const (
 	ResourceTypeRouteTable                                             ResourceType = "route-table"
 	ResourceTypeSecurityGroup                                          ResourceType = "security-group"
 	ResourceTypeSecurityGroupRule                                      ResourceType = "security-group-rule"
+	ResourceTypeServiceLinkVirtualInterface                            ResourceType = "service-link-virtual-interface"
 	ResourceTypeSnapshot                                               ResourceType = "snapshot"
 	ResourceTypeSpotFleetRequest                                       ResourceType = "spot-fleet-request"
 	ResourceTypeSpotInstancesRequest                                   ResourceType = "spot-instances-request"
@@ -7596,6 +7686,7 @@ func (ResourceType) Values() []ResourceType {
 		"network-insights-path",
 		"network-insights-access-scope",
 		"network-insights-access-scope-analysis",
+		"outpost-lag",
 		"placement-group",
 		"prefix-list",
 		"replace-root-volume-task",
@@ -7603,6 +7694,7 @@ func (ResourceType) Values() []ResourceType {
 		"route-table",
 		"security-group",
 		"security-group-rule",
+		"service-link-virtual-interface",
 		"snapshot",
 		"spot-fleet-request",
 		"spot-instances-request",
@@ -8150,12 +8242,37 @@ func (ServiceConnectivityType) Values() []ServiceConnectivityType {
 	}
 }
 
+type ServiceLinkVirtualInterfaceConfigurationState string
+
+// Enum values for ServiceLinkVirtualInterfaceConfigurationState
+const (
+	ServiceLinkVirtualInterfaceConfigurationStatePending   ServiceLinkVirtualInterfaceConfigurationState = "pending"
+	ServiceLinkVirtualInterfaceConfigurationStateAvailable ServiceLinkVirtualInterfaceConfigurationState = "available"
+	ServiceLinkVirtualInterfaceConfigurationStateDeleting  ServiceLinkVirtualInterfaceConfigurationState = "deleting"
+	ServiceLinkVirtualInterfaceConfigurationStateDeleted   ServiceLinkVirtualInterfaceConfigurationState = "deleted"
+)
+
+// Values returns all known values for
+// ServiceLinkVirtualInterfaceConfigurationState. Note that this can be expanded in
+// the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ServiceLinkVirtualInterfaceConfigurationState) Values() []ServiceLinkVirtualInterfaceConfigurationState {
+	return []ServiceLinkVirtualInterfaceConfigurationState{
+		"pending",
+		"available",
+		"deleting",
+		"deleted",
+	}
+}
+
 type ServiceManaged string
 
 // Enum values for ServiceManaged
 const (
-	ServiceManagedAlb ServiceManaged = "alb"
-	ServiceManagedNlb ServiceManaged = "nlb"
+	ServiceManagedAlb  ServiceManaged = "alb"
+	ServiceManagedNlb  ServiceManaged = "nlb"
+	ServiceManagedRnat ServiceManaged = "rnat"
 )
 
 // Values returns all known values for ServiceManaged. Note that this can be
@@ -8166,6 +8283,7 @@ func (ServiceManaged) Values() []ServiceManaged {
 	return []ServiceManaged{
 		"alb",
 		"nlb",
+		"rnat",
 	}
 }
 
