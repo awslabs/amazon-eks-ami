@@ -131,25 +131,7 @@ fi
 ###############################################################################
 
 sudo dnf install -y runc-${RUNC_VERSION}
-
-# utility function for pulling rpms from an S3 bucket
-function rpm_install() {
-  local RPMS=($@)
-  echo "Pulling and installing local rpms from s3 bucket"
-  for RPM in "${RPMS[@]}"; do
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    sudo yum localinstall -y ${WORKING_DIR}/${RPM}
-  done
-}
-
-# TO-DO: Currently using scratch build of containerd 2.0.4 for AL2023 in s3, change to use dnf install once it support
-if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
-  if ! sudo dnf install -y "containerd-2.0.*"; then
-    rpm_install "containerd-2.0.4-1.amzn2023.0.1.$(uname -m).rpm"
-  fi
-else
-  sudo dnf install -y containerd-${CONTAINERD_VERSION}
-fi
+sudo dnf install -y containerd-${CONTAINERD_VERSION}
 
 sudo systemctl enable ebs-initialize-bin@containerd
 

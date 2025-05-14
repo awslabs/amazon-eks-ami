@@ -3,7 +3,6 @@ package containerd
 import (
 	"bytes"
 	_ "embed"
-	"strings"
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -23,8 +22,7 @@ const (
 var (
 	//go:embed config.template.toml
 	containerdConfigTemplateData string
-	//go:embed config2.template.toml
-	containerdConfigTemplateData2 string
+	containerdConfigTemplate     = template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData))
 )
 
 type containerdTemplateVars struct {
@@ -32,18 +30,6 @@ type containerdTemplateVars struct {
 	SandboxImage      string
 	RuntimeName       string
 	RuntimeBinaryName string
-}
-
-func getContainerdConfigTemplate() (*template.Template, error) {
-	version, err := GetContainerdVersion()
-	if err != nil {
-		return &template.Template{}, err
-	}
-	// if version is like 2.x.x, use config2.template.toml
-	if strings.HasPrefix(version, "2.") {
-		return template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData2)), nil
-	}
-	return template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData)), nil
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig) error {
@@ -80,10 +66,6 @@ func generateContainerdConfig(cfg *api.NodeConfig) ([]byte, error) {
 		EnableCDI:         semver.Compare(cfg.Status.KubeletVersion, "v1.32.0") >= 0,
 	}
 	var buf bytes.Buffer
-	containerdConfigTemplate, err := getContainerdConfigTemplate()
-	if err != nil {
-		return nil, err
-	}
 	if err := containerdConfigTemplate.Execute(&buf, configVars); err != nil {
 		return nil, err
 	}
