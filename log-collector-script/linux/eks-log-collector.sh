@@ -864,7 +864,7 @@ get_io_throttled_processes() {
   command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
-  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v " 0$" >> ${IO_THROTTLE_LOG}
   ok
 }
 
