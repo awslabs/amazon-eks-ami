@@ -15,4 +15,3 @@ assert::files-equal /etc/containerd/config.toml expected-containerd-configv2.tom
 
 nodeadm init --skip run --config-source file://configv3.yaml
 assert::files-equal /etc/containerd/config.toml expected-containerd-configv3.toml
-

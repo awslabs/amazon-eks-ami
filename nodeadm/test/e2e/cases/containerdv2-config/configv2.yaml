@@ -16,8 +16,6 @@ spec:
 
       [plugins."io.containerd.grpc.v1.cri".containerd]
       discard_unpacked_layers = false
-      
+
       [plugins.'io.containerd.grpc.v1.cri']
       sandbox_image = "registry.k8s.io/pause:3.10"
-
-
