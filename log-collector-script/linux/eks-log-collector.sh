@@ -20,14 +20,23 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.8"
+readonly PROGRAM_VERSION="0.7.9"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
 readonly LOG_DIR="/var/log"
 readonly COLLECT_DIR="/tmp/eks-log-collector"
 readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
-readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
+
+# Global options for journalctl - https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+
+# Unify the out output with precise ISO timestamp (e.g. 2025-02-12T06:25:29.149489+0000)
+# It might be needed to have nanosecond timestamp for advanced troubleshooting.
+readonly JOURNALCTL_CMD='/usr/bin/journalctl --output=short-iso-precise'
+
+# Collect log start from 10 days ago, could be '-10d (10 days ago)', '-10h (10 hours ago)', '-10m (10 minutes ago)'
+readonly JOURNALCTL_SINCE='-10d'
+
 INSTANCE_ID=""
 INIT_TYPE=""
 PACKAGE_TYPE=""
@@ -471,7 +480,7 @@ get_docker_logs() {
 
   case "${INIT_TYPE}" in
     systemd | snap)
-      journalctl --unit=docker --since "${DAYS_10}" > "${COLLECT_DIR}"/docker/docker.log
+      timeout 75 ${JOURNALCTL_CMD} --unit=docker --since "${JOURNALCTL_SINCE}" > "${COLLECT_DIR}"/docker/docker.log
       ;;
     other)
       for entry in docker upstart/docker; do
@@ -527,7 +536,7 @@ get_k8s_info() {
 
         timeout 75 snap get kubelet-eks > "${COLLECT_DIR}"/kubelet/kubelet-eks_service.txt 2>&1
       else
-        timeout 75 journalctl --unit=kubelet --since "${DAYS_10}" > "${COLLECT_DIR}"/kubelet/kubelet.log
+        timeout 75 ${JOURNALCTL_CMD} --unit=kubelet --since "${JOURNALCTL_SINCE}" > "${COLLECT_DIR}"/kubelet/kubelet.log
 
         systemctl cat kubelet > "${COLLECT_DIR}"/kubelet/kubelet_service.txt 2>&1
 
@@ -549,9 +558,8 @@ get_nodeadm_info() {
   try "collect nodeadm information"
   case "${INIT_TYPE}" in
     systemd)
-      timeout 75 journalctl --unit=nodeadm-config --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-config.log
-
-      timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
+      timeout 75 ${JOURNALCTL_CMD} --unit=nodeadm-config > "${COLLECT_DIR}"/nodeadm/nodeadm-config.log
+      timeout 75 ${JOURNALCTL_CMD} --unit=nodeadm-run > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
 
       ;;
     *)
@@ -644,7 +652,7 @@ get_networking_info() {
   timeout 75 ip -6 route show table all >> "${COLLECT_DIR}"/networking/ip6route.txt
 
   # configure-multicard-interfaces
-  timeout 75 journalctl -u configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
+  timeout 75 ${JOURNALCTL_CMD} --unit=configure-multicard-interfaces > "${COLLECT_DIR}"/networking/configure-multicard-interfaces.txt || echo -e "\tTimed out, ignoring \"configure-multicard-interfaces unit output \" "
 
   # test some network connectivity
   timeout 75 ping -A -c 10 amazon.com > "${COLLECT_DIR}"/networking/ping_amazon.com.txt
@@ -786,7 +794,7 @@ get_containerd_info() {
     # force containerd to dump goroutines
     timeout 75 killall -sUSR1 containerd
     timeout 75 containerd config dump > "${COLLECT_DIR}"/containerd/containerd-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
-    timeout 75 journalctl -u containerd > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
+    timeout 75 ${JOURNALCTL_CMD} --unit=containerd --since "${JOURNALCTL_SINCE}" > "${COLLECT_DIR}"/containerd/containerd-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"containerd info output \" "
     timeout 75 cp -f /tmp/containerd.*.stacks.log "${COLLECT_DIR}"/containerd/
   else
     warning "The Containerd daemon is not running."
@@ -811,7 +819,7 @@ get_containerd_info() {
 
 get_sandboxImage_info() {
   try "Collect sandbox-image daemon information"
-  timeout 75 journalctl -u sandbox-image > "${COLLECT_DIR}"/sandbox-image/sandbox-image-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"sandbox-image info output \" "
+  timeout 75 ${JOURNALCTL_CMD} --unit=sandbox-image --since "${JOURNALCTL_SINCE}" > "${COLLECT_DIR}"/sandbox-image/sandbox-image-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"sandbox-image info output \" "
   ok
 }
 
