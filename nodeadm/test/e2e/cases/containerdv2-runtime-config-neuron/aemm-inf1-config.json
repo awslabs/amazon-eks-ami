@@ -1,0 +1,29 @@
+{
+  "imdsv2": true,
+  "metadata": {
+    "values": {
+      "hostname": "ip-172-16-34-43.ec2.internal",
+      "instance-id": "i-1234567890abcdef0",
+      "instance-type": "inf1.xlarge",
+      "local-hostname": "ip-172-16-34-43.ec2.internal",
+      "local-ipv4": "172.16.34.43",
+      "mac": "0e:49:61:0f:c3:11"
+    }
+  },
+  "dynamic": {
+    "values": {
+      "instance-identity-document": {
+        "availabilityZone": "us-west-2f",
+        "instanceId": "i-1234567890abcdef0",
+        "architecture": "x86_64",
+        "instanceType": "inf1.xlarge",
+        "region": "us-west-2"
+      }
+    }
+  },
+  "userdata": {
+    "values": {
+      "userdata": "LS0tCmFwaVZlcnNpb246IG5vZGUuZWtzLmF3cy92MWFscGhhMQpraW5kOiBOb2RlQ29uZmlnCnNwZWM6CiAgY2x1c3RlcjoKICAgIG5hbWU6IG15LWNsdXN0ZXIKICAgIGFwaVNlcnZlckVuZHBvaW50OiBodHRwczovL2V4YW1wbGUuY29tCiAgICBjZXJ0aWZpY2F0ZUF1dGhvcml0eTogWTJWeWRHbG1hV05oZEdWQmRYUm9iM0pwZEhrPQogICAgY2lkcjogMTAuMTAwLjAuMC8xNgo="
+    }
+  }
+}
