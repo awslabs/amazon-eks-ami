@@ -198,7 +198,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 }
 
 func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
-	nodeIp, err := getNodeIp(context.TODO(), cfg)
+	nodeIp, err := getNodeIp(context.TODO(), cfg, imds.DefaultClient())
 	if err != nil {
 		return err
 	}
@@ -395,20 +395,21 @@ func getProviderId(availabilityZone, instanceId string) string {
 }
 
 // Get the IP of the node depending on the ipFamily configured for the cluster
-func getNodeIp(ctx context.Context, cfg *api.NodeConfig) (string, error) {
+func getNodeIp(ctx context.Context, cfg *api.NodeConfig, imdsClient imds.IMDSClient) (string, error) {
 	ipFamily, err := api.GetCIDRIpFamily(cfg.Spec.Cluster.CIDR)
 	if err != nil {
 		return "", err
 	}
 	switch ipFamily {
 	case api.IPFamilyIPv4:
-		ipv4, err := imds.GetProperty(ctx, "local-ipv4")
+		ipv4, err := imdsClient.GetProperty(ctx, imds.LocalIPv4)
 		if err != nil {
 			return "", err
 		}
 		return ipv4, nil
 	case api.IPFamilyIPv6:
-		ipv6, err := imds.GetProperty(ctx, imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC)))
+		prop := fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC)
+		ipv6, err := imdsClient.GetProperty(ctx, imds.IMDSProperty(prop))
 		if err != nil {
 			return "", err
 		}
