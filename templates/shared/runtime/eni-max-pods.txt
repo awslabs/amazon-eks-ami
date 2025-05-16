@@ -649,6 +649,7 @@ p4de.24xlarge 737
 p5.48xlarge 100
 p5e.48xlarge 100
 p5en.48xlarge 198
+p6-b200.48xlarge 198
 r3.2xlarge 58
 r3.4xlarge 234
 r3.8xlarge 234
