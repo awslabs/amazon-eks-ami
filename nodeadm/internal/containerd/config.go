@@ -108,15 +108,16 @@ func generateContainerdConfig(cfg *api.NodeConfig, templateVersion ConfigSchema)
 }
 
 func getConfigTemplateVersion(cfg *api.NodeConfig, isContainerdV2 bool) (ConfigSchema, error) {
+	config := string(cfg.Spec.Containerd.Config)
 	if isContainerdV2 {
 		// side case: if V2 config passed in nodeConfig when using containerd 2.*, we use V2 config template and will run containerd config migrate
-		if len(cfg.Spec.Containerd.Config) > 0 && !Version3configInNodeConfig(cfg) {
+		if len(cfg.Spec.Containerd.Config) > 0 && !Version3configInNodeConfig(config) {
 			return ConfigSchemaV2, nil
 		}
 		return ConfigSchemaV3, nil
 	} else {
 		// side case: if v3 config passed in nodeConfig when using containerd 1.*, throw error
-		if len(cfg.Spec.Containerd.Config) > 0 && Version3configInNodeConfig(cfg) {
+		if len(cfg.Spec.Containerd.Config) > 0 && Version3configInNodeConfig(config) {
 			zap.L().Error("Invalid containerd config passed, containerd 1.7.* doesn't support containerd configuration V3 properties")
 			return "", fmt.Errorf("failed to get config template version")
 		}
@@ -126,9 +127,9 @@ func getConfigTemplateVersion(cfg *api.NodeConfig, isContainerdV2 bool) (ConfigS
 
 // Most proprty are moved under `io.containerd.cri.v1.runtime` and `io.containerd.cri.v1.images` in config v3, only a few left
 // in `io.containerd.grpc.v1.cri` which is same as config V2. So assume it is config V2 if `io.containerd.grpc.v1.cri` detected
-func Version3configInNodeConfig(cfg *api.NodeConfig) bool {
-	return strings.Contains(string(cfg.Spec.Containerd.Config), "io.containerd.cri.v1.images") ||
-		strings.Contains(string(cfg.Spec.Containerd.Config), "io.containerd.cri.v1.runtime")
+func Version3configInNodeConfig(config string) bool {
+	return strings.Contains(config, "io.containerd.cri.v1.images") ||
+		strings.Contains(config, "io.containerd.cri.v1.runtime")
 }
 
 func migrateConfig() error {

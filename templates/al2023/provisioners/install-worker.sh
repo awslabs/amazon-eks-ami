@@ -142,7 +142,7 @@ function rpm_install() {
   done
 }
 
-# TO-DO: Currently using scratch build of containerd 2.0.4 for AL2023 in s3, change to use dnf install once it support
+# TODO: remove branch once packages are available in AmazonLinux repositories
 if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
   if ! sudo dnf install -y "containerd-2.0.*"; then
     rpm_install "containerd-2.0.5-1.amzn2023.0.1.$(uname -m).rpm"
