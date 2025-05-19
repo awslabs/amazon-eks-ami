@@ -6,7 +6,7 @@ set -o pipefail
 
 source /helpers.sh
 
-mock::aws aemm-g5-config.json
+mock::aws
 mock::kubelet 1.27.0
 wait::dbus-ready
 

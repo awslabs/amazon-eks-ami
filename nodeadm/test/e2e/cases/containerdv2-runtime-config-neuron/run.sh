@@ -6,7 +6,7 @@ set -o pipefail
 
 source /helpers.sh
 
-mock::aws aemm-inf1-config.json
+mock::aws
 mock::kubelet 1.32.0
 wait::dbus-ready
 
