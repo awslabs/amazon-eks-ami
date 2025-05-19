@@ -13,7 +13,6 @@ wait::dbus-ready
 touch /usr/bin/nvidia-container-runtime
 
 nodeadm init --skip run --config-source file://configv2.yaml
-
 assert::files-equal /etc/containerd/config.toml expected-containerd-configv2.toml
 
 nodeadm init --skip run --config-source file://configv3.yaml
