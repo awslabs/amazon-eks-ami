@@ -29,16 +29,16 @@ var (
 	containerdConfigTemplateData2 string
 )
 
-type TemplateVersion string
+type ConfigSchema string
 
 const (
-	V2 TemplateVersion = "2"
-	V3 TemplateVersion = "3"
+	ConfigSchemaV2 ConfigSchema = "2"
+	ConfigSchemaV3 ConfigSchema = "3"
 )
 
-var containerdTemplateVersionMap = map[TemplateVersion]string{
-	V2: containerdConfigTemplateData,
-	V3: containerdConfigTemplateData2,
+var containerdTemplateVersionMap = map[ConfigSchema]string{
+	ConfigSchemaV2: containerdConfigTemplateData,
+	ConfigSchemaV3: containerdConfigTemplateData2,
 }
 
 type containerdTemplateVars struct {
@@ -83,14 +83,14 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	}
 	// configuration V3 template will be used for containerd 2.* by default, unless there are configuration V2 property passed in NodeConfig,
 	// then need to run containerd config migrate. Need to run after write file because it only work for what already in the config file.
-	if isContainerdV2 && templateVersion == V2 {
+	if isContainerdV2 && templateVersion == ConfigSchemaV2 {
 		zap.L().Info("Migrate containerd config to V3..", zap.String("path", containerdConfigFile))
 		return migrateConfig()
 	}
 	return nil
 }
 
-func generateContainerdConfig(cfg *api.NodeConfig, templateVersion TemplateVersion) ([]byte, error) {
+func generateContainerdConfig(cfg *api.NodeConfig, templateVersion ConfigSchema) ([]byte, error) {
 	runtimeOptions := getRuntimeOptions(cfg)
 
 	configVars := containerdTemplateVars{
@@ -107,20 +107,20 @@ func generateContainerdConfig(cfg *api.NodeConfig, templateVersion TemplateVersi
 	return buf.Bytes(), nil
 }
 
-func getConfigTemplateVersion(cfg *api.NodeConfig, isContainerdV2 bool) (TemplateVersion, error) {
+func getConfigTemplateVersion(cfg *api.NodeConfig, isContainerdV2 bool) (ConfigSchema, error) {
 	if isContainerdV2 {
-		// side case: if v2 config passed in nodeConfig when using containerd 2.*, we use V2 config template and will run containerd config migrate
+		// side case: if V2 config passed in nodeConfig when using containerd 2.*, we use V2 config template and will run containerd config migrate
 		if len(cfg.Spec.Containerd.Config) > 0 && !Version3configInNodeConfig(cfg) {
-			return V2, nil
+			return ConfigSchemaV2, nil
 		}
-		return V3, nil
+		return ConfigSchemaV3, nil
 	} else {
 		// side case: if v3 config passed in nodeConfig when using containerd 1.*, throw error
 		if len(cfg.Spec.Containerd.Config) > 0 && Version3configInNodeConfig(cfg) {
 			zap.L().Error("Invalid containerd config passed, containerd 1.7.* doesn't support containerd configuration V3 properties")
 			return "", fmt.Errorf("failed to get config template version")
 		}
-		return V2, nil
+		return ConfigSchemaV2, nil
 	}
 }
 

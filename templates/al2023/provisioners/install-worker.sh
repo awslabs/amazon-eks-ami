@@ -151,6 +151,9 @@ else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
 
+# generate and store containerd version in file /etc/eks/containerd-version.txt
+containerd --version | sudo tee /etc/eks/containerd-version.txt
+
 sudo systemctl enable ebs-initialize-bin@containerd
 
 ###############################################################################
