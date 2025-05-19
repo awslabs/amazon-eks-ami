@@ -15,7 +15,7 @@ fi
 
 # build image
 printf "🛠️ Building test infra image with containerd v1..."
-TEST_IMAGE=$(docker build -q -f test/e2e/infra/Dockerfile --build-arg CONTAINERD_VERSION=1.7.27 .)
+TEST_IMAGE=$(docker build -q -f test/e2e/infra/Dockerfile --build-arg CONTAINERD_VERSION=1.7.* .)
 echo "done! Test image with containerd v1: $TEST_IMAGE"
 
 printf "🛠️ Building test infra image with containerd v2..."
