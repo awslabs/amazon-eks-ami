@@ -50,6 +50,8 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletConfig struct {
+	metav1.TypeMeta `json:",inline"`
+
 	Address                  string                           `json:"address"`
 	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
 	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
@@ -58,6 +60,7 @@ type kubeletConfig struct {
 	ClusterDNS               []string                         `json:"clusterDNS"`
 	ClusterDomain            string                           `json:"clusterDomain"`
 	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
+	EnforceNodeAllocatable   []string                         `json:"enforceNodeAllocatable"`
 	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
 	FeatureGates             map[string]bool                  `json:"featureGates"`
 	HairpinMode              string                           `json:"hairpinMode"`
@@ -73,9 +76,9 @@ type kubeletConfig struct {
 	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
 	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
 	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
+	SystemReserved           map[string]string                `json:"systemReserved,omitempty"`
 	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
 	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	metav1.TypeMeta          `json:",inline"`
 }
 
 type loggingConfiguration struct {
@@ -114,6 +117,7 @@ func defaultKubeletSubConfig() kubeletConfig {
 		CgroupRoot:               "/",
 		ClusterDomain:            "cluster.local",
 		ContainerRuntimeEndpoint: containerd.ContainerRuntimeEndpoint,
+		EnforceNodeAllocatable:   []string{"pods"},
 		EvictionHard: map[string]string{
 			"memory.available":  "100Mi",
 			"nodefs.available":  "10%",
@@ -256,6 +260,12 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 // config with reserved cgroup values on behalf of the user
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
+	ksc.SystemReserved = map[string]string{
+		"cpu":               "",
+		"memory":            "",
+		"ephemeral-storage": "",
+	}
+
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
 	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
 		// #nosec G115 // known source from ec2 apis within int32 range
