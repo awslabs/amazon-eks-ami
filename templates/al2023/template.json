@@ -29,6 +29,7 @@
     "launch_block_device_mappings_volume_size": null,
     "nodeadm_build_image": null,
     "nvidia_driver_major_version": null,
+    "nvidia_repository_url": null,
     "pause_container_image": null,
     "remote_folder": null,
     "runc_version": null,
@@ -184,6 +185,11 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../shared/provisioners/set-clocksource.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/enable-fips.sh",
       "environment_vars": [
         "ENABLE_FIPS={{user `enable_fips`}}"
@@ -262,6 +268,7 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
+        "NVIDIA_REPOSITORY={{user `nvidia_repository_url`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },

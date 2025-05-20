@@ -50,6 +50,9 @@ type DescribeInstanceTypesInput struct {
 	//   - current-generation - Indicates whether this instance type is the latest
 	//   generation instance type of an instance family ( true | false ).
 	//
+	//   - dedicated-hosts-supported - Indicates whether the instance type supports
+	//   Dedicated Hosts. ( true | false )
+	//
 	//   - ebs-info.ebs-optimized-info.baseline-bandwidth-in-mbps - The baseline
 	//   bandwidth performance for an EBS-optimized instance type, in Mbps.
 	//
@@ -109,6 +112,9 @@ type DescribeInstanceTypesInput struct {
 	//   - instance-type - The instance type (for example c5.2xlarge or c5*).
 	//
 	//   - memory-info.size-in-mib - The memory size.
+	//
+	//   - network-info.bandwidth-weightings - For instances that support bandwidth
+	//   weighting to boost performance ( default , vpc-1 , ebs-1 ).
 	//
 	//   - network-info.efa-info.maximum-efa-interfaces - The maximum number of Elastic
 	//   Fabric Adapters (EFAs) per instance.
@@ -275,6 +281,9 @@ func (c *Client) addOperationDescribeInstanceTypesMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeInstanceTypes(options.Region), middleware.Before); err != nil {

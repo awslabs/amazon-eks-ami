@@ -94,12 +94,15 @@ type LocalStorageOptions struct {
 }
 
 // LocalStorageStrategy specifies how to handle an instance's local storage devices.
-// +kubebuilder:validation:Enum={RAID0, Mount}
+// +kubebuilder:validation:Enum={RAID0, RAID10, Mount}
 type LocalStorageStrategy string
 
 const (
 	// LocalStorageRAID0 will create a single raid0 volume from any local disks
 	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
+
+	// LocalStorageRAID10 will create a single raid10 volume from any local disks. Minimum of 4.
+	LocalStorageRAID10 LocalStorageStrategy = "RAID10"
 
 	// LocalStorageMount will mount each local disk individually
 	LocalStorageMount LocalStorageStrategy = "Mount"
