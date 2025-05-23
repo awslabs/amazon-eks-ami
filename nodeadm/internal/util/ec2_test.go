@@ -42,8 +42,13 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 					{
 						InstanceType: "t3.medium",
 						NetworkInfo: &types.NetworkInfo{
-							MaximumNetworkInterfaces:  aws.Int32(3),
+							DefaultNetworkCardIndex:   aws.Int32(0),
 							Ipv4AddressesPerInterface: aws.Int32(6),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
 						},
 					},
 				},
@@ -68,6 +73,37 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 			},
 			mockError:     fmt.Errorf("invalid instance type"),
 			expectedError: fmt.Errorf("error describing instance type mock-type.large: %w", errors.New("invalid instance type")),
+		},
+		{
+			instanceType: "mock-multicard.large",
+			expectedResult: ec2util.EniInfo{
+				EniCount:        int32(15),
+				PodsPerEniCount: int32(50),
+			},
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "mock-multicard.large",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex:   aws.Int32(1),
+							Ipv4AddressesPerInterface: aws.Int32(50),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									MaximumNetworkInterfaces: aws.Int32(0),
+								},
+								{
+									MaximumNetworkInterfaces: aws.Int32(15),
+								},
+								{
+									MaximumNetworkInterfaces: aws.Int32(0),
+								},
+							},
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: nil,
 		},
 	}
 
