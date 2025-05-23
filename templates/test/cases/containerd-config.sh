@@ -27,7 +27,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime containerd \
   --containerd-config-file "$CONTAINERD_TOML" \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -eq 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"

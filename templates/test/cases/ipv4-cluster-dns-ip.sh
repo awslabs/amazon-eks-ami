@@ -9,7 +9,7 @@ expected_cluster_dns="192.168.0.1"
   --apiserver-endpoint http://my-api-endpoint \
   --ip-family ipv4 \
   --dns-cluster-ip "${expected_cluster_dns}" \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"

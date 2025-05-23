@@ -8,7 +8,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --kubelet-extra-args '--node-labels=cnf=cnf1 --reserved-cpus=0-3 --cpu-manager-policy=static' \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"
@@ -32,7 +32,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"
@@ -55,7 +55,7 @@ export KUBELET_VERSION=v1.23.15-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"
