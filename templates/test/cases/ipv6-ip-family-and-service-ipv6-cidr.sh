@@ -7,7 +7,7 @@ exit_code=0
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --ip-family ipv6 \
-  test || exit_code=$?
+  ipv6-cluster || exit_code=$?
 
 if [[ ${exit_code} -eq 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"
