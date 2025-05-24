@@ -312,6 +312,11 @@ if [[ ! -z "${IP_FAMILY}" ]]; then
     log "ERROR: Invalid --ip-family. Only ipv4 or ipv6 are allowed"
     exit 1
   fi
+
+  if [[ "${IP_FAMILY}" == "ipv6" ]] && [[ -z "${SERVICE_IPV6_CIDR}" ]]; then
+    log "ERROR: --service-ipv6-cidr must be provided when --ip-family is specified as \"ipv6\""
+    exit 1
+  fi
 fi
 
 if [[ ! -z "${SERVICE_IPV6_CIDR}" ]]; then
@@ -344,8 +349,8 @@ PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
 CA_CERTIFICATE_DIRECTORY=/etc/kubernetes/pki
 CA_CERTIFICATE_FILE_PATH=$CA_CERTIFICATE_DIRECTORY/ca.crt
 mkdir -p $CA_CERTIFICATE_DIRECTORY
-if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
-  log "INFO: --b64-cluster-ca or --apiserver-endpoint is not defined, describing cluster..."
+if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]] || [[ -z "${DNS_CLUSTER_IP}" ]]; then
+  log "INFO: --b64-cluster-ca or --apiserver-endpoint or --dns-cluster-ip is not defined, describing cluster..."
   DESCRIBE_CLUSTER_RESULT="/tmp/describe_cluster_result.txt"
 
   # Retry the DescribeCluster API for API_RETRY_ATTEMPTS
@@ -465,13 +470,17 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
 
   if [[ "${IP_FAMILY}" == "ipv4" ]]; then
     if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
-      #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      # Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      log "INFO: Detected SERVICE_IPV4_CIDR='$SERVICE_IPV4_CIDR'. Will set DNS_CLUSTER_IP as '${SERVICE_IPV4_CIDR%.*}.10'."
       DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
     else
       TEN_RANGE=$(imds "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true)
       DNS_CLUSTER_IP=10.100.0.10
       if [[ "$TEN_RANGE" != "0" ]]; then
+        log "INFO: Detected no SERVICE_IPV4_CIDR defined and VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '172.20.0.10'."
         DNS_CLUSTER_IP=172.20.0.10
+      else
+        log "INFO: Detected no SERVICE_IPV4_CIDR defined and VPC CIDR (IPv4) not in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '10.100.0.10'."
       fi
     fi
   fi

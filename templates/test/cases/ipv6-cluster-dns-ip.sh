@@ -8,8 +8,9 @@ expected_cluster_dns="fe80::2a"
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --ip-family ipv6 \
+  --service-ipv6-cidr fe80::1 \
   --dns-cluster-ip "${expected_cluster_dns}" \
-  test || exit_code=$?
+  ipv6-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"

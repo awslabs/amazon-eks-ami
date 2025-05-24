@@ -10,7 +10,7 @@ export KUBELET_VERSION=v1.20.15-eks-ba74326
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime dockerd \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"
@@ -23,7 +23,7 @@ export KUBELET_VERSION=v1.20.15-eks-ba74326
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime containerd \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"
@@ -35,7 +35,7 @@ export KUBELET_VERSION=v1.20.15-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"
@@ -48,7 +48,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime dockerd \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 echo "EXIT CODE $exit_code"
 if [[ ${exit_code} -eq 0 ]]; then
@@ -63,7 +63,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --container-runtime containerd \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"
@@ -75,7 +75,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"
@@ -89,7 +89,7 @@ export KUBELET_VERSION=v1.24.15-eks-ba74326
   --apiserver-endpoint http://my-api-endpoint \
   --enable-docker-bridge true \
   --docker-config-json "{\"some\":\"json\"}" \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${exit_code}'"

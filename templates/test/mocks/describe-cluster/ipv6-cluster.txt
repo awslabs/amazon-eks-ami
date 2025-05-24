@@ -1,0 +1,1 @@
+dGVzdA==	ipv6	http://my-api-endpoint	None	None	None	fe80::1

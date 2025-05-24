@@ -7,7 +7,7 @@ export KUBELET_VERSION=v1.21.0-eks-ba74326
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || exit_code=$?
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"

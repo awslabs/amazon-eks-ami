@@ -34,3 +34,24 @@ if [[ $1 == "ec2" ]]; then
     exit 1
   fi
 fi
+
+if [[ $1 == "eks" ]]; then
+  if [[ $2 == "describe-cluster" ]]; then
+    # Assuming all the cluster name for the test cases would be "ipv4-cluster"
+    if [[ $(echo $@ | grep "ipv4-cluster") ]]; then
+      if [[ -f "${SCRIPTPATH}/describe-cluster/ipv4-cluster.txt" ]]; then
+        cat "${SCRIPTPATH}/describe-cluster/ipv4-cluster.txt"
+        exit 0
+      fi
+    fi
+    # Assuming all the cluster name for the test cases would be "ipv6-cluster"
+    if [[ $(echo $@ | grep "ipv6-cluster") ]]; then
+      if [[ -f "${SCRIPTPATH}/describe-cluster/ipv6-cluster.txt" ]]; then
+        cat "${SCRIPTPATH}/describe-cluster/ipv6-cluster.txt"
+        exit 0
+      fi
+    fi
+    echo >&2 "cluster not found"
+    exit 0
+  fi
+fi

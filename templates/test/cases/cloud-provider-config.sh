@@ -25,7 +25,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || EXIT_CODE=$?
+  ipv4-cluster || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   fail "expected a zero exit code but got '${EXIT_CODE}'"
 fi
@@ -46,7 +46,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || EXIT_CODE=$?
+  ipv4-cluster || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   fail "expected a zero exit code but got '${EXIT_CODE}'"
 fi
@@ -67,7 +67,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || EXIT_CODE=$?
+  ipv4-cluster || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   fail "expected a zero exit code but got '${EXIT_CODE}'"
 fi
