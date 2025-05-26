@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "-> Should return ipv6 DNS Cluster IP when given dns-cluster-ip"
+echo "--> Should return IPv4 DNS Cluster IP when --service-ipv4-cidr set"
 exit_code=0
-expected_cluster_dns="fe80::2a"
+expected_cluster_dns="192.168.0.10"
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  --ip-family ipv6 \
-  --dns-cluster-ip "${expected_cluster_dns}" \
-  ipv6-cluster || exit_code=$?
+  --ip-family ipv4 \
+  --service-ipv4-cidr 192.168.0.0/16 \
+  ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
   echo "❌ Test Failed: expected a non-zero exit code but got '${exit_code}'"

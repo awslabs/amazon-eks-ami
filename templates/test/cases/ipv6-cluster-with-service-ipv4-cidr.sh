@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "-> Should fail validation - ip-family mismatch"
+echo "-> Should fail validation - IPv6 cluster with  mismatch --service-ipv4-cidr set"
 exit_code=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  --ip-family ipv4 \
-  --service-ipv6-cidr 192.168.0.1/24 \
+  --ip-family ipv6 \
+  --service-ipv4-cidr 192.168.0.0/24 \
   ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -eq 0 ]]; then
