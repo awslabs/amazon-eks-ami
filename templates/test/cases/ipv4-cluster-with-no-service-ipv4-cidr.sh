@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "--> Should return IPv4 DNS Cluster IP when given dns-cluster-ip"
+echo "--> Should return default IPv4 DNS Cluster IP when --service-ipv4-cidr not set"
 exit_code=0
-expected_cluster_dns="192.168.0.1"
+expected_cluster_dns="10.100.0.10"
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --ip-family ipv4 \
-  --dns-cluster-ip "${expected_cluster_dns}" \
   ipv4-cluster || exit_code=$?
 
 if [[ ${exit_code} -ne 0 ]]; then
