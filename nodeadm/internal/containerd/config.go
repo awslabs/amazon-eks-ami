@@ -118,7 +118,7 @@ func getConfigTemplateVersion(cfg *api.NodeConfig, isContainerdV2 bool) (ConfigS
 	} else {
 		// side case: if v3 config passed in nodeConfig when using containerd 1.*, throw error
 		if len(cfg.Spec.Containerd.Config) > 0 && Version3configInNodeConfig(config) {
-			zap.L().Error("Invalid containerd config passed, containerd 1.7.* doesn't support containerd configuration V3 properties")
+			zap.L().Error("Invalid containerd config passed, containerd 1.* doesn't support containerd configuration V3 properties")
 			return "", fmt.Errorf("failed to get config template version")
 		}
 		return ConfigSchemaV2, nil
