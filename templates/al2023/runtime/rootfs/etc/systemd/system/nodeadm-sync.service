@@ -1,0 +1,13 @@
+[Unit]
+Description=EKS Nodeadm Config Sync
+Documentation=https://github.com/awslabs/amazon-eks-ami
+# start after nodeadm run
+After=nodeadm-run.service
+Requires=nodeadm-run.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nodeadm daemon config-sync
+
+[Install]
+WantedBy=multi-user.target

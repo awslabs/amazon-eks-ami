@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/config"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/daemon"
 	initcmd "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm/init"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 )
@@ -20,6 +21,7 @@ func main() {
 	cmds := []cli.Command{
 		config.NewConfigCommand(),
 		initcmd.NewInitCommand(),
+		daemon.NewDaemonCommand(),
 	}
 
 	for _, cmd := range cmds {
