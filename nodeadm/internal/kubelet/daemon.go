@@ -48,6 +48,10 @@ func (k *kubelet) EnsureRunning() error {
 	return k.daemonManager.StartDaemon(KubeletDaemonName)
 }
 
+func (k *kubelet) Restart() error {
+	return k.daemonManager.RestartDaemon(KubeletDaemonName)
+}
+
 func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {
 	return nil
 }

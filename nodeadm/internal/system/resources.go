@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"go.uber.org/zap"
 )
@@ -79,6 +80,15 @@ func GetMilliNumCores() (int, error) {
 	}
 	return allLogicalCoresCount * 1000, err
 
+}
+
+func GetTotalMemoryMB() uint64 {
+	var sysinfo syscall.Sysinfo_t
+	err := syscall.Sysinfo(&sysinfo)
+	if err != nil {
+		return 0
+	}
+	return (uint64(sysinfo.Totalram) * uint64(sysinfo.Unit)) / 1000000
 }
 
 func getCPUCount() (int, error) {

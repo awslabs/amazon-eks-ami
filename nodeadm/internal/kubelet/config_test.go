@@ -26,7 +26,7 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 				KubeletVersion: test.kubeletVersion,
 			},
 		}
-		kubetConfig.withVersionToggles(&nodeConfig, make(map[string]string))
+		kubetConfig.WithVersionToggles(&nodeConfig, make(map[string]string))
 		kubeletCredentialProviders, present := kubetConfig.FeatureGates["KubeletCredentialProviders"]
 		if test.expectedValue == nil && present {
 			t.Errorf("KubeletCredentialProviders shouldn't be set for versions %s", test.kubeletVersion)
@@ -54,7 +54,7 @@ func TestContainerRuntime(t *testing.T) {
 				KubeletVersion: test.kubeletVersion,
 			},
 		}
-		kubetConfig.withVersionToggles(&nodeConfig, kubeletAruments)
+		kubetConfig.WithVersionToggles(&nodeConfig, kubeletAruments)
 		containerRuntime, present := kubeletAruments["container-runtime"]
 		if test.expectedContainerRuntime == nil {
 			if present {
@@ -93,7 +93,7 @@ func TestKubeAPILimits(t *testing.T) {
 				KubeletVersion: test.kubeletVersion,
 			},
 		}
-		kubetConfig.withVersionToggles(&nodeConfig, make(map[string]string))
+		kubetConfig.WithVersionToggles(&nodeConfig, make(map[string]string))
 		assert.Equal(t, test.expectedKubeAPIQS, kubetConfig.KubeAPIQPS)
 		assert.Equal(t, test.expectedKubeAPIBurst, kubetConfig.KubeAPIBurst)
 	}
@@ -124,7 +124,7 @@ func TestProviderID(t *testing.T) {
 		kubeletAruments := make(map[string]string)
 		kubetConfig := defaultKubeletSubConfig()
 		nodeConfig.Status.KubeletVersion = test.kubeletVersion
-		kubetConfig.withCloudProvider(&nodeConfig, kubeletAruments)
+		kubetConfig.WithCloudProvider(&nodeConfig, kubeletAruments)
 		assert.Equal(t, test.expectedCloudProvider, kubeletAruments["cloud-provider"])
 		if kubeletAruments["cloud-provider"] == "external" {
 			assert.Equal(t, *kubetConfig.ProviderID, providerId)

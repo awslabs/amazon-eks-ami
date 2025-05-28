@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package rpc;
+
+option go_package = "github.com/aws/amazon-vpc-cni-k8s/rpc;rpc";
+import "google/protobuf/empty.proto";
+
+// The service definition.
+service CNIBackend {
+  rpc AddNetwork (AddNetworkRequest) returns (AddNetworkReply) {}
+  rpc DelNetwork (DelNetworkRequest) returns (DelNetworkReply) {}
+  rpc GetAllocatableValues (google.protobuf.Empty) returns (GetAllocatableValuesReply) {}
+}
+
+message AddNetworkRequest {
+  string ClientVersion = 8;
+  string K8S_POD_NAME = 1;
+  string K8S_POD_NAMESPACE = 2;
+  string K8S_POD_INFRA_CONTAINER_ID = 3;
+  string ContainerID = 7;
+  string IfName = 5;
+  string NetworkName = 6;
+  string Netns = 4;
+  // next field: 9
+}
+
+message AddNetworkReply {
+  bool Success = 1;
+  string IPv4Addr = 2;
+  string IPv6Addr = 11;
+  int32 DeviceNumber = 4;
+  bool UseExternalSNAT = 5;
+  repeated string VPCv4CIDRs = 6;
+  repeated string VPCv6CIDRs = 12;
+
+  // start of pod-eni parameters
+  int32 PodVlanId = 7;
+  string PodENIMAC = 8;
+  string PodENISubnetGW = 9;
+  int32 ParentIfIndex = 10;
+  // end of pod-eni parameters
+
+  string NetworkPolicyMode = 13;
+  // next field: 14
+}
+
+message DelNetworkRequest {
+  string ClientVersion = 9;
+  string K8S_POD_NAME = 1;
+  string K8S_POD_NAMESPACE = 2;
+  string K8S_POD_INFRA_CONTAINER_ID = 3;
+  string Reason = 5;
+  string ContainerID = 8;
+  string IfName = 6;
+  string NetworkName = 7;
+  string K8S_POD_UID = 10;
+  // next field: 11
+}
+
+message DelNetworkReply {
+  bool Success = 1;
+  string IPv4Addr = 2;
+  string IPv6Addr = 5;
+  int32 DeviceNumber = 3;
+
+  // start of pod-eni parameters
+  int32 PodVlanId = 4;
+  // end of pod-eni parameters
+
+  string NetworkPolicyMode = 6;
+  // next field: 7
+}
+
+message GetAllocatableValuesReply {
+  int32 MaxAllocatableIPs = 1;
+  // next field: 2
+}
+
+// The service definition.
+service NPBackend {
+  rpc EnforceNpToPod (EnforceNpRequest) returns (EnforceNpReply) {}
+  rpc DeletePodNp (DeleteNpRequest) returns (DeleteNpReply) {}
+}
+
+message EnforceNpRequest {
+  string K8S_POD_NAME = 1;
+  string K8S_POD_NAMESPACE = 2;
+  string NETWORK_POLICY_MODE = 3;
+}
+
+message EnforceNpReply {
+  bool Success = 1;
+}
+
+message DeleteNpRequest {
+  string K8S_POD_NAME = 1;
+  string K8S_POD_NAMESPACE = 2;
+}
+
+message DeleteNpReply {
+  bool Success = 1;
+}
+
+// The service definition.
+service ConfigServerBackend {
+    rpc GetNetworkPolicyConfigs (google.protobuf.Empty) returns (NetworkPolicyAgentConfigReply) {}
+}
+
+message NetworkPolicyAgentConfigReply {
+  string NetworkPolicyMode = 1;
+}
