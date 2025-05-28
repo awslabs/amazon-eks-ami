@@ -30,6 +30,10 @@ func (cd *containerd) EnsureRunning() error {
 	return cd.daemonManager.StartDaemon(ContainerdDaemonName)
 }
 
+func (cd *containerd) Restart() error {
+	return cd.daemonManager.RestartDaemon(ContainerdDaemonName)
+}
+
 func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
 	return nil
 }

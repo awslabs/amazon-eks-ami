@@ -122,4 +122,8 @@ type Feature string
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	// CNIReconcile controls whether nodeadm should attempt to interrogate a max pods value
+	// from a locally running CNI.
+	CNIReconcile Feature = "CNIReconcile"
 )

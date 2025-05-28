@@ -26,7 +26,7 @@ func NewKubeletDaemon(daemonManager daemon.DaemonManager) daemon.Daemon {
 }
 
 func (k *kubelet) Configure(cfg *api.NodeConfig) error {
-	if err := k.writeKubeletConfig(cfg); err != nil {
+	if err := k.writeDefaultKubeletConfig(cfg); err != nil {
 		return err
 	}
 	if err := k.writeKubeconfig(cfg); err != nil {
@@ -46,6 +46,10 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 
 func (k *kubelet) EnsureRunning() error {
 	return k.daemonManager.StartDaemon(KubeletDaemonName)
+}
+
+func (k *kubelet) Restart() error {
+	return k.daemonManager.RestartDaemon(KubeletDaemonName)
 }
 
 func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {
