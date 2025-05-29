@@ -98,8 +98,9 @@ EOF
 ### SSH ########################################################################
 ################################################################################
 
-# Disable weak ciphers
+# Disable weak ciphers and MACs
 echo -e "\nCiphers aes128-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com" | sudo tee -a /etc/ssh/sshd_config
+echo -e "\nMACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256" | sudo tee -a /etc/ssh/sshd_config
 sudo systemctl restart sshd.service
 
 ################################################################################
