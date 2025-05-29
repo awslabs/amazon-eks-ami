@@ -79,6 +79,7 @@ sudo dnf -y install \
   kernel-modules-extra-common-$(uname -r)
 
 function archive-open-kmods() {
+  echo "Archiving open kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -106,6 +107,7 @@ function archive-open-kmods() {
 }
 
 function archive-proprietary-kmod() {
+  echo "Archiving proprietary kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -115,8 +117,37 @@ function archive-proprietary-kmod() {
   sudo kmod-util remove nvidia
 }
 
+function archive-grid-kmod() {
+  echo "Archiving GRID kmods"
+  local workdir=NVIDIA-Linux
+  sudo mkdir -p ${workdir}
+  pushd ${workdir}
+
+  sudo aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run .
+  local package=$(ls NVIDIA-Linux-x86_64*.run)
+  sudo sh ${package} --extract-only
+  sudo rm -rf ${package}
+
+  cd $(ls)
+
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-grid"/g' kernel/dkms.conf
+
+  sudo dnf -y install dkms
+  sudo ./nvidia-installer --kernel-module-type proprietary --dkms --silent
+
+  sudo kmod-util archive nvidia-grid
+  sudo kmod-util remove nvidia-grid
+
+  sudo ./nvidia-installer --uninstall --silent
+  sudo ./nvidia-installer --no-kernel-modules --silent
+
+  popd
+  sudo rm -rf ${workdir}
+}
+
 archive-open-kmods
 archive-proprietary-kmod
+archive-grid-kmod
 
 ################################################################################
 ### Install NVLSM ##############################################################
