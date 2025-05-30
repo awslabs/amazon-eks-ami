@@ -1,0 +1,1 @@
+SUBSYSTEM=="net", PROGRAM="/usr/bin/nodeadm-aux udev-net-managed-by", ENV{ID_NET_MANAGED_BY}="%result"
