@@ -31,6 +31,11 @@ function rpm_install() {
 
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
+# install and lock DKMS at the version provided by Amazon Linux
+# necessary because NVIDIA has pushed their own (newer) DKMS package to their repo
+sudo dnf install -y dkms
+sudo dnf versionlock dkms
+
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
@@ -84,6 +89,8 @@ function archive-open-kmods() {
   else
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
   fi
+  dkms status
+  ls -la /var/lib/dkms/
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
