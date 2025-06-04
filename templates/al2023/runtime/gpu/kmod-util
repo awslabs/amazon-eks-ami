@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# /usr/sbin may not be on the PATH
+# dkms may not be on the PATH
 DKMS=/usr/sbin/dkms
 DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
 
