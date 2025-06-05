@@ -12,7 +12,7 @@
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "cache_container_images": "false",
-    "cni_plugin_version": "v1.2.0",
+    "cni_plugin_version": "v1.5.1",
     "containerd_version": "1.7.*",
     "creator": "{{env `USER`}}",
     "docker_version": "none",
