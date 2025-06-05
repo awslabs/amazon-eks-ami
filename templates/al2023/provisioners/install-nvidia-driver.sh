@@ -84,6 +84,7 @@ sudo dnf -y install \
   kernel-modules-extra-common-$(uname -r)
 
 function archive-open-kmods() {
+  echo "Archiving open kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -93,9 +94,14 @@ function archive-open-kmods() {
   ls -la /var/lib/dkms/
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
-  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
+  NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$NVIDIA_OPEN_VERSION/source/dkms.conf
 
   sudo kmod-util archive nvidia-open
+
+  # Copy the source files to a new directory for GRID driver installation
+  sudo mkdir /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
+  sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
@@ -112,7 +118,25 @@ function archive-open-kmods() {
   fi
 }
 
+function archive-grid-kmod() {
+  local MACHINE=$(uname -m)
+  if [ "$MACHINE" != "x86_64" ]; then
+    return
+  fi
+  echo "Archiving GRID kmods"
+  NVIDIA_OPEN_VERSION=$(ls -d /usr/src/nvidia-open-grid-* | sed 's/.*nvidia-open-grid-//')
+  sudo sed -i 's/PACKAGE_NAME="nvidia-open"/PACKAGE_NAME="nvidia-open-grid"/g' /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo sed -i "s/MAKE\[0\]=\"'make'/MAKE\[0\]=\"'make' GRID_BUILD=1 GRID_BUILD_CSP=1 /g" /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo dkms build -m nvidia-open-grid -v $NVIDIA_OPEN_VERSION
+  sudo dkms install nvidia-open-grid/$NVIDIA_OPEN_VERSION
+
+  sudo kmod-util archive nvidia-open-grid
+  sudo kmod-util remove nvidia-open-grid
+  sudo rm -rf /usr/src/nvidia-open-grid*
+}
+
 function archive-proprietary-kmod() {
+  echo "Archiving proprietary kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -120,9 +144,11 @@ function archive-proprietary-kmod() {
   fi
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
+  sudo rm -rf /usr/src/nvidia*
 }
 
 archive-open-kmods
+archive-grid-kmod
 archive-proprietary-kmod
 
 ################################################################################
