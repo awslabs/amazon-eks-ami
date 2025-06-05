@@ -85,13 +85,9 @@ sudo dnf -y install \
 
 function archive-open-kmods() {
   echo "Archiving open kmods"
-  if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
-  fi
-  dkms status
-  ls -la /var/lib/dkms/
+
+  sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}*"
+
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
@@ -109,13 +105,8 @@ function archive-open-kmods() {
 
   sudo kmod-util remove nvidia-open
 
-  if is-isolated-partition; then
-    sudo dnf -y remove --all nvidia-driver
-    sudo dnf -y remove --all "kmod-nvidia-open*"
-  else
-    sudo dnf -y module remove --all nvidia-driver
-    sudo dnf -y module reset nvidia-driver
-  fi
+  sudo dnf -y remove --all nvidia-driver
+  sudo dnf -y remove --all "kmod-nvidia-open*"
 }
 
 function archive-grid-kmod() {
@@ -137,11 +128,7 @@ function archive-grid-kmod() {
 
 function archive-proprietary-kmod() {
   echo "Archiving proprietary kmods"
-  if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
-  fi
+  sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}*"
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
@@ -180,7 +167,7 @@ sudo systemctl enable set-nvidia-clocks.service
 ### Install other dependencies #################################################
 ################################################################################
 sudo dnf -y install nvidia-fabric-manager
-sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}*"
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then

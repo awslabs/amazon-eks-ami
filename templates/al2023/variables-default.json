@@ -20,7 +20,7 @@
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "20",
     "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.23",
-    "nvidia_driver_major_version": "570",
+    "nvidia_driver_major_version": "570.133.20",
     "nvidia_repository_url": null,
     "pause_container_image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.10",
     "remote_folder": "/tmp",
