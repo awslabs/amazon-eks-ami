@@ -9,12 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
+	"go.uber.org/zap"
 )
 
 // Fetch information about the ec2 instance using IMDS data.
 // This information is stored into the internal config to avoid redundant calls
 // to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client) (*InstanceDetails, error) {
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client, log *zap.Logger) (*InstanceDetails, error) {
 	instanceIdenitityDocument, err := imds.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2C
 
 	var privateDNSName string
 	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
-		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
+		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID, log)
 		if err != nil {
 			return nil, err
 		}
@@ -46,9 +47,10 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2C
 const privateDNSNameAvailableTimeout = 3 * time.Minute
 
 // GetPrivateDNSName returns this instance's private DNS name as reported by the EC2 API, waiting until it's available if necessary.
-func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error) {
+func getPrivateDNSName(ec2Client *ec2.Client, instanceID string, log *zap.Logger) (string, error) {
 	w := ec2extra.NewInstanceConditionWaiter(ec2Client, privateDNSNameAvailable, func(opts *ec2extra.InstanceConditionWaiterOptions) {
 		opts.LogWaitAttempts = true
+		opts.Logger = log
 	})
 	out, err := w.WaitForOutput(context.TODO(), &ec2.DescribeInstancesInput{InstanceIds: []string{instanceID}}, privateDNSNameAvailableTimeout)
 	if err != nil {
