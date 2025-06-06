@@ -158,7 +158,9 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	log.Info("Fetched kubelet version", zap.String("version", kubeletVersion))
 	log.Info("Fetching instance details..")
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithClientLogMode(aws.LogRetries),
+		config.WithRetryer(func() aws.Retryer {
+			return aws.NopRetryer{}
+		}),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
 			// Use our pre-configured IMDS client to avoid hitting common retry
 			// issues with the default config.
@@ -168,7 +170,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), log)
 	if err != nil {
 		return err
 	}

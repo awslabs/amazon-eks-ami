@@ -11,6 +11,7 @@ import (
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithywaiter "github.com/aws/smithy-go/waiter"
+	"go.uber.org/zap"
 )
 
 type InstanceCondition func(output *ec2.DescribeInstancesOutput) (bool, error)
@@ -44,6 +45,8 @@ type InstanceConditionWaiterOptions struct {
 
 	// LogWaitAttempts is used to enable logging for waiter retry attempts
 	LogWaitAttempts bool
+
+	Logger *zap.Logger
 }
 
 // InstanceConditionWaiter waits for an instance to meet a condition
@@ -88,6 +91,7 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	}
 
 	options := w.options
+	zapLogger := options.Logger
 	for _, fn := range optFns {
 		fn(&options)
 	}
@@ -126,13 +130,16 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			retryable, err := instanceRetryable(err)
-			if err != nil {
-				return nil, err
+			retryable, retryErr := instanceRetryable(err)
+			if retryErr != nil {
+				return nil, retryErr
 			}
 			if !retryable {
 				return out, nil
 			}
+			zapLogger.Warn("retryable error encountered",
+				zap.Error(err),
+			)
 		} else {
 			conditionMet, err := w.condition(out)
 			if err != nil {
