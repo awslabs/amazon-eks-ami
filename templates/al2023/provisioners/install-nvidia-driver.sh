@@ -132,6 +132,13 @@ function archive-grid-kmod() {
 
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
+  if is-isolated-partition; then
+    sudo dnf -y remove --all nvidia-driver
+    sudo dnf -y remove --all "kmod-nvidia-open*"
+  else
+    sudo dnf -y module remove --all nvidia-driver
+    sudo dnf -y module reset nvidia-driver
+  fi
   sudo rm -rf /usr/src/nvidia-open-grid*
 }
 
