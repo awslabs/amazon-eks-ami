@@ -1,6 +1,10 @@
 package init
 
 import (
+	"encoding/json" 
+	"os"           
+	"path/filepath"
+
 	"context"
 	"time"
 
@@ -24,6 +28,7 @@ import (
 const (
 	configPhase = "config"
 	runPhase    = "run"
+	defaultConfigPath = "/var/lib/nodeadm/config.json" // adding a default path to write `config.json`` too.
 )
 
 func NewInitCommand() cli.Command {
@@ -71,6 +76,11 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	if err := enrichConfig(log, nodeConfig); err != nil {
 		return err
 	}
+
+    log.Info("Writing node configuration..") // adding a log entry and calling func `writeConfigToFile`
+    if err := writeConfigToFile(log, nodeConfig); err != nil {
+        return err
+    }
 
 	zap.L().Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
@@ -180,4 +190,27 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil
+}
+
+// this func ensure to creation of directory `/var/lib/nodeadm` with 0500 and file `config.json` with 0200
+// after writing to `config.json` its changes the permisison to 0400 to only allow read.
+func writeConfigToFile(log *zap.Logger, cfg *api.NodeConfig) error { 
+    log.Info("Creating nodeadm directory..", zap.String("path", filepath.Dir(defaultConfigPath)))
+    if err := os.MkdirAll(filepath.Dir(defaultConfigPath), 0500); err != nil {
+        return err
+    }
+    log.Info("Writing configuration file..", zap.String("path", defaultConfigPath))
+    f, err := os.OpenFile(defaultConfigPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0200)
+    if err != nil {
+        return err
+    }
+    defer func() {
+        f.Close()
+        os.Chmod(defaultConfigPath, 0400)
+    }()
+    if err := json.NewEncoder(f).Encode(cfg); err != nil {
+        return err
+    }
+    log.Info("Configuration file written successfully", zap.String("path", defaultConfigPath))
+    return nil
 }
