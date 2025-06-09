@@ -229,6 +229,11 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[stri
 		ksc.KubeAPIQPS = ptr.Int(10)
 		ksc.KubeAPIBurst = ptr.Int(20)
 	}
+
+	// EKS enables DRA on 1.33+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
+		ksc.FeatureGates["DynamicResourceAllocation"] = true
+	}
 }
 
 func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
