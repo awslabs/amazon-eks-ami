@@ -58,11 +58,6 @@ else
   sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
 
-# Install dkms dependencies from amazonlinux
-sudo dnf -y install gcc make patch elfutils-libelf-devel kernel-devel
-# Install dkms from the cuda repo
-sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
-
 ################################################################################
 ### Install drivers ############################################################
 ################################################################################
@@ -83,6 +78,11 @@ sudo dnf -y install \
   kernel-headers-$(uname -r) \
   kernel-modules-extra-common-$(uname -r)
 
+# Install dkms dependency from amazonlinux
+sudo dnf -y install patch
+# Install dkms from the cuda repo
+sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
+
 function archive-open-kmods() {
   echo "Archiving open kmods"
   if is-isolated-partition; then
@@ -94,8 +94,16 @@ function archive-open-kmods() {
   ls -la /var/lib/dkms/
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
-  NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
-  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$NVIDIA_OPEN_VERSION/source/dkms.conf
+
+  # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
+  # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+  sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+  sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
   sudo kmod-util archive nvidia-open
 
