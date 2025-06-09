@@ -53,6 +53,10 @@ if is-isolated-partition; then
 else
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
+  elif [[ "$(uname -m)" == "aarch64" ]]; then
+    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/sbsa/cuda-amzn2023.repo
+    # nvidia-container-toolkit is not included in the amzn2023/sbsa repo, but is for other architectures
+    sudo dnf config-manager --add-repo=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
   else
     sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
   fi
