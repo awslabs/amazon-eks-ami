@@ -31,11 +31,6 @@ function rpm_install() {
 
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
-# install and lock DKMS at the version provided by Amazon Linux
-# necessary because NVIDIA has pushed their own (newer) DKMS package to their repo
-sudo dnf install -y dkms
-sudo dnf versionlock dkms
-
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
@@ -62,6 +57,11 @@ else
   # update all current .repo sources to enable gpgcheck
   sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
+
+# Install dkms dependencies from amazonlinux
+sudo dnf -y install gcc make patch elfutils-libelf-devel kernel-devel
+# Install dkms from the cuda repo
+sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
 
 ################################################################################
 ### Install drivers ############################################################
