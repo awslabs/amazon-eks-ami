@@ -14,7 +14,7 @@ function log() {
 
 # get the version of a registered kernel module
 function module-version() {
-  ${DKMS} status -m "${1}" | tr -s ',' '/' | tr -d ' ' | awk -F '/' '{print $2}'
+  ls /var/lib/dkms/${1}/ | head -n 1
 }
 
 # load a kernel module from the archives
