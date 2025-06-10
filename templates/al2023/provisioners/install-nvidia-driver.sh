@@ -82,10 +82,14 @@ sudo dnf -y install \
   kernel-headers-$(uname -r) \
   kernel-modules-extra-common-$(uname -r)
 
-# Install dkms dependency from amazonlinux
+# Install dkms dependency from amazonlinux repo
 sudo dnf -y install patch
-# Install dkms from the cuda repo
-sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
+if is-isolated-partition; then
+  sudo dnf -y install dkms
+else
+  # Install dkms from the cuda repo
+  sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
+fi
 
 function archive-open-kmods() {
   echo "Archiving open kmods"
