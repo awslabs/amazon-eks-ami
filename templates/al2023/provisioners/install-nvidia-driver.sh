@@ -34,23 +34,20 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
-function get_cuda_al2023_x86_repo() {
-  if [[ $AWS_REGION == cn-* ]]; then
-    DOMAIN="nvidia.cn"
-  else
-    DOMAIN="nvidia.com"
-  fi
-
-  echo "https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo"
-}
-
 # Determine the domain based on the region
 if is-isolated-partition; then
   sudo dnf install -y nvidia-release
   sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
 
   rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
+
 else
+  if [[ $AWS_REGION == cn-* ]]; then
+    DOMAIN="nvidia.cn"
+  else
+    DOMAIN="nvidia.com"
+  fi
+
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
   elif [[ "$(uname -m)" == "aarch64" ]]; then
@@ -58,7 +55,7 @@ else
     # nvidia-container-toolkit is not included in the amzn2023/sbsa repo, but is for other architectures
     sudo dnf config-manager --add-repo=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
   else
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/$(uname -m)/cuda-amzn2023.repo
   fi
 
   # update all current .repo sources to enable gpgcheck
@@ -85,23 +82,10 @@ sudo dnf -y install \
   kernel-headers-$(uname -r) \
   kernel-modules-extra-common-$(uname -r)
 
-# Install dkms dependency from amazonlinux repo
+# Install dkms dependency from amazonlinux
 sudo dnf -y install patch
-
-if is-isolated-partition; then
-  sudo dnf -y install dkms
-else
-  # Install dkms from the cuda repo
-  if [[ "$(uname -m)" == "x86_64" ]]; then
-    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
-  else
-    sudo dnf -y remove dkms
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
-    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
-    sudo dnf config-manager --set-disabled cuda-amzn2023-x86_64
-    sudo rm /etc/yum.repos.d/cuda-amzn2023.repo
-  fi
-fi
+# Install dkms from the cuda repo
+sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
 
 function archive-open-kmods() {
   echo "Archiving open kmods"
