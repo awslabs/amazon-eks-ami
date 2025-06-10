@@ -2,17 +2,12 @@ package init
 
 import (
 	"context"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 	"k8s.io/utils/strings/slices"
+	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -157,18 +152,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	cfg.Status.KubeletVersion = kubeletVersion
 	log.Info("Fetched kubelet version", zap.String("version", kubeletVersion))
 	log.Info("Fetching instance details..")
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithClientLogMode(aws.LogRetries),
-		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
-		}),
-	)
-	if err != nil {
-		return err
-	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates)
 	if err != nil {
 		return err
 	}
