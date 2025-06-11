@@ -4,8 +4,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# dkms may not be on the PATH
-DKMS=/usr/bin/dkms
+# dkms may not be on the PATH. Discover the path from known paths
+DKMS=""
+for path in /usr/bin/dkms /usr/sbin/dkms; do
+  if [ -x "$path" ]; then
+    DKMS=$path
+    break
+  fi
+done
+
 DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
 
 function log() {
