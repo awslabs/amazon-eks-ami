@@ -33,6 +33,7 @@ function print_help {
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
   echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods <mount | raid0 | raid10>"
+  echo "--max-pods-value Specify an exact value of max pods to use for kubelet, prioritized over all other related settings if provided."
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
@@ -166,6 +167,12 @@ while [[ $# -gt 0 ]]; do
     --mount-bpf-fs)
       MOUNT_BPF_FS=$2
       log "INFO: --mount-bpf-fs='${MOUNT_BPF_FS}'"
+      shift
+      shift
+      ;;
+    --max-pods-value)
+      MAX_PODS_VALUE=$2
+      log "INFO: --max-pods-value='${MAX_PODS_VALUE}'"
       shift
       shift
       ;;
@@ -517,6 +524,7 @@ fi
 MAX_PODS_FILE="/etc/eks/eni-max-pods.txt"
 set +o pipefail
 MAX_PODS=$(cat $MAX_PODS_FILE | awk "/^${INSTANCE_TYPE:-unset}/"' { print $2 }')
+MAX_PODS=${MAX_PODS_VALUE:-$MAX_PODS}
 set -o pipefail
 if [ -z "$MAX_PODS" ] || [ -z "$INSTANCE_TYPE" ]; then
   log "INFO: No entry for type '$INSTANCE_TYPE' in $MAX_PODS_FILE. Will attempt to auto-discover value."
