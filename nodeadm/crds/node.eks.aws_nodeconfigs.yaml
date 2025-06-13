@@ -107,10 +107,13 @@ spec:
                           List of directories that will not be mounted to LocalStorage. By default,
                           all mounts are enabled.
                         items:
-                          description: DisabledMount specifies a directory that should
-                            not be mounted onto local storage
+                          description: |-
+                            DisabledMount specifies a directory that should not be mounted onto local storage
+
+
+                            * `Containerd` refers to `/var/lib/containerd`
+                            * `PodLogs` refers to `/var/log/pods`
                           enum:
-                          - Kubelet
                           - Containerd
                           - PodLogs
                           type: string
