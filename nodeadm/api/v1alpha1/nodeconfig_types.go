@@ -117,11 +117,13 @@ const (
 )
 
 // DisabledMount specifies a directory that should not be mounted onto local storage
-// +kubebuilder:validation:Enum={Kubelet, Containerd, PodLogs}
+//
+// `Containerd` refers to `/var/lib/containerd`
+// `PodLogs` refers to `/var/log/pods`
+// +kubebuilder:validation:Enum={Containerd, PodLogs}
 type DisabledMount string
 
 const (
-	DisabledMountKubelet    DisabledMount = "Kubelet"
 	DisabledMountContainerd DisabledMount = "Containerd"
 	DisabledMountPodLogs    DisabledMount = "PodLogs"
 )

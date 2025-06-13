@@ -43,11 +43,14 @@ _Underlying type:_ _string_
 
 DisabledMount specifies a directory that should not be mounted onto local storage
 
+`Containerd` refers to `/var/lib/containerd`
+`PodLogs` refers to `/var/log/pods`
+
 _Appears in:_
 - [LocalStorageOptions](#localstorageoptions)
 
 .Validation:
-- Enum: [Kubelet Containerd PodLogs]
+- Enum: [Containerd PodLogs]
 
 #### Feature
 

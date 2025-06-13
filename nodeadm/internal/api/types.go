@@ -113,7 +113,6 @@ const (
 type DisabledMount string
 
 const (
-	DisabledMountKubelet    DisabledMount = "Kubelet"
 	DisabledMountContainerd DisabledMount = "Containerd"
 	DisabledMountPodLogs    DisabledMount = "PodLogs"
 )
