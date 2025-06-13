@@ -48,10 +48,14 @@ else
     DOMAIN="nvidia.com"
   fi
 
-  sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
-  sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+  if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
+    sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
+  else
+    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/$(uname -m)/cuda-amzn2023.repo
+  fi
 
-  sudo sed -i 's/gpgcheck=0/gpgcheck=1/g' /etc/yum.repos.d/nvidia-container-toolkit.repo /etc/yum.repos.d/cuda-amzn2023.repo
+  # update all current .repo sources to enable gpgcheck
+  sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
 
 ################################################################################
@@ -62,7 +66,17 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
-sudo dnf -y install kernel-modules-extra.x86_64
+
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  sudo dnf -y install kernel6.12-modules-extra-$(uname -r)
+else
+  sudo dnf -y install kernel-modules-extra-$(uname -r)
+fi
+
+sudo dnf -y install \
+  kernel-devel-$(uname -r) \
+  kernel-headers-$(uname -r) \
+  kernel-modules-extra-common-$(uname -r)
 
 function archive-open-kmods() {
   if is-isolated-partition; then
@@ -105,6 +119,20 @@ archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
+### Install NVLSM ##############################################################
+################################################################################
+# https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
+
+# TODO: install unconditionally once availability is guaranteed
+if ! is-isolated-partition; then
+  echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
+  sudo dnf -y install \
+    libibumad \
+    infiniband-diags \
+    nvlsm
+fi
+
+################################################################################
 ### Prepare for nvidia init ####################################################
 ################################################################################
 
@@ -119,6 +147,7 @@ sudo systemctl enable set-nvidia-clocks.service
 ### Install other dependencies #################################################
 ################################################################################
 sudo dnf -y install nvidia-fabric-manager
+sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then

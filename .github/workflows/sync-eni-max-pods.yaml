@@ -14,7 +14,7 @@ jobs:
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
     steps:
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
+      - uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # 4.2.0
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_ENI_MAX_PODS }}
@@ -35,7 +35,7 @@ jobs:
           make generate-limits
           cp misc/eni-max-pods.txt ../amazon-eks-ami/templates/shared/runtime/eni-max-pods.txt
           cp misc/eni-max-pods.txt ../amazon-eks-ami/nodeadm/internal/kubelet/eni-max-pods.txt
-      - uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
+      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # 7.0.8
         with:
           branch: update-eni-max-pods
           path: amazon-eks-ami/

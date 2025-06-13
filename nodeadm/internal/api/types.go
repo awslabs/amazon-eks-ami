@@ -36,8 +36,9 @@ type NodeConfigSpec struct {
 }
 
 type NodeConfigStatus struct {
-	Instance InstanceDetails `json:"instance,omitempty"`
-	Defaults DefaultOptions  `json:"default,omitempty"`
+	Instance       InstanceDetails `json:"instance,omitempty"`
+	Defaults       DefaultOptions  `json:"default,omitempty"`
+	KubeletVersion string          `json:"kubeletVersion,omitempty"`
 }
 
 type InstanceDetails struct {
@@ -102,8 +103,9 @@ type LocalStorageOptions struct {
 type LocalStorageStrategy string
 
 const (
-	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
-	LocalStorageMount LocalStorageStrategy = "Mount"
+	LocalStorageRAID0  LocalStorageStrategy = "RAID0"
+	LocalStorageRAID10 LocalStorageStrategy = "RAID10"
+	LocalStorageMount  LocalStorageStrategy = "Mount"
 )
 
 type Feature string

@@ -21,7 +21,7 @@ jobs:
   build:
     executor: packer
     environment:
-      K8S_VERSION: 1.27
+      K8S_VERSION: 1.28
       os_distro: "al2"
     steps:
       - attach_workspace:

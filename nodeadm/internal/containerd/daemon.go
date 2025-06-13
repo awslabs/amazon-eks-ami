@@ -20,6 +20,9 @@ func NewContainerdDaemon(daemonManager daemon.DaemonManager) daemon.Daemon {
 }
 
 func (cd *containerd) Configure(c *api.NodeConfig) error {
+	if err := writeBaseRuntimeSpec(c); err != nil {
+		return err
+	}
 	return writeContainerdConfig(c)
 }
 

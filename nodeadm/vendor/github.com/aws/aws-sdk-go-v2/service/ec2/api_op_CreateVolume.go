@@ -234,7 +234,7 @@ type CreateVolumeOutput struct {
 	// Indicates whether Amazon EBS Multi-Attach is enabled.
 	MultiAttachEnabled *bool
 
-	// The entity that manages the volume.
+	// The service provider that manages the volume.
 	Operator *types.OperatorResponse
 
 	// The Amazon Resource Name (ARN) of the Outpost.
@@ -334,6 +334,9 @@ func (c *Client) addOperationCreateVolumeMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateVolumeMiddleware(stack, options); err != nil {
