@@ -37,6 +37,18 @@ _Appears in:_
 | `config` _string_ | Config is an inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)<br />that will be merged with the defaults. |
 | `baseRuntimeSpec` _object (keys:string, values:[RawExtension](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg))_ | BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based.<br />The provided spec will be merged with the default spec; so that a partial spec may be provided.<br />For more information, see: https://github.com/opencontainers/runtime-spec |
 
+#### DisabledMount
+
+_Underlying type:_ _string_
+
+DisabledMount specifies a directory that should not be mounted onto local storage
+
+_Appears in:_
+- [LocalStorageOptions](#localstorageoptions)
+
+.Validation:
+- Enum: [Kubelet Containerd PodLogs]
+
 #### Feature
 
 _Underlying type:_ _string_
@@ -83,6 +95,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `strategy` _[LocalStorageStrategy](#localstoragestrategy)_ |  |
+| `mountPath` _string_ | MountPath is the path where the filesystem will be mounted.<br />Defaults to `/mnt/k8s-disks/`. |
+| `disabledMounts` _[DisabledMount](#disabledmount) array_ | List of directories that will not be mounted to LocalStorage. By default,<br />all mounts are enabled. |
 
 #### LocalStorageStrategy
 

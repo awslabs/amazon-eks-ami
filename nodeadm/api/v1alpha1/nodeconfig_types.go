@@ -91,6 +91,14 @@ type InstanceOptions struct {
 // are used when available.
 type LocalStorageOptions struct {
 	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
+
+	// MountPath is the path where the filesystem will be mounted.
+	// Defaults to `/mnt/k8s-disks/`.
+	MountPath string `json:"mountPath,omitempty"`
+
+	// List of directories that will not be mounted to LocalStorage. By default,
+	// all mounts are enabled.
+	DisabledMounts []DisabledMount `json:"disabledMounts,omitempty"`
 }
 
 // LocalStorageStrategy specifies how to handle an instance's local storage devices.
@@ -106,6 +114,16 @@ const (
 
 	// LocalStorageMount will mount each local disk individually
 	LocalStorageMount LocalStorageStrategy = "Mount"
+)
+
+// DisabledMount specifies a directory that should not be mounted onto local storage
+// +kubebuilder:validation:Enum={Kubelet, Containerd, PodLogs}
+type DisabledMount string
+
+const (
+	DisabledMountKubelet    DisabledMount = "Kubelet"
+	DisabledMountContainerd DisabledMount = "Containerd"
+	DisabledMountPodLogs    DisabledMount = "PodLogs"
 )
 
 // Feature specifies which feature gate should be toggled

@@ -204,6 +204,8 @@ func Convert_api_KubeletOptions_To_v1alpha1_KubeletOptions(in *api.KubeletOption
 
 func autoConvert_v1alpha1_LocalStorageOptions_To_api_LocalStorageOptions(in *v1alpha1.LocalStorageOptions, out *api.LocalStorageOptions, s conversion.Scope) error {
 	out.Strategy = api.LocalStorageStrategy(in.Strategy)
+	out.MountPath = in.MountPath
+	out.DisabledMounts = *(*[]api.DisabledMount)(unsafe.Pointer(&in.DisabledMounts))
 	return nil
 }
 
@@ -214,6 +216,8 @@ func Convert_v1alpha1_LocalStorageOptions_To_api_LocalStorageOptions(in *v1alpha
 
 func autoConvert_api_LocalStorageOptions_To_v1alpha1_LocalStorageOptions(in *api.LocalStorageOptions, out *v1alpha1.LocalStorageOptions, s conversion.Scope) error {
 	out.Strategy = v1alpha1.LocalStorageStrategy(in.Strategy)
+	out.MountPath = in.MountPath
+	out.DisabledMounts = *(*[]v1alpha1.DisabledMount)(unsafe.Pointer(&in.DisabledMounts))
 	return nil
 }
 

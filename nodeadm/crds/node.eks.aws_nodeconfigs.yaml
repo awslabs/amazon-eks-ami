@@ -102,6 +102,24 @@ spec:
                       LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
                       are used when available.
                     properties:
+                      disabledMounts:
+                        description: |-
+                          List of directories that will not be mounted to LocalStorage. By default,
+                          all mounts are enabled.
+                        items:
+                          description: DisabledMount specifies a directory that should
+                            not be mounted onto local storage
+                          enum:
+                          - Kubelet
+                          - Containerd
+                          - PodLogs
+                          type: string
+                        type: array
+                      mountPath:
+                        description: |-
+                          MountPath is the path where the filesystem will be mounted.
+                          Defaults to `/mnt/k8s-disks/`.
+                        type: string
                       strategy:
                         description: LocalStorageStrategy specifies how to handle
                           an instance's local storage devices.
