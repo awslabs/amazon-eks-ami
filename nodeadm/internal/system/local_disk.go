@@ -27,8 +27,23 @@ func (a *localDiskAspect) Setup(cfg *api.NodeConfig) error {
 		return nil
 	}
 	strategy := strings.ToLower(string(cfg.Spec.Instance.LocalStorage.Strategy))
+	args := []string{strategy}
+
+	if cfg.Spec.Instance.LocalStorage.MountPath != "" {
+		args = append(args, "--dir", cfg.Spec.Instance.LocalStorage.MountPath)
+	}
+
+	for _, mount := range cfg.Spec.Instance.LocalStorage.DisabledMounts {
+		switch mount {
+		case api.DisabledMountPodLogs:
+			args = append(args, "--no-bind-pod-logs")
+		case api.DisabledMountContainerd:
+			args = append(args, "--no-bind-containerd")
+		}
+	}
+
 	// #nosec G204 Subprocess launched with variable
-	cmd := exec.Command("setup-local-disks", strategy)
+	cmd := exec.Command("setup-local-disks", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
