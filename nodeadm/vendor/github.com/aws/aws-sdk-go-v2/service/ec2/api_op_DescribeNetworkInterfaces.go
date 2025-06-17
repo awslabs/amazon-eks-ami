@@ -16,12 +16,11 @@ import (
 	"time"
 )
 
-// Describes one or more of your network interfaces.
+// Describes the specified network interfaces or all your network interfaces.
 //
 // If you have a large number of network interfaces, the operation fails unless
 // you use pagination or one of the following filters: group-id , mac-address ,
-// private-dns-name , private-ip-address , private-dns-name , subnet-id , or vpc-id
-// .
+// private-dns-name , private-ip-address , subnet-id , or vpc-id .
 //
 // We strongly recommend using only paginated requests. Unpaginated requests are
 // susceptible to throttling and timeouts.
@@ -259,6 +258,9 @@ func (c *Client) addOperationDescribeNetworkInterfacesMiddlewares(stack *middlew
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeNetworkInterfaces(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -487,6 +489,9 @@ func networkInterfaceAvailableStateRetryable(ctx context.Context, input *Describ
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

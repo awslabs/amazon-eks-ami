@@ -23,10 +23,12 @@ on:
         type: string
       k8s_versions:
         description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
-        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
         required: false
         type: string
       build_arguments:
+        required: false
+        type: string
+      test_arguments:
         required: false
         type: string
     outputs:
@@ -41,12 +43,23 @@ jobs:
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
       os_distros: ${{ steps.variables.outputs.os_distros }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
+    - uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # 4.2.0
+      with:
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
     - id: variables
       run: |
         echo 'ci_step_name_prefix=CI:' >> $GITHUB_OUTPUT
-        echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
         echo "os_distros=$(jq -Rn --arg input '${{ inputs.os_distros }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+        if [ -z "${{ inputs.k8s_versions }}" ]; then
+          echo "kubernetes_versions=$(aws eks describe-cluster-versions | jq -c '.clusterVersions | map(.clusterVersion)')" >> $GITHUB_OUTPUT
+        else
+          echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
+        fi
   kubernetes-versions:
     runs-on: ubuntu-latest
     name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
@@ -65,7 +78,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
         with:
           ref: 'main'
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # 4.0.2
+      - uses: aws-actions/configure-aws-credentials@f24d7193d98baebaeacc7e2227925dd47cc267f5 # 4.2.0
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_CI }}
@@ -91,3 +104,4 @@ jobs:
           build_id: ${{ inputs.resource_id }}
           aws_region: ${{ secrets.AWS_REGION }}
           log_bucket: ${{ secrets.CI_LOG_BUCKET }}
+          additional_arguments: ${{ inputs.test_arguments }}

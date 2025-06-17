@@ -177,6 +177,9 @@ func (c *Client) addOperationDescribeVpcPeeringConnectionsMiddlewares(stack *mid
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVpcPeeringConnections(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -378,7 +381,11 @@ func vpcPeeringConnectionDeletedStateRetryable(ctx context.Context, input *Descr
 		var v2 []types.VpcPeeringConnectionStateReasonCode
 		for _, v := range v1 {
 			v3 := v.Status
-			v4 := v3.Code
+			var v4 types.VpcPeeringConnectionStateReasonCode
+			if v3 != nil {
+				v5 := v3.Code
+				v4 = v5
+			}
 			v2 = append(v2, v4)
 		}
 		expectedValue := "deleted"
@@ -407,6 +414,9 @@ func vpcPeeringConnectionDeletedStateRetryable(ctx context.Context, input *Descr
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -589,6 +599,9 @@ func vpcPeeringConnectionExistsStateRetryable(ctx context.Context, input *Descri
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

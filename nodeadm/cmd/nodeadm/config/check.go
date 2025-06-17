@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/integrii/flaggy"
@@ -29,8 +30,11 @@ func (c *fileCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	if err != nil {
 		return err
 	}
-	_, err = provider.Provide()
+	nodeConfig, err := provider.Provide()
 	if err != nil {
+		return err
+	}
+	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
 	}
 	log.Info("Configuration is valid")

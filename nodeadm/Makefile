@@ -68,6 +68,8 @@ test: crds generate fmt vet ## Run go test against code.
 	go test ./...
 
 .PHONY: test-e2e
+# the test infra container needs a linux executable
+test-e2e: GOOS=linux
 test-e2e: build ## Run e2e tests.
 	test/e2e/run.sh
 
@@ -75,7 +77,7 @@ test-e2e: build ## Run e2e tests.
 
 .PHONY: build
 build: ## Build binary.
-	go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+	GOOS=$(GOOS) go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
 
 .PHONY: run
 run: build ## Run binary.
