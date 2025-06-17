@@ -18,6 +18,9 @@ inputs:
   log_bucket:
     required: true
     type: string
+  additional_arguments:
+    required: false
+    type: string
 runs:
   using: "composite"
   steps:
@@ -25,6 +28,8 @@ runs:
       shell: bash
       run: |
         export PATH=${PATH}:$(go env GOPATH)/bin
+        # old versions of packages are sometimes cached by the proxy, just disable it
+        GOPROXY=direct
         go install sigs.k8s.io/kubetest2/...@latest
         go install github.com/aws/aws-k8s-tester/...@HEAD
 
@@ -41,6 +46,10 @@ runs:
           ;;
         esac
 
+        if [ ! "${{ inputs.additional_arguments }}" = "" ]; then
+          KUBETEST2_ARGS="${KUBETEST2_ARGS} ${{ inputs.additional_arguments }}"
+        fi
+
         TESTER_NAME=ginkgo
         # k8s_version below 1.26 use the older ginkgo tester
         if [ "${{ inputs.k8s_version }}" = "$(echo -e "${{ inputs.k8s_version }}\n1.26" | sort -V | head -n1)" ]; then
@@ -55,7 +64,6 @@ runs:
           --emit-metrics \
           --log-bucket=${{ inputs.log_bucket }} \
           --kubernetes-version=${{ inputs.k8s_version }} \
-          --generate-ssh-key \
           --unmanaged-nodes \
           --ami=${{ inputs.ami_id }} \
           --region=${{ inputs.aws_region }} \

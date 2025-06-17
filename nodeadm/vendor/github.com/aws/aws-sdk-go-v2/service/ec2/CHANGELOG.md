@@ -1,3 +1,56 @@
+# v1.211.3 (2025-04-10)
+
+* No change notes available for this release.
+
+# v1.211.2 (2025-04-04)
+
+* **Documentation**: Doc-only updates for Amazon EC2
+
+# v1.211.1 (2025-04-03)
+
+* No change notes available for this release.
+
+# v1.211.0 (2025-03-31)
+
+* **Feature**: Release VPC Route Server, a new feature allowing dynamic routing in VPCs.
+
+# v1.210.1 (2025-03-19)
+
+* **Documentation**: Doc-only updates for EC2 for March 2025.
+
+# v1.210.0 (2025-03-13)
+
+* **Feature**: This release changes the CreateLaunchTemplate, CreateLaunchTemplateVersion, ModifyLaunchTemplate CLI and SDKs such that if you do not specify a client token, a randomly generated token is used for the request to ensure idempotency.
+
+# v1.209.0 (2025-03-11)
+
+* **Feature**: This release adds the GroupLongName field to the response of the DescribeAvailabilityZones API.
+
+# v1.208.0 (2025-03-07)
+
+* **Feature**: Add serviceManaged field to DescribeAddresses API response.
+
+# v1.207.1 (2025-03-04.2)
+
+* **Bug Fix**: Add assurance test for operation order.
+
+# v1.207.0 (2025-03-04)
+
+* **Feature**: Update the DescribeVpcs response
+
+# v1.206.0 (2025-02-27)
+
+* **Feature**: Track credential providers via User-Agent Feature ids
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.205.0 (2025-02-26)
+
+* **Feature**: Amazon EC2 Fleet customers can now override the Block Device Mapping specified in the Launch Template when creating a new Fleet request, saving the effort of creating and associating new Launch Templates to customize the Block Device Mapping.
+
+# v1.204.0 (2025-02-25)
+
+* **Feature**: Adds support for time-based EBS-backed AMI copy operations. Time-based copy ensures that EBS-backed AMIs are copied within and across Regions in a specified timeframe.
+
 # v1.203.1 (2025-02-18)
 
 * **Bug Fix**: Bump go version to 1.22

@@ -34,26 +34,29 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
-# Determine the domain based on the region
-if is-isolated-partition; then
-  sudo dnf install -y nvidia-release
-  sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
-
-  rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
-
-else
+function get_cuda_al2023_x86_repo() {
   if [[ $AWS_REGION == cn-* ]]; then
     DOMAIN="nvidia.cn"
   else
     DOMAIN="nvidia.com"
   fi
 
+  echo "https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo"
+}
+
+# Determine the domain based on the region
+if is-isolated-partition; then
+  sudo dnf install -y nvidia-release
+  sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
+
+  rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
+else
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
   else
-    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/$(uname -m)/cuda-amzn2023.repo
+    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
   fi
-  sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+
   # update all current .repo sources to enable gpgcheck
   sudo dnf config-manager --save --setopt=*.gpgcheck=1
 fi
@@ -66,19 +69,68 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
-sudo dnf -y install kernel-modules-extra
+
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  sudo dnf -y install kernel6.12-modules-extra-$(uname -r)
+else
+  sudo dnf -y install kernel-modules-extra-$(uname -r)
+fi
+
+sudo dnf -y install \
+  kernel-devel-$(uname -r) \
+  kernel-headers-$(uname -r) \
+  kernel-modules-extra-common-$(uname -r)
+
+# Install dkms dependency from amazonlinux repo
+sudo dnf -y install patch
+
+if is-isolated-partition; then
+  sudo dnf -y install dkms
+else
+  # Install dkms from the cuda repo
+  if [[ "$(uname -m)" == "x86_64" ]]; then
+    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
+  else
+    sudo dnf -y remove dkms
+    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
+    sudo dnf config-manager --set-disabled cuda-amzn2023-x86_64
+    sudo rm /etc/yum.repos.d/cuda-amzn2023.repo
+  fi
+fi
 
 function archive-open-kmods() {
+  echo "Archiving open kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
   fi
+  dkms status
+  ls -la /var/lib/dkms/
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
-  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$(kmod-util module-version nvidia-open)/source/dkms.conf
+
+  if is-isolated-partition; then
+    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
+    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$NVIDIA_OPEN_VERSION/source/dkms.conf
+  else
+    # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
+    # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+    sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
+    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
+    sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+    sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
+    sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
+    sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  fi
 
   sudo kmod-util archive nvidia-open
+
+  # Copy the source files to a new directory for GRID driver installation
+  sudo mkdir /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
+  sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
@@ -95,7 +147,25 @@ function archive-open-kmods() {
   fi
 }
 
+function archive-grid-kmod() {
+  local MACHINE=$(uname -m)
+  if [ "$MACHINE" != "x86_64" ]; then
+    return
+  fi
+  echo "Archiving GRID kmods"
+  NVIDIA_OPEN_VERSION=$(ls -d /usr/src/nvidia-open-grid-* | sed 's/.*nvidia-open-grid-//')
+  sudo sed -i 's/PACKAGE_NAME="nvidia-open"/PACKAGE_NAME="nvidia-open-grid"/g' /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo sed -i "s/MAKE\[0\]=\"'make'/MAKE\[0\]=\"'make' GRID_BUILD=1 GRID_BUILD_CSP=1 /g" /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo dkms build -m nvidia-open-grid -v $NVIDIA_OPEN_VERSION
+  sudo dkms install nvidia-open-grid/$NVIDIA_OPEN_VERSION
+
+  sudo kmod-util archive nvidia-open-grid
+  sudo kmod-util remove nvidia-open-grid
+  sudo rm -rf /usr/src/nvidia-open-grid*
+}
+
 function archive-proprietary-kmod() {
+  echo "Archiving proprietary kmods"
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -103,10 +173,26 @@ function archive-proprietary-kmod() {
   fi
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
+  sudo rm -rf /usr/src/nvidia*
 }
 
 archive-open-kmods
+archive-grid-kmod
 archive-proprietary-kmod
+
+################################################################################
+### Install NVLSM ##############################################################
+################################################################################
+# https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
+
+# TODO: install unconditionally once availability is guaranteed
+if ! is-isolated-partition; then
+  echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
+  sudo dnf -y install \
+    libibumad \
+    infiniband-diags \
+    nvlsm
+fi
 
 ################################################################################
 ### Prepare for nvidia init ####################################################

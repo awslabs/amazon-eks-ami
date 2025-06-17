@@ -7,6 +7,7 @@ address = '/run/foo/foo.sock'
 
 [plugins]
 [plugins.'io.containerd.grpc.v1.cri']
+enable_cdi = false
 sandbox_image = 'localhost/kubernetes/pause'
 
 [plugins.'io.containerd.grpc.v1.cri'.cni]

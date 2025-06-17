@@ -1,0 +1,1 @@
+dGVzdA==	ipv4	http://my-api-endpoint	None	None	10.100.0.0/16	None

@@ -36,6 +36,7 @@ function print_help {
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
+  echo "--service-ipv4-cidr ipv4 cidr range of the cluster"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
@@ -135,6 +136,12 @@ while [[ $# -gt 0 ]]; do
     --ip-family)
       IP_FAMILY=$2
       log "INFO: --ip-family='${IP_FAMILY}'"
+      shift
+      shift
+      ;;
+    --service-ipv4-cidr)
+      SERVICE_IPV4_CIDR=$2
+      log "INFO: --service-ipv4-cidr='${SERVICE_IPV4_CIDR}'"
       shift
       shift
       ;;
@@ -465,13 +472,18 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
 
   if [[ "${IP_FAMILY}" == "ipv4" ]]; then
     if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
-      #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      # Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      log "INFO: Detected SERVICE_IPV4_CIDR='$SERVICE_IPV4_CIDR'. Will set DNS_CLUSTER_IP as '${SERVICE_IPV4_CIDR%.*}.10'."
       DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
     else
+      log "INFO: No --service-ipv4-cidr set, will try to determine DNS_CLUSTER_IP by VPC IPV4 CIDR Blocks from IMDS."
       TEN_RANGE=$(imds "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true)
       DNS_CLUSTER_IP=10.100.0.10
       if [[ "$TEN_RANGE" != "0" ]]; then
+        log "INFO: Detected VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '172.20.0.10'."
         DNS_CLUSTER_IP=172.20.0.10
+      else
+        log "INFO: Detected no VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '10.100.0.10'."
       fi
     fi
   fi

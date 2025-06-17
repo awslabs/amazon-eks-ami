@@ -381,15 +381,21 @@ get_iptables_info() {
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
-  if ! command -v ipvsadm && command -v ipset > /dev/null 2>&1; then
-    echo "IPVS Linux kernel module not installed" | tee ipvsadm.txt ipset.txt
-  elif command -v ipvsadm > /dev/null 2>&1; then
+  if ! command -v ipvsadm > /dev/null 2>&1; then
+    echo "ipvsadm not installed" | tee "${COLLECT_DIR}"/networking/ipvsadm.txt
+  else
     # check that ip_vs module is loaded in get_modinfo()
     try "collect ipvs information"
-    ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt && sed -i '1s/^/add:service/server \tprotocol \tvirtual-server \tscheduler algorithm \treal-server \n/' "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
     ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+  fi
+
+  if ! command -v ipset > /dev/null 2>&1; then
+    echo "ipset not installed" | tee "${COLLECT_DIR}"/networking/ipset.txt
+  else
     ipset --list | tee "${COLLECT_DIR}"/networking/ipset.txt
     ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipset.txt
     ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
@@ -858,7 +864,7 @@ get_io_throttled_processes() {
   command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
-  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v " 0$" >> ${IO_THROTTLE_LOG}
   ok
 }
 
@@ -878,6 +884,16 @@ get_nvidia_bug_report() {
   ok
 }
 
+banner() {
+  echo >&2 "\
+****************************************************************************************
+* WARNING: The log bundle collected by this script may contain sensitive information.  *
+*                                                                                      *
+* Please review the contents of the log bundle carefully and redact or obfuscate       *
+* any information you do not wish to be accessible before sharing it with others.      *
+****************************************************************************************"
+}
+
 # -----------------------------------------------------------------------------
 # Entrypoint
 parse_options "$@"
@@ -885,3 +901,4 @@ parse_options "$@"
 collect
 pack
 finished
+banner
