@@ -130,12 +130,8 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			retryable, err := instanceRetryable(err)
-			if err != nil {
-				return nil, err
-			}
-			if !retryable {
-				return out, nil
+			if !isErrorRetryable(err) {
+				return out, err
 			}
 		} else {
 			conditionMet, err := w.condition(out)
@@ -181,18 +177,17 @@ var (
 	timeouts = retry.IsErrorTimeouts(retry.DefaultTimeouts)
 )
 
-func instanceRetryable(err error) (bool, error) {
+func isErrorRetryable(err error) bool {
 	if err != nil {
 		if timeouts.IsErrorTimeout(err).Bool() {
 			zap.L().Warn("timeout error encountered", zap.Error(err))
-			return true, nil
+			return true
 		}
 		if retryables.IsErrorRetryable(err).Bool() {
 			zap.L().Warn("retryable error encountered", zap.Error(err))
-			return true, nil
+			return true
 		}
-		return false, nil
+		return false
 	}
-
-	return true, nil
+	return true
 }
