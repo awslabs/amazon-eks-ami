@@ -2,16 +2,15 @@ package ec2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"go.uber.org/zap"
 )
 
 type InstanceCondition func(output *ec2.DescribeInstancesOutput) (bool, error)
@@ -55,7 +54,7 @@ type InstanceConditionWaiter struct {
 }
 
 // NewInstanceConditionWaiter constructs a InstanceConditionWaiter.
-func NewInstanceConditionWaiter(config aws.Config, condition InstanceCondition, optFns ...func(*InstanceConditionWaiterOptions)) *InstanceConditionWaiter {
+func NewInstanceConditionWaiter(client ec2.DescribeInstancesAPIClient, condition InstanceCondition, optFns ...func(*InstanceConditionWaiterOptions)) *InstanceConditionWaiter {
 	options := InstanceConditionWaiterOptions{}
 	options.MinDelay = 15 * time.Second
 	options.MaxDelay = 120 * time.Second
@@ -64,9 +63,6 @@ func NewInstanceConditionWaiter(config aws.Config, condition InstanceCondition, 
 		fn(&options)
 	}
 
-	// Disable default AWS SDK retry behavior as InstanceConditionWaiter implements its own exponential backoff retry logic
-	config.Retryer = func() aws.Retryer { return aws.NopRetryer{} }
-	client := ec2.NewFromConfig(config)
 	return &InstanceConditionWaiter{
 		client:    client,
 		condition: condition,
@@ -107,6 +103,7 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	ctx, cancelFn := context.WithTimeout(ctx, maxWaitDur)
 	defer cancelFn()
 
+	logger := smithywaiter.Logger{}
 	remainingTime := maxWaitDur
 
 	var attempt int64
@@ -116,7 +113,9 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		start := time.Now()
 
 		if options.LogWaitAttempts {
-			zap.L().Warn("attempting waiter request", zap.Int("attempt", int(attempt)))
+			logger.Attempt = attempt
+			apiOptions = append([]func(*middleware.Stack) error{}, options.APIOptions...)
+			apiOptions = append(apiOptions, logger.AddLogger)
 		}
 
 		out, err := w.client.DescribeInstances(ctx, params, func(o *ec2.Options) {
@@ -127,8 +126,12 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			if !isErrorRetryable(err) {
-				return out, err
+			retryable, err := instanceRetryable(err)
+			if err != nil {
+				return nil, err
+			}
+			if !retryable {
+				return out, nil
 			}
 		} else {
 			conditionMet, err := w.condition(out)
@@ -162,29 +165,18 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	return nil, fmt.Errorf("exceeded max wait time for InstanceCondition waiter")
 }
 
-var (
-	retryables = retry.IsErrorRetryables(append(
-		[]retry.IsErrorRetryable{
-			retry.RetryableErrorCode{
-				Codes: map[string]struct{}{"InvalidInstanceID.NotFound": {}},
-			},
-		},
-		retry.DefaultRetryables...,
-	))
-	timeouts = retry.IsErrorTimeouts(retry.DefaultTimeouts)
-)
-
-func isErrorRetryable(err error) bool {
+func instanceRetryable(err error) (bool, error) {
 	if err != nil {
-		if timeouts.IsErrorTimeout(err).Bool() {
-			zap.L().Warn("timeout error encountered", zap.Error(err))
-			return true
+		var apiErr smithy.APIError
+		ok := errors.As(err, &apiErr)
+		if !ok {
+			return false, fmt.Errorf("expected err to be of type smithy.APIError, got %w", err)
 		}
-		if retryables.IsErrorRetryable(err).Bool() {
-			zap.L().Warn("retryable error encountered", zap.Error(err))
-			return true
+
+		if "InvalidInstanceID.NotFound" == apiErr.ErrorCode() {
+			return true, nil
 		}
-		return false
 	}
-	return true
+
+	return true, nil
 }
