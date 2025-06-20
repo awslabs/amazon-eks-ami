@@ -2,12 +2,13 @@ package ec2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithywaiter "github.com/aws/smithy-go/waiter"
@@ -130,13 +131,16 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			retryable, err := instanceRetryable(err)
-			if err != nil {
-				return nil, err
+			retryable, retryErr := instanceRetryable(err)
+			if retryErr != nil {
+				return nil, retryErr
 			}
 			if !retryable {
 				return out, nil
 			}
+			zap.L().Warn("retryable error encountered",
+				zap.Error(err),
+			)
 		} else {
 			conditionMet, err := w.condition(out)
 			if err != nil {
@@ -169,29 +173,17 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	return nil, fmt.Errorf("exceeded max wait time for InstanceCondition waiter")
 }
 
-var (
-	retryables = retry.IsErrorRetryables(append(
-		[]retry.IsErrorRetryable{
-			retry.RetryableErrorCode{
-				Codes: map[string]struct{}{"InvalidInstanceID.NotFound": {}},
-			},
-		},
-		retry.DefaultRetryables...,
-	))
-	timeouts = retry.IsErrorTimeouts(retry.DefaultTimeouts)
-)
-
 func instanceRetryable(err error) (bool, error) {
 	if err != nil {
-		if timeouts.IsErrorTimeout(err).Bool() {
-			zap.L().Warn("timeout error encountered", zap.Error(err))
+		var apiErr smithy.APIError
+		ok := errors.As(err, &apiErr)
+		if !ok {
+			return false, fmt.Errorf("expected err to be of type smithy.APIError, got %w", err)
+		}
+
+		if "InvalidInstanceID.NotFound" == apiErr.ErrorCode() {
 			return true, nil
 		}
-		if retryables.IsErrorRetryable(err).Bool() {
-			zap.L().Warn("retryable error encountered", zap.Error(err))
-			return true, nil
-		}
-		return false, nil
 	}
 
 	return true, nil
