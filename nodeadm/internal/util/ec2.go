@@ -3,6 +3,8 @@ package util
 import (
 	"context"
 	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
@@ -35,8 +37,9 @@ func GetEniInfoForInstanceType(ec2API EC2API, instanceType string) (EniInfo, err
 
 	if len(describeResp.InstanceTypes) > 0 {
 		instanceTypeInfo := describeResp.InstanceTypes[0]
+		defaultNetworkCardIndex := aws.ToInt32(instanceTypeInfo.NetworkInfo.DefaultNetworkCardIndex)
 		return EniInfo{
-			EniCount:        *instanceTypeInfo.NetworkInfo.MaximumNetworkInterfaces,
+			EniCount:        *instanceTypeInfo.NetworkInfo.NetworkCards[defaultNetworkCardIndex].MaximumNetworkInterfaces,
 			PodsPerEniCount: *instanceTypeInfo.NetworkInfo.Ipv4AddressesPerInterface,
 		}, nil
 	}
