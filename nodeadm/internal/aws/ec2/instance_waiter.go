@@ -107,7 +107,6 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	ctx, cancelFn := context.WithTimeout(ctx, maxWaitDur)
 	defer cancelFn()
 
-	logger := smithywaiter.Logger{}
 	remainingTime := maxWaitDur
 
 	var attempt int64
@@ -117,9 +116,7 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		start := time.Now()
 
 		if options.LogWaitAttempts {
-			logger.Attempt = attempt
-			apiOptions = append([]func(*middleware.Stack) error{}, options.APIOptions...)
-			apiOptions = append(apiOptions, logger.AddLogger)
+			zap.L().Warn("attempting waiter request", zap.Int("attempt", int(attempt)))
 		}
 
 		out, err := w.client.DescribeInstances(ctx, params, func(o *ec2.Options) {
