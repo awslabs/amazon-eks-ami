@@ -28,7 +28,7 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool) (*In
 
 	var privateDNSName string
 	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
-		privateDNSName, err = getPrivateDNSName(ctx, instanceIdenitityDocument.InstanceID)
+		privateDNSName, err = getPrivateDNSName(instanceIdenitityDocument.InstanceID)
 		if err != nil {
 			return nil, err
 		}
@@ -47,8 +47,8 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool) (*In
 const privateDNSNameAvailableTimeout = 3 * time.Minute
 
 // GetPrivateDNSName returns this instance's private DNS name as reported by the EC2 API, waiting until it's available if necessary.
-func getPrivateDNSName(ctx context.Context, instanceID string) (string, error) {
-	awsConfig, err := config.LoadDefaultConfig(ctx,
+func getPrivateDNSName(instanceID string) (string, error) {
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
 			// Use our pre-configured IMDS client to avoid hitting common retry
 			// issues with the default config.
@@ -61,7 +61,7 @@ func getPrivateDNSName(ctx context.Context, instanceID string) (string, error) {
 	w := ec2extra.NewInstanceConditionWaiter(awsConfig, privateDNSNameAvailable, func(opts *ec2extra.InstanceConditionWaiterOptions) {
 		opts.LogWaitAttempts = true
 	})
-	out, err := w.WaitForOutput(ctx, &ec2.DescribeInstancesInput{InstanceIds: []string{instanceID}}, privateDNSNameAvailableTimeout)
+	out, err := w.WaitForOutput(context.TODO(), &ec2.DescribeInstancesInput{InstanceIds: []string{instanceID}}, privateDNSNameAvailableTimeout)
 	if err != nil {
 		return "", err
 	}

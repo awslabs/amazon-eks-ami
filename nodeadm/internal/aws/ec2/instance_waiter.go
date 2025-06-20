@@ -107,6 +107,7 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 	ctx, cancelFn := context.WithTimeout(ctx, maxWaitDur)
 	defer cancelFn()
 
+	logger := smithywaiter.Logger{}
 	remainingTime := maxWaitDur
 
 	var attempt int64
@@ -116,7 +117,9 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		start := time.Now()
 
 		if options.LogWaitAttempts {
-			zap.L().Warn("attempting waiter request", zap.Int("attempt", int(attempt)))
+			logger.Attempt = attempt
+			apiOptions = append([]func(*middleware.Stack) error{}, options.APIOptions...)
+			apiOptions = append(apiOptions, logger.AddLogger)
 		}
 
 		out, err := w.client.DescribeInstances(ctx, params, func(o *ec2.Options) {
@@ -127,8 +130,12 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			if !isErrorRetryable(err) {
-				return out, err
+			retryable, err := instanceRetryable(err)
+			if err != nil {
+				return nil, err
+			}
+			if !retryable {
+				return out, nil
 			}
 		} else {
 			conditionMet, err := w.condition(out)
@@ -174,17 +181,18 @@ var (
 	timeouts = retry.IsErrorTimeouts(retry.DefaultTimeouts)
 )
 
-func isErrorRetryable(err error) bool {
+func instanceRetryable(err error) (bool, error) {
 	if err != nil {
 		if timeouts.IsErrorTimeout(err).Bool() {
 			zap.L().Warn("timeout error encountered", zap.Error(err))
-			return true
+			return true, nil
 		}
 		if retryables.IsErrorRetryable(err).Bool() {
 			zap.L().Warn("retryable error encountered", zap.Error(err))
-			return true
+			return true, nil
 		}
-		return false
+		return false, nil
 	}
-	return true
+
+	return true, nil
 }
