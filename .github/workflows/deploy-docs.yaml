@@ -15,7 +15,7 @@ jobs:
     - run: |
         pushd nodeadm && make wasm && popd
         mkdir -p ./site/assets/wasm && cp ./nodeadm/_bin/nodeadm.wasm ./site/assets/wasm/
-        mkdir -p ./site/assets/javascripts && cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" ./site/assets/javascripts/
+        mkdir -p ./site/assets/javascripts && cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" ./site/assets/javascripts/
     - run: pip install mkdocs mkdocs-material
       # use the --dirty flag so that we dont purge our custom assets
     - run: mkdocs gh-deploy --dirty --no-history --force
