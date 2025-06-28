@@ -4,12 +4,13 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"text/template"
+
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"go.uber.org/zap"
 )
 
 const (
