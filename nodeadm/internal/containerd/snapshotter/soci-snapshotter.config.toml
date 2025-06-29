@@ -1,0 +1,26 @@
+debug = false
+
+[content_store]
+type = 'containerd'
+
+[cri_keychain]
+enable_keychain = true
+image_service_path = '/run/containerd/containerd.sock'
+
+[http]
+RequestTimeoutMsec = 1000000
+
+[image_pull]
+concurrent_download_chunk_size = ""
+discard_unpacked_layers = true
+max_concurrent_downloads = -1
+max_concurrent_downloads_per_image = 3
+max_concurrent_unpacks = -1
+max_concurrent_unpacks_per_image = 1
+
+['image_pull.decompress_streams.gzip']
+args = ['-d', '-c']
+path = '/usr/bin/unpigz'
+
+[snapshotter]
+disable_lazy_loading = true

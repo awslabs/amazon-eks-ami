@@ -44,7 +44,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func (k *kubelet) EnsureRunning() error {
+func (k *kubelet) EnsureRunning(_ *api.NodeConfig) error {
 	return k.daemonManager.StartDaemon(KubeletDaemonName)
 }
 
