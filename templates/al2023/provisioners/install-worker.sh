@@ -46,9 +46,6 @@ fi
 ### Packages ###################################################################
 ################################################################################
 
-# Update the OS to begin with to catch up to the latest packages.
-sudo dnf update -y
-
 # Install necessary packages
 sudo dnf install -y \
   aws-cfn-bootstrap \
@@ -65,6 +62,17 @@ sudo dnf install -y \
   mdadm \
   pigz \
   python3-dnf-plugin-versionlock
+
+# we need to specify the fully-formed version of these packages
+# because the 6.1 and 6.12 branches share a namespace
+sudo dnf install -y \
+  kernel-headers-$(uname -r) \
+  kernel-devel-$(uname -r)
+# versionlock them for the same reason
+sudo dnf versionlock kernel-headers kernel-devel
+# versionlock the kernel to make sure it matches
+# pattern has to match "kernel-6.1..." and "kernel6.12-6.12..."
+sudo dnf versionlock kernel*-$(uname -r)
 
 ################################################################################
 ### Networking #################################################################
