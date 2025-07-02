@@ -12,7 +12,7 @@ type Daemon interface {
 	// daemon reflects that it is running.
 	//	* If the daemon is not running, it will be started.
 	//	* If the daemon is already running, and has been re-configured, it will be restarted.
-	EnsureRunning() error
+	EnsureRunning(*api.NodeConfig) error
 	// PostLaunch runs any additional step that needs to occur after the service
 	// daemon as been started
 	PostLaunch(*api.NodeConfig) error

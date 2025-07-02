@@ -14,6 +14,9 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// InstanceIdNodeNameGate controls whether to use instance ID as the node's name.
 	// By default, this feature is disabled, and the private DNS Name will be used.
 	InstanceIdNodeName: DefaultFalse,
+
+	// Allows more granular control for faster image pull. Disabled by default
+	FastContainerImagePull: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {

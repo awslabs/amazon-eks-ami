@@ -128,7 +128,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Ensuring daemon is running..", nameField)
-			if err := daemon.EnsureRunning(); err != nil {
+			if err := daemon.EnsureRunning(nodeConfig); err != nil {
 				return err
 			}
 			log.Info("Daemon is running", nameField)
