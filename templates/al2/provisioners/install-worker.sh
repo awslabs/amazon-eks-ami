@@ -140,6 +140,13 @@ cat << EOF | sudo tee /lib/modprobe.d/10-no-dummies.conf
 options dummy numdummies=0
 EOF
 
+if vercmp "${KUBERNETES_VERSION}" gteq "1.30.0"; then
+  # increase the max inhibit delay to accommodate kubelet's graceful shutdown procedure
+  cat << EOF | sudo tee /etc/systemd/logind.conf.d/00-kubelet-graceful-shutdown.conf
+InhibitDelayMaxSec=45
+EOF
+fi
+
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
