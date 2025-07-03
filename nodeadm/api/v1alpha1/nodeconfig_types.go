@@ -129,10 +129,13 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,FastContainerImagePull}
 type Feature string
 
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	// Allows more granular control for faster image pull
+	FastContainerImagePull Feature = "FastContainerImagePull"
 )
