@@ -199,6 +199,22 @@ load_imds_token() {
   fi
 }
 
+load_location() {
+  if [[ -z "${IMDS_TOKEN}" ]]; then
+    return
+  fi
+
+  REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region)
+  if [[ $? -ne 0 ]]; then
+    warning "Unable to find EC2 Region, skipping."
+  fi
+
+  AZ=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone)
+  if [[ $? -ne 0 ]]; then
+    warning "Unable to find EC2 AZ, skipping."
+  fi
+}
+
 create_directories() {
   # Make sure the directory the script lives in is there. Not an issue if
   # the EKS AMI is used, as it will have it.
@@ -235,16 +251,12 @@ get_region() {
     return
   fi
 
-  if REGION=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/region); then
+  if [[ -n "${REGION:-}" ]]; then
     echo "${REGION}" > "${COLLECT_DIR}"/system/region.txt
-  else
-    warning "Unable to find EC2 Region, skipping."
   fi
 
-  if AZ=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/placement/availability-zone); then
+  if [[ -n "${AZ:-}" ]]; then
     echo "${AZ}" > "${COLLECT_DIR}"/system/availability-zone.txt
-  else
-    warning "Unable to find EC2 AZ, skipping."
   fi
 }
 
@@ -283,6 +295,7 @@ init() {
 
   if [[ "${eks_hybrid}" == "false" ]]; then
     load_imds_token
+    load_location
   fi
 }
 
@@ -650,6 +663,9 @@ get_networking_info() {
   # test some network connectivity
   timeout 75 ping -A -c 10 amazon.com > "${COLLECT_DIR}"/networking/ping_amazon.com.txt
   timeout 75 ping -A -c 10 public.ecr.aws > "${COLLECT_DIR}"/networking/ping_public.ecr.aws.txt
+  if [[ -n "${REGION:-}" ]]; then
+    timeout 75 ping -A -c 10 "ec2.${REGION}.amazonaws.com" > "${COLLECT_DIR}/networking/ping_ec2.${REGION}.amazonaws.com.txt"
+  fi
 
   if [[ -e "${COLLECT_DIR}"/kubelet/kubeconfig.yaml ]]; then
     API_SERVER=$(grep server: "${COLLECT_DIR}"/kubelet/kubeconfig.yaml | sed 's/.*server: //')
