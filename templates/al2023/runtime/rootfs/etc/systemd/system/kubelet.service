@@ -1,8 +1,8 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Wants=containerd.service
+After=containerd.service soci-snapshotter.socket
+Wants=containerd.service soci-snapshotter.socket
 
 [Service]
 Slice=runtime.slice

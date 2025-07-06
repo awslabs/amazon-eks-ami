@@ -19,18 +19,21 @@ func NewContainerdDaemon(daemonManager daemon.DaemonManager) daemon.Daemon {
 	}
 }
 
-func (cd *containerd) Configure(c *api.NodeConfig) error {
-	if err := writeBaseRuntimeSpec(c); err != nil {
+func (cd *containerd) Configure(cfg *api.NodeConfig) error {
+	if err := writeBaseRuntimeSpec(cfg); err != nil {
 		return err
 	}
-	return writeContainerdConfig(c)
+	if err := writeSnapshotterConfig(cfg); err != nil {
+		return err
+	}
+	return writeContainerdConfig(cfg)
 }
 
 func (cd *containerd) EnsureRunning() error {
 	return cd.daemonManager.StartDaemon(ContainerdDaemonName)
 }
 
-func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
+func (cd *containerd) PostLaunch(cfg *api.NodeConfig) error {
 	return nil
 }
 

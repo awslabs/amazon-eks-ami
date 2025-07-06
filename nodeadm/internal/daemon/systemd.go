@@ -5,6 +5,7 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -105,6 +106,10 @@ func (m *systemdDaemonManager) Close() {
 }
 
 func getServiceUnitName(name string) string {
+	if strings.HasSuffix(name, ".service") ||
+		strings.HasSuffix(name, ".socket") {
+		return name
+	}
 	return fmt.Sprintf("%s.service", name)
 }
 

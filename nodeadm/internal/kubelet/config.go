@@ -58,6 +58,7 @@ type kubeletConfig struct {
 	ClusterDNS               []string                         `json:"clusterDNS"`
 	ClusterDomain            string                           `json:"clusterDomain"`
 	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
+	ImageServiceEndpoint     string                           `json:"imageServiceEndpoint,omitempty"`
 	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
 	FeatureGates             map[string]bool                  `json:"featureGates"`
 	HairpinMode              string                           `json:"hairpinMode"`
@@ -291,6 +292,12 @@ func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags 
 	return nil
 }
 
+func (ksc *kubeletConfig) withImageServiceEndpoint(cfg *api.NodeConfig) {
+	if api.IsFeatureEnabled(api.FastContainerImagePull, cfg.Spec.FeatureGates) {
+		ksc.ImageServiceEndpoint = "unix:///run/soci-snapshotter-grpc/soci-snapshotter-grpc.sock"
+	}
+}
+
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	kubeletConfig := defaultKubeletSubConfig()
 
@@ -310,6 +317,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withVersionToggles(cfg, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg)
+	kubeletConfig.withImageServiceEndpoint(cfg)
 
 	return &kubeletConfig, nil
 }
