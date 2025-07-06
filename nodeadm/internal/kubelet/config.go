@@ -58,6 +58,7 @@ type kubeletConfig struct {
 	ClusterDNS               []string                         `json:"clusterDNS"`
 	ClusterDomain            string                           `json:"clusterDomain"`
 	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
+	ImageServiceEndpoint     string                           `json:"imageServiceEndpoint,omitempty"`
 	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
 	FeatureGates             map[string]bool                  `json:"featureGates"`
 	HairpinMode              string                           `json:"hairpinMode"`
@@ -259,7 +260,7 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
+func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, resources system.Resources) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
 	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
@@ -269,7 +270,7 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
 	}
 	ksc.KubeReserved = map[string]string{
-		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
+		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve(resources)),
 		"ephemeral-storage": "1Gi",
 		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
 	}
@@ -291,6 +292,12 @@ func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags 
 	return nil
 }
 
+func (ksc *kubeletConfig) withImageServiceEndpoint(cfg *api.NodeConfig, resources system.Resources) {
+	if containerd.UseSOCISnapshotter(cfg, resources) {
+		ksc.ImageServiceEndpoint = "unix:///run/soci-snapshotter-grpc/soci-snapshotter-grpc.sock"
+	}
+}
+
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	kubeletConfig := defaultKubeletSubConfig()
 
@@ -309,7 +316,8 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(cfg, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources(cfg)
+	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
+	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
 
 	return &kubeletConfig, nil
 }
@@ -423,8 +431,8 @@ func getNodeIp(ctx context.Context, cfg *api.NodeConfig) (string, error) {
 	}
 }
 
-func getCPUMillicoresToReserve() int {
-	totalCPUMillicores, err := system.GetMilliNumCores()
+func getCPUMillicoresToReserve(resources system.Resources) int {
+	totalCPUMillicores, err := resources.GetMilliNumCores()
 	if err != nil {
 		zap.L().Error("Error found when GetMilliNumCores", zap.Error(err))
 		return 0
