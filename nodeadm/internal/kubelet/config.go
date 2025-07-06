@@ -373,7 +373,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
 		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
-		filePath := path.Join(dirPath, "00-nodeadm.conf")
+		filePath := path.Join(dirPath, "40-nodeadm.conf")
 
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in

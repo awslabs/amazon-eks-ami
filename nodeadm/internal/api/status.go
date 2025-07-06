@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
@@ -15,7 +14,7 @@ import (
 // Fetch information about the ec2 instance using IMDS data.
 // This information is stored into the internal config to avoid redundant calls
 // to IMDS when looking for instance metadata
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool) (*InstanceDetails, error) {
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client) (*InstanceDetails, error) {
 	instanceIdenitityDocument, err := imds.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
@@ -28,7 +27,7 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool) (*In
 
 	var privateDNSName string
 	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
-		privateDNSName, err = getPrivateDNSName(instanceIdenitityDocument.InstanceID)
+		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
 		if err != nil {
 			return nil, err
 		}
@@ -47,18 +46,8 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool) (*In
 const privateDNSNameAvailableTimeout = 3 * time.Minute
 
 // GetPrivateDNSName returns this instance's private DNS name as reported by the EC2 API, waiting until it's available if necessary.
-func getPrivateDNSName(instanceID string) (string, error) {
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
-		}),
-	)
-	if err != nil {
-		return "", err
-	}
-	w := ec2extra.NewInstanceConditionWaiter(awsConfig, privateDNSNameAvailable, func(opts *ec2extra.InstanceConditionWaiterOptions) {
+func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error) {
+	w := ec2extra.NewInstanceConditionWaiter(ec2Client, privateDNSNameAvailable, func(opts *ec2extra.InstanceConditionWaiterOptions) {
 		opts.LogWaitAttempts = true
 	})
 	out, err := w.WaitForOutput(context.TODO(), &ec2.DescribeInstancesInput{InstanceIds: []string{instanceID}}, privateDNSNameAvailableTimeout)

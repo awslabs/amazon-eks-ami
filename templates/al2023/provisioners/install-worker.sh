@@ -136,6 +136,7 @@ fi
 
 sudo dnf install -y runc-${RUNC_VERSION}
 sudo dnf install -y containerd-${CONTAINERD_VERSION}
+sudo dnf versionlock containerd-*
 
 sudo systemctl enable ebs-initialize-bin@containerd
 

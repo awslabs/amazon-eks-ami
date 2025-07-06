@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/smithy-go"
 	"github.com/aws/smithy-go/middleware"
 	smithytime "github.com/aws/smithy-go/time"
 	smithywaiter "github.com/aws/smithy-go/waiter"
-	"go.uber.org/zap"
 )
 
 type InstanceCondition func(output *ec2.DescribeInstancesOutput) (bool, error)
@@ -56,7 +54,7 @@ type InstanceConditionWaiter struct {
 }
 
 // NewInstanceConditionWaiter constructs a InstanceConditionWaiter.
-func NewInstanceConditionWaiter(config aws.Config, condition InstanceCondition, optFns ...func(*InstanceConditionWaiterOptions)) *InstanceConditionWaiter {
+func NewInstanceConditionWaiter(client ec2.DescribeInstancesAPIClient, condition InstanceCondition, optFns ...func(*InstanceConditionWaiterOptions)) *InstanceConditionWaiter {
 	options := InstanceConditionWaiterOptions{}
 	options.MinDelay = 15 * time.Second
 	options.MaxDelay = 120 * time.Second
@@ -65,9 +63,6 @@ func NewInstanceConditionWaiter(config aws.Config, condition InstanceCondition, 
 		fn(&options)
 	}
 
-	// Disable default AWS SDK retry behavior as InstanceConditionWaiter implements its own exponential backoff retry logic
-	config.Retryer = func() aws.Retryer { return aws.NopRetryer{} }
-	client := ec2.NewFromConfig(config)
 	return &InstanceConditionWaiter{
 		client:    client,
 		condition: condition,
@@ -131,16 +126,13 @@ func (w *InstanceConditionWaiter) WaitForOutput(ctx context.Context, params *ec2
 		})
 
 		if err != nil {
-			retryable, retryErr := instanceRetryable(err)
-			if retryErr != nil {
-				return nil, retryErr
+			retryable, err := instanceRetryable(err)
+			if err != nil {
+				return nil, err
 			}
 			if !retryable {
 				return out, nil
 			}
-			zap.L().Warn("retryable error encountered",
-				zap.Error(err),
-			)
 		} else {
 			conditionMet, err := w.condition(out)
 			if err != nil {

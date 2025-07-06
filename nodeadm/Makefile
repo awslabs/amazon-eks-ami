@@ -56,8 +56,9 @@ generate-doc: crd-ref-docs
 	rm doc/api.md.tmp
 
 .PHONY: fmt
-fmt: ## Run go fmt against code.
+fmt: goimports ## Run go fmt and goimports against code.
 	go fmt ./...
+	@$(GOIMPORTS) -w $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -98,13 +99,15 @@ $(LOCALBIN):
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 CONVERSION_GEN ?= $(LOCALBIN)/conversion-gen
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
+GOIMPORTS ?= $(LOCALBIN)/goimports
 
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
 CODE_GENERATOR_VERSION ?= v0.28.1
 CRD_REF_DOCS_VERSION ?= v0.1.0
+GOIMPORTS_VERSION ?= v0.34.0
 
-tools: controller-gen conversion-gen crd-ref-docs ## Install the toolchain.
+tools: controller-gen conversion-gen crd-ref-docs goimports ## Install the toolchain.
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
@@ -123,6 +126,12 @@ crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	test -s $(LOCALBIN)/crd-ref-docs || \
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(CRD_REF_DOCS_VERSION)
+
+.PHONY: goimports
+goimports: $(GOIMPORTS) ## Download goimports locally if necessary.
+$(GOIMPORTS): $(LOCALBIN)
+	test -s $(LOCALBIN)/goimports || \
+	GOBIN=$(LOCALBIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
 .PHONY: update-deps
 update-deps:
