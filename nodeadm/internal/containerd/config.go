@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/pelletier/go-toml/v2"
 	"go.uber.org/zap"
@@ -18,8 +19,9 @@ import (
 const ContainerRuntimeEndpoint = "unix:///run/containerd/containerd.sock"
 
 const (
-	containerdConfigFile = "/etc/containerd/config.toml"
-	containerdConfigPerm = 0644
+	containerdConfigFile      = "/etc/containerd/config.toml"
+	sociSnapshotterConfigFile = "/etc/soci-snapshotter-grpc/config.toml"
+	configPerm                = 0644
 )
 
 var (
@@ -27,6 +29,9 @@ var (
 	containerdConfigTemplateData string
 	//go:embed config2.template.toml
 	containerdConfigTemplateData2 string
+
+	//go:embed snapshotter/soci-snapshotter.config.toml
+	sociSnapshotterTemplateData []byte
 )
 
 type ConfigSchema string
@@ -34,6 +39,8 @@ type ConfigSchema string
 const (
 	ConfigSchemaV2 ConfigSchema = "2"
 	ConfigSchemaV3 ConfigSchema = "3"
+
+	gibibyte int64 = 1024 * 1024 * 1024
 )
 
 var containerdTemplateVersionMap = map[ConfigSchema]string{
@@ -42,13 +49,14 @@ var containerdTemplateVersionMap = map[ConfigSchema]string{
 }
 
 type containerdTemplateVars struct {
-	EnableCDI         bool
-	SandboxImage      string
-	RuntimeName       string
-	RuntimeBinaryName string
+	EnableCDI          bool
+	SandboxImage       string
+	RuntimeName        string
+	RuntimeBinaryName  string
+	UseSOCISnapshotter bool
 }
 
-func writeContainerdConfig(cfg *api.NodeConfig) error {
+func writeContainerdConfig(cfg *api.NodeConfig, resources system.Resources) error {
 	isContainerdV2, err := isContainerdV2()
 	if err != nil {
 		return err
@@ -57,27 +65,17 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
-	containerdConfig, err := generateContainerdConfig(cfg, templateVersion)
+	containerdConfig, err := generateContainerdConfig(cfg, resources, templateVersion)
+	if err != nil {
+		return err
+	}
+	containerdConfig, err = combineContainerdConfigs(containerdConfig, cfg.Spec.Containerd.Config)
 	if err != nil {
 		return err
 	}
 
-	// because the logic in containerd's import merge decides to completely
-	// overwrite entire sections, we want to implement this merging ourselves.
-	// see: https://github.com/containerd/containerd/blob/a91b05d99ceac46329be06eb43f7ae10b89aad45/cmd/containerd/server/config/config.go#L407-L431
-	if len(cfg.Spec.Containerd.Config) > 0 {
-		containerdConfigMap, err := util.Merge(containerdConfig, []byte(cfg.Spec.Containerd.Config), toml.Marshal, toml.Unmarshal)
-		if err != nil {
-			return err
-		}
-		containerdConfig, err = toml.Marshal(containerdConfigMap)
-		if err != nil {
-			return err
-		}
-	}
-
 	zap.L().Info("Writing containerd config to file..", zap.String("path", containerdConfigFile))
-	err = util.WriteFileWithDir(containerdConfigFile, containerdConfig, containerdConfigPerm)
+	err = util.WriteFileWithDir(containerdConfigFile, containerdConfig, configPerm)
 	if err != nil {
 		return err
 	}
@@ -90,14 +88,32 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func generateContainerdConfig(cfg *api.NodeConfig, templateVersion ConfigSchema) ([]byte, error) {
+func combineContainerdConfigs(configA []byte, configB api.ContainerdConfig) ([]byte, error) {
+	// because the logic in containerd's import merge decides to completely
+	// overwrite entire sections, we want to implement this merging ourselves.
+	// see: https://github.com/containerd/containerd/blob/a91b05d99ceac46329be06eb43f7ae10b89aad45/cmd/containerd/server/config/config.go#L407-L431
+	if len(configB) <= 0 {
+		return configA, nil
+	}
+
+	containerdConfigMap, err := util.Merge(configA, []byte(configB), toml.Marshal, toml.Unmarshal)
+	if err != nil {
+		return nil, err
+	}
+
+	return toml.Marshal(containerdConfigMap)
+
+}
+
+func generateContainerdConfig(cfg *api.NodeConfig, resources system.Resources, templateVersion ConfigSchema) ([]byte, error) {
 	runtimeOptions := getRuntimeOptions(cfg)
 
 	configVars := containerdTemplateVars{
-		SandboxImage:      cfg.Status.Defaults.SandboxImage,
-		RuntimeBinaryName: runtimeOptions.RuntimeBinaryPath,
-		RuntimeName:       runtimeOptions.RuntimeName,
-		EnableCDI:         semver.Compare(cfg.Status.KubeletVersion, "v1.32.0") >= 0,
+		SandboxImage:       cfg.Status.Defaults.SandboxImage,
+		RuntimeBinaryName:  runtimeOptions.RuntimeBinaryPath,
+		RuntimeName:        runtimeOptions.RuntimeName,
+		EnableCDI:          semver.Compare(cfg.Status.KubeletVersion, "v1.32.0") >= 0,
+		UseSOCISnapshotter: UseSOCISnapshotter(cfg, resources),
 	}
 	var buf bytes.Buffer
 	containerdConfigTemplate := template.Must(template.New(containerdConfigFile).Parse(containerdTemplateVersionMap[templateVersion]))
@@ -137,5 +153,34 @@ func migrateConfig() error {
 	if err != nil {
 		return err
 	}
-	return util.WriteFileWithDir(containerdConfigFile, migratedConfig, containerdConfigPerm)
+	return util.WriteFileWithDir(containerdConfigFile, migratedConfig, configPerm)
+}
+
+func writeSnapshotterConfig(cfg *api.NodeConfig, resources system.Resources) error {
+	if UseSOCISnapshotter(cfg, resources) {
+		return util.WriteFileWithDir(sociSnapshotterConfigFile, sociSnapshotterTemplateData, configPerm)
+	}
+
+	return nil
+}
+
+func UseSOCISnapshotter(cfg *api.NodeConfig, resources system.Resources) bool {
+	if !api.IsFeatureEnabled(api.AggressiveImagePull, cfg.Spec.FeatureGates) {
+		return false
+	}
+
+	totalCPUMillicores, err := resources.GetMilliNumCores()
+	if err != nil {
+		zap.L().Error("Error getting total CPU millicores", zap.Error(err))
+		return false
+	}
+
+	totalMemory, err := resources.GetOnlineMemory()
+	if err != nil {
+		zap.L().Error("Error getting total memory", zap.Error(err))
+		return false
+	}
+
+	return totalMemory >= 8*gibibyte && totalCPUMillicores >= 8000
+
 }

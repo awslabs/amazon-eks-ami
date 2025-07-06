@@ -89,8 +89,8 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	daemons := []daemon.Daemon{
-		containerd.NewContainerdDaemon(daemonManager),
-		kubelet.NewKubeletDaemon(daemonManager),
+		containerd.NewContainerdDaemon(daemonManager, system.SysfsResources{}),
+		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
 	}
 
 	if !slices.Contains(c.skipPhases, configPhase) {

@@ -8,6 +8,10 @@ address = "/run/containerd/containerd.sock"
 [plugins."io.containerd.grpc.v1.cri".containerd]
 default_runtime_name = "{{.RuntimeName}}"
 discard_unpacked_layers = true
+{{- if .UseSOCISnapshotter}}
+snapshotter = "soci"
+disable_snapshot_annotations = false
+{{- end}}
 
 [plugins."io.containerd.grpc.v1.cri"]
 sandbox_image = "{{.SandboxImage}}"
@@ -27,3 +31,13 @@ SystemdCgroup = true
 [plugins."io.containerd.grpc.v1.cri".cni]
 bin_dir = "/opt/cni/bin"
 conf_dir = "/etc/cni/net.d"
+
+{{if .UseSOCISnapshotter}}
+[proxy_plugins.soci]
+type = "snapshot"
+address = "/run/soci-snapshotter-grpc/soci-snapshotter-grpc.sock"
+
+[proxy_plugins.soci.exports]
+root = "/var/lib/soci-snapshotter-grpc"
+
+{{- end}}
