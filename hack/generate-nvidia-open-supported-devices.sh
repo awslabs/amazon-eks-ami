@@ -28,16 +28,16 @@ sh "${RUNFILE}" --extract-only
 
 cd -
 
-cat "${TEMP_DIR}/${RUNFILE_DIR}/${SUPPORTED_GPUS_FILE}" \
-  | jq -r '.chips[] | select(.features[] | contains("kernelopen")) | "\(.devid) \(.name)"' \
-  | sort -u \
-  > "${TEMP_DIR}/${DEVICE_FILE}"
-
 ACKNOWLEDGEMENT="# This file was generated from ${SUPPORTED_GPUS_FILE} contained in $(basename "${RUNFILE}")"
 
-COMMENTED_LICENSE=$(sed -e 's/^/# /g' "${TEMP_DIR}/${RUNFILE_DIR}/supported-gpus/LICENSE")
+COMMENTED_LICENSE=$(sed -e 's/^/# /g' "${TEMP_DIR}/${RUNFILE_DIR}/supported-gpus/LICENSE" | sed -e 's/^# $/#/g')
 
 OUTPUT_FILE="../templates/al2023/runtime/gpu/nvidia-open-supported-devices-${RUNFILE_MAJOR_VERSION}.txt"
 
 printf '%s\n%s\n' "${ACKNOWLEDGEMENT}" "${COMMENTED_LICENSE}" \
-  | cat - ${TEMP_DIR}/${DEVICE_FILE} > "${OUTPUT_FILE}"
+  | tee "${OUTPUT_FILE}"
+
+cat "${TEMP_DIR}/${RUNFILE_DIR}/${SUPPORTED_GPUS_FILE}" \
+  | jq -r '.chips[] | select(.features[] | contains("kernelopen")) | "\(.devid) \(.name)"' \
+  | sort -u \
+  | tee -a "${OUTPUT_FILE}"
