@@ -5,6 +5,10 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Version from git tags
+VERSION ?= $(shell git describe --tags --abbrev=8 --always)
+LDFLAGS ?= -X 'main.gitTagVersion=$(VERSION)'
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
@@ -78,7 +82,7 @@ test-e2e: build ## Run e2e tests.
 
 .PHONY: build
 build: ## Build binary.
-	GOOS=$(GOOS) go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+	GOOS=$(GOOS) go build -ldflags="$(LDFLAGS)" -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
 
 .PHONY: run
 run: build ## Run binary.
