@@ -2,9 +2,10 @@ package system
 
 import (
 	_ "embed"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"reflect"
 	"testing"
+
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 )
 
 //go:embed _assets/test_10-eks_primary_eni_only.conf

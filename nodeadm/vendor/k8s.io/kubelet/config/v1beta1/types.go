@@ -83,6 +83,25 @@ const (
 	StaticMemoryManagerPolicy = "Static"
 )
 
+// ImagePullCredentialsVerificationPolicy is an enum for the policy that is enforced
+// when pod is requesting an image that appears on the system
+type ImagePullCredentialsVerificationPolicy string
+
+const (
+	// NeverVerify will never require credential verification for images that
+	// already exist on the node
+	NeverVerify ImagePullCredentialsVerificationPolicy = "NeverVerify"
+	// NeverVerifyPreloadedImages does not require credential verification for images
+	// pulled outside the kubelet process
+	NeverVerifyPreloadedImages ImagePullCredentialsVerificationPolicy = "NeverVerifyPreloadedImages"
+	// NeverVerifyAllowlistedImages does not require credential verification for
+	// a list of images that were pulled outside the kubelet process
+	NeverVerifyAllowlistedImages ImagePullCredentialsVerificationPolicy = "NeverVerifyAllowlistedImages"
+	// AlwaysVerify requires credential verification for accessing any image on the
+	// node irregardless how it was pulled
+	AlwaysVerify ImagePullCredentialsVerificationPolicy = "AlwaysVerify"
+)
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // KubeletConfiguration contains the configuration for the Kubelet
@@ -210,6 +229,28 @@ type KubeletConfiguration struct {
 	// Default: 10
 	// +optional
 	RegistryBurst int32 `json:"registryBurst,omitempty"`
+	// imagePullCredentialsVerificationPolicy determines how credentials should be
+	// verified when pod requests an image that is already present on the node:
+	//   - NeverVerify
+	//       - anyone on a node can use any image present on the node
+	//   - NeverVerifyPreloadedImages
+	//       - images that were pulled to the node by something else than the kubelet
+	//         can be used without reverifying pull credentials
+	//   - NeverVerifyAllowlistedImages
+	//       - like "NeverVerifyPreloadedImages" but only node images from
+	//         `preloadedImagesVerificationAllowlist` don't require reverification
+	//   - AlwaysVerify
+	//       - all images require credential reverification
+	// +optional
+	ImagePullCredentialsVerificationPolicy ImagePullCredentialsVerificationPolicy `json:"imagePullCredentialsVerificationPolicy,omitempty"`
+	// preloadedImagesVerificationAllowlist specifies a list of images that are
+	// exempted from credential reverification for the "NeverVerifyAllowlistedImages"
+	// `imagePullCredentialsVerificationPolicy`.
+	// The list accepts a full path segment wildcard suffix "/*".
+	// Only use image specs without an image tag or digest.
+	// +optional
+	// +listType=set
+	PreloadedImagesVerificationAllowlist []string `json:"preloadedImagesVerificationAllowlist,omitempty"`
 	// eventRecordQPS is the maximum event creations per second. If 0, there
 	// is no limit enforced. The value cannot be a negative number.
 	// Default: 50
@@ -350,18 +391,24 @@ type KubeletConfiguration struct {
 	// +optional
 	CgroupDriver string `json:"cgroupDriver,omitempty"`
 	// cpuManagerPolicy is the name of the policy to use.
-	// Requires the CPUManager feature gate to be enabled.
 	// Default: "None"
 	// +optional
 	CPUManagerPolicy string `json:"cpuManagerPolicy,omitempty"`
+	// singleProcessOOMKill, if true, will prevent the `memory.oom.group` flag from being set for container
+	// cgroups in cgroups v2. This causes processes in the container to be OOM killed individually instead of as
+	// a group. It means that if true, the behavior aligns with the behavior of cgroups v1.
+	// The default value is determined automatically when you don't specify.
+	// On non-linux such as windows, only null / absent is allowed.
+	// On cgroup v1 linux, only null / absent and true are allowed.
+	// On cgroup v2 linux, null / absent, true and false are allowed. The default value is false.
+	// +optional
+	SingleProcessOOMKill *bool `json:"singleProcessOOMKill,omitempty"`
 	// cpuManagerPolicyOptions is a set of key=value which 	allows to set extra options
 	// to fine tune the behaviour of the cpu manager policies.
-	// Requires  both the "CPUManager" and "CPUManagerPolicyOptions" feature gates to be enabled.
 	// Default: nil
 	// +optional
 	CPUManagerPolicyOptions map[string]string `json:"cpuManagerPolicyOptions,omitempty"`
 	// cpuManagerReconcilePeriod is the reconciliation period for the CPU Manager.
-	// Requires the CPUManager feature gate to be enabled.
 	// Default: "10s"
 	// +optional
 	CPUManagerReconcilePeriod metav1.Duration `json:"cpuManagerReconcilePeriod,omitempty"`
@@ -521,15 +568,13 @@ type KubeletConfiguration struct {
 	EvictionSoftGracePeriod map[string]string `json:"evictionSoftGracePeriod,omitempty"`
 	// evictionPressureTransitionPeriod is the duration for which the kubelet has to wait
 	// before transitioning out of an eviction pressure condition.
+	// A duration of 0s will be converted to the default value of 5m
 	// Default: "5m"
 	// +optional
 	EvictionPressureTransitionPeriod metav1.Duration `json:"evictionPressureTransitionPeriod,omitempty"`
 	// evictionMaxPodGracePeriod is the maximum allowed grace period (in seconds) to use
 	// when terminating pods in response to a soft eviction threshold being met. This value
 	// effectively caps the Pod's terminationGracePeriodSeconds value during soft evictions.
-	// Note: Due to issue #64530, the behavior has a bug where this value currently just
-	// overrides the grace period during soft eviction, which can increase the grace
-	// period from what is set on the Pod. This bug will be fixed in a future release.
 	// Default: 0
 	// +optional
 	EvictionMaxPodGracePeriod int32 `json:"evictionMaxPodGracePeriod,omitempty"`
@@ -540,6 +585,16 @@ type KubeletConfiguration struct {
 	// Default: nil
 	// +optional
 	EvictionMinimumReclaim map[string]string `json:"evictionMinimumReclaim,omitempty"`
+	// mergeDefaultEvictionSettings indicates that defaults for the evictionHard, evictionSoft, evictionSoftGracePeriod, and evictionMinimumReclaim
+	// fields should be merged into values specified for those fields in this configuration.
+	// Signals specified in this configuration take precedence.
+	// Signals not specified in this configuration inherit their defaults.
+	// If false, and if any signal is specified in this configuration then other signals that
+	// are not specified in this configuration will be set to 0.
+	// It applies to merging the fields for which the default exists, and currently only evictionHard has default values.
+	// Default: false
+	// +optional
+	MergeDefaultEvictionSettings *bool `json:"mergeDefaultEvictionSettings,omitempty"`
 	// podsPerCore is the maximum number of pods per core. Cannot exceed maxPods.
 	// The value must be a non-negative integer.
 	// If 0, there is no limit on the number of Pods.
@@ -632,14 +687,14 @@ type KubeletConfiguration struct {
 	// systemReserved is a set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=150G)
 	// pairs that describe resources reserved for non-kubernetes components.
 	// Currently only cpu and memory are supported.
-	// See http://kubernetes.io/docs/user-guide/compute-resources for more detail.
+	// See https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources for more detail.
 	// Default: nil
 	// +optional
 	SystemReserved map[string]string `json:"systemReserved,omitempty"`
 	// kubeReserved is a set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=150G) pairs
 	// that describe resources reserved for kubernetes system components.
 	// Currently cpu, memory and local storage for root file system are supported.
-	// See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// See https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources
 	// for more details.
 	// Default: nil
 	// +optional
@@ -720,6 +775,8 @@ type KubeletConfiguration struct {
 	EnableSystemLogHandler *bool `json:"enableSystemLogHandler,omitempty"`
 	// enableSystemLogQuery enables the node log query feature on the /logs endpoint.
 	// EnableSystemLogHandler has to be enabled in addition for this feature to work.
+	// Enabling this feature has security implications. The recommendation is to enable it on a need basis for debugging
+	// purposes and disabling otherwise.
 	// Default: false
 	// +featureGate=NodeLogQuery
 	// +optional
@@ -769,6 +826,11 @@ type KubeletConfiguration struct {
 	// +featureGate=GracefulNodeShutdownBasedOnPodPriority
 	// +optional
 	ShutdownGracePeriodByPodPriority []ShutdownGracePeriodByPodPriority `json:"shutdownGracePeriodByPodPriority,omitempty"`
+	// CrashLoopBackOff contains config to modify node-level parameters for
+	// container restart behavior
+	// +featureGate=KubeletCrashLoopBackOffMax
+	// +optional
+	CrashLoopBackOff CrashLoopBackOffConfig `json:"crashLoopBackOff,omitempty"`
 	// reservedMemory specifies a comma-separated list of memory reservations for NUMA nodes.
 	// The parameter makes sense only in the context of the memory manager feature.
 	// The memory manager will not allocate reserved memory for container workloads.
@@ -859,6 +921,11 @@ type KubeletConfiguration struct {
 	// Default: false
 	// +optional
 	FailCgroupV1 *bool `json:"failCgroupV1,omitempty"`
+
+	// UserNamespaces contains User Namespace configurations.
+	// +featureGate=UserNamespaceSupport
+	// +optional
+	UserNamespaces *UserNamespaces `json:"userNamespaces,omitempty"`
 }
 
 type KubeletAuthorizationMode string
@@ -969,6 +1036,15 @@ type MemorySwapConfiguration struct {
 	SwapBehavior string `json:"swapBehavior,omitempty"`
 }
 
+type CrashLoopBackOffConfig struct {
+	// maxContainerRestartPeriod is the maximum duration the backoff delay can accrue
+	// to for container restarts, minimum 1 second, maximum 300 seconds. If not set,
+	// defaults to the internal crashloopbackoff maximum (300s).
+	// +featureGate=KubeletCrashLoopBackOffMax
+	// +optional
+	MaxContainerRestartPeriod *metav1.Duration `json:"maxContainerRestartPeriod,omitempty"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CredentialProviderConfig is the configuration containing information about
@@ -981,7 +1057,7 @@ type CredentialProviderConfig struct {
 	// Multiple providers may match against a single image, in which case credentials
 	// from all providers will be returned to the kubelet. If multiple providers are called
 	// for a single image, the results are combined. If providers return overlapping
-	// auth keys, the value from the provider earlier in this list is used.
+	// auth keys, the value from the provider earlier in this list is attempted first.
 	Providers []CredentialProvider `json:"providers"`
 }
 
@@ -991,6 +1067,7 @@ type CredentialProvider struct {
 	// name is the required name of the credential provider. It must match the name of the
 	// provider executable as seen by the kubelet. The executable must be in the kubelet's
 	// bin directory (set by the --image-credential-provider-bin-dir flag).
+	// Required to be unique across all providers.
 	Name string `json:"name"`
 
 	// matchImages is a required list of strings used to match against images in order to
@@ -1043,4 +1120,18 @@ type CredentialProvider struct {
 type ExecEnvVar struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+// UserNamespaces contains User Namespace configurations.
+type UserNamespaces struct {
+	// IDsPerPod is the mapping length of UIDs and GIDs.
+	// The length must be a multiple of 65536, and must be less than 1<<32.
+	// On non-linux such as windows, only null / absent is allowed.
+	//
+	// Changing the value may require recreating all containers on the node.
+	//
+	// Default: 65536
+	// +featureGate=UserNamespaceSupport
+	// +optional
+	IDsPerPod *int64 `json:"idsPerPod,omitempty"`
 }

@@ -91,18 +91,41 @@ type InstanceOptions struct {
 // are used when available.
 type LocalStorageOptions struct {
 	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
+
+	// MountPath is the path where the filesystem will be mounted.
+	// Defaults to `/mnt/k8s-disks/`.
+	MountPath string `json:"mountPath,omitempty"`
+
+	// List of directories that will not be mounted to LocalStorage. By default,
+	// all mounts are enabled.
+	DisabledMounts []DisabledMount `json:"disabledMounts,omitempty"`
 }
 
 // LocalStorageStrategy specifies how to handle an instance's local storage devices.
-// +kubebuilder:validation:Enum={RAID0, Mount}
+// +kubebuilder:validation:Enum={RAID0, RAID10, Mount}
 type LocalStorageStrategy string
 
 const (
 	// LocalStorageRAID0 will create a single raid0 volume from any local disks
 	LocalStorageRAID0 LocalStorageStrategy = "RAID0"
 
+	// LocalStorageRAID10 will create a single raid10 volume from any local disks. Minimum of 4.
+	LocalStorageRAID10 LocalStorageStrategy = "RAID10"
+
 	// LocalStorageMount will mount each local disk individually
 	LocalStorageMount LocalStorageStrategy = "Mount"
+)
+
+// DisabledMount specifies a directory that should not be mounted onto local storage
+//
+// * `Containerd` refers to `/var/lib/containerd`
+// * `PodLogs` refers to `/var/log/pods`
+// +kubebuilder:validation:Enum={Containerd, PodLogs}
+type DisabledMount string
+
+const (
+	DisabledMountContainerd DisabledMount = "Containerd"
+	DisabledMountPodLogs    DisabledMount = "PodLogs"
 )
 
 // Feature specifies which feature gate should be toggled

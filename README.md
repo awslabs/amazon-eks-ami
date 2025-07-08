@@ -1,4 +1,6 @@
 # Amazon EKS AMI Build Specification
+> [!IMPORTANT]
+> Amazon EKS will no longer publish EKS-optimized Amazon Linux 2 (AL2) AMIs after November 26th, 2025. Additionally, Kubernetes version 1.32 is the last version for which Amazon EKS will release AL2 AMIs. From version 1.33 onwards, Amazon EKS will continue to release AL2023 and Bottlerocket based AMIs. To learn more, see [Guide to EKS AL2 & AL2-Accelerated AMIs transition features](https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html).
 
 This repository contains resources and configuration scripts for building a
 custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
@@ -46,7 +48,7 @@ make k8s=1.29 os_distro=al2023
 make help
 ```
 
-The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](Makefile).
+The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](https://github.com/awslabs/amazon-eks-ami/blob/main/Makefile).
 
 > **Note**
 > The default instance type to build this AMI does not qualify for the AWS free tier.
@@ -54,7 +56,7 @@ The Makefile chooses a particular kubelet binary to use per Kubernetes version w
 
 ## 🔒 Security
 
-For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to AWS Security https://aws.amazon.com/security/vulnerability-reporting/
+For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to [AWS Security](https://aws.amazon.com/security/vulnerability-reporting/).
 
 ## ⚖️ License Summary
 

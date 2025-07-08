@@ -11,11 +11,20 @@ At a high level, you run this script on your Kubernetes node, and it will collec
 * Run this project as the root user
 
 ```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/linux/eks-log-collector.sh
+curl -O https://amazon-eks.s3.amazonaws.com/support/log-collector-script/linux/eks-log-collector.sh
 sudo bash eks-log-collector.sh
 ```
 
 Confirm if the tarball file was successfully created (it can be .tgz or .tar.gz)
+
+> [!NOTE]
+> If you plan to provide this log bundle to another party, please review the
+> contents of the bundle and redact anything you wish not to be accessible.
+>
+> The following are sources you might potentially want to obfuscate:
+> * `/system/ps.txt` contains process command line arguments from `ps`.
+> * `/var/log/cloud-init-output.log` contains output from scripts that are run from ec2 userdata.
+> * `/cni/cni-configuration-variables-containerd.json` contains container info (read via `ctr`) which includes environment variables.
 
 #### Retrieving the logs
 
@@ -35,6 +44,8 @@ OPTIONS:
    --ignore_introspection To ignore introspection of IPAMD; Pass this flag if DISABLE_INTROSPECTION is enabled on CNI
 
    --ignore_metrics Variable To ignore prometheus metrics collection; Pass this flag if DISABLE_METRICS enabled on CNI
+
+   --eks_hybrid Variable To denote that the script is running on an EKS Hybrid node; This will skip IMDS queries for AWS region and instance ID
 
    --help  Show this help message.
 ```
@@ -102,7 +113,7 @@ Trying to archive gathered information...
 1. Create the SSM document named "EKSLogCollector" using the following commands:
 
 ```
-curl -O https://raw.githubusercontent.com/awslabs/amazon-eks-ami/main/log-collector-script/linux/eks-ssm-content.json
+curl -O https://amazon-eks.s3.amazonaws.com/support/log-collector-script/linux/eks-ssm-content.json
 aws ssm create-document \
   --name "EKSLogCollectorLinux" \
   --document-type "Command" \

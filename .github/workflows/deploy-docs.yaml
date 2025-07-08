@@ -11,5 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
+    - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # 5.5.0
+    - run: |
+        pushd nodeadm && make wasm && popd
+        mkdir -p ./site/assets/wasm && cp ./nodeadm/_bin/nodeadm.wasm ./site/assets/wasm/
+        mkdir -p ./site/assets/javascripts && cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" ./site/assets/javascripts/
     - run: pip install mkdocs mkdocs-material
-    - run: mkdocs gh-deploy --strict --no-history --force
+      # use the --dirty flag so that we dont purge our custom assets
+    - run: mkdocs gh-deploy --dirty --no-history --force

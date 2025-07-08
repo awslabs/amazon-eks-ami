@@ -32,10 +32,12 @@ on:
         type: string
       k8s_versions:
         description: 'Kubernetes Versions (comma-separated, e.g., 1.29,1.30)'
-        default: "1.24,1.25,1.26,1.27,1.28,1.29,1.30,1.31"
         required: false
         type: string
       build_arguments:
+        required: false
+        type: string
+      test_arguments:
         required: false
         type: string
 
@@ -75,7 +77,8 @@ jobs:
       k8s_versions: ${{ inputs.k8s_versions }}
       os_distros: ${{ inputs.os_distros }}
       git_sha: ${{ inputs.git_sha }}
-      build_arguments: ${{ inputs.build-arguments }}
+      build_arguments: ${{ inputs.build_arguments }}
+      test_arguments: ${{ inputs.test_arguments }}
       resource_id: "ci-${{ inputs.pr_number }}-${{ needs.setup.outputs.git_sha_short }}-${{ inputs.uuid }}"
       run_name: "ci(#${{ inputs.pr_number }}@${{ needs.setup.outputs.git_sha_short }}): ${{ inputs.uuid }}"
       goal: "${{ inputs.goal }}"

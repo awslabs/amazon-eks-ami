@@ -37,7 +37,8 @@ function imdscurl() {
     cat >&2 $OUTPUT_FILE
     return $CODE
   fi
-  printf "$(cat $OUTPUT_FILE)\n"
+  cat $OUTPUT_FILE
+  printf "\n"
   rm $OUTPUT_FILE
 }
 

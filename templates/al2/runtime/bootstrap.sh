@@ -32,10 +32,11 @@ function print_help {
   echo "--enable-local-outpost Enable support for worker nodes to communicate with the local control plane when running on a disconnected Outpost. (true or false)"
   echo "--ip-family Specify ip family of the cluster"
   echo "--kubelet-extra-args Extra arguments to add to the kubelet. Useful for adding labels or taints."
-  echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods [mount | raid0]"
+  echo "--local-disks Setup instance storage NVMe disks in raid0 or mount the individual disks for use by pods <mount | raid0 | raid10>"
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
+  echo "--service-ipv4-cidr ipv4 cidr range of the cluster"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
@@ -135,6 +136,12 @@ while [[ $# -gt 0 ]]; do
     --ip-family)
       IP_FAMILY=$2
       log "INFO: --ip-family='${IP_FAMILY}'"
+      shift
+      shift
+      ;;
+    --service-ipv4-cidr)
+      SERVICE_IPV4_CIDR=$2
+      log "INFO: --service-ipv4-cidr='${SERVICE_IPV4_CIDR}'"
       shift
       shift
       ;;
@@ -335,11 +342,6 @@ if [ "$MOUNT_BPF_FS" = "true" ]; then
   mount-bpf-fs
 fi
 
-cp -v /etc/eks/configure-clocksource.service /etc/systemd/system/configure-clocksource.service
-chown root:root /etc/systemd/system/configure-clocksource.service
-systemctl daemon-reload
-systemctl enable --now configure-clocksource
-
 ECR_URI=$(/etc/eks/get-ecr-uri.sh "${AWS_DEFAULT_REGION}" "${AWS_SERVICES_DOMAIN}" "${PAUSE_CONTAINER_ACCOUNT:-}")
 PAUSE_CONTAINER_IMAGE=${PAUSE_CONTAINER_IMAGE:-$ECR_URI/eks/pause}
 PAUSE_CONTAINER="$PAUSE_CONTAINER_IMAGE:$PAUSE_CONTAINER_VERSION"
@@ -362,9 +364,9 @@ if [[ -z "${B64_CLUSTER_CA}" ]] || [[ -z "${APISERVER_ENDPOINT}" ]]; then
 
     aws eks wait cluster-active \
       --region=${AWS_DEFAULT_REGION} \
-      --name=${CLUSTER_NAME}
+      --name=${CLUSTER_NAME} || rc=$?
 
-    aws eks describe-cluster \
+    [[ $rc -eq 0 ]] && aws eks describe-cluster \
       --region=${AWS_DEFAULT_REGION} \
       --name=${CLUSTER_NAME} \
       --output=text \
@@ -470,13 +472,18 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
 
   if [[ "${IP_FAMILY}" == "ipv4" ]]; then
     if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
-      #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      # Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      log "INFO: Detected SERVICE_IPV4_CIDR='$SERVICE_IPV4_CIDR'. Will set DNS_CLUSTER_IP as '${SERVICE_IPV4_CIDR%.*}.10'."
       DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
     else
+      log "INFO: No --service-ipv4-cidr set, will try to determine DNS_CLUSTER_IP by VPC IPV4 CIDR Blocks from IMDS."
       TEN_RANGE=$(imds "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true)
       DNS_CLUSTER_IP=10.100.0.10
       if [[ "$TEN_RANGE" != "0" ]]; then
+        log "INFO: Detected VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '172.20.0.10'."
         DNS_CLUSTER_IP=172.20.0.10
+      else
+        log "INFO: Detected no VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '10.100.0.10'."
       fi
     fi
   fi

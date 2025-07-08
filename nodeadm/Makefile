@@ -56,8 +56,9 @@ generate-doc: crd-ref-docs
 	rm doc/api.md.tmp
 
 .PHONY: fmt
-fmt: ## Run go fmt against code.
+fmt: goimports ## Run go fmt and goimports against code.
 	go fmt ./...
+	@$(GOIMPORTS) -w $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -68,6 +69,8 @@ test: crds generate fmt vet ## Run go test against code.
 	go test ./...
 
 .PHONY: test-e2e
+# the test infra container needs a linux executable
+test-e2e: GOOS=linux
 test-e2e: build ## Run e2e tests.
 	test/e2e/run.sh
 
@@ -75,11 +78,15 @@ test-e2e: build ## Run e2e tests.
 
 .PHONY: build
 build: ## Build binary.
-	go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+	GOOS=$(GOOS) go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
 
 .PHONY: run
-run: build ## Run binary
+run: build ## Run binary.
 	go run cmd/nodeadm/main.go $(args)
+
+.PHONY: wasm
+wasm: ## Build WASM binary.
+	GOOS=js GOARCH=wasm go build -o $(LOCALBIN)/nodeadm.wasm cmd/nodeadm-wasm/main.go
 
 ##@ Build Dependencies
 
@@ -92,13 +99,15 @@ $(LOCALBIN):
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 CONVERSION_GEN ?= $(LOCALBIN)/conversion-gen
 CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
+GOIMPORTS ?= $(LOCALBIN)/goimports
 
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
 CODE_GENERATOR_VERSION ?= v0.28.1
 CRD_REF_DOCS_VERSION ?= v0.1.0
+GOIMPORTS_VERSION ?= v0.34.0
 
-tools: controller-gen conversion-gen crd-ref-docs ## Install the toolchain.
+tools: controller-gen conversion-gen crd-ref-docs goimports ## Install the toolchain.
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
@@ -117,6 +126,12 @@ crd-ref-docs: $(CRD_REF_DOCS) ## Download crd-ref-docs locally if necessary.
 $(CRD_REF_DOCS): $(LOCALBIN)
 	test -s $(LOCALBIN)/crd-ref-docs || \
 	GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@$(CRD_REF_DOCS_VERSION)
+
+.PHONY: goimports
+goimports: $(GOIMPORTS) ## Download goimports locally if necessary.
+$(GOIMPORTS): $(LOCALBIN)
+	test -s $(LOCALBIN)/goimports || \
+	GOBIN=$(LOCALBIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
 .PHONY: update-deps
 update-deps:

@@ -36,13 +36,9 @@ const (
 )
 
 func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
-	kubeletVersion, err := GetKubeletVersion()
-	if err != nil {
-		return err
-	}
 	// tracking: https://github.com/kubernetes/enhancements/issues/3983
 	// for enabling drop-in configuration
-	if semver.Compare(kubeletVersion, "v1.29.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
 		return k.writeKubeletConfigToFile(cfg)
 	} else {
 		return k.writeKubeletConfigToDir(cfg)
@@ -211,9 +207,9 @@ func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]strin
 	return nil
 }
 
-func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[string]string) {
+func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[string]string) {
 	// TODO: remove when 1.26 is EOL
-	if semver.Compare(kubeletVersion, "v1.27.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
 		// --container-runtime flag is gone in 1.27+
 		flags["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
@@ -223,20 +219,25 @@ func (ksc *kubeletConfig) withVersionToggles(kubeletVersion string, flags map[st
 
 	// TODO: Remove this during 1.27 EOL
 	// Enable Feature Gate for KubeletCredentialProviders in versions less than 1.28 since this feature flag was removed in 1.28.
-	if semver.Compare(kubeletVersion, "v1.28.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.28.0") < 0 {
 		ksc.FeatureGates["KubeletCredentialProviders"] = true
 	}
 
 	// for K8s versions that suport API Priority & Fairness, increase our API server QPS
 	// in 1.27, the default is already increased to 50/100, so use the higher defaults
-	if semver.Compare(kubeletVersion, "v1.22.0") >= 0 && semver.Compare(kubeletVersion, "v1.27.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.22.0") >= 0 && semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
 		ksc.KubeAPIQPS = ptr.Int(10)
 		ksc.KubeAPIBurst = ptr.Int(20)
 	}
+
+	// EKS enables DRA on 1.33+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
+		ksc.FeatureGates["DynamicResourceAllocation"] = true
+	}
 }
 
-func (ksc *kubeletConfig) withCloudProvider(kubeletVersion string, cfg *api.NodeConfig, flags map[string]string) {
-	if semver.Compare(kubeletVersion, "v1.26.0") >= 0 {
+func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.26.0") >= 0 {
 		// ref: https://github.com/kubernetes/kubernetes/pull/121367
 		flags["cloud-provider"] = "external"
 		// provider ID needs to be specified when the cloud provider is external
@@ -280,24 +281,17 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 //
 // TODO: revisit once the minimum supportted version catches up or the container
 // runtime is moved to containerd 2.0
-func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, kubeletVersion string, flags map[string]string) error {
+func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags map[string]string) error {
 	// the flag is a noop on 1.29+, since the behavior was changed to use the
 	// CRI image pinning behavior and no longer considers the flag value.
 	// see: https://github.com/kubernetes/kubernetes/pull/118544
-	if semver.Compare(kubeletVersion, "v1.29.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
 		flags["pod-infra-container-image"] = cfg.Status.Defaults.SandboxImage
 	}
 	return nil
 }
 
 func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
-	// Get the kubelet/kubernetes version to help conditionally enable features
-	kubeletVersion, err := GetKubeletVersion()
-	if err != nil {
-		return nil, err
-	}
-	zap.L().Info("Detected kubelet version", zap.String("version", kubeletVersion))
-
 	kubeletConfig := defaultKubeletSubConfig()
 
 	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
@@ -309,12 +303,12 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
 		return nil, err
 	}
-	if err := kubeletConfig.withPodInfraContainerImage(cfg, kubeletVersion, k.flags); err != nil {
+	if err := kubeletConfig.withPodInfraContainerImage(cfg, k.flags); err != nil {
 		return nil, err
 	}
 
-	kubeletConfig.withVersionToggles(kubeletVersion, k.flags)
-	kubeletConfig.withCloudProvider(kubeletVersion, cfg, k.flags)
+	kubeletConfig.withVersionToggles(cfg, k.flags)
+	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg)
 
 	return &kubeletConfig, nil
@@ -379,7 +373,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
 		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
-		filePath := path.Join(dirPath, "00-nodeadm.conf")
+		filePath := path.Join(dirPath, "40-nodeadm.conf")
 
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in

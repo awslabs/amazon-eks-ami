@@ -13,11 +13,11 @@ import (
 	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 )
 
-func parseMaybeMultipart(data []byte) (*internalapi.NodeConfig, error) {
+func ParseMaybeMultipart(data []byte) (*internalapi.NodeConfig, error) {
 	// if the MIME data fails to parse as a multipart document, then fall back
 	// to parsing the entire userdata as the node config.
 	if multipartReader, err := getMultipartReader(data); err == nil {
-		config, err := parseMultipart(multipartReader)
+		config, err := ParseMultipart(multipartReader)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +31,7 @@ func parseMaybeMultipart(data []byte) (*internalapi.NodeConfig, error) {
 	}
 }
 
-func parseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, error) {
+func ParseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, error) {
 	var nodeConfigs []*internalapi.NodeConfig
 	for {
 		part, err := userDataReader.NextPart()
