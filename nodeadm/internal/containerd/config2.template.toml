@@ -1,0 +1,33 @@
+version = 3
+root = "/var/lib/containerd"
+state = "/run/containerd"
+
+[grpc]
+address = "/run/containerd/containerd.sock"
+
+[plugins.'io.containerd.cri.v1.images']
+discard_unpacked_layers = true
+
+[plugins.'io.containerd.cri.v1.images'.pinned_images]
+sandbox = "{{.SandboxImage}}"
+
+[plugins."io.containerd.cri.v1.images".registry]
+config_path = "/etc/containerd/certs.d:/etc/docker/certs.d"
+
+[plugins.'io.containerd.cri.v1.runtime']
+enable_cdi = {{.EnableCDI}}
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd]
+default_runtime_name = "{{.RuntimeName}}"
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.{{.RuntimeName}}]
+runtime_type = "io.containerd.runc.v2"
+base_runtime_spec = "/etc/containerd/base-runtime-spec.json"
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.{{.RuntimeName}}.options]
+BinaryName = "{{.RuntimeBinaryName}}"
+SystemdCgroup = true
+
+[plugins.'io.containerd.cri.v1.runtime'.cni]
+bin_dir = "/opt/cni/bin"
+conf_dir = "/etc/cni/net.d"
