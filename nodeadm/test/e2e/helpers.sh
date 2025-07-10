@@ -100,17 +100,64 @@ function wait::dbus-ready() {
   wait::path-exists /run/systemd/private
 }
 
-function mock::aws() {
-  local CONFIG_PATH=${1:-/etc/aemm-default-config.json}
-  [ "${IMDS_MOCK_ONLY_CONFIGURE:-}" = "true" ] || imds-mock --config-file $CONFIG_PATH &
-  export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338
-  [ "${AWS_MOCK_ONLY_CONFIGURE:-}" = "true" ] || $HOME/.local/bin/moto_server -p5000 &
-  export AWS_ACCESS_KEY_ID='testing'
-  export AWS_SECRET_ACCESS_KEY='testing'
-  export AWS_SECURITY_TOKEN='testing'
-  export AWS_SESSION_TOKEN='testing'
-  export AWS_REGION=us-east-1
-  export AWS_ENDPOINT_URL=http://localhost:5000
-  # ensure that our instance exists in the API
-  aws ec2 run-instances
+function wait::server-responding() {
+  if [ "$#" -ne 3 ]; then
+    echo "usage: $0 HOST PORT TIMEOUT_SECONDS"
+    return 1
+  fi
+  HOST=${1}
+  PORT=${2}
+  TIMEOUT_SECONDS=${3}
+  SLEEP_SECONDS=1
+  START=$(date +%s)
+  while ! nc -z "$HOST" "$PORT"; do
+    NOW=$(date +%s)
+    ELAPSED=$((NOW - START))
+    if [ "$ELAPSED" -ge "$TIMEOUT_SECONDS" ]; then
+      echo "ERROR: server did not respond on $HOST:$PORT within $TIMEOUT_SECONDS second(s)"
+      return 1
+    fi
+    sleep "$SLEEP_SECONDS"
+  done
+  return 0
 }
+
+function mock::imds() {
+  local CONFIG_PATH=${1:-/etc/aemm-default-config.json}
+  imds-mock --config-file $CONFIG_PATH &
+  wait::server-responding localhost 1338 10
+}
+
+function mock::aws() {
+  if [ "${ENABLE_IMDS_MOCK:-true}" = "true" ]; then
+    mock::imds ${1:-}
+  fi
+  if [ "${ENABLE_AWS_MOCK:-true}" = "true" ]; then
+    $HOME/.local/bin/moto_server -p5000 &
+    wait::server-responding localhost 5000 10
+    # ensure that our instance exists in the API
+    aws ec2 run-instances
+  fi
+}
+
+function mock::connection-timeout-server() {
+  if [ "$#" -ne 1 ]; then
+    echo "usage: $0 PORT"
+    return 1
+  fi
+  iptables -A INPUT -p tcp --dport ${1} -j DROP
+}
+
+# common environment variables
+export AWS_ACCESS_KEY_ID='testing'
+export AWS_SECRET_ACCESS_KEY='testing'
+export AWS_SECURITY_TOKEN='testing'
+export AWS_SESSION_TOKEN='testing'
+export AWS_REGION=us-east-1
+
+# this is set regardless of whether the mock AWS API is started
+# because we don't want to inadvertently send requests to the real AWS API
+export AWS_ENDPOINT_URL=http://localhost:5000
+
+# do the same for IMDS, for good measure
+export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338

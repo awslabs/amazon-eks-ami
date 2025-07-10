@@ -19,7 +19,9 @@ echo "done! Test image: $TEST_IMAGE"
 
 FAILED="false"
 
-for CASE_DIR in $(ls -d test/e2e/cases/*); do
+CASE_PREFIX=${1:-}
+
+for CASE_DIR in $(ls -d test/e2e/cases/${CASE_PREFIX}*); do
   CASE_NAME=$(basename $CASE_DIR)
   printf "🧪 Testing $CASE_NAME..."
   CONTAINER_ID=$(docker run \

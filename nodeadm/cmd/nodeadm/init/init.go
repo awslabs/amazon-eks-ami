@@ -168,6 +168,15 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
+	if awsConfig.RetryMaxAttempts == 0 {
+		// use a very generous retry policy to accomodate delays in network readiness
+		// we only specify the max attempts if it is unset by the user
+		// so it's possible to override with the AWS_MAX_ATTEMPTS environment variable.
+		// NOTE that this is the number of attempts that will be made in a blocking fashion
+		// i.e. an SDK client.ExampleAPICall() will not return until these attempts are exhausted
+		// we'll give up after approximately 10 minutes
+		awsConfig.RetryMaxAttempts = 30
+	}
 	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
 	if err != nil {
 		return err
