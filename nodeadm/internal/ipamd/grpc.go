@@ -20,17 +20,17 @@ func GetMaxAllocatableIPs(ctx context.Context) (int32, error) {
 	grpcClient := grpcwrapper.New()
 	conn, err := grpcClient.Dial(cniBackendServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return 0, fmt.Errorf("failed to connect to ipamd server: %v", err)
+		return -1, fmt.Errorf("failed to connect to ipamd server: %v", err)
 	}
 	defer conn.Close()
 
 	cniBackendClient := rpcwrapper.New().NewCNIBackendClient(conn)
 	resp, err := cniBackendClient.GetAllocatableValues(ctx, &emptypb.Empty{})
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	if resp.MaxAllocatableIPs <= 0 {
-		return 0, fmt.Errorf("received a non-positive value for max IPs: %d", resp.MaxAllocatableIPs)
+		return -1, fmt.Errorf("received a non-positive value for max IPs: %d", resp.MaxAllocatableIPs)
 	}
 	return resp.MaxAllocatableIPs, nil
 }
