@@ -128,6 +128,12 @@ fi
 ### systemd ####################################################################
 ################################################################################
 
+# changes OOM killer behavior under pressure
+# TODO remove this when 1.31 is EOL
+if vercmp $KUBERNETES_VERSION gteq "1.32"; then
+  sudo mkdir -p /etc/systemd/system/system.slice.d
+  sudo mv "${WORKING_DIR}/system.slice.oom.conf" /etc/systemd/system/system.slice.d/oom.conf
+fi
 sudo mv "${WORKING_DIR}/runtime.slice" /etc/systemd/system/runtime.slice
 # this unit is safe to have regardless of variant because it will not run if
 # the required binaries are not present.
