@@ -11,4 +11,4 @@ Type=oneshot
 ExecStart=/usr/bin/nodeadm init --skip config
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=cloud-init.target
