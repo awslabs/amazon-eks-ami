@@ -72,7 +72,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		return err
 	}
 
-	zap.L().Info("Validating configuration..")
+	log.Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
 	}
@@ -86,7 +86,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	aspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
-		system.NewNetworkingAspect(),
 	}
 
 	daemons := []daemon.Daemon{
@@ -124,7 +123,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 				continue
 			}
-
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Ensuring daemon is running..", nameField)

@@ -6,12 +6,19 @@ set -o pipefail
 
 cd $(dirname $0)/../..
 
-NODEADM=$PWD/_bin/nodeadm
+declare MOUNT_FLAGS=""
+declare -A MOUNT_TARGETS=(
+  ['nodeadm']=$PWD/_bin/nodeadm
+  ['nodeadm-internal']=$PWD/_bin/nodeadm-internal
+)
 
-if [ ! -f "${NODEADM}" ]; then
-  echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
-  exit 1
-fi
+for binary in "${!MOUNT_TARGETS[@]}"; do
+  if [ ! -f "${MOUNT_TARGETS[$binary]}" ]; then
+    echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
+    exit 1
+  fi
+  MOUNT_FLAGS+=" -v ${MOUNT_TARGETS[$binary]}:/usr/local/bin/$binary"
+done
 
 printf "🛠️ Building test infra image..."
 TEST_IMAGE=$(docker build -q -f test/e2e/infra/Dockerfile .)
@@ -28,7 +35,7 @@ for CASE_DIR in $(ls -d test/e2e/cases/${CASE_PREFIX}*); do
     -d \
     --rm \
     --privileged \
-    -v $NODEADM:/usr/local/bin/nodeadm \
+    $MOUNT_FLAGS \
     -v $PWD/$CASE_DIR:/test-case \
     $TEST_IMAGE)
   LOG_FILE=$(mktemp)
