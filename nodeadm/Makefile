@@ -78,7 +78,7 @@ test-e2e: build ## Run e2e tests.
 
 .PHONY: build
 build: ## Build binary.
-	GOOS=$(GOOS) go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+	GOOS=$(GOOS) go build -o $(LOCALBIN)/ ./cmd/...
 
 .PHONY: run
 run: build ## Run binary.
@@ -132,6 +132,10 @@ goimports: $(GOIMPORTS) ## Download goimports locally if necessary.
 $(GOIMPORTS): $(LOCALBIN)
 	test -s $(LOCALBIN)/goimports || \
 	GOBIN=$(LOCALBIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
+
+.PHONY: update-doc-references
+update-doc-references: #  Generate doc references using nodeadm-docs
+	go run cmd/nodeadm-docs/main.go max-pods > doc/feature-gates/references/maxpods.md
 
 .PHONY: update-deps
 update-deps:
