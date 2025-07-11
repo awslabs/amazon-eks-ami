@@ -14,6 +14,10 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// InstanceIdNodeNameGate controls whether to use instance ID as the node's name.
 	// By default, this feature is disabled, and the private DNS Name will be used.
 	InstanceIdNodeName: DefaultFalse,
+
+	// MemoryLimitMaxPods controls whether a ceiling should be applied to the max pods value
+	// based on the instance's total free memory
+	MemoryLimitMaxPods: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {

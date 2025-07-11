@@ -18,10 +18,10 @@ func Merge(
 	marshaller func(v any) ([]byte, error),
 	unmarshaller func(data []byte, v any) error,
 	opts ...func(*mergo.Config),
-) (map[string]interface{}, error) {
+) (map[string]any, error) {
 	var (
 		dstBytes, srcBytes []byte
-		dstMap, srcMap     map[string]interface{}
+		dstMap, srcMap     map[string]any
 		err                error
 	)
 	if reflect.TypeOf(dst) == reflect.TypeOf([]byte{}) && reflect.TypeOf(src) == reflect.TypeOf([]byte{}) {

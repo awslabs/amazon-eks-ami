@@ -135,4 +135,8 @@ type Feature string
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	// MemoryLimitMaxPods will calculate a ceiling to the max pods value
+	// based on memory reserved
+	MemoryLimitMaxPods Feature = "MemoryLimitMaxPods"
 )

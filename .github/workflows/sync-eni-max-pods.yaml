@@ -42,7 +42,7 @@ jobs:
           base: main
           add-paths: |
             templates/shared/runtime/eni-max-pods.txt
-            nodeadm/internal/kubelet/eni-max-pods.txt
+            nodeadm/internal/kubelet/maxpods/eni-max-pods.txt
           commit-message: "Update eni-max-pods.txt"
           committer: "GitHub <noreply@github.com>"
           author: "GitHub <noreply@github.com>"
