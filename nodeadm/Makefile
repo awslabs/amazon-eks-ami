@@ -133,6 +133,10 @@ $(GOIMPORTS): $(LOCALBIN)
 	test -s $(LOCALBIN)/goimports || \
 	GOBIN=$(LOCALBIN) go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)
 
+.PHONY: update-doc-references
+update-doc-references: #  Generated doc references using nodeadm-docs
+	go run cmd/nodeadm-docs/main.go max-pods > doc/references/maxpods.md
+
 .PHONY: update-deps
 update-deps:
 	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all) && go mod tidy && go mod vendor

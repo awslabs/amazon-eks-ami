@@ -24,6 +24,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
+	maxpods "github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet/maxpods"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
@@ -257,21 +258,36 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 	}
 }
 
+func GetClassicMaxPods(instanceType string, region string) int32 {
+	maxPods, err := maxpods.GetENIMaxPodsFromFile(instanceType)
+	if err == nil {
+		return maxPods
+	}
+	zap.L().Info("Failed to get max pods value from file, determining value from EC2...", zap.Error(err))
+	maxPods, err = maxpods.GetENIMaxPodsFromEC2(region, instanceType)
+	if err == nil {
+		return maxPods
+	}
+	zap.L().Info("Failed to get max pods value from EC2, setting to default", zap.Error(err))
+	return maxpods.DefaultMaxPods
+}
+
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
-		// #nosec G115 // known source from ec2 apis within int32 range
-		ksc.MaxPods = int32(maxPods)
-	} else {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+
+	maxPods := GetClassicMaxPods(cfg.Status.Instance.Type, cfg.Status.Instance.Region)
+	if api.IsFeatureEnabled(api.LimitMaxPods, cfg.Spec.FeatureGates) {
+		zap.L().Info("Applying limit to max pods value", zap.Int32("unboundMaxPods", maxPods))
+		maxPods = maxpods.ApplyLimit(maxPods)
 	}
+	ksc.MaxPods = maxPods
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
+		"memory":            fmt.Sprintf("%dMi", GetMemoryMebibytesToReserve(ksc.MaxPods)),
 	}
 }
 
@@ -454,6 +470,6 @@ func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int)
 	return (reserved - startRange) * percentage / 10000
 }
 
-func getMemoryMebibytesToReserve(maxPods int32) int32 {
+func GetMemoryMebibytesToReserve(maxPods int32) int32 {
 	return 11*maxPods + 255
 }
