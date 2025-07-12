@@ -141,6 +141,33 @@ sudo dnf versionlock containerd-*
 sudo systemctl enable ebs-initialize-bin@containerd
 
 ###############################################################################
+### SOCI Snapshotter setup ##########################################################
+###############################################################################
+function install-soci-snapshotter() {
+  PARTITION=$(imds /latest/meta-data/services/partition)
+  SUPPORTED_PARTITIONS=("aws" "aws-us-gov")
+  for SUPPORTED_PARTITION in "${SUPPORTED_PARTITIONS[@]}"; do
+    if [ "${SUPPORTED_PARTITION}" = "${PARTITION}" ]; then
+      RELEASE=0.11.0
+      SOCI_SNAPSHOTTER_DIR="${WORKING_DIR}/soci-snapshotter-install"
+      mkdir "${SOCI_SNAPSHOTTER_DIR}"
+      curl \
+        --silent \
+        --show-error \
+        --retry 10 \
+        --retry-delay 1 \
+        -L "https://github.com/awslabs/soci-snapshotter/releases/download/v$RELEASE/soci-snapshotter-$RELEASE-linux-$ARCH-static.tar.gz" -o "${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter.tar.gz"
+      tar -xzf ${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter.tar.gz -C ${SOCI_SNAPSHOTTER_DIR}
+      sudo mv ${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter-grpc /usr/bin/
+      rm -rf ${SOCI_SNAPSHOTTER_DIR}
+
+      sudo systemctl enable soci-snapshotter.socket
+    fi
+  done
+}
+install-soci-snapshotter
+
+###############################################################################
 ### Nerdctl setup #############################################################
 ###############################################################################
 

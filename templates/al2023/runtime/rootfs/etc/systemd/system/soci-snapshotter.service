@@ -1,0 +1,12 @@
+[Unit]
+Description=soci snapshotter containerd plugin
+Documentation=https://github.com/awslabs/soci-snapshotter
+Before=containerd.service kubelet.service
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/soci-snapshotter-grpc --address fd://
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

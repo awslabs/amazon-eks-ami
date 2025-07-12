@@ -62,7 +62,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName]
+- Enum: [InstanceIdNodeName FastContainerImagePull]
 
 #### InstanceOptions
 

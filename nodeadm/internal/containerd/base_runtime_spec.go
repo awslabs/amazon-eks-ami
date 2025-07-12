@@ -34,5 +34,5 @@ func writeBaseRuntimeSpec(cfg *api.NodeConfig) error {
 		}
 		baseRuntimeSpecData = string(mergedBaseRuntimeSpecData)
 	}
-	return util.WriteFileWithDir(containerdBaseRuntimeSpecFile, []byte(baseRuntimeSpecData), containerdConfigPerm)
+	return util.WriteFileWithDir(containerdBaseRuntimeSpecFile, []byte(baseRuntimeSpecData), configPerm)
 }
