@@ -63,7 +63,8 @@ sudo dnf install -y \
   unzip \
   wget \
   mdadm \
-  pigz
+  pigz \
+  python3-dnf-plugin-versionlock
 
 ################################################################################
 ### Networking #################################################################
@@ -71,6 +72,9 @@ sudo dnf install -y \
 
 # needed by kubelet
 sudo dnf install -y iptables-nft
+
+# updating this package may trigger post-install hooks or config changes that undo what happens below
+sudo dnf versionlock amazon-ec2-net-utils
 
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
@@ -132,6 +136,7 @@ fi
 
 sudo dnf install -y runc-${RUNC_VERSION}
 sudo dnf install -y containerd-${CONTAINERD_VERSION}
+sudo dnf versionlock containerd-*
 
 # generate and store containerd version in file /etc/eks/containerd-version.txt
 containerd --version | sudo tee /etc/eks/containerd-version.txt

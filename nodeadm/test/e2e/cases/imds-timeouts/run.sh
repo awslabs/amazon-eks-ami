@@ -10,7 +10,7 @@ wait::dbus-ready
 mock::kubelet 1.29.0
 
 # configure without launching the imds mock service
-IMDS_MOCK_ONLY_CONFIGURE=true mock::aws
+ENABLE_IMDS_MOCK=false mock::aws
 
 if nodeadm init --skip run; then
   echo "bootstrap should not succeed when EC2 IMDS APIs are not reachable."
@@ -19,5 +19,5 @@ fi
 
 # start the imds mock part way into the initialization to mimic
 # delayed availability of IMDS
-{ sleep 10 && AWS_MOCK_ONLY_CONFIGURE=true mock::aws; } &
+{ sleep 10 && ENABLE_AWS_MOCK=false mock::aws; } &
 nodeadm init --skip run

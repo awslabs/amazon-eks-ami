@@ -71,6 +71,7 @@ COMMON_DIRECTORIES=(
 COMMON_LOGS=(
   syslog
   messages
+  unattended-upgrades
   aws-routed-eni # eks
   containers     # eks
   pods           # eks
@@ -668,7 +669,32 @@ get_networking_info() {
     ethtool -S ${ifc} >> "${COLLECT_DIR}"/networking/ethtool.txt 2>&1
     echo -e "\n" >> "${COLLECT_DIR}"/networking/ethtool.txt
   done
+
+  get_systemd_network_config
   ok
+}
+
+get_systemd_network_config() {
+  # The possible locations of systemd-networkd configuration files
+  # https://www.freedesktop.org/software/systemd/man/latest/systemd.network.html
+  folders=(
+    "/usr/lib/systemd/network"
+    "/etc/systemd/network"
+    "/run/systemd/network"
+    "/usr/local/lib/systemd/network"
+  )
+
+  mkdir -p "${COLLECT_DIR}"/networking/systemd-network
+
+  # Process each folder
+  for folder in "${folders[@]}"; do
+    [ ! -d "$folder" ] && continue
+    [ -z "$(ls -A "$folder")" ] && continue
+    for unit in "$folder"/*.*; do
+      [ ! -f "$unit" ] && continue
+      systemd-analyze cat-config "${unit}" > "${COLLECT_DIR}"/networking/systemd-network/$(basename "$unit") 2> /dev/null
+    done
+  done
 }
 
 get_cni_config() {
@@ -864,7 +890,7 @@ get_io_throttled_processes() {
   command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
-  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v " 0$" >> ${IO_THROTTLE_LOG}
   ok
 }
 

@@ -229,6 +229,11 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[stri
 		ksc.KubeAPIQPS = ptr.Int(10)
 		ksc.KubeAPIBurst = ptr.Int(20)
 	}
+
+	// EKS enables DRA on 1.33+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
+		ksc.FeatureGates["DynamicResourceAllocation"] = true
+	}
 }
 
 func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
@@ -368,7 +373,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
 		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
-		filePath := path.Join(dirPath, "00-nodeadm.conf")
+		filePath := path.Join(dirPath, "40-nodeadm.conf")
 
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in

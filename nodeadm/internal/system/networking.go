@@ -2,14 +2,16 @@ package system
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"fmt"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"text/template"
+
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
+	"go.uber.org/zap"
 )
 
 const (
@@ -30,29 +32,6 @@ var (
 	eksPrimaryENIOnlyConfTemplate     = template.Must(template.New(eksPrimaryENIOnlyConfName).Parse(eksPrimaryENIOnlyConfTemplateData))
 )
 
-// NewNetworkingAspect constructs new networkingAspect.
-func NewNetworkingAspect() *networkingAspect {
-	return &networkingAspect{}
-}
-
-var _ SystemAspect = &networkingAspect{}
-
-// networkingAspect setups eks-specific networking configurations.
-type networkingAspect struct{}
-
-// Name returns the name of this aspect.
-func (a *networkingAspect) Name() string {
-	return networkingAspectName
-}
-
-// Setup executes the logic of this aspect.
-func (a *networkingAspect) Setup(cfg *api.NodeConfig) error {
-	if err := a.ensureEKSNetworkConfiguration(cfg); err != nil {
-		return fmt.Errorf("failed to ensure eks network configuration: %w", err)
-	}
-	return nil
-}
-
 // ensureEKSNetworkConfiguration will install eks specific network configuration into system.
 // NOTE: this is a temporary fix for AL2023, where the `80-ec2.network` setup by amazon-ec2-net-utils will cause systemd.network
 // to manage all ENIs on host, and that can potentially result in multiple issues including:
@@ -62,7 +41,11 @@ func (a *networkingAspect) Setup(cfg *api.NodeConfig) error {
 // To address this issue temporarily, we use drop-ins to alter configuration of `80-ec2.network` after boot to make it match against primary ENI only.
 // TODO: there are limitations on current solutions as well, and we should figure long term solution for this:
 //  1. the altNames for ENIs(a new feature in AL2023) were setup by amazon-ec2-net-utils via udev rules, but it's disabled by eks.
-func (a *networkingAspect) ensureEKSNetworkConfiguration(cfg *api.NodeConfig) error {
+func EnsureEKSNetworkConfiguration() error {
+	primaryENIMac, err := imds.GetProperty(context.TODO(), "mac")
+	if err != nil {
+		return fmt.Errorf("failed to get MAC from IMDS: %w", err)
+	}
 	networkCfgDropInDir := fmt.Sprintf("%s/%s.d", administrationNetworkDir, ec2NetworkConfigurationName)
 	eksPrimaryENIOnlyConfPathName := fmt.Sprintf("%s/%s", networkCfgDropInDir, eksPrimaryENIOnlyConfName)
 	if exists, err := util.IsFilePathExists(eksPrimaryENIOnlyConfPathName); err != nil {
@@ -72,7 +55,7 @@ func (a *networkingAspect) ensureEKSNetworkConfiguration(cfg *api.NodeConfig) er
 		return nil
 	}
 
-	eksPrimaryENIOnlyConfContent, err := a.generateEKSPrimaryENIOnlyConfiguration(cfg)
+	eksPrimaryENIOnlyConfContent, err := generateEKSPrimaryENIOnlyConfiguration(primaryENIMac)
 	if err != nil {
 		return fmt.Errorf("failed to generate eks_primary_eni_only network configuration: %w", err)
 	}
@@ -83,7 +66,7 @@ func (a *networkingAspect) ensureEKSNetworkConfiguration(cfg *api.NodeConfig) er
 	if err := os.WriteFile(eksPrimaryENIOnlyConfPathName, eksPrimaryENIOnlyConfContent, networkConfFilePerms); err != nil {
 		return fmt.Errorf("failed to write eks_primary_eni_only network configuration: %w", err)
 	}
-	if err := a.reloadNetworkConfigurations(); err != nil {
+	if err := reloadNetworkConfigurations(); err != nil {
 		return fmt.Errorf("failed to reload network configurations: %w", err)
 	}
 	return nil
@@ -95,8 +78,7 @@ type eksPrimaryENIOnlyTemplateVars struct {
 }
 
 // generateEKSPrimaryENIOnlyConfiguration generates the eks primary eni only network configuration.
-func (a *networkingAspect) generateEKSPrimaryENIOnlyConfiguration(cfg *api.NodeConfig) ([]byte, error) {
-	primaryENIMac := cfg.Status.Instance.MAC
+func generateEKSPrimaryENIOnlyConfiguration(primaryENIMac string) ([]byte, error) {
 	templateVars := eksPrimaryENIOnlyTemplateVars{
 		PermanentMACAddress: primaryENIMac,
 	}
@@ -108,7 +90,7 @@ func (a *networkingAspect) generateEKSPrimaryENIOnlyConfiguration(cfg *api.NodeC
 	return buf.Bytes(), nil
 }
 
-func (a *networkingAspect) reloadNetworkConfigurations() error {
+func reloadNetworkConfigurations() error {
 	cmd := exec.Command("networkctl", "reload")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
