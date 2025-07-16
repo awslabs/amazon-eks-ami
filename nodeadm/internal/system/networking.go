@@ -17,8 +17,8 @@ import (
 
 const (
 	networkingAspectName = "networking"
-	// The local administration network directory for systemd.network
-	administrationNetworkDir = "/etc/systemd/network"
+	// the ephemeral networkd config directory, reset on reboot
+	administrationNetworkDir = "/run/systemd/network"
 	// the name of ec2 network configuration setup by amazon-ec2-net-utils:
 	// https://github.com/amazonlinux/amazon-ec2-net-utils/blob/c6626fb5cd094bbfeb62c456fe088011dbab3f95/systemd/network/80-ec2.network
 	ec2NetworkConfigurationName = "80-ec2.network"
