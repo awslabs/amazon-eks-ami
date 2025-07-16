@@ -225,7 +225,6 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "AWS_REGION={{user `aws_region`}}",
         "BUILD_IMAGE={{user `nodeadm_build_image`}}",
-        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
       ]
     },

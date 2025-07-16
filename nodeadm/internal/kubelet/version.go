@@ -31,7 +31,7 @@ func GetKubeletVersionRaw() ([]byte, error) {
 	return os.ReadFile(kubeletVersionFile)
 }
 
-var semVerRegex = regexp.MustCompile(`v[0-9]+\.[0-9]+\.[0-9]+`)
+var semVerRegex = regexp.MustCompile(`v[0-9]+\.[0-9]+.[0-9]+`)
 
 func parseSemVer(rawVersion string) string {
 	return semVerRegex.FindString(rawVersion)

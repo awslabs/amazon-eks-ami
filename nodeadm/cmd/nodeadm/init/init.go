@@ -86,10 +86,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	aspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
-		// TODO: this code path is going to be superceded by the
-		// nodeadm-internal boot hook starting in Kubernetes 1.33+, which will
-		// configure the network routes before starting the nodeadm bootstrap.
-		system.NewNetworkingAspect(),
 	}
 
 	daemons := []daemon.Daemon{
