@@ -38,7 +38,11 @@ sudo mv \
   /usr/bin/
 
 # enable nodeadm bootstrap systemd units
-sudo systemctl enable \
-  nodeadm-boot-hook \
-  nodeadm-config \
-  nodeadm-run
+sudo systemctl enable nodeadm-config
+sudo systemctl enable nodeadm-run
+
+# TODO: starting in 1.33+ we will start configuring systemd-networkd in a boot
+# hook rather than just in the run-phase of nodeadm.
+if vercmp "$KUBERNETES_VERSION" gteq "1.33.0"; then
+  sudo systemctl enable nodeadm-boot-hook
+fi
