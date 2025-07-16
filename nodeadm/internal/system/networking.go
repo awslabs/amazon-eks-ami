@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"text/template"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
@@ -32,29 +31,6 @@ var (
 	eksPrimaryENIOnlyConfTemplateData string
 	eksPrimaryENIOnlyConfTemplate     = template.Must(template.New(eksPrimaryENIOnlyConfName).Parse(eksPrimaryENIOnlyConfTemplateData))
 )
-
-// NewNetworkingAspect constructs new networkingAspect.
-func NewNetworkingAspect() *networkingAspect {
-	return &networkingAspect{}
-}
-
-var _ SystemAspect = &networkingAspect{}
-
-// networkingAspect setups eks-specific networking configurations.
-type networkingAspect struct{}
-
-// Name returns the name of this aspect.
-func (a *networkingAspect) Name() string {
-	return networkingAspectName
-}
-
-// Setup executes the logic of this aspect.
-func (a *networkingAspect) Setup(_ *api.NodeConfig) error {
-	if err := EnsureEKSNetworkConfiguration(); err != nil {
-		return fmt.Errorf("failed to ensure eks network configuration: %w", err)
-	}
-	return nil
-}
 
 // ensureEKSNetworkConfiguration will install eks specific network configuration into system.
 // NOTE: this is a temporary fix for AL2023, where the `80-ec2.network` setup by amazon-ec2-net-utils will cause systemd.network
