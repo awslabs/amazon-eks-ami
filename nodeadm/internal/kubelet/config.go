@@ -327,10 +327,13 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withVersionToggles(cfg, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg)
-	kubeletConfig.withNodeLabels(k.flags, map[string]LabelValueFunc{
+
+	nodeLabelFuncs := map[string]LabelValueFunc{}
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
 		// see: https://github.com/NVIDIA/gpu-operator/commit/e25291b86cf4542ac62d8635cda4bd653c4face3
-		"nvidia.com/gpu.present": getNvidiaGPULabel,
-	})
+		nodeLabelFuncs["nvidia.com/gpu.present"] = getNvidiaGPULabel
+	}
+	kubeletConfig.withNodeLabels(k.flags, nodeLabelFuncs)
 
 	return &kubeletConfig, nil
 }

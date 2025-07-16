@@ -7,7 +7,7 @@ set -o pipefail
 source /helpers.sh
 
 mock::aws
-mock::kubelet 1.32.0
+mock::kubelet 1.34.0
 wait::dbus-ready
 
 nodeadm init --skip run --config-source file://config.yaml
@@ -21,4 +21,13 @@ mock::pci-device "0x10de"
 nodeadm init --skip run --config-source file://config.yaml
 
 assert::file-contains /etc/eks/kubelet/environment '--node-labels=nvidia.com/gpu.present=true'
+assert::file-contains /etc/eks/kubelet/environment '--node-labels=foo=bar'
+
+# the label is only applied start from Kubernetes 1.34+
+
+mock::kubelet 1.33.0
+
+nodeadm init --skip run --config-source file://config.yaml
+
+assert::file-not-contains /etc/eks/kubelet/environment '--node-labels=nvidia.com/gpu.present=true'
 assert::file-contains /etc/eks/kubelet/environment '--node-labels=foo=bar'

@@ -19,3 +19,17 @@ There are three levels of stability and support:
 ### Stable
 - Example: `v5`.
 - Support for a stable API will align with the support of a major version of Amazon Linux.
+
+## Feature Gates
+
+|Name|Default|Since|Until|
+|---|---|---|---|
+|`InstanceIdNodeName`|`false`|-|-|
+
+## Behaviorial Boundaries
+
+|Description|Since|Until|
+|---|---|---|
+|Apply the `nvidia.com/gpu.present=true` node label on startup if NVIDIA devices are detected on the instance|1.34|-|
+|Enable CDI in the default containerd configuration|1.32|-|
+|Write user-provided kubelet config as a kubelet drop-in configuration file|1.29|-|
