@@ -304,13 +304,14 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, reso
 //
 // TODO: revisit once the minimum supportted version catches up or the container
 // runtime is moved to containerd 2.0
-func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags map[string]string) {
+func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags map[string]string) error {
 	// the flag is a noop on 1.29+, since the behavior was changed to use the
 	// CRI image pinning behavior and no longer considers the flag value.
 	// see: https://github.com/kubernetes/kubernetes/pull/118544
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
 		flags["pod-infra-container-image"] = cfg.Status.Defaults.SandboxImage
 	}
+	return nil
 }
 
 func (ksc *kubeletConfig) withImageServiceEndpoint(cfg *api.NodeConfig, resources system.Resources) {
@@ -331,15 +332,21 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
 		return nil, err
 	}
+	if err := kubeletConfig.withPodInfraContainerImage(cfg, k.flags); err != nil {
+		return nil, err
+	}
 
 	kubeletConfig.withVersionToggles(cfg)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
 	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
-	kubeletConfig.withNodeLabels(k.flags, map[string]LabelValueFunc{
+
+	nodeLabelFuncs := map[string]LabelValueFunc{}
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.35.0") >= 0 {
 		// see: https://github.com/NVIDIA/gpu-operator/commit/e25291b86cf4542ac62d8635cda4bd653c4face3
-		"nvidia.com/gpu.present": getNvidiaGPULabel,
-	})
+		nodeLabelFuncs["nvidia.com/gpu.present"] = getNvidiaGPULabel
+	}
+	kubeletConfig.withNodeLabels(k.flags, nodeLabelFuncs)
 
 	return &kubeletConfig, nil
 }
