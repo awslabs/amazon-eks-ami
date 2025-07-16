@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 const NVIDIA_VENDOR_ID = "0x10de"
@@ -16,8 +18,10 @@ func IsPCIVendorAttached(vendorId string) (bool, error) {
 		return false, err
 	}
 	for _, vendorPath := range vendorPaths {
-		vendorIdBytes, err := os.ReadFile(filepath.Clean(vendorPath))
+		// #nosec G304 // read only operation on sysfs path
+		vendorIdBytes, err := os.ReadFile(vendorPath)
 		if err != nil {
+			zap.L().Warn("failed to read vendor id", zap.Error(err))
 			continue
 		}
 		if strings.TrimSpace(string(vendorIdBytes)) == vendorId {
