@@ -20,3 +20,7 @@ mock::kubelet 1.27.0
 nodeadm init --skip run --config-source file://config.yaml
 
 assert::json-files-equal /etc/eks/image-credential-provider/config.json expected-image-credential-provider-config-127.json
+
+nodeadm init --skip run --config-source file://config-custom.yaml
+
+assert::json-files-equal /etc/eks/image-credential-provider/config.json expected-image-credential-provider-config-127-custom.json

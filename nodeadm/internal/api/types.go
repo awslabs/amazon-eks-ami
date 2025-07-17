@@ -73,6 +73,11 @@ type KubeletOptions struct {
 	// amended to the generated defaults, and therefore will act as overrides
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	Flags KubeletFlags `json:"flags,omitempty"`
+	// ImageCredentialProviderConfig is a custom Go template to configure
+	// the image credential provider. If not set, a default template is used.
+	// The template is rendered with the ConfigApiVersion, EcrProviderName
+	// and ProviderApiVersion variables.
+	ImageCredentialProviderConfig string `json:"imageCredentialProviderConfig,omitempty"`
 }
 
 // InlineDocument is an alias to a dynamically typed map. This allows using

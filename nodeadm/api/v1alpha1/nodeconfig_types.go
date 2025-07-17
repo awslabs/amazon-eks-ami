@@ -68,6 +68,12 @@ type KubeletOptions struct {
 	// Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
 	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
+
+	// ImageCredentialProviderConfig is a custom Go template to configure
+	// the image credential provider. If not set, a default template is used.
+	// The template is rendered with the ConfigApiVersion, EcrProviderName
+	// and ProviderApiVersion variables.
+	ImageCredentialProviderConfig string `json:"imageCredentialProviderConfig,omitempty"`
 }
 
 // ContainerdOptions are additional parameters passed to `containerd`.
