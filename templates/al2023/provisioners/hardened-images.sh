@@ -31,8 +31,7 @@ if [[ "$HARDENED_IMAGE" == "true" ]]; then
   sudo yum install container-selinux -y && \
   # Install Go 1.24 Patch that allows for read/write to socket.
   cd "${WORKING_DIR}/selinux/go-1.24" && \
-  ls -la && \
-  checkmodule -M -m -o go-1.24.mod go-1.24.te && \
-  semodule_package -o go-1.24.pp -m go-1.24.mod && \
-  sudo semodule -i go-1.24.pp
+  checkmodule -M -m -o go-patch.mod go-patch.te && \
+  semodule_package -o go-patch.pp -m go-patch.mod && \
+  sudo semodule -i go-patch.pp
 fi
