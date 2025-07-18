@@ -1,0 +1,11 @@
+module go-1.24 1.0;
+
+require {
+        type kernel_t;
+        type container_t;
+        class tcp_socket { read write };
+}
+
+#============= container_t ==============
+
+allow container_t kernel_t:tcp_socket { read write };
