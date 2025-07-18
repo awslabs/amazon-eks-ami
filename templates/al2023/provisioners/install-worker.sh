@@ -138,6 +138,9 @@ sudo dnf install -y runc-${RUNC_VERSION}
 sudo dnf install -y containerd-${CONTAINERD_VERSION}
 sudo dnf versionlock containerd-*
 
+# generate and store containerd version in file /etc/eks/containerd-version.txt
+containerd --version | sudo tee /etc/eks/containerd-version.txt
+
 sudo systemctl enable ebs-initialize-bin@containerd
 
 ###############################################################################
