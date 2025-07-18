@@ -240,7 +240,7 @@
       "script": "{{template_dir}}/provisioners/hardened-images.sh",
       "environment_vars": [
         "HARDENED_IMAGE={{user `hardened_image`}}",
-        "WORK_DIR={{user `working_dir`}}"
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {
