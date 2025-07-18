@@ -149,7 +149,7 @@
     {
       "type": "file",
       "source": "{{template_dir}}/selinux",
-      "destination": "{{user `working_dir`}}/tmp"
+      "destination": "{{user `working_dir`}}/selinux"
     },
     {
       "type": "file",
