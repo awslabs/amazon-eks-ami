@@ -581,8 +581,12 @@ get_ipamd_info() {
   fi
 
   try "collect L-IPAMD checkpoint"
-  if [[ -f /var/run/aws-node/ipam.json ]]; then
-    cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
+  if [[ -d /var/run/aws-node/ ]]; then
+    for file in /var/run/aws-node/*; do
+      if [[ -f "$file" ]]; then
+        cp "$file" "${COLLECT_DIR}"/ipamd/$(basename "$file")
+      fi
+    done
   fi
 
   ok
