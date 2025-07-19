@@ -21,6 +21,10 @@ nav:
       - 'Reference': nodeadm/doc/api.md
     - 'Examples': nodeadm/doc/examples.md
     - 'Playground': nodeadm/doc/playground.md
+    - 'Feature Gates':
+      - 'References':
+          - 'LimitMaxPods': 'nodeadm/doc/references/maxpods.md'
+      - 'LimitMaxPods': 'nodeadm/doc/feature-gates/limit-max-pods.md'
 theme:
   name: material
   palette:
