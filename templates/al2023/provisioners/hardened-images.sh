@@ -4,8 +4,34 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
+################################################################################
+### Validate Required Arguments ################################################
+################################################################################
+validate_env_set() {
+  (
+    set +o nounset
+
+    if [ -z "${!1}" ]; then
+      echo "Packer variable '$1' was not set. Aborting"
+      exit 1
+    fi
+  )
+}
+
+validate_env_set HARDENED_IMAGE
+validate_env_set WORKING_DIR
+
+################################################################################
+### Install/Add Required Selinux Policies ######################################
+################################################################################
+
 if [[ "$HARDENED_IMAGE" == "true" ]]; then
-  sudo chcon -t bin_t /usr/bin/nodeadm
-  sudo systemctl disable firewalld
-  sudo yum install container-selinux -y
+  sudo chcon -t bin_t /usr/bin/nodeadm && \
+  sudo systemctl disable firewalld && \
+  sudo yum install container-selinux -y && \
+  # Install Go 1.24 Patch that allows for read/write to socket.
+  cd "${WORKING_DIR}/selinux/go-1.24" && \
+  checkmodule -M -m -o go-patch.mod go-patch.te && \
+  semodule_package -o go-patch.pp -m go-patch.mod && \
+  sudo semodule -i go-patch.pp
 fi

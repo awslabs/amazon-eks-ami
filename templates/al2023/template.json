@@ -148,6 +148,11 @@
     },
     {
       "type": "file",
+      "source": "{{template_dir}}/selinux",
+      "destination": "{{user `working_dir`}}/"
+    },
+    {
+      "type": "file",
       "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
@@ -234,8 +239,9 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/hardened-images.sh",
       "environment_vars": [
-        "HARDENED_IMAGE={{user `hardened_image`}}"
-      ]      
+        "HARDENED_IMAGE={{user `hardened_image`}}",
+        "WORKING_DIR={{user `working_dir`}}"
+      ]
     },
     {
       "type": "shell",
