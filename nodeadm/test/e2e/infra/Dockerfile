@@ -5,7 +5,7 @@ RUN mv /bin/cmd /imds-mock
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 RUN dnf -y update && \
-    dnf -y install systemd containerd jq python3 awscli && \
+    dnf -y install systemd containerd jq python3 awscli nmap-ncat iptables && \
     dnf clean all
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \

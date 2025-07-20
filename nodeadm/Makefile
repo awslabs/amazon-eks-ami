@@ -78,7 +78,7 @@ test-e2e: build ## Run e2e tests.
 
 .PHONY: build
 build: ## Build binary.
-	GOOS=$(GOOS) go build -o $(LOCALBIN)/nodeadm cmd/nodeadm/main.go
+	GOOS=$(GOOS) go build -o $(LOCALBIN)/ ./cmd/...
 
 .PHONY: run
 run: build ## Run binary.
