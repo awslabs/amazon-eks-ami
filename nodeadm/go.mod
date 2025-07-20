@@ -7,14 +7,14 @@ toolchain go1.24.4
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.227.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.231.0
 	github.com/aws/smithy-go v1.22.4
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/integrii/flaggy v1.5.2
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/mod v0.25.0
+	golang.org/x/mod v0.26.0
 	k8s.io/apimachinery v0.33.2
 	k8s.io/kubelet v0.33.2
 	sigs.k8s.io/controller-runtime v0.21.0
