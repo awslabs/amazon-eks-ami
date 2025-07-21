@@ -27,8 +27,7 @@ validate_env_set WORKING_DIR
 
 install_go_1.24_patch() {
   cd "${WORKING_DIR}/selinux/go-1.24"
-  checkmodule -M -m -o go-patch.mod go-patch.te
-  semodule_package -o go-patch.pp -m go-patch.mod
+  make -f /usr/share/selinux/devel/Makefile
   sudo semodule -i go-patch.pp
 }
 
@@ -37,10 +36,9 @@ install_go_1.24_patch() {
 ################################################################################
 
 install_node_exporter_patch() {
-  cd "${WORKING_DIR}/selinux/go-1.24"
-  checkmodule -M -m -o node-exporter.mod node-exporter.te
-  semodule_package -o node-exporter.pp -m node_exporter.mod
-  sudo semodule -i node_exporter.pp
+  cd "${WORKING_DIR}/selinux/node-exporter"
+  make -f /usr/share/selinux/devel/Makefile
+  sudo semodule -i node-exporter.pp
 }
 
 ################################################################################
@@ -50,11 +48,9 @@ install_node_exporter_patch() {
 if [[ "$HARDENED_IMAGE" == "true" ]]; then
   sudo chcon -t bin_t /usr/bin/nodeadm && \
   sudo systemctl disable firewalld && \
-  sudo yum install container-selinux -y && \
+  sudo yum install container-selinux selinux-policy-devel -y && \
   # Install Go 1.24 Patch that allows for read/write to socket.
   install_go_1.24_patch
   # Install node_exporter patch
   install_node_exporter_patch
 fi
-
-

@@ -1,4 +1,4 @@
-policy_module(node_exporter_container, 1.0)
+policy_module(node_exporter, 1.0)
 
 require {
     type container_t;

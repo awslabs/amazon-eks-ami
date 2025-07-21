@@ -1,4 +1,4 @@
-module go-patch 1.0;
+policy_module(go-patch, 1.0)
 
 require {
         type kernel_t;
