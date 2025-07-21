@@ -54,7 +54,7 @@ if [[ "$HARDENED_IMAGE" == "true" ]]; then
   # Install Go 1.24 Patch that allows for read/write to socket.
   install_go_1.24_patch
   # Install node_exporter patch
-
+  install_node_exporter_patch
 fi
 
 
