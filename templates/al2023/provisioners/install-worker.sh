@@ -141,33 +141,6 @@ sudo dnf versionlock containerd-*
 sudo systemctl enable ebs-initialize-bin@containerd
 
 ###############################################################################
-### SOCI Snapshotter setup ##########################################################
-###############################################################################
-function install-soci-snapshotter() {
-  PARTITION=$(imds /latest/meta-data/services/partition)
-  SUPPORTED_PARTITIONS=("aws" "aws-us-gov")
-  for SUPPORTED_PARTITION in "${SUPPORTED_PARTITIONS[@]}"; do
-    if [ "${SUPPORTED_PARTITION}" = "${PARTITION}" ]; then
-      RELEASE=0.11.0
-      SOCI_SNAPSHOTTER_DIR="${WORKING_DIR}/soci-snapshotter-install"
-      mkdir "${SOCI_SNAPSHOTTER_DIR}"
-      curl \
-        --silent \
-        --show-error \
-        --retry 10 \
-        --retry-delay 1 \
-        -L "https://github.com/awslabs/soci-snapshotter/releases/download/v$RELEASE/soci-snapshotter-$RELEASE-linux-$ARCH-static.tar.gz" -o "${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter.tar.gz"
-      tar -xzf ${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter.tar.gz -C ${SOCI_SNAPSHOTTER_DIR}
-      sudo mv ${SOCI_SNAPSHOTTER_DIR}/soci-snapshotter-grpc /usr/bin/
-      rm -rf ${SOCI_SNAPSHOTTER_DIR}
-
-      sudo systemctl enable soci-snapshotter.socket
-    fi
-  done
-}
-install-soci-snapshotter
-
-###############################################################################
 ### Nerdctl setup #############################################################
 ###############################################################################
 
@@ -200,6 +173,7 @@ elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+S3_RPMS_PATH="s3://$BINARY_BUCKET_NAME/rpms"
 
 BINARIES=(
   kubelet
@@ -244,6 +218,17 @@ fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+
+###############################################################################
+### SOCI Snapshotter setup ##########################################################
+###############################################################################
+function install-soci-snapshotter() {
+    PATCH_VERSION=0.11.1-1
+    aws s3 cp --region $BINARY_BUCKET_REGION $S3_RPMS_PATH/soci-snapshotter-$PATCH_VERSION.amzn2023.0.1.$MACHINE.rpm .
+    sudo rpm -i soci-snapshotter-$PATCH_VERSION.amzn2023.0.1.$MACHINE.rpm
+    sudo systemctl enable soci-snapshotter.socket
+}
+install-soci-snapshotter
 
 ################################################################################
 ### SSM Agent ##################################################################

@@ -136,6 +136,6 @@ const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
 
-	// Allows more granular control for faster image pull
+	// FastContainerImagePull reduces image pull time
 	FastContainerImagePull Feature = "FastContainerImagePull"
 )

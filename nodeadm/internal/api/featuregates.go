@@ -15,7 +15,7 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// By default, this feature is disabled, and the private DNS Name will be used.
 	InstanceIdNodeName: DefaultFalse,
 
-	// Allows more granular control for faster image pull. Disabled by default
+	// FastContainerImagePull reduces image pull time. Disabled by default
 	FastContainerImagePull: DefaultFalse,
 }
 

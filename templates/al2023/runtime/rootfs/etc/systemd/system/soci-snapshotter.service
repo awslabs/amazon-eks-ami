@@ -1,7 +1,6 @@
 [Unit]
 Description=soci snapshotter containerd plugin
 Documentation=https://github.com/awslabs/soci-snapshotter
-Before=containerd.service kubelet.service
 
 [Service]
 Type=notify

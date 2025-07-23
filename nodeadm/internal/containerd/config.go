@@ -26,7 +26,7 @@ var (
 	containerdConfigTemplate     = template.Must(template.New(containerdConfigFile).Parse(containerdConfigTemplateData))
 
 	//go:embed snapshotter/soci-snapshotter.config.toml
-	sociSnapshotterTemplateData string
+	sociSnapshotterTemplateData []byte
 )
 
 type containerdTemplateVars struct {
@@ -49,7 +49,7 @@ func writeContainerdConfig(cfg *api.NodeConfig) error {
 
 func writeSnapshotterConfig(cfg *api.NodeConfig) error {
 	if api.IsFeatureEnabled(api.FastContainerImagePull, cfg.Spec.FeatureGates) {
-		return util.WriteFileWithDir(sociSnapshotterConfigFile, []byte(sociSnapshotterTemplateData), configPerm)
+		return util.WriteFileWithDir(sociSnapshotterConfigFile, sociSnapshotterTemplateData, configPerm)
 	}
 	return nil
 }
