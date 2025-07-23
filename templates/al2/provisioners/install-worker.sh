@@ -149,7 +149,20 @@ sudo yum install -y runc-${RUNC_VERSION}
 sudo yum versionlock runc-*
 
 # install containerd and lock version
-sudo yum install -y containerd-${CONTAINERD_VERSION}
+function rpm_install() {
+  local RPMS=($@)
+  echo "Pulling and installing local rpms from s3 bucket"
+  for RPM in "${RPMS[@]}"; do
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    sudo yum localinstall -y ${WORKING_DIR}/${RPM}
+  done
+}
+
+if [[ "$CONTAINERD_VERSION" == 1.* ]]; then
+  rpm_install "containerd-1.7.27-1.amzn2.0.4.$(uname -m).rpm"
+else
+  sudo yum install -y containerd-${CONTAINERD_VERSION}
+fi
 sudo yum versionlock containerd-*
 
 # install cri-tools for crictl, needed to interact with containerd's CRI server
