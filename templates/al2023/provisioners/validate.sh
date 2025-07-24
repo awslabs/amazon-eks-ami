@@ -8,12 +8,13 @@ validate_file_nonexists() {
   local file_blob=$1
   for f in $file_blob; do
     if [ -e "$f" ]; then
-      echo "$f shouldn't exists"
+      echo "$f shouldn't exist"
       exit 1
     fi
   done
 }
 
+validate_file_nonexists '/etc/dnf/vars/releasever'
 validate_file_nonexists '/etc/hostname'
 validate_file_nonexists '/etc/resolv.conf'
 validate_file_nonexists '/etc/ssh/ssh_host*'

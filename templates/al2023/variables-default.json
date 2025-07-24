@@ -35,6 +35,7 @@
     "subnet_id": "",
     "temporary_security_group_source_cidrs": "",
     "user_data_file": null,
+    "use_latest_packages": "true",
     "volume_type": "gp3",
     "working_dir": "{{user `remote_folder`}}/worker"
 }

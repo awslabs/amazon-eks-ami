@@ -200,6 +200,14 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/set-releasever.sh",
+      "environment_vars": [
+        "SET_DEFAULT_LATEST={{user `use_latest_packages`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-worker.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
@@ -284,6 +292,14 @@
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/set-releasever.sh",
+      "environment_vars": [
+        "SET_DEFAULT_LATEST=false"
+      ]
     },
     {
       "type": "shell",
