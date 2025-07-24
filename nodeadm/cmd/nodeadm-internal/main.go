@@ -2,6 +2,7 @@ package main
 
 import (
 	boothook "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/boot-hook"
+	cnireconcile "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/cni-reconcile"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 )
 
@@ -12,6 +13,7 @@ func main() {
 		AdditionalHelp: "WARNING: There is no command-line stability guarantee!",
 		Commands: []cli.Command{
 			boothook.NewBootHookCommand(),
+			cnireconcile.NewCNIReconcileCommand(),
 		},
 	}
 	m.Run()

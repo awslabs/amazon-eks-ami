@@ -4,11 +4,14 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,7 +23,6 @@ import (
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
 	"github.com/aws/smithy-go/ptr"
-
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -33,48 +35,60 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
+
+	cniBasedConfigFIle    = "20-nodeadm.conf"
+	userKubeletDropinFile = "40-nodeadm.conf"
 )
 
-func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
-	// tracking: https://github.com/kubernetes/enhancements/issues/3983
-	// for enabling drop-in configuration
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
+var dropinConfigDir = filepath.Join(kubeletConfigRoot, kubeletConfigDir)
+
+func (k *kubelet) writeDefaultKubeletConfig(cfg *api.NodeConfig) error {
+	if !SupportsDropinConfigs(cfg.Status.KubeletVersion) {
 		return k.writeKubeletConfigToFile(cfg)
 	} else {
 		return k.writeKubeletConfigToDir(cfg)
 	}
 }
 
+// tracking: https://github.com/kubernetes/enhancements/issues/3983
+// for enabling drop-in configuration
+func SupportsDropinConfigs(kubeletVersion string) bool {
+	return semver.Compare(kubeletVersion, "v1.29.0") >= 0
+}
+
 // kubeletConfig is an internal-only representation of the kubelet configuration
 // that is generated using sane defaults for EKS. It is a subset of the upstream
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
+//
+// All values in here should omit empty and store as pointers, where applicable, to ensure
+// that just a subset of this can be applied as needed at a given time.
 type kubeletConfig struct {
-	Address                  string                           `json:"address"`
-	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
-	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
-	CgroupDriver             string                           `json:"cgroupDriver"`
-	CgroupRoot               string                           `json:"cgroupRoot"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
-	ClusterDomain            string                           `json:"clusterDomain"`
-	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
-	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
-	FeatureGates             map[string]bool                  `json:"featureGates"`
-	HairpinMode              string                           `json:"hairpinMode"`
-	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
-	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
-	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
-	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
-	Logging                  loggingConfiguration             `json:"logging"`
-	MaxPods                  int32                            `json:"maxPods,omitempty"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ProviderID               *string                          `json:"providerID,omitempty"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
-	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
-	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
-	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
+	Address                  *string                           `json:"address,omitempty"`
+	Authentication           *k8skubelet.KubeletAuthentication `json:"authentication,omitempty"`
+	Authorization            *k8skubelet.KubeletAuthorization  `json:"authorization,omitempty"`
+	CgroupDriver             *string                           `json:"cgroupDriver,omitempty"`
+	CgroupRoot               *string                           `json:"cgroupRoot,omitempty"`
+	ClusterDNS               []string                          `json:"clusterDNS,omitempty"`
+	ClusterDomain            *string                           `json:"clusterDomain,omitempty"`
+	ContainerRuntimeEndpoint *string                           `json:"containerRuntimeEndpoint,omitempty"`
+	EvictionHard             map[string]string                 `json:"evictionHard,omitempty"`
+	FeatureGates             map[string]bool                   `json:"featureGates,omitempty"`
+	HairpinMode              *string                           `json:"hairpinMode,omitempty"`
+	KubeAPIBurst             *int                              `json:"kubeAPIBurst,omitempty"`
+	KubeAPIQPS               *int                              `json:"kubeAPIQPS,omitempty"`
+	KubeReserved             map[string]string                 `json:"kubeReserved,omitempty"`
+	KubeReservedCgroup       *string                           `json:"kubeReservedCgroup,omitempty"`
+	Logging                  *loggingConfiguration             `json:"logging,omitempty"`
+	MaxPods                  *int32                            `json:"maxPods,omitempty"`
+	ProtectKernelDefaults    *bool                             `json:"protectKernelDefaults,omitempty"`
+	ProviderID               *string                           `json:"providerID,omitempty"`
+	ReadOnlyPort             *int                              `json:"readOnlyPort,omitempty"`
+	RegisterWithTaints       []v1.Taint                        `json:"registerWithTaints,omitempty"`
+	SerializeImagePulls      *bool                             `json:"serializeImagePulls,omitempty"`
+	ServerTLSBootstrap       *bool                             `json:"serverTLSBootstrap,omitempty"`
+	SystemReservedCgroup     *string                           `json:"systemReservedCgroup,omitempty"`
+	TLSCipherSuites          *[]string                         `json:"tlsCipherSuites,omitempty"`
 	metav1.TypeMeta          `json:",inline"`
 }
 
@@ -86,12 +100,9 @@ type loggingConfiguration struct {
 // kubelet configuration with additional sane defaults.
 func defaultKubeletSubConfig() kubeletConfig {
 	return kubeletConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeletConfiguration",
-			APIVersion: "kubelet.config.k8s.io/v1beta1",
-		},
-		Address: "0.0.0.0",
-		Authentication: k8skubelet.KubeletAuthentication{
+		TypeMeta: getConfigV1Beta1TypeMeta(),
+		Address:  ptr.String("0.0.0.0"),
+		Authentication: &k8skubelet.KubeletAuthentication{
 			Anonymous: k8skubelet.KubeletAnonymousAuthentication{
 				Enabled: ptr.Bool(false),
 			},
@@ -103,17 +114,17 @@ func defaultKubeletSubConfig() kubeletConfig {
 				ClientCAFile: caCertificatePath,
 			},
 		},
-		Authorization: k8skubelet.KubeletAuthorization{
+		Authorization: &k8skubelet.KubeletAuthorization{
 			Mode: "Webhook",
 			Webhook: k8skubelet.KubeletWebhookAuthorization{
 				CacheAuthorizedTTL:   metav1.Duration{Duration: time.Minute * 5},
 				CacheUnauthorizedTTL: metav1.Duration{Duration: time.Second * 30},
 			},
 		},
-		CgroupDriver:             "systemd",
-		CgroupRoot:               "/",
-		ClusterDomain:            "cluster.local",
-		ContainerRuntimeEndpoint: containerd.ContainerRuntimeEndpoint,
+		CgroupDriver:             ptr.String("systemd"),
+		CgroupRoot:               ptr.String("/"),
+		ClusterDomain:            ptr.String("cluster.local"),
+		ContainerRuntimeEndpoint: ptr.String(containerd.ContainerRuntimeEndpoint),
 		EvictionHard: map[string]string{
 			"memory.available":  "100Mi",
 			"nodefs.available":  "10%",
@@ -122,15 +133,15 @@ func defaultKubeletSubConfig() kubeletConfig {
 		FeatureGates: map[string]bool{
 			"RotateKubeletServerCertificate": true,
 		},
-		HairpinMode:           "hairpin-veth",
-		ProtectKernelDefaults: true,
-		ReadOnlyPort:          0,
-		Logging: loggingConfiguration{
+		HairpinMode:           ptr.String("hairpin-veth"),
+		ProtectKernelDefaults: ptr.Bool(true),
+		ReadOnlyPort:          ptr.Int(0),
+		Logging: &loggingConfiguration{
 			Verbosity: 2,
 		},
-		SerializeImagePulls: false,
-		ServerTLSBootstrap:  true,
-		TLSCipherSuites: []string{
+		SerializeImagePulls: ptr.Bool(false),
+		ServerTLSBootstrap:  ptr.Bool(true),
+		TLSCipherSuites: &[]string{
 			"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
 			"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
 			"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
@@ -214,7 +225,7 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[stri
 		flags["container-runtime"] = "remote"
 		// --container-runtime-endpoint moved to kubelet config start from 1.27
 		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
-		flags["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
+		flags["container-runtime-endpoint"] = ptr.ToString(ksc.ContainerRuntimeEndpoint)
 	}
 
 	// TODO: Remove this during 1.27 EOL
@@ -259,19 +270,15 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
+func (ksc *kubeletConfig) withReservedResources(maxPods int32) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
-		// #nosec G115 // known source from ec2 apis within int32 range
-		ksc.MaxPods = int32(maxPods)
-	} else {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
-	}
+	// TODO: rebase on https://github.com/awslabs/amazon-eks-ami/pull/2325 to limit the max value here
+	ksc.MaxPods = ptr.Int32(maxPods)
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
+		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ptr.ToInt32(ksc.MaxPods))),
 	}
 }
 
@@ -291,7 +298,7 @@ func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags 
 	return nil
 }
 
-func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
+func (k *kubelet) GenerateDefaultKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	kubeletConfig := defaultKubeletSubConfig()
 
 	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
@@ -309,15 +316,31 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(cfg, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources(cfg)
-
+	kubeletConfig.withReservedResources(GetClassicMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type))
 	return &kubeletConfig, nil
+}
+
+func ConfigureCNIBasedConfig(ctx context.Context, cfg *api.NodeConfig) error {
+	kubeletConfig := kubeletConfig{
+		TypeMeta: getConfigV1Beta1TypeMeta(),
+	}
+	maxpods, err := interrogateMaxPods(ctx)
+	if err != nil {
+		return err
+	}
+	kubeletConfig.withReservedResources(maxpods)
+
+	return writeConfigToDropinFile(kubeletConfig, cniBasedConfigFIle)
+}
+
+func CNIConfigExists() (bool, error) {
+	return dropinConfigFileExists(cniBasedConfigFIle)
 }
 
 // WriteConfig writes the kubelet config to a file.
 // This should only be used for kubelet versions < 1.28.
 func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
-	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
+	kubeletConfig, err := k.GenerateDefaultKubeletConfig(cfg)
 	if err != nil {
 		return err
 	}
@@ -349,8 +372,12 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
 // standard config file and writes the user's provided config to a directory for
 // drop-in support. This is only supported on kubelet versions >= 1.28. see:
 // https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
+// WriteKubeletConfigToDir writes nodeadm's generated kubelet config to the
+// standard config file and writes the user's provided config to a directory for
+// drop-in support. This is only supported on kubelet versions >= 1.28. see:
+// https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
 func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
-	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
+	kubeletConfig, err := k.GenerateDefaultKubeletConfig(cfg)
 	if err != nil {
 		return err
 	}
@@ -367,14 +394,15 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		return err
 	}
 
-	if cfg.Spec.Kubelet.Config != nil && len(cfg.Spec.Kubelet.Config) > 0 {
+	if requiresDropinConfig(cfg) {
 		dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
 		k.flags["config-dir"] = dirPath
 
 		zap.L().Info("Enabling kubelet config drop-in dir..")
 		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
-		filePath := path.Join(dirPath, "40-nodeadm.conf")
+	}
 
+	if len(cfg.Spec.Kubelet.Config) > 0 {
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in
 		// config as a valid KubeletConfiguration
@@ -382,16 +410,40 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		if err != nil {
 			return err
 		}
-		userKubeletConfigBytes, err := json.MarshalIndent(userKubeletConfigMap, "", strings.Repeat(" ", 4))
-		if err != nil {
-			return err
-		}
-		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
-		if err := util.WriteFileWithDir(filePath, userKubeletConfigBytes, kubeletConfigPerm); err != nil {
+		if err := writeConfigToDropinFile(userKubeletConfigMap, userKubeletDropinFile); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func requiresDropinConfig(cfg *api.NodeConfig) bool {
+	return len(cfg.Spec.Kubelet.Config) > 0 || api.IsFeatureEnabled(api.CNIReconcile, cfg.Spec.FeatureGates)
+}
+
+func dropinConfigFileExists(filename string) (bool, error) {
+	if _, err := os.Stat(filepath.Join(dropinConfigDir, filename)); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		} else {
+			return false, fmt.Errorf("could not determine if drop-in kubelet config %s exists: %v", filename, err)
+		}
+	}
+	return true, nil
+}
+
+func writeConfigToDropinFile(config any, filename string) error {
+	userKubeletConfigBytes, err := json.MarshalIndent(config, "", strings.Repeat(" ", 4))
+	if err != nil {
+		return err
+	}
+
+	configFilePath := filepath.Join(dropinConfigDir, filename)
+	zap.L().Info("Writing kubelet config to drop-in file..", zap.String("path", configFilePath))
+	if err := util.WriteFileWithDir(configFilePath, userKubeletConfigBytes, kubeletConfigPerm); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -440,6 +492,13 @@ func getCPUMillicoresToReserve() int {
 	}
 
 	return cpuToReserve
+}
+
+func getConfigV1Beta1TypeMeta() metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       "KubeletConfiguration",
+		APIVersion: "kubelet.config.k8s.io/v1beta1",
+	}
 }
 
 // getResourceToReserveInRange calculates the CPU resources to reserve for a given range.

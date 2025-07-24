@@ -1,19 +1,15 @@
 package init
 
 import (
-	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/config"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
@@ -68,7 +64,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Enriching configuration..")
-	if err := enrichConfig(log, nodeConfig); err != nil {
+	if err := config.Enrich(log, nodeConfig); err != nil {
 		return err
 	}
 
@@ -141,50 +137,5 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	log.Info("done!", zap.Duration("duration", time.Since(start)))
 
-	return nil
-}
-
-// Various initializations and verifications of the NodeConfig and
-// perform in-place updates when allowed by the user
-func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
-	log.Info("Fetching kubelet version..")
-	kubeletVersion, err := kubelet.GetKubeletVersion()
-	if err != nil {
-		return err
-	}
-	cfg.Status.KubeletVersion = kubeletVersion
-	log.Info("Fetched kubelet version", zap.String("version", kubeletVersion))
-	log.Info("Fetching instance details..")
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithClientLogMode(aws.LogRetries),
-		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
-		}),
-	)
-	if err != nil {
-		return err
-	}
-	if awsConfig.RetryMaxAttempts == 0 {
-		// use a very generous retry policy to accomodate delays in network readiness
-		// we only specify the max attempts if it is unset by the user
-		// so it's possible to override with the AWS_MAX_ATTEMPTS environment variable.
-		// NOTE that this is the number of attempts that will be made in a blocking fashion
-		// i.e. an SDK client.ExampleAPICall() will not return until these attempts are exhausted
-		// we'll give up after approximately 10 minutes
-		awsConfig.RetryMaxAttempts = 30
-	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
-	if err != nil {
-		return err
-	}
-	cfg.Status.Instance = *instanceDetails
-	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
-	log.Info("Fetching default options...")
-	cfg.Status.Defaults = api.DefaultOptions{
-		SandboxImage: "localhost/kubernetes/pause",
-	}
-	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil
 }

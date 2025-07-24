@@ -3,18 +3,26 @@ package kubelet
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/ipamd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 )
 
 // default value from kubelet
 // https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/#kubelet-config-k8s-io-v1beta1-KubeletConfiguration
-const defaultMaxPods = 110
+const (
+	defaultMaxPods = 110
+
+	// numHostNetworkingPods is maxPods padding to account for expected host networking
+	// pods that do not claim IPs: kube-proxy and the AWS VPC CNI
+	numHostNetworkingPods = 2
+)
 
 //go:embed eni-max-pods.txt
 var eniMaxPods string
@@ -46,6 +54,15 @@ func init() {
 	}
 }
 
+func GetClassicMaxPods(region string, instanceType string) int32 {
+	if maxPods, ok := MaxPodsPerInstanceType[instanceType]; ok {
+		// #nosec G115 // known source from ec2 apis within int32 range
+		return int32(maxPods)
+	} else {
+		return CalcMaxPods(region, instanceType)
+	}
+}
+
 // CalcMaxPods handle the edge case when instance type is not present in MaxPodsPerInstanceType
 // The behavior should align with AL2, which essentially is:
 //
@@ -63,5 +80,20 @@ func CalcMaxPods(awsRegion string, instanceType string) int32 {
 		zap.L().Warn("cannot find the max pod for input instance type, setting it to default value")
 		return defaultMaxPods
 	}
-	return eniInfo.EniCount*(eniInfo.PodsPerEniCount-1) + 2
+	return eniInfo.EniCount*(eniInfo.PodsPerEniCount-1) + numHostNetworkingPods
+}
+
+// interrogateMaxPods attempts to interrogate a locally running instance of ipamd for the maximum
+// number of IPs it could allocate. ipamd is typically ran by a pod, so this will usually
+// error if invoked at initial node bootstrap.
+//
+// NOTE: this is a blocking call with a pre-configured timeout, the context should be appropriately set.
+func interrogateMaxPods(ctx context.Context) (int32, error) {
+	maxIPs, err := ipamd.PollMaxAllocatableIPs(ctx)
+	if err != nil {
+		return -1, err
+	} else if maxIPs <= 0 {
+		return -1, fmt.Errorf("expected positive value for allocatable IPs, got %d", maxIPs)
+	}
+	return maxIPs + numHostNetworkingPods, nil
 }
