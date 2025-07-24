@@ -205,6 +205,7 @@
         "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
         "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
+        "CONTAINERD_RPM_URL={{user `containerd_rpm_url`}}",
         "DOCKER_VERSION={{user `docker_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",

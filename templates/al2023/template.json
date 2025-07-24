@@ -208,6 +208,7 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
+        "CONTAINERD_RPM_URL={{user `containerd_rpm_url`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "RUNC_VERSION={{user `runc_version`}}",

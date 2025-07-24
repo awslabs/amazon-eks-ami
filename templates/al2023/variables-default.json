@@ -11,6 +11,7 @@
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
     "containerd_version": "1.7.*",
+    "containerd_rpm_url": "",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
     "enable_efa": "false",

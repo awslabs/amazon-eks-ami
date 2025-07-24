@@ -14,6 +14,7 @@
     "cache_container_images": "false",
     "cni_plugin_version": "v1.2.0",
     "containerd_version": "1.7.*",
+    "containerd_rpm_url": "",
     "creator": "{{env `USER`}}",
     "docker_version": "none",
     "enable_fips": "false",

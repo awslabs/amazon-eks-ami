@@ -133,16 +133,12 @@ fi
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
-function rpm_install() {
-  local RPMS=($@)
-  echo "Pulling and installing local rpms from s3 bucket"
-  for RPM in "${RPMS[@]}"; do
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    sudo dnf localinstall -y ${WORKING_DIR}/${RPM}
-  done
-}
-
 sudo dnf install -y runc-${RUNC_VERSION}
+if [[ -n "$CONTAINERD_RPM_URL" ]]; then
+  # install contianerd.rpm if containerd rpm url provided
+  curl -fsSL -o /tmp/containerd.rpm "$CONTAINERD_RPM_URL"
+  sudo dnf localinstall -y /tmp/containerd.rpm
+else
 if [[ "$CONTAINERD_VERSION" == 1.* ]]; then
   rpm_install "containerd-1.7.27-1.amzn2023.0.4.$(uname -m).rpm"
 else
