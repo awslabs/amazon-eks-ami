@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"go.uber.org/zap"
 )
@@ -79,6 +80,18 @@ func GetMilliNumCores() (int, error) {
 	}
 	return allLogicalCoresCount * 1000, err
 
+}
+
+// This returns the equivalent of MemTotal from /proc/meminfo. This is equivalent to total physical memory less
+// memory reserved for the kernel, which can therefore change as the kernel changes.
+// https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/deployment_guide/s2-proc-meminfo
+func GetTotalMemoryMiB() uint64 {
+	var sysinfo syscall.Sysinfo_t
+	err := syscall.Sysinfo(&sysinfo)
+	if err != nil {
+		return 0
+	}
+	return (uint64(sysinfo.Totalram) * uint64(sysinfo.Unit)) / 1048576
 }
 
 func getCPUCount() (int, error) {

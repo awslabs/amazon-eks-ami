@@ -23,6 +23,10 @@ func (m *MockEC2Client) DescribeInstanceTypes(ctx context.Context, params *ec2.D
 	return args.Get(0).(*ec2.DescribeInstanceTypesOutput), args.Error(1)
 }
 
+func (m *MockEC2Client) DescribeRegions(ctx context.Context) ([]string, error) {
+	panic("DescribeRegions is unimplemented")
+}
+
 func TestGetEniInfoForInstanceType(t *testing.T) {
 	tests := []struct {
 		instanceType   string
