@@ -47,6 +47,7 @@ fi
 ################################################################################
 
 # Update the OS to begin with to catch up to the latest packages.
+sudo dnf upgrade -y --releasever=latest
 sudo dnf update -y
 
 # Install necessary packages
