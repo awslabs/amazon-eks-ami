@@ -139,9 +139,6 @@ if [[ -n "$CONTAINERD_RPM_URL" ]]; then
   curl -fsSL -o /tmp/containerd.rpm "$CONTAINERD_RPM_URL"
   sudo dnf localinstall -y /tmp/containerd.rpm
 else
-if [[ "$CONTAINERD_VERSION" == 1.* ]]; then
-  rpm_install "containerd-1.7.27-1.amzn2023.0.4.$(uname -m).rpm"
-else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
 sudo dnf versionlock containerd-*
