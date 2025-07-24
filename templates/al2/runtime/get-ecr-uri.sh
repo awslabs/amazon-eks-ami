@@ -42,6 +42,9 @@ else
     eu-isoe-west-1)
       acct="249663109785"
       ;;
+    eusc-de-east-1)
+      acct="877088126301"
+      ;;
     us-isof-south-1)
       acct="676585237158"
       ;;
@@ -130,6 +133,10 @@ else
     eu-isoe-*)
       acct="249663109785"
       region="eu-isoe-west-1"
+      ;;
+    eusc-*)
+      acct="877088126301"
+      region="eusc-de-east-1"
       ;;
     us-isof-*)
       acct="676585237158"
