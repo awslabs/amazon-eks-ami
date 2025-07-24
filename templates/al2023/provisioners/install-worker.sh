@@ -47,6 +47,7 @@ fi
 ################################################################################
 
 # Update the OS to begin with to catch up to the latest packages.
+sudo dnf upgrade -y --releasever=latest
 sudo dnf update -y
 
 # Install necessary packages
@@ -217,6 +218,12 @@ fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+
+###############################################################################
+### SOCI Snapshotter setup ##########################################################
+###############################################################################
+sudo dnf install -y soci-snapshotter
+sudo systemctl enable soci-snapshotter.socket
 
 ################################################################################
 ### SSM Agent ##################################################################
