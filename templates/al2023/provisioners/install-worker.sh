@@ -173,7 +173,6 @@ elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
 fi
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
-S3_RPMS_PATH="s3://$BINARY_BUCKET_NAME/rpms"
 
 BINARIES=(
   kubelet
@@ -222,13 +221,8 @@ sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 ###############################################################################
 ### SOCI Snapshotter setup ##########################################################
 ###############################################################################
-function install-soci-snapshotter() {
-    PATCH_VERSION=0.11.1-1
-    aws s3 cp --region $BINARY_BUCKET_REGION $S3_RPMS_PATH/soci-snapshotter-$PATCH_VERSION.amzn2023.0.1.$MACHINE.rpm .
-    sudo rpm -i soci-snapshotter-$PATCH_VERSION.amzn2023.0.1.$MACHINE.rpm
-    sudo systemctl enable soci-snapshotter.socket
-}
-install-soci-snapshotter
+sudo dnf install -y soci-snapshotter
+sudo systemctl enable soci-snapshotter.socket
 
 ################################################################################
 ### SSM Agent ##################################################################
