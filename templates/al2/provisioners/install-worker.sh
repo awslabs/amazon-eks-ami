@@ -149,7 +149,27 @@ sudo yum install -y runc-${RUNC_VERSION}
 sudo yum versionlock runc-*
 
 # install containerd and lock version
-sudo yum install -y containerd-${CONTAINERD_VERSION}
+# TO-DO: this is a temp way to install binary from s3, need to change once we figure out how to get and store containerd binaries in long term
+if [[ "$CONTAINERD_VERSION" == "1.7.*" && "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
+  CONTAINERD_BINARIES=(
+    containerd
+    containerd-shim
+    containerd-shim-runc-v1
+    containerd-shim-runc-v2
+    ctr
+  )
+  echo "Pulling and installing local containerd binary from s3 bucket"
+  for binary in "${CONTAINERD_BINARIES[@]}"; do
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${binary} .
+    sudo chmod +x $binary
+    sudo mv $binary /usr/bin/
+  done
+  sudo mkdir -p /var/lib/containerd
+  sudo mv $WORKING_DIR/containerd.service /etc/systemd/system/containerd.service
+  sudo chown root:root /etc/systemd/system/containerd.service
+else
+  sudo yum install -y containerd-${CONTAINERD_VERSION}
+fi
 sudo yum versionlock containerd-*
 
 # install cri-tools for crictl, needed to interact with containerd's CRI server
