@@ -352,7 +352,6 @@ i3.2xlarge 58
 i3.4xlarge 234
 i3.8xlarge 234
 i3.large 29
-i3.metal 737
 i3.xlarge 58
 i3en.12xlarge 234
 i3en.24xlarge 737
