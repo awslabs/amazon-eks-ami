@@ -136,15 +136,14 @@ fi
 sudo dnf install -y runc-${RUNC_VERSION}
 # TO-DO: this is a temp way to install binary from s3, need to change once we figure out how to get and store containerd binaries in long term
 if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
-  version=$(echo "$CONTAINERD_VERSION" | sed 's/\./-/g')
   CONTAINERD_BINARIES=(
-    containerd-${version}
-    containerd-shim-runc-v2-${version}
-    ctr-${version}
+    containerd
+    containerd-shim-runc-v2
+    ctr
   )
   for binary in "${CONTAINERD_BINARIES[@]}"; do
     echo "Pulling and installing local containerd binary ${binary} from s3 bucket"
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${binary} .
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${binary} .
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
   done
