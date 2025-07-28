@@ -1,3 +1,27 @@
+# v1.236.0 (2025-07-25)
+
+* **Feature**: Transit Gateway native integration with AWS Network Firewall. Adding new enum value for the new Transit Gateway Attachment type.
+
+# v1.235.0 (2025-07-23)
+
+* **Feature**: Added support for skip-os-shutdown option for the EC2 instance stop and terminate operations. This feature enables customers to bypass the graceful OS shutdown, supporting faster state transitions when instance data preservation isn't critical.
+
+# v1.234.0 (2025-07-21)
+
+* **Feature**: This release adds support for C8gn, F2 and P6e-GB200 Instance types
+
+# v1.233.1 (2025-07-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.233.0 (2025-07-17)
+
+* **Feature**: AWS Free Tier Version2 Support
+
+# v1.232.0 (2025-07-15)
+
+* **Feature**: This release adds support for volume initialization status, which enables you to monitor when the initialization process for an EBS volume is completed. This release also adds IPv6 support to EC2 Instance Connect Endpoints, allowing you to connect to your EC2 Instance via a private IPv6 address.
+
 # v1.231.0 (2025-07-09)
 
 * **Feature**: Adds support to Capacity Blocks for ML for purchasing EC2 P6e-GB200 UltraServers. Customers can now purchase u-p6e-gb200x72 and u-p6e-gb200x36 UltraServers. Adds new DescribeCapacityBlocks andDescribeCapacityBlockStatus APIs. Adds support for CapacityBlockId to DescribeInstanceTopology.
