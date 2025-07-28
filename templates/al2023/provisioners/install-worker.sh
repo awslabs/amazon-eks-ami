@@ -134,7 +134,6 @@ fi
 ### Containerd setup ##########################################################
 ###############################################################################
 sudo dnf install -y runc-${RUNC_VERSION}
-# TO-DO: this is a temp way to install binary from s3, need to change once we figure out how to get and store containerd binaries in long term
 if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
   CONTAINERD_BINARIES=(
     containerd
