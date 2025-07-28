@@ -29,9 +29,14 @@ metadata_expire=0" | sudo tee /etc/yum.repos.d/neuron.repo
 ################################################################################
 ### Install packages ###########################################################
 ################################################################################
-
+KERNEL_PACKAGE="kernel"
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  KERNEL_PACKAGE="kernel6.12"
+fi
 sudo dnf -y install \
-  kernel-devel-$(uname -r) \
-  kernel-headers-$(uname -r)
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers"
+
+sudo dnf versionlock 'kernel*'
 
 sudo dnf install -y aws-neuronx-dkms aws-neuronx-tools
