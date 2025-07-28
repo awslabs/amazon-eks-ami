@@ -61631,6 +61631,11 @@ func awsEc2query_serializeOpDocumentCreateInstanceConnectEndpointInput(v *Create
 		objectKey.Boolean(*v.DryRun)
 	}
 
+	if len(v.IpAddressType) > 0 {
+		objectKey := object.Key("IpAddressType")
+		objectKey.String(string(v.IpAddressType))
+	}
+
 	if v.PreserveClientIp != nil {
 		objectKey := object.Key("PreserveClientIp")
 		objectKey.Boolean(*v.PreserveClientIp)
@@ -80811,6 +80816,11 @@ func awsEc2query_serializeOpDocumentStopInstancesInput(v *StopInstancesInput, va
 		}
 	}
 
+	if v.SkipOsShutdown != nil {
+		objectKey := object.Key("SkipOsShutdown")
+		objectKey.Boolean(*v.SkipOsShutdown)
+	}
+
 	return nil
 }
 
@@ -80855,6 +80865,11 @@ func awsEc2query_serializeOpDocumentTerminateInstancesInput(v *TerminateInstance
 		if err := awsEc2query_serializeDocumentInstanceIdStringList(v.InstanceIds, objectKey); err != nil {
 			return err
 		}
+	}
+
+	if v.SkipOsShutdown != nil {
+		objectKey := object.Key("SkipOsShutdown")
+		objectKey.Boolean(*v.SkipOsShutdown)
 	}
 
 	return nil
