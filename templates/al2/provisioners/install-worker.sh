@@ -164,10 +164,12 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
   sudo mkdir -p /var/lib/containerd
   sudo mv $WORKING_DIR/containerd.service /etc/systemd/system/containerd.service
   sudo chown root:root /etc/systemd/system/containerd.service
+  # exclude containerd from yum.conf as versionlock doesn't work in this case
+  echo "exclude=containerd*,docker*" | sudo tee -a /etc/yum.conf
 else
   sudo yum install -y containerd-${CONTAINERD_VERSION}
+  sudo yum versionlock containerd-*
 fi
-sudo yum versionlock containerd-*
 
 # install cri-tools for crictl, needed to interact with containerd's CRI server
 sudo yum install -y cri-tools

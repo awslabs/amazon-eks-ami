@@ -145,12 +145,14 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${binary} .
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
+    # exclude containerd from yum.conf as versionlock doesn't work in this case
+    echo "exclude=containerd*" | sudo tee -a /etc/dnf/dnf.conf
   done
   sudo mkdir -p /var/lib/containerd
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
+  sudo dnf versionlock containerd-*
 fi
-sudo dnf versionlock containerd-*
 
 sudo systemctl enable ebs-initialize-bin@containerd
 
