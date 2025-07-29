@@ -24,6 +24,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
+	maxpods "github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet/maxpods"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
@@ -257,21 +258,35 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 	}
 }
 
+func GetClassicMaxPods(instanceType string, region string) int32 {
+	maxPods, err := maxpods.GetENIMaxPodsFromFile(instanceType)
+	if err == nil {
+		return maxPods
+	}
+	zap.L().Info("Failed to get max pods value from file, determining value from EC2...", zap.Error(err))
+	maxPods, err = maxpods.GetENIMaxPodsFromEC2(region, instanceType)
+	if err == nil {
+		return maxPods
+	}
+	zap.L().Info("Failed to get max pods value from EC2, using default", zap.Error(err))
+	return maxpods.DefaultMaxPods
+}
+
 // When the DefaultReservedResources flag is enabled, override the kubelet
 // config with reserved cgroup values on behalf of the user
-func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig) {
+func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, maxPods int32) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
-		// #nosec G115 // known source from ec2 apis within int32 range
-		ksc.MaxPods = int32(maxPods)
-	} else {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+
+	if api.IsFeatureEnabled(api.MemoryLimitMaxPods, cfg.Spec.FeatureGates) {
+		zap.L().Info("Applying limit to max pods value", zap.Int32("originalMaxPodsValue", maxPods))
+		maxPods = maxpods.ApplyLimit(maxPods)
 	}
+	ksc.MaxPods = maxPods
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve()),
 		"ephemeral-storage": "1Gi",
-		"memory":            fmt.Sprintf("%dMi", getMemoryMebibytesToReserve(ksc.MaxPods)),
+		"memory":            fmt.Sprintf("%dMi", maxpods.GetMemoryMebibytesToReserve(ksc.MaxPods)),
 	}
 }
 
@@ -309,7 +324,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 
 	kubeletConfig.withVersionToggles(cfg, k.flags)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
-	kubeletConfig.withDefaultReservedResources(cfg)
+	kubeletConfig.withDefaultReservedResources(cfg, GetClassicMaxPods(cfg.Status.Instance.Type, cfg.Status.Instance.Region))
 
 	return &kubeletConfig, nil
 }
@@ -429,31 +444,11 @@ func getCPUMillicoresToReserve() int {
 		zap.L().Error("Error found when GetMilliNumCores", zap.Error(err))
 		return 0
 	}
+	return getCPUMillicoresToReserveFromTotal(totalCPUMillicores)
+}
+
+func getCPUMillicoresToReserveFromTotal(totalCPUMillicores int) int {
 	cpuRanges := []int{0, 1000, 2000, 4000, totalCPUMillicores}
 	cpuPercentageReservedForRanges := []int{600, 100, 50, 25}
-	cpuToReserve := 0
-
-	for i, percentageToReserveForRange := range cpuPercentageReservedForRanges {
-		startRange := cpuRanges[i]
-		endRange := cpuRanges[i+1]
-		cpuToReserve += getResourceToReserveInRange(totalCPUMillicores, startRange, endRange, percentageToReserveForRange)
-	}
-
-	return cpuToReserve
-}
-
-// getResourceToReserveInRange calculates the CPU resources to reserve for a given range.
-func getResourceToReserveInRange(totalCPU, startRange, endRange, percentage int) int {
-	if totalCPU <= startRange {
-		return 0
-	}
-	reserved := totalCPU
-	if reserved > endRange {
-		reserved = endRange
-	}
-	return (reserved - startRange) * percentage / 10000
-}
-
-func getMemoryMebibytesToReserve(maxPods int32) int32 {
-	return 11*maxPods + 255
+	return int(util.GetAmountFromPercentageBands(cpuPercentageReservedForRanges, cpuRanges, uint64(totalCPUMillicores), 10000))
 }

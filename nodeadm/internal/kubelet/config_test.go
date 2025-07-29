@@ -1,6 +1,7 @@
 package kubelet
 
 import (
+	"math"
 	"testing"
 
 	"github.com/aws/smithy-go/ptr"
@@ -130,5 +131,37 @@ func TestProviderID(t *testing.T) {
 			assert.Equal(t, *kubetConfig.ProviderID, providerId)
 			// TODO assert that the --hostname-override == PrivateDnsName
 		}
+	}
+}
+
+func Test_getCPUMillicoresToReserveFromTotal(t *testing.T) {
+	testCases := []struct {
+		totalCPUMillicores int
+		expetedReservation int
+	}{
+		{
+			totalCPUMillicores: 1000,
+			expetedReservation: 60,
+		},
+		{
+			totalCPUMillicores: 2000,
+			expetedReservation: 70,
+		},
+		{
+			totalCPUMillicores: 4000,
+			expetedReservation: 80,
+		},
+		{
+			totalCPUMillicores: 8000,
+			expetedReservation: 90,
+		},
+		{
+			totalCPUMillicores: int(math.MaxInt),
+			expetedReservation: int(math.Floor(1000*0.06 + 1000*0.01 + 2000*0.005 + (math.MaxInt)*0.0025)),
+		},
+	}
+	for _, testCase := range testCases {
+		millicoresToReserve := getCPUMillicoresToReserveFromTotal(testCase.totalCPUMillicores)
+		assert.Equal(t, testCase.expetedReservation, millicoresToReserve)
 	}
 }
