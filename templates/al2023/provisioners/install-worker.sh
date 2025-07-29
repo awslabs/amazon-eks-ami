@@ -141,7 +141,7 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
     ctr
   )
   for binary in "${CONTAINERD_BINARIES[@]}"; do
-    echo "Pulling and installing local containerd binary ${binary} from s3 bucket"
+    echo "Installing containerd from S3..."
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${binary} .
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
