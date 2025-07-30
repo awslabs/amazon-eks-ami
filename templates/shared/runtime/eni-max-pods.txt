@@ -327,8 +327,13 @@ g6e.48xlarge 492
 g6e.4xlarge 234
 g6e.8xlarge 234
 g6e.xlarge 58
+g6f.2xlarge 58
+g6f.4xlarge 234
+g6f.large 20
+g6f.xlarge 58
 gr6.4xlarge 234
 gr6.8xlarge 234
+gr6f.4xlarge 234
 h1.16xlarge 394
 h1.2xlarge 58
 h1.4xlarge 234
@@ -352,7 +357,6 @@ i3.2xlarge 58
 i3.4xlarge 234
 i3.8xlarge 234
 i3.large 29
-i3.metal 737
 i3.xlarge 58
 i3en.12xlarge 234
 i3en.24xlarge 737
