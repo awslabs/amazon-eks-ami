@@ -38,7 +38,7 @@ runs:
             KUBETEST2_ARGS="--user-data-format=bootstrap.sh"
             ;;
           al2023)
-            KUBETEST2_ARGS="--addons=vpc-cni:latest --tune-vpc-cni --user-data-format=nodeadm"
+            KUBETEST2_ARGS="--user-data-format=nodeadm"
             ;;
           *)
             echo >&2 "unknown os_distro: ${{ inputs.os_distro }}"
