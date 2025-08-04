@@ -15,7 +15,7 @@
     "binary_bucket_name": null,
     "binary_bucket_region": null,
     "containerd_version": null,
-    "install_containerd_from_s3": false,
+    "install_containerd_from_s3": null,
     "creator": null,
     "enable_accelerator": null,
     "enable_efa": null,
