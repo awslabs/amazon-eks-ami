@@ -142,7 +142,7 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
   )
   for binary in "${CONTAINERD_BINARIES[@]}"; do
     echo "Installing containerd from S3..."
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${binary} .
+    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${MACHINE}/${binary} .
     sudo chmod +x $binary
     sudo mv $binary /usr/bin/
     # exclude containerd from yum.conf as versionlock doesn't work in this case
