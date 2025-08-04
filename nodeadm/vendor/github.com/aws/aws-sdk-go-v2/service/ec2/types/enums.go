@@ -988,6 +988,59 @@ func (CapacityBlockExtensionStatus) Values() []CapacityBlockExtensionStatus {
 	}
 }
 
+type CapacityBlockInterconnectStatus string
+
+// Enum values for CapacityBlockInterconnectStatus
+const (
+	CapacityBlockInterconnectStatusOk               CapacityBlockInterconnectStatus = "ok"
+	CapacityBlockInterconnectStatusImpaired         CapacityBlockInterconnectStatus = "impaired"
+	CapacityBlockInterconnectStatusInsufficientData CapacityBlockInterconnectStatus = "insufficient-data"
+)
+
+// Values returns all known values for CapacityBlockInterconnectStatus. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityBlockInterconnectStatus) Values() []CapacityBlockInterconnectStatus {
+	return []CapacityBlockInterconnectStatus{
+		"ok",
+		"impaired",
+		"insufficient-data",
+	}
+}
+
+type CapacityBlockResourceState string
+
+// Enum values for CapacityBlockResourceState
+const (
+	CapacityBlockResourceStateActive         CapacityBlockResourceState = "active"
+	CapacityBlockResourceStateExpired        CapacityBlockResourceState = "expired"
+	CapacityBlockResourceStateUnavailable    CapacityBlockResourceState = "unavailable"
+	CapacityBlockResourceStateCancelled      CapacityBlockResourceState = "cancelled"
+	CapacityBlockResourceStateFailed         CapacityBlockResourceState = "failed"
+	CapacityBlockResourceStateScheduled      CapacityBlockResourceState = "scheduled"
+	CapacityBlockResourceStatePaymentPending CapacityBlockResourceState = "payment-pending"
+	CapacityBlockResourceStatePaymentFailed  CapacityBlockResourceState = "payment-failed"
+)
+
+// Values returns all known values for CapacityBlockResourceState. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityBlockResourceState) Values() []CapacityBlockResourceState {
+	return []CapacityBlockResourceState{
+		"active",
+		"expired",
+		"unavailable",
+		"cancelled",
+		"failed",
+		"scheduled",
+		"payment-pending",
+		"payment-failed",
+	}
+}
+
 type CapacityReservationBillingRequestStatus string
 
 // Enum values for CapacityReservationBillingRequestStatus
@@ -1159,6 +1212,7 @@ const (
 	CapacityReservationStateAssessing      CapacityReservationState = "assessing"
 	CapacityReservationStateDelayed        CapacityReservationState = "delayed"
 	CapacityReservationStateUnsupported    CapacityReservationState = "unsupported"
+	CapacityReservationStateUnavailable    CapacityReservationState = "unavailable"
 )
 
 // Values returns all known values for CapacityReservationState. Note that this
@@ -1178,6 +1232,7 @@ func (CapacityReservationState) Values() []CapacityReservationState {
 		"assessing",
 		"delayed",
 		"unsupported",
+		"unavailable",
 	}
 }
 
@@ -2986,6 +3041,25 @@ func (ImdsSupportValues) Values() []ImdsSupportValues {
 	}
 }
 
+type InitializationType string
+
+// Enum values for InitializationType
+const (
+	InitializationTypeDefault         InitializationType = "default"
+	InitializationTypeProvisionedRate InitializationType = "provisioned-rate"
+)
+
+// Values returns all known values for InitializationType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (InitializationType) Values() []InitializationType {
+	return []InitializationType{
+		"default",
+		"provisioned-rate",
+	}
+}
+
 type InstanceAttributeName string
 
 // Enum values for InstanceAttributeName
@@ -4329,6 +4403,20 @@ const (
 	InstanceTypeR8gd48xlarge       InstanceType = "r8gd.48xlarge"
 	InstanceTypeR8gdMetal24xl      InstanceType = "r8gd.metal-24xl"
 	InstanceTypeR8gdMetal48xl      InstanceType = "r8gd.metal-48xl"
+	InstanceTypeC8gnMedium         InstanceType = "c8gn.medium"
+	InstanceTypeC8gnLarge          InstanceType = "c8gn.large"
+	InstanceTypeC8gnXlarge         InstanceType = "c8gn.xlarge"
+	InstanceTypeC8gn2xlarge        InstanceType = "c8gn.2xlarge"
+	InstanceTypeC8gn4xlarge        InstanceType = "c8gn.4xlarge"
+	InstanceTypeC8gn8xlarge        InstanceType = "c8gn.8xlarge"
+	InstanceTypeC8gn12xlarge       InstanceType = "c8gn.12xlarge"
+	InstanceTypeC8gn16xlarge       InstanceType = "c8gn.16xlarge"
+	InstanceTypeC8gn24xlarge       InstanceType = "c8gn.24xlarge"
+	InstanceTypeC8gn48xlarge       InstanceType = "c8gn.48xlarge"
+	InstanceTypeC8gnMetal24xl      InstanceType = "c8gn.metal-24xl"
+	InstanceTypeC8gnMetal48xl      InstanceType = "c8gn.metal-48xl"
+	InstanceTypeF26xlarge          InstanceType = "f2.6xlarge"
+	InstanceTypeP6eGb20036xlarge   InstanceType = "p6e-gb200.36xlarge"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -5282,6 +5370,20 @@ func (InstanceType) Values() []InstanceType {
 		"r8gd.48xlarge",
 		"r8gd.metal-24xl",
 		"r8gd.metal-48xl",
+		"c8gn.medium",
+		"c8gn.large",
+		"c8gn.xlarge",
+		"c8gn.2xlarge",
+		"c8gn.4xlarge",
+		"c8gn.8xlarge",
+		"c8gn.12xlarge",
+		"c8gn.16xlarge",
+		"c8gn.24xlarge",
+		"c8gn.48xlarge",
+		"c8gn.metal-24xl",
+		"c8gn.metal-48xl",
+		"f2.6xlarge",
+		"p6e-gb200.36xlarge",
 	}
 }
 
@@ -7868,6 +7970,7 @@ const (
 	ResourceTypeInstanceConnectEndpoint                                ResourceType = "instance-connect-endpoint"
 	ResourceTypeVerifiedAccessEndpointTarget                           ResourceType = "verified-access-endpoint-target"
 	ResourceTypeIpamExternalResourceVerificationToken                  ResourceType = "ipam-external-resource-verification-token"
+	ResourceTypeCapacityBlock                                          ResourceType = "capacity-block"
 	ResourceTypeMacModificationTask                                    ResourceType = "mac-modification-task"
 )
 
@@ -7971,6 +8074,7 @@ func (ResourceType) Values() []ResourceType {
 		"instance-connect-endpoint",
 		"verified-access-endpoint-target",
 		"ipam-external-resource-verification-token",
+		"capacity-block",
 		"mac-modification-task",
 	}
 }
@@ -9434,6 +9538,7 @@ const (
 	TransitGatewayAttachmentResourceTypeConnect              TransitGatewayAttachmentResourceType = "connect"
 	TransitGatewayAttachmentResourceTypePeering              TransitGatewayAttachmentResourceType = "peering"
 	TransitGatewayAttachmentResourceTypeTgwPeering           TransitGatewayAttachmentResourceType = "tgw-peering"
+	TransitGatewayAttachmentResourceTypeNetworkFunction      TransitGatewayAttachmentResourceType = "network-function"
 )
 
 // Values returns all known values for TransitGatewayAttachmentResourceType. Note
@@ -9449,6 +9554,7 @@ func (TransitGatewayAttachmentResourceType) Values() []TransitGatewayAttachmentR
 		"connect",
 		"peering",
 		"tgw-peering",
+		"network-function",
 	}
 }
 
@@ -10196,8 +10302,9 @@ type VolumeStatusName string
 
 // Enum values for VolumeStatusName
 const (
-	VolumeStatusNameIoEnabled     VolumeStatusName = "io-enabled"
-	VolumeStatusNameIoPerformance VolumeStatusName = "io-performance"
+	VolumeStatusNameIoEnabled           VolumeStatusName = "io-enabled"
+	VolumeStatusNameIoPerformance       VolumeStatusName = "io-performance"
+	VolumeStatusNameInitializationState VolumeStatusName = "initialization-state"
 )
 
 // Values returns all known values for VolumeStatusName. Note that this can be
@@ -10208,6 +10315,7 @@ func (VolumeStatusName) Values() []VolumeStatusName {
 	return []VolumeStatusName{
 		"io-enabled",
 		"io-performance",
+		"initialization-state",
 	}
 }
 

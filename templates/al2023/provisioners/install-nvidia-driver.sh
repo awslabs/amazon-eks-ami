@@ -70,16 +70,17 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
 
+KERNEL_PACKAGE="kernel"
 if [[ "$(uname -r)" == 6.12.* ]]; then
-  sudo dnf -y install kernel6.12-modules-extra-$(uname -r)
-else
-  sudo dnf -y install kernel-modules-extra-$(uname -r)
+  KERNEL_PACKAGE="kernel6.12"
 fi
-
 sudo dnf -y install \
-  kernel-devel-$(uname -r) \
-  kernel-headers-$(uname -r) \
-  kernel-modules-extra-common-$(uname -r)
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers" \
+  "${KERNEL_PACKAGE}-modules-extra" \
+  "${KERNEL_PACKAGE}-modules-extra-common"
+
+sudo dnf versionlock 'kernel*'
 
 # Install dkms dependency from amazonlinux repo
 sudo dnf -y install patch

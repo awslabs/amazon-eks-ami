@@ -66,6 +66,19 @@ sudo dnf install -y \
   pigz \
   python3-dnf-plugin-versionlock
 
+# we need to handle different kernel packages depending on the namespace
+# associated with the minor version.
+KERNEL_PACKAGE="kernel"
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  KERNEL_PACKAGE="kernel6.12"
+fi
+sudo dnf -y install \
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers"
+
+# versionlock kernel packages so they remain consistent.
+sudo dnf versionlock 'kernel*'
+
 ################################################################################
 ### Networking #################################################################
 ################################################################################
