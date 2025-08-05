@@ -31,6 +31,13 @@ if [ "$?" != 0 ]; then
 fi
 echo $(jq ".binaries.kubelet = \"$KUBELET_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
 
+CONTAINERD_VERSION=$(containerd --version | awk '{print $3}')
+if [ "$?" != 0 ]; then
+  echo "unable to get containerd version"
+  exit 1
+fi
+echo $(jq ".binaries.containerd = \"$CONTAINERD_VERSION\"" $OUTPUT_FILE) > $OUTPUT_FILE
+
 CLI_VERSION=$(aws --version | awk '{print $1}' | cut -d '/' -f 2)
 if [ "$?" != 0 ]; then
   echo "unable to get aws cli version"
