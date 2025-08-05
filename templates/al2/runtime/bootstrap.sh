@@ -193,14 +193,6 @@ export IMDS_TOKEN
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 log "INFO: Using kubelet version $KUBELET_VERSION"
 
-# ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27.1: https://github.com/kubernetes/cloud-provider-aws/pull/597
-# TODO: remove this when 1.26 is EOL
-if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
-  IMAGE_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/image-credential-provider/config.json
-  echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
-  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
-fi
-
 # Set container runtime related variables
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
 ENABLE_DOCKER_BRIDGE="${ENABLE_DOCKER_BRIDGE:-false}"
@@ -541,20 +533,13 @@ fi
 
 KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
 
-if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
-  # TODO: remove this when 1.25 is EOL
-  KUBELET_CLOUD_PROVIDER="aws"
-else
-  KUBELET_CLOUD_PROVIDER="external"
-  echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
-  # When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
-  # If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
-  # then /etc/hostname is not the same as EC2's PrivateDnsName.
-  # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
-  KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$(private-dns-name)"
-fi
-
-KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
+echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+# When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
+# If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
+# then /etc/hostname is not the same as EC2's PrivateDnsName.
+# The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
+KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$(private-dns-name)"
+KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=external"
 
 mkdir -p /etc/systemd/system
 
@@ -598,12 +583,6 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   chown root:root /etc/systemd/system/kubelet.service
   # Validate containerd config
   containerd config dump > /dev/null
-
-  # --container-runtime flag is gone in 1.27+
-  # TODO: remove this when 1.26 is EOL
-  if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
-    KUBELET_ARGS="$KUBELET_ARGS --container-runtime=remote"
-  fi
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   mkdir -p /etc/docker
   bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"

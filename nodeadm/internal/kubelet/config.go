@@ -208,29 +208,7 @@ func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]strin
 	return nil
 }
 
-func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[string]string) {
-	// TODO: remove when 1.26 is EOL
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
-		// --container-runtime flag is gone in 1.27+
-		flags["container-runtime"] = "remote"
-		// --container-runtime-endpoint moved to kubelet config start from 1.27
-		// https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.27.md?plain=1#L1800-L1801
-		flags["container-runtime-endpoint"] = ksc.ContainerRuntimeEndpoint
-	}
-
-	// TODO: Remove this during 1.27 EOL
-	// Enable Feature Gate for KubeletCredentialProviders in versions less than 1.28 since this feature flag was removed in 1.28.
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.28.0") < 0 {
-		ksc.FeatureGates["KubeletCredentialProviders"] = true
-	}
-
-	// for K8s versions that suport API Priority & Fairness, increase our API server QPS
-	// in 1.27, the default is already increased to 50/100, so use the higher defaults
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
-		ksc.KubeAPIQPS = ptr.Int(10)
-		ksc.KubeAPIBurst = ptr.Int(20)
-	}
-
+func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig) {
 	// EKS enables DRA on 1.33+
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
 		ksc.FeatureGates["DynamicResourceAllocation"] = true
@@ -238,24 +216,20 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[stri
 }
 
 func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.26.0") >= 0 {
-		// ref: https://github.com/kubernetes/kubernetes/pull/121367
-		flags["cloud-provider"] = "external"
-		// provider ID needs to be specified when the cloud provider is external
-		ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
-		var nodeName string
-		if api.IsFeatureEnabled(api.InstanceIdNodeName, cfg.Spec.FeatureGates) {
-			zap.L().Info("Opt-in Instance Id naming strategy")
-			nodeName = cfg.Status.Instance.ID
-		} else {
-			// the name of the Node object default to EC2 PrivateDnsName
-			// see: https://github.com/awslabs/amazon-eks-ami/pull/1264
-			nodeName = cfg.Status.Instance.PrivateDNSName
-		}
-		flags["hostname-override"] = nodeName
+	// ref: https://github.com/kubernetes/kubernetes/pull/121367
+	flags["cloud-provider"] = "external"
+	// provider ID needs to be specified when the cloud provider is external
+	ksc.ProviderID = ptr.String(getProviderId(cfg.Status.Instance.AvailabilityZone, cfg.Status.Instance.ID))
+	var nodeName string
+	if api.IsFeatureEnabled(api.InstanceIdNodeName, cfg.Spec.FeatureGates) {
+		zap.L().Info("Opt-in Instance Id naming strategy")
+		nodeName = cfg.Status.Instance.ID
 	} else {
-		flags["cloud-provider"] = "aws"
+		// the name of the Node object default to EC2 PrivateDnsName
+		// see: https://github.com/awslabs/amazon-eks-ami/pull/1264
+		nodeName = cfg.Status.Instance.PrivateDNSName
 	}
+	flags["hostname-override"] = nodeName
 }
 
 // When the DefaultReservedResources flag is enabled, override the kubelet
@@ -314,7 +288,7 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 		return nil, err
 	}
 
-	kubeletConfig.withVersionToggles(cfg, k.flags)
+	kubeletConfig.withVersionToggles(cfg)
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
 	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
