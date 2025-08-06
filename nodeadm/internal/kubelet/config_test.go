@@ -14,7 +14,6 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 		kubeletVersion string
 		expectedValue  *bool
 	}{
-		{kubeletVersion: "v1.23.0", expectedValue: ptr.Bool(true)},
 		{kubeletVersion: "v1.27.0", expectedValue: ptr.Bool(true)},
 		{kubeletVersion: "v1.28.0", expectedValue: nil},
 	}
@@ -78,9 +77,6 @@ func TestKubeAPILimits(t *testing.T) {
 		expectedKubeAPIQS    *int
 		expectedKubeAPIBurst *int
 	}{
-		{kubeletVersion: "v1.21.0", expectedKubeAPIQS: nil, expectedKubeAPIBurst: nil},
-		{kubeletVersion: "v1.22.0", expectedKubeAPIQS: ptr.Int(10), expectedKubeAPIBurst: ptr.Int(20)},
-		{kubeletVersion: "v1.23.0", expectedKubeAPIQS: ptr.Int(10), expectedKubeAPIBurst: ptr.Int(20)},
 		{kubeletVersion: "v1.26.0", expectedKubeAPIQS: ptr.Int(10), expectedKubeAPIBurst: ptr.Int(20)},
 		{kubeletVersion: "v1.27.0", expectedKubeAPIQS: nil, expectedKubeAPIBurst: nil},
 		{kubeletVersion: "v1.28.0", expectedKubeAPIQS: nil, expectedKubeAPIBurst: nil},
@@ -104,7 +100,6 @@ func TestProviderID(t *testing.T) {
 		kubeletVersion        string
 		expectedCloudProvider string
 	}{
-		{kubeletVersion: "v1.23.0", expectedCloudProvider: "aws"},
 		{kubeletVersion: "v1.25.0", expectedCloudProvider: "aws"},
 		{kubeletVersion: "v1.26.0", expectedCloudProvider: "external"},
 		{kubeletVersion: "v1.27.0", expectedCloudProvider: "external"},
