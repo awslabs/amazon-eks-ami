@@ -180,7 +180,11 @@ if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
   echo "containerd config is already present"
 else
-  sudo mv $WORKING_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+  if [[ "${CONTAINERD_VERSION}" == 2.* ]]; then
+    sudo mv $WORKING_DIR/containerd-config2.toml /etc/eks/containerd/containerd-config.toml
+  else
+    sudo mv $WORKING_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+  fi
 fi
 
 sudo mv $WORKING_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
