@@ -167,7 +167,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		zap.L().Info("Setting up outpost..")
 
 		if cfg.Spec.Cluster.ID == "" {
-			return fmt.Errorf("clusterId cannot be empty when outpost is enabled.")
+			return fmt.Errorf("clusterId cannot be empty when outpost is enabled")
 		}
 		apiUrl, err := url.Parse(cfg.Spec.Cluster.APIServerEndpoint)
 		if err != nil {
@@ -225,7 +225,7 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig, flags map[stri
 
 	// for K8s versions that suport API Priority & Fairness, increase our API server QPS
 	// in 1.27, the default is already increased to 50/100, so use the higher defaults
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.22.0") >= 0 && semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
 		ksc.KubeAPIQPS = ptr.Int(10)
 		ksc.KubeAPIBurst = ptr.Int(20)
 	}
@@ -323,7 +323,7 @@ func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
 	}
 
 	var kubeletConfigBytes []byte
-	if cfg.Spec.Kubelet.Config != nil && len(cfg.Spec.Kubelet.Config) > 0 {
+	if len(cfg.Spec.Kubelet.Config) > 0 {
 		mergedMap, err := util.Merge(kubeletConfig, cfg.Spec.Kubelet.Config, json.Marshal, json.Unmarshal)
 		if err != nil {
 			return err
@@ -367,7 +367,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		return err
 	}
 
-	if cfg.Spec.Kubelet.Config != nil && len(cfg.Spec.Kubelet.Config) > 0 {
+	if len(cfg.Spec.Kubelet.Config) > 0 {
 		dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
 		k.flags["config-dir"] = dirPath
 
