@@ -129,10 +129,16 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,AggressiveImagePullTradeoff}
 type Feature string
 
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	// AggressiveImagePullTradeoff enables a parallel image pull for container
+	// images. This will use more instance CPU and Memory during image pull, but
+	// may result in faster image pull times. This flag cannot be enabled on
+	// instances with memory and vCPU below a certain threshold.
+	AggressiveImagePullTradeoff Feature = "AggressiveImagePullTradeoff"
 )
