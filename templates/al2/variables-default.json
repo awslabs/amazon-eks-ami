@@ -19,7 +19,7 @@
     "docker_version": "none",
     "enable_fips": "false",
     "encrypted": "false",
-    "kernel_version": "",
+    "kernel_version": "5.10.239-236.958",
     "kms_key_id": "",
     "iam_instance_profile": "",
     "launch_block_device_mappings_volume_size": "4",
