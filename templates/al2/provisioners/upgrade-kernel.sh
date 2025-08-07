@@ -5,8 +5,7 @@ set -o nounset
 set -o errexit
 
 if [[ -z "$KERNEL_VERSION" ]]; then
-  # TO-DO: change it back to 5.10 once kernel bug fixed
-  KERNEL_VERSION=5.10.239-236.958
+  KERNEL_VERSION=5.10
   echo "kernel_version is unset. Setting to $KERNEL_VERSION based on Kubernetes version $KUBERNETES_VERSION."
 fi
 
