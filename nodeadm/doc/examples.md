@@ -62,7 +62,7 @@ spec:
 The configuration objects will be merged in the order they appear in the MIME multi-part document, meaning the value in the lattermost configuration object will take precedence.
 
 ---
-## Using instance ID as node name (experimental)
+## Using instance ID as node name
 
 When the `InstanceIdNodeName` feature gate is enabled, `nodeadm` will use the EC2 instance's ID (e.g. `i-abcdefg1234`) as the name of the `Node` object created by `kubelet`, instead of the EC2 instance's private DNS Name (e.g. `ip-192-168-1-1.ec2.internal`).
 There are several benefits of doing this:
