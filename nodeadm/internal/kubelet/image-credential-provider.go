@@ -43,7 +43,17 @@ func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error 
 		return err
 	}
 
-	config, err := generateImageCredentialProviderConfig(cfg, ecrCredentialProviderBinPath)
+	providerTemplate := imageCredentialProviderTemplate
+	if cfg.Spec.Kubelet.ImageCredentialProviderConfig != "" {
+		var err error
+		providerTemplate, err = template.New("image-credential-provider").Parse(cfg.Spec.Kubelet.ImageCredentialProviderConfig)
+		if err != nil {
+			return fmt.Errorf("failed to parse custom image credential provider config template: %w", err)
+		}
+		zap.L().Info("using custom image credential provider config")
+	}
+
+	config, err := generateImageCredentialProviderConfig(cfg, providerTemplate, ecrCredentialProviderBinPath)
 	if err != nil {
 		return err
 	}
@@ -60,7 +70,7 @@ type imageCredentialProviderTemplateVars struct {
 	EcrProviderName    string
 }
 
-func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialProviderBinPath string) ([]byte, error) {
+func generateImageCredentialProviderConfig(cfg *api.NodeConfig, providerTemplate *template.Template, ecrCredentialProviderBinPath string) ([]byte, error) {
 	templateVars := imageCredentialProviderTemplateVars{
 		EcrProviderName: filepath.Base(ecrCredentialProviderBinPath),
 	}
@@ -72,7 +82,7 @@ func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialPro
 		templateVars.ProviderApiVersion = "credentialprovider.kubelet.k8s.io/v1"
 	}
 	var buf bytes.Buffer
-	if err := imageCredentialProviderTemplate.Execute(&buf, templateVars); err != nil {
+	if err := providerTemplate.Execute(&buf, templateVars); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
