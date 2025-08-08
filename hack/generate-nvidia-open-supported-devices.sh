@@ -5,30 +5,29 @@ set -o pipefail
 set -o nounset
 
 if [ "$#" -ne 1 ]; then
-  echo >&2 "usage: $0 NVIDIA_LINUX_RUNFILE"
-  echo >&2
-  echo >&2 "Download a .run file from: https://www.nvidia.com/en-us/drivers/unix/"
+  echo >&2 "usage: $0 NVIDIA_DRIVER_MAJOR_VERSION"
   exit 1
 fi
 
 cd $(dirname $0)
 
-RUNFILE="${1}"
-RUNFILE_DIR=$(basename "${RUNFILE}" | sed s/\.run//g)
+NVIDIA_DRIVER_MAJOR_VERSION="${1}"
+FULL_DRIVER_VERSION=$(curl https://docs.nvidia.com/datacenter/tesla/drivers/releases.json | jq -e -r --arg driver_version "${NVIDIA_DRIVER_MAJOR_VERSION}" '.[$driver_version].driver_info[0].release_version')
 TEMP_DIR=$(mktemp -d)
+RUNFILE_NAME="NVIDIA-Linux-$(uname -m)-${FULL_DRIVER_VERSION}.run"
+wget -O "${TEMP_DIR}"/"${RUNFILE_NAME}" "https://us.download.nvidia.com/tesla/${FULL_DRIVER_VERSION}/${RUNFILE_NAME}"
+RUNFILE_DIR=$(basename "${RUNFILE_NAME}" | sed s/\.run//g)
 DEVICE_FILE="devices.txt"
 SUPPORTED_GPUS_FILE="supported-gpus/supported-gpus.json"
 
-cp "${RUNFILE}" "${TEMP_DIR}"
-
 cd "${TEMP_DIR}"
 
-RUNFILE_MAJOR_VERSION=$(sh "${RUNFILE}" --info | grep Identification | awk '{print $NF}' | cut -d. -f1)
-sh "${RUNFILE}" --extract-only
+RUNFILE_MAJOR_VERSION=$(sh "${RUNFILE_NAME}" --info | grep Identification | awk '{print $NF}' | cut -d. -f1)
+sh "${RUNFILE_NAME}" --extract-only
 
 cd -
 
-ACKNOWLEDGEMENT="# This file was generated from ${SUPPORTED_GPUS_FILE} contained in $(basename "${RUNFILE}")"
+ACKNOWLEDGEMENT="# This file was generated from ${SUPPORTED_GPUS_FILE} contained in $(basename "${RUNFILE_NAME}")"
 
 COMMENTED_LICENSE=$(sed -e 's/^/# /g' "${TEMP_DIR}/${RUNFILE_DIR}/supported-gpus/LICENSE" | sed -e 's/^# $/#/g')
 
