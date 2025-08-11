@@ -1,4 +1,4 @@
 {
-    "source_ami_filter_name": "al2023-ami-minimal-2023.8.20250721.2-kernel-6.1-*",
+    "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.1-*",
     "containerd_version": "1.7.27"
 }
