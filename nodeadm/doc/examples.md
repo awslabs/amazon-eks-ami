@@ -102,7 +102,7 @@ This has the benefit of potentially decreasing image pull time, at the cost of i
 
 ### To enable this feature:
 1. Ensure your instance type is a larger instance type. Currently we recommend a 2xlarge instance or larger, but that value may change.
-2. Make sure your workloads can tolerate the increased CPU and memory usage during image pull.
+2. Make sure your workloads can tolerate the increased CPU and memory usage during image pull. This makes the most sense when you need to pull a very large container image early in a node's lifecycle, before other workloads are running.
 3. Enable the feature gate in your user data:
 ```
 ---
