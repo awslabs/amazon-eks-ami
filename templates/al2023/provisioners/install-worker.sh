@@ -111,13 +111,7 @@ cat << EOF | sudo tee /etc/systemd/network/99-default.link.d/99-no-policy.conf
 MACAddressPolicy=none
 EOF
 
-if [[ "$(uname -r)" == 6.12.* ]]; then
-  # Create module loading configuration for iptable_nat on kernel 6.12
-  cat << EOF | sudo tee -a /etc/modules-load.d/iptables.conf
-ip_tables
-iptable_nat
-EOF
-fi
+
 
 ################################################################################
 ### SSH ########################################################################
