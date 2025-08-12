@@ -122,4 +122,6 @@ type Feature string
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	AggressiveImagePull Feature = "AggressiveImagePull"
 )
