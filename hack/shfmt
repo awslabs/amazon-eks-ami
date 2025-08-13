@@ -15,4 +15,4 @@ fi
 
 FILES=$(${SHFMT_COMMAND} --find --language-dialect auto "${WORKDIR}" | grep -v "nodeadm/vendor/")
 
-${SHFMT_COMMAND} ${FLAGS} $@ ${FILES}
+${SHFMT_COMMAND} ${FLAGS} "$@" ${FILES}
