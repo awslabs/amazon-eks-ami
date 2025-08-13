@@ -210,7 +210,6 @@
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
         "INSTALL_CONTAINERD_FROM_S3={{user `install_containerd_from_s3`}}",
-        "CONTAINERD_RELEASE_VERSION={{user `containerd_release_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "RUNC_VERSION={{user `runc_version`}}",
