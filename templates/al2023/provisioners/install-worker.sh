@@ -249,10 +249,7 @@ sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 # Use `--disableexcludes=all` to allow downloading containerd RPM (but not installing it).
 # TODO consider installing a stub package that provides containerd so that we can
 # do this the normal way with dnf.
-SOCI_RPM_DIR=$(mktemp -d)
-sudo dnf install -y --downloadonly --downloaddir="${SOCI_RPM_DIR}" --disableexcludes=all soci-snapshotter
-# This will break if we need other deps besides containerd.
-sudo rpm -i --nodeps "${SOCI_RPM_DIR}/soci-snapshotter*.rpm"
+sudo dnf install -y soci-snapshotter
 sudo systemctl enable soci-snapshotter.socket
 
 ################################################################################
