@@ -12,8 +12,8 @@ fi
 set -o nounset
 
 # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-retries.html
-AWS_RETRY_MODE=standard
-AWS_MAX_ATTEMPTS=5
+export AWS_RETRY_MODE=standard
+export AWS_MAX_ATTEMPTS=5
 
 function jqb64() {
   if [ "$#" -lt 2 ]; then

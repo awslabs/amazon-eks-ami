@@ -21,7 +21,8 @@ function is-isolated-partition() {
 }
 
 function rpm_install() {
-  local RPMS=($@)
+  local RPMS
+  mapfile -t RPMS <<< "$@"
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
@@ -54,7 +55,7 @@ else
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
   else
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
   fi
 
   # update all current .repo sources to enable gpgcheck
@@ -93,7 +94,7 @@ else
     sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
   else
     sudo dnf -y remove dkms
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
     sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
     sudo dnf config-manager --set-disabled cuda-amzn2023-x86_64
     sudo rm /etc/yum.repos.d/cuda-amzn2023.repo
@@ -144,7 +145,8 @@ function archive-open-kmods() {
 }
 
 function archive-grid-kmod() {
-  local MACHINE=$(uname -m)
+  local MACHINE
+  MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi

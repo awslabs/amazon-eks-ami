@@ -187,7 +187,8 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 CLUSTER_NAME="$1"
 set -u
 
-export IMDS_TOKEN=$(imds token)
+IMDS_TOKEN=$(imds token)
+export IMDS_TOKEN
 
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 log "INFO: Using kubelet version $KUBELET_VERSION"
@@ -296,7 +297,7 @@ get_memory_mebibytes_to_reserve() {
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
   local total_cpu_on_instance=$(($(nproc) * 1000))
-  local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
+  local cpu_ranges=(0 1000 2000 4000 "$total_cpu_on_instance")
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
   for i in "${!cpu_percentage_reserved_for_ranges[@]}"; do
@@ -314,7 +315,7 @@ if [ -z "$CLUSTER_NAME" ]; then
 fi
 
 if [[ ! -z "${IP_FAMILY}" ]]; then
-  IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
+  IP_FAMILY="$(tr '[A-Z]' '[a-z]' <<< "$IP_FAMILY")"
   if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]]; then
     log "ERROR: Invalid --ip-family. Only ipv4 or ipv6 are allowed"
     exit 1
@@ -492,7 +493,7 @@ else
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo $(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG) > $KUBELET_CONFIG
+echo "$(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
@@ -505,7 +506,7 @@ INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 if vercmp "$KUBELET_VERSION" gteq "1.22.0" && vercmp "$KUBELET_VERSION" lt "1.27.0"; then
   # for K8s versions that suport API Priority & Fairness, increase our API server QPS
   # in 1.27, the default is already increased to 50/100, so use the higher defaults
-  echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
+  echo "$(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function

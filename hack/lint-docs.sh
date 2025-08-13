@@ -2,7 +2,7 @@
 
 set -o errexit
 
-cd $(dirname $0)
+cd "$(dirname $0)"
 
 ./generate-template-variable-doc.py
 if ! git diff --exit-code ../doc/usage/; then

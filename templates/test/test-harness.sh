@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-export SCRIPTPATH="$(
+
+set -euo pipefail
+
+SCRIPTPATH="$(
   cd "$(dirname "$0")"
   pwd -P
 )"
-set -euo pipefail
+export SCRIPTPATH
 
 TEST_CASE_SCRIPT=""
 
@@ -50,7 +53,7 @@ function run() {
 if [[ ! -z ${TEST_CASE_SCRIPT} ]]; then
   test_cases=${TEST_CASE_SCRIPT}
 else
-  test_cases=($(find ${SCRIPTPATH}/cases -name "*.sh" -type f))
+  mapfile -t test_cases < <(find ${SCRIPTPATH}/cases -name "*.sh" -type f)
 fi
 
 for case in "${test_cases[@]}"; do

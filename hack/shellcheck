@@ -4,9 +4,9 @@
 set -o nounset
 
 WORKDIR=$(realpath .)
-FILES=$(hack/findshell.sh ${WORKDIR})
+FILES=$(hack/shfmt_command.sh --find --language-dialect auto "${WORKDIR}" | grep -v "nodeadm/vendor/")
 SHELLCHECK_COMMAND=$(which shellcheck 2> /dev/null)
 if [ -z "$SHELLCHECK_COMMAND" ]; then
   SHELLCHECK_COMMAND="docker run --rm -v $WORKDIR:$WORKDIR -w $WORKDIR koalaman/shellcheck:stable"
 fi
-$SHELLCHECK_COMMAND $* $FILES
+$SHELLCHECK_COMMAND "$@" $FILES

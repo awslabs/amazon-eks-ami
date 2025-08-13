@@ -63,7 +63,7 @@ lint: lint-docs lint-code
 .PHONY: lint-code
 lint-code: ## Check the source files for syntax and format issues
 	hack/shfmt --diff
-	hack/shellcheck --format gcc --severity error
+	hack/shellcheck --format gcc --severity warning
 	hack/lint-space-errors.sh
 
 .PHONY: test
