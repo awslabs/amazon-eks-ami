@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-echo >&2 "mocking 'sudo $@'"
+echo >&2 "mocking 'sudo $*'"
 exec "$@"

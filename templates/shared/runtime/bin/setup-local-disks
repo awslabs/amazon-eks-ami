@@ -269,14 +269,14 @@ fi
 case "${DISK_SETUP}" in
   "raid0")
     maybe_raid 0
-    echo "Successfully setup RAID-0 consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup RAID-0 consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
   "raid10")
     maybe_raid 10
-    echo "Successfully setup RAID-10 consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup RAID-10 consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
   "mount")
     maybe_mount
-    echo "Successfully setup disk mounts consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup disk mounts consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
 esac

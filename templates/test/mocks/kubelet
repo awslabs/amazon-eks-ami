@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo >&2 "mocking 'kubelet $@'"
+echo >&2 "mocking 'kubelet $*'"
 
 # The only use of kubelet directly is to get the Kubernetes version,
 # so we'll set a default here to avoid test failures, and you can
