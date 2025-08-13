@@ -147,9 +147,9 @@ fi
 ### Containerd setup ##########################################################
 ###############################################################################
 sudo dnf install -y runc-${RUNC_VERSION}
-if [[ -n "$INSTALL_CONTAINERD_RELEASE_FROM_S3" ]]; then
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}-${INSTALL_CONTAINERD_RELEASE_FROM_S3}.eks.${MACHINE}.rpm /tmp/containerd/
-  sudo dnf install -y /tmp/containerd/containerd-${CONTAINERD_VERSION}-${INSTALL_CONTAINERD_RELEASE_FROM_S3}.eks.${MACHINE}.rpm
+if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.eks.${MACHINE}.rpm /tmp/containerd/
+  sudo dnf install -y /tmp/containerd/containerd-${CONTAINERD_VERSION}.eks.${MACHINE}.rpm
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
