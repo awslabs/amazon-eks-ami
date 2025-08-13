@@ -112,20 +112,15 @@ function archive-open-kmods() {
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
 
-  if is-isolated-partition; then
-    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
-    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$NVIDIA_OPEN_VERSION/source/dkms.conf
-  else
-    # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
-    # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
-    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
-    sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
-    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
-    sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
-    sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
-    sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
-    sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
-  fi
+  # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
+  # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+  sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+  sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
   sudo kmod-util archive nvidia-open
 
