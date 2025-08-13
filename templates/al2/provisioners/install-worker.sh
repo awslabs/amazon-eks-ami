@@ -154,7 +154,7 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-1.eks.${MACHINE}.rpm /tmp/containerd/
   sudo yum install -y /tmp/containerd/containerd-${CONTAINERD_VERSION}-1.eks.${MACHINE}.rpm
   # have to add versionlock explicitly as sudo yum versionlock containerd-* doesn't work for rpm installed outside al repo
-  sudo yum versionlock add containerd-${CONTAINERD_VERSION}-1.eks
+  sudo yum versionlock add containerd-${CONTAINERD_VERSION}-1.eks.*
 else
   sudo yum install -y containerd-${CONTAINERD_VERSION}
   sudo yum versionlock containerd-*
