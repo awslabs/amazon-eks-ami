@@ -148,8 +148,8 @@ fi
 ###############################################################################
 sudo dnf install -y runc-${RUNC_VERSION}
 if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm /tmp/containerd/
-  sudo dnf install -y /tmp/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  sudo dnf install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
