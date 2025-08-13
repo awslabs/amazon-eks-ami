@@ -15,6 +15,7 @@
     "cni_plugin_version": "v1.2.0",
     "containerd_version": "1.7.27",
     "install_containerd_from_s3": "false",
+    "containerd_release_version": "1",
     "creator": "{{env `USER`}}",
     "docker_version": "none",
     "enable_fips": "false",

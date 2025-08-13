@@ -12,6 +12,7 @@
     "binary_bucket_region": "us-west-2",
     "containerd_version": "2.0.5",
     "install_containerd_from_s3": "false",
+    "containerd_release_version": "1",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
     "enable_efa": "false",
