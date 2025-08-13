@@ -22,8 +22,7 @@
 | `cache_container_images` |  |
 | `cni_plugin_version` |  |
 | `containerd_version` |  |
-| `install_containerd_from_s3` |  |
-| `containerd_release_version` |  |
+| `install_containerd_release_from_s3` |  |
 | `creator` |  |
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
