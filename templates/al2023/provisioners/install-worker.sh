@@ -242,13 +242,6 @@ sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 ### SOCI Snapshotter ##########################################################
 ###############################################################################
 
-# dnf will still try to install containerd from Amazon Linux as a dependency,
-# and it will break because we explicitly exclude it in favor of our manual
-# version in order to version lock it. dnf doesn't recognize the locally
-# installed version.
-# Use `--disableexcludes=all` to allow downloading containerd RPM (but not installing it).
-# TODO consider installing a stub package that provides containerd so that we can
-# do this the normal way with dnf.
 sudo dnf install -y soci-snapshotter
 sudo systemctl enable soci-snapshotter.socket
 
