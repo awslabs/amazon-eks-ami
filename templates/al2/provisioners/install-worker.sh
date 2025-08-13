@@ -150,22 +150,11 @@ sudo yum versionlock runc-*
 
 # install containerd and lock version
 if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
-  CONTAINERD_BINARIES=(
-    containerd
-    containerd-shim-runc-v2
-    ctr
-  )
   echo "Installing containerd from S3..."
-  for binary in "${CONTAINERD_BINARIES[@]}"; do
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/${CONTAINERD_VERSION}/${MACHINE}/${binary} .
-    sudo chmod +x $binary
-    sudo mv $binary /usr/bin/
-  done
-  sudo mkdir -p /var/lib/containerd
-  sudo mv $WORKING_DIR/containerd.service /etc/systemd/system/containerd.service
-  sudo chown root:root /etc/systemd/system/containerd.service
-  # exclude containerd from yum.conf as versionlock doesn't work in this case
-  echo "exclude=containerd*,docker*" | sudo tee -a /etc/yum.conf
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  sudo yum install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
+  # have to add versionlock explicitly as sudo yum versionlock containerd-* doesn't work for rpm installed outside al repo
+  sudo yum versionlock add containerd-${CONTAINERD_VERSION}.*
 else
   sudo yum install -y containerd-${CONTAINERD_VERSION}
   sudo yum versionlock containerd-*
