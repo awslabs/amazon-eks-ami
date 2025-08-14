@@ -197,7 +197,7 @@ S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin
 BINARIES=(
   kubelet
 )
-for binary in ${BINARIES[*]}; do
+for binary in "${BINARIES[@]}"; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .

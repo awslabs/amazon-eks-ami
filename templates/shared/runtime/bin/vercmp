@@ -34,6 +34,7 @@ RIGHT="$3"
 if [ "$LEFT" = "$RIGHT" ]; then
   COMPARISON=0
 else
+  # shellcheck disable=SC2207
   SORTED=($(for VER in "$LEFT" "$RIGHT"; do echo "$VER"; done | sort -V))
   if [ "${SORTED[0]}" = "$LEFT" ]; then
     COMPARISON=-1

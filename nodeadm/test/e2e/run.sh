@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-cd $(dirname $0)/../..
+cd "$(dirname $0)/../.."
 
 declare MOUNT_FLAGS=""
 declare -A MOUNT_TARGETS=(
@@ -34,7 +34,7 @@ FAILED="false"
 function runTest() {
   local case_name=$1
   local image=$2
-  if [[ $image == $CONTAINERD_V1_IMAGE ]]; then
+  if [[ $image == "$CONTAINERD_V1_IMAGE" ]]; then
     printf "🧪 Testing %s with containerd v1 image..." "$case_name"
   else
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
@@ -61,7 +61,7 @@ function runTest() {
 
 # Run tests
 CASE_PREFIX=${1:-}
-for CASE_DIR in $(ls -d test/e2e/cases/${CASE_PREFIX}*); do
+for CASE_DIR in test/e2e/cases/${CASE_PREFIX}*; do
   CASE_NAME=$(basename "$CASE_DIR")
   if [[ "$CASE_NAME" == containerdv2-* ]]; then
     runTest "$CASE_NAME" "$CONTAINERD_V2_IMAGE"

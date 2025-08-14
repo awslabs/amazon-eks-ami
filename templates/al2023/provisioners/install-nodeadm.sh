@@ -26,7 +26,7 @@ sudo nerdctl run \
 sudo nerdctl rmi \
   --force \
   $BUILD_IMAGE \
-  $(sudo nerdctl images -a | grep none | awk '{ print $3 }')
+  "$(sudo nerdctl images -a | grep none | awk '{ print $3 }')"
 
 # move the nodeadm binary into bin folder
 sudo chmod a+x \
