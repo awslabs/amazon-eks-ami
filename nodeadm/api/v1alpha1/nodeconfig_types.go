@@ -29,10 +29,11 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster    ClusterDetails    `json:"cluster,omitempty"`
-	Containerd ContainerdOptions `json:"containerd,omitempty"`
-	Instance   InstanceOptions   `json:"instance,omitempty"`
-	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Cluster            ClusterDetails     `json:"cluster,omitempty"`
+	Containerd         ContainerdOptions  `json:"containerd,omitempty"`
+	DiagnosticsOptions DiagnosticsOptions `json:"diagnosticsOptions,omitempty"`
+	Instance           InstanceOptions    `json:"instance,omitempty"`
+	Kubelet            KubeletOptions     `json:"kubelet,omitempty"`
 	// FeatureGates holds key-value pairs to enable or disable application features.
 	FeatureGates map[Feature]bool `json:"featureGates,omitempty"`
 }
@@ -82,6 +83,11 @@ type ContainerdOptions struct {
 	BaseRuntimeSpec map[string]runtime.RawExtension `json:"baseRuntimeSpec,omitempty"`
 }
 
+// DiagnosticsOptions configures different aspects relating to diagnostics
+type DiagnosticsOptions struct {
+	DiagnosticsS3UploadURI string `json:"diagnosticsS3UploadURI,omitempty"`
+}
+
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
@@ -129,7 +135,7 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName,AggressiveImagePull}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,AggressiveImagePull,AutoCollectDiagnostics}
 type Feature string
 
 const (
@@ -141,4 +147,8 @@ const (
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	AggressiveImagePull Feature = "AggressiveImagePull"
+
+	// AutoCollectDiagnostics enables nodeadm to automatically attempt to collect
+	// diagnostic information, such as the node log bundle, on failure.
+	AutoCollectDiagnostics Feature = "AutoCollectDiagnostics"
 )
