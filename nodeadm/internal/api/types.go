@@ -28,11 +28,12 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster      ClusterDetails    `json:"cluster,omitempty"`
-	Containerd   ContainerdOptions `json:"containerd,omitempty"`
-	Instance     InstanceOptions   `json:"instance,omitempty"`
-	Kubelet      KubeletOptions    `json:"kubelet,omitempty"`
-	FeatureGates map[Feature]bool  `json:"featureGates,omitempty"`
+	Cluster            ClusterDetails     `json:"cluster,omitempty"`
+	Containerd         ContainerdOptions  `json:"containerd,omitempty"`
+	DiagnosticsOptions DiagnosticsOptions `json:"diagnosticsOptions,omitempty"`
+	Instance           InstanceOptions    `json:"instance,omitempty"`
+	Kubelet            KubeletOptions     `json:"kubelet,omitempty"`
+	FeatureGates       map[Feature]bool   `json:"featureGates,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -52,6 +53,11 @@ type InstanceDetails struct {
 
 type DefaultOptions struct {
 	SandboxImage string `json:"sandboxImage,omitempty"`
+}
+
+// DiagnosticsOptions configures different aspects relating to diagnostics
+type DiagnosticsOptions struct {
+	DiagnosticsS3UploadURI string `json:"diagnosticsS3UploadURI,omitempty"`
 }
 
 type ClusterDetails struct {
@@ -124,4 +130,6 @@ const (
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
 
 	AggressiveImagePull Feature = "AggressiveImagePull"
+
+	AutoCollectDiagnostics Feature = "AutoCollectDiagnostics"
 )

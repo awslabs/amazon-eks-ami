@@ -87,6 +87,13 @@ spec:
                       that will be merged with the defaults.
                     type: string
                 type: object
+              diagnosticsOptions:
+                description: DiagnosticsOptions configures different aspects relating
+                  to diagnostics
+                properties:
+                  diagnosticsS3UploadURI:
+                    type: string
+                type: object
               featureGates:
                 additionalProperties:
                   type: boolean

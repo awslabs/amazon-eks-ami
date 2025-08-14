@@ -37,6 +37,17 @@ _Appears in:_
 | `config` _string_ | Config is an inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)<br />that will be merged with the defaults. |
 | `baseRuntimeSpec` _object (keys:string, values:[RawExtension](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg))_ | BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based.<br />The provided spec will be merged with the default spec; so that a partial spec may be provided.<br />For more information, see: https://github.com/opencontainers/runtime-spec |
 
+#### DiagnosticsOptions
+
+DiagnosticsOptions configures different aspects relating to diagnostics
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `diagnosticsS3UploadURI` _string_ |  |
+
 #### DisabledMount
 
 _Underlying type:_ _string_
@@ -62,7 +73,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName AggressiveImagePull]
+- Enum: [InstanceIdNodeName AggressiveImagePull AutoCollectDiagnostics]
 
 #### InstanceOptions
 
@@ -135,6 +146,7 @@ _Appears in:_
 | --- | --- |
 | `cluster` _[ClusterDetails](#clusterdetails)_ |  |
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
+| `diagnosticsOptions` _[DiagnosticsOptions](#diagnosticsoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
 | `featureGates` _object (keys:[Feature](#feature), values:boolean)_ | FeatureGates holds key-value pairs to enable or disable application features. |

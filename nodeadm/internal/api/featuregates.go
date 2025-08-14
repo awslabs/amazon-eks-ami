@@ -20,6 +20,10 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	AggressiveImagePull: DefaultFalse,
+
+	// AutoCollectDiagnostics enables nodeadm to automatically attempt to collect
+	// diagnostic information, such as the node log bundle, on failure.
+	AutoCollectDiagnostics: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {

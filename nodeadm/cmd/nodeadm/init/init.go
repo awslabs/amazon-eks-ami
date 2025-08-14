@@ -2,6 +2,8 @@ package init
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,15 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/s3"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/logshim"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
 
@@ -45,28 +48,52 @@ func (c *initCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
-	start := time.Now()
-
-	log.Info("Checking user is root..")
-	root, err := cli.IsRunningAsRoot()
-	if err != nil {
-		return err
-	} else if !root {
-		return cli.ErrMustRunAsRoot
+func (c *initCmd) collectDiagnostics(ctx context.Context, log *zap.Logger, nodeConfig *api.NodeConfig) error {
+	if !api.IsFeatureEnabled(api.AutoCollectDiagnostics, nodeConfig.Spec.FeatureGates) {
+		return nil
 	}
 
-	log.Info("Loading configuration..", zap.String("configSource", opts.ConfigSource))
-	provider, err := configprovider.BuildConfigProvider(opts.ConfigSource)
-	if err != nil {
-		return err
-	}
-	nodeConfig, err := provider.Provide()
+	log.Info("Collecting diagnostic information...")
+
+	// TODO: consider associating with nodeadm-config or nodeadm-init instead, but there's not
+	// really a clean way to do this other than guessing based on the set --skip-phases
+	// This can already be extrapolated on inspection basedon on the collected logs though
+	unixTime := fmt.Sprint(time.Now().Unix())
+	logCollector := logshim.NewLogCollector(unixTime)
+
+	_, err := logCollector.Collect()
 	if err != nil {
 		return err
 	}
-	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
+	logPath, err := logCollector.GetDataPath()
+	if err != nil {
+		return err
+	}
 
+	log.Info("Successfully collected diagnostics!", zap.String("path", logPath))
+
+	if nodeConfig.Spec.DiagnosticsOptions.DiagnosticsS3UploadURI != "" {
+		uploadURI := nodeConfig.Spec.DiagnosticsOptions.DiagnosticsS3UploadURI
+		log.Info("Uploading diagnostic info to S3...", zap.String("s3URI", uploadURI))
+		uploader, err := s3.NewUploader()
+		if err != nil {
+			return err
+		}
+
+		bucket, key, err := s3.ExtractBucketAndKeyFromURI(uploadURI)
+		if err != nil {
+			return err
+		}
+
+		uploader.Upload(ctx, logPath, bucket, key)
+
+		log.Info("Successfully uploaded diagnostic info to S3!", zap.String("s3URI", uploadURI))
+	}
+
+	return nil
+}
+
+func (c *initCmd) runWithConfig(startTime time.Time, log *zap.Logger, nodeConfig *api.NodeConfig) error {
 	log.Info("Enriching configuration..")
 	if err := enrichConfig(log, nodeConfig); err != nil {
 		return err
@@ -137,6 +164,43 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			}
 			log.Info("Finished post-launch tasks", nameField)
 		}
+	}
+
+	return nil
+}
+
+func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+	ctx := context.Background()
+	start := time.Now()
+
+	log.Info("Checking user is root..")
+	root, err := cli.IsRunningAsRoot()
+	if err != nil {
+		return err
+	} else if !root {
+		return cli.ErrMustRunAsRoot
+	}
+
+	log.Info("Loading configuration..", zap.String("configSource", opts.ConfigSource))
+	provider, err := configprovider.BuildConfigProvider(opts.ConfigSource)
+	if err != nil {
+		return err
+	}
+	nodeConfig, err := provider.Provide()
+	if err != nil {
+		return err
+	}
+	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
+
+	err = c.runWithConfig(start, log, nodeConfig)
+	if err != nil {
+		// This is a duplicate log (later logged fatal), but ensures it's captured in diagnostics
+		log.Error("Encountered error while running", zap.Error(err))
+		if diagnosticsErr := c.collectDiagnostics(ctx, log, nodeConfig); diagnosticsErr != nil {
+			log.Info("Failed to collect diagnostics", zap.Error(diagnosticsErr))
+		}
+
+		return err
 	}
 
 	log.Info("done!", zap.Duration("duration", time.Since(start)))
