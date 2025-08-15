@@ -22,7 +22,7 @@ function is-isolated-partition() {
 
 function rpm_install() {
   local RPMS
-  mapfile -t RPMS <<< "$@"
+  read -ra RPMS <<< "$@"
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}

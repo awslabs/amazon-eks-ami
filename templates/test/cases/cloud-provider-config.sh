@@ -10,7 +10,7 @@ KUBELET_CONFIG_FILE="/etc/kubernetes/kubelet/kubelet-config.json"
 function fail() {
   echo "❌ Test Failed:" "$@"
   echo "Kubelet systemd units:"
-  find $KUBELET_UNIT_DIR -type f -print0 | xargs cat
+  find $KUBELET_UNIT_DIR -type f -print0 | xargs -0 cat
   echo "Kubelet config file:"
   cat $KUBELET_CONFIG_FILE | jq '.'
   exit 1
