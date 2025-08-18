@@ -92,9 +92,9 @@ spec:
 ```
 
 ---
-## Enabling aggressive image pull (experimental)
+## Enabling fast image pull (experimental)
 
-When the `AggressiveImagePull` feature gate is enabled, `nodeadm` will configure the container runtime to pull and unpack container images in parallel.
+When the `FastImagePull` feature gate is enabled, `nodeadm` will configure the container runtime to pull and unpack container images in parallel.
 
 This has the benefit of potentially decreasing image pull time, at the cost of increased CPU, memory and EBS usage during image pull.
 
@@ -111,7 +111,7 @@ apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   featureGates:
-    AggressiveImagePull: true
+    FastImagePull: true
 ```
 
 ---

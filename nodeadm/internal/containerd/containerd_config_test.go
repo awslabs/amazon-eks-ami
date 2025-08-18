@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContainerdConfigWithUserConfigAndAggressiveImagePullFeature(t *testing.T) {
+func TestContainerdConfigWithUserConfigAndFastImagePullFeature(t *testing.T) {
 	cfg := &api.NodeConfig{
 		Spec: api.NodeConfigSpec{
 			FeatureGates: map[api.Feature]bool{
-				api.AggressiveImagePull: true,
+				api.FastImagePull: true,
 			},
 			Containerd: api.ContainerdOptions{
 				Config: api.ContainerdConfig(`
@@ -76,7 +76,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
@@ -89,7 +89,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
@@ -102,7 +102,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
@@ -121,7 +121,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
@@ -134,7 +134,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
@@ -147,7 +147,7 @@ func TestContainerdConfig(t *testing.T) {
 			cfg: &api.NodeConfig{
 				Spec: api.NodeConfigSpec{
 					FeatureGates: map[api.Feature]bool{
-						api.AggressiveImagePull: true,
+						api.FastImagePull: true,
 					},
 				},
 			},
