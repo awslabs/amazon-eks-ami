@@ -165,7 +165,7 @@ func writeSnapshotterConfig(cfg *api.NodeConfig, resources system.Resources) err
 }
 
 func UseSOCISnapshotter(cfg *api.NodeConfig, resources system.Resources) bool {
-	if !api.IsFeatureEnabled(api.AggressiveImagePull, cfg.Spec.FeatureGates) {
+	if !api.IsFeatureEnabled(api.FastImagePull, cfg.Spec.FeatureGates) {
 		return false
 	}
 

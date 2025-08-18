@@ -62,7 +62,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName AggressiveImagePull]
+- Enum: [InstanceIdNodeName FastImagePull]
 
 #### InstanceOptions
 
