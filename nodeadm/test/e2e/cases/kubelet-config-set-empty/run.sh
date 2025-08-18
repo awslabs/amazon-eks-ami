@@ -7,7 +7,7 @@ set -o pipefail
 source /helpers.sh
 
 mock::aws
-mock::kubelet 1.27.0
+mock::kubelet 1.28.0
 wait::dbus-ready
 
 # this test covers cases where the user wants to utilize `reservedSystemCPUs`,

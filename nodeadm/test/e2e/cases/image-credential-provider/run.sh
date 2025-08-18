@@ -9,12 +9,6 @@ source /helpers.sh
 mock::aws
 wait::dbus-ready
 
-mock::kubelet 1.26.0
-
-nodeadm init --skip run --config-source file://config.yaml
-
-assert::json-files-equal /etc/eks/image-credential-provider/config.json expected-image-credential-provider-config-126.json
-
 mock::kubelet 1.27.0
 
 nodeadm init --skip run --config-source file://config.yaml

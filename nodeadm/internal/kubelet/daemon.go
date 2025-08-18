@@ -35,7 +35,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	if err := k.writeKubeconfig(cfg); err != nil {
 		return err
 	}
-	if err := k.writeImageCredentialProviderConfig(cfg); err != nil {
+	if err := k.writeImageCredentialProviderConfig(); err != nil {
 		return err
 	}
 	if err := writeClusterCaCert(cfg.Spec.Cluster.CertificateAuthority); err != nil {
