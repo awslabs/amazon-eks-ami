@@ -4459,6 +4459,9 @@ type Ec2InstanceConnectEndpoint struct {
 	// Default: true
 	PreserveClientIp *bool
 
+	// The public DNS names of the endpoint.
+	PublicDnsNames *InstanceConnectEndpointPublicDnsNames
+
 	// The security groups associated with the endpoint. If you didn't specify a
 	// security group, the default security group for your VPC is associated with the
 	// endpoint.
@@ -6908,22 +6911,9 @@ type Image struct {
 	RootDeviceType DeviceType
 
 	// The ID of the source AMI from which the AMI was created.
-	//
-	// The ID only appears if the AMI was created using CreateImage, CopyImage, or CreateRestoreImageTask. The ID does not
-	// appear if the AMI was created using any other API. For some older AMIs, the ID
-	// might not be available. For more information, see [Identify the source AMI used to create a new Amazon EC2 AMI]in the Amazon EC2 User Guide.
-	//
-	// [Identify the source AMI used to create a new Amazon EC2 AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify-source-ami-used-to-create-new-ami.html
 	SourceImageId *string
 
 	// The Region of the source AMI.
-	//
-	// The Region only appears if the AMI was created using CreateImage, CopyImage, or CreateRestoreImageTask. The Region does
-	// not appear if the AMI was created using any other API. For some older AMIs, the
-	// Region might not be available. For more information, see [Identify the source AMI used to create a new Amazon EC2 AMI]in the Amazon EC2 User
-	// Guide.
-	//
-	// [Identify the source AMI used to create a new Amazon EC2 AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify-source-ami-used-to-create-new-ami.html
 	SourceImageRegion *string
 
 	// The ID of the instance that the AMI was created from if the AMI was created
@@ -7277,6 +7267,9 @@ type ImportInstanceVolumeDetailItem struct {
 	// The Availability Zone where the resulting instance will reside.
 	AvailabilityZone *string
 
+	// The ID of the Availability Zone where the resulting instance will reside.
+	AvailabilityZoneId *string
+
 	// The number of bytes converted so far.
 	BytesConverted *int64
 
@@ -7321,6 +7314,9 @@ type ImportVolumeTaskDetails struct {
 
 	// The Availability Zone where the resulting volume will reside.
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone where the resulting volume will reside.
+	AvailabilityZoneId *string
 
 	// The number of bytes converted so far.
 	BytesConverted *int64
@@ -7738,6 +7734,33 @@ type InstanceCapacity struct {
 	// The total number of instances that can be launched onto the Dedicated Host if
 	// there are no instances running on it.
 	TotalCapacity *int32
+
+	noSmithyDocumentSerde
+}
+
+// The DNS names of the endpoint.
+type InstanceConnectEndpointDnsNames struct {
+
+	// The DNS name of the EC2 Instance Connect Endpoint.
+	DnsName *string
+
+	// The Federal Information Processing Standards (FIPS) compliant DNS name of the
+	// EC2 Instance Connect Endpoint.
+	FipsDnsName *string
+
+	noSmithyDocumentSerde
+}
+
+// The public DNS names of the endpoint, including IPv4-only and dualstack DNS
+// names.
+type InstanceConnectEndpointPublicDnsNames struct {
+
+	// The dualstack DNS name of the EC2 Instance Connect Endpoint. A dualstack DNS
+	// name supports connections from both IPv4 and IPv6 clients.
+	Dualstack *InstanceConnectEndpointDnsNames
+
+	// The IPv4-only DNS name of the EC2 Instance Connect Endpoint.
+	Ipv4 *InstanceConnectEndpointDnsNames
 
 	noSmithyDocumentSerde
 }
@@ -9389,6 +9412,9 @@ type InstanceStatus struct {
 
 	// The Availability Zone of the instance.
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone of the instance.
+	AvailabilityZoneId *string
 
 	// Any scheduled events associated with the instance.
 	Events []InstanceStatusEvent
@@ -12052,6 +12078,9 @@ type LaunchTemplatePlacement struct {
 	// The Availability Zone of the instance.
 	AvailabilityZone *string
 
+	// The ID of the Availability Zone of the instance.
+	AvailabilityZoneId *string
+
 	// The Group ID of the placement group. You must specify the Placement Group Group
 	// ID to launch an instance in a shared placement group.
 	GroupId *string
@@ -12086,7 +12115,14 @@ type LaunchTemplatePlacementRequest struct {
 	Affinity *string
 
 	// The Availability Zone for the instance.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone for the instance.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
+	AvailabilityZoneId *string
 
 	// The Group Id of a placement group. You must specify the Placement Group Group
 	// Id to launch an instance in a shared placement group.
@@ -15007,13 +15043,25 @@ type Placement struct {
 
 	// The Availability Zone of the instance.
 	//
-	// If not specified, an Availability Zone will be automatically chosen for you
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both.
+	// If neither is specified, Amazon EC2 automatically selects an Availability Zone
 	// based on the load balancing criteria for the Region.
 	//
 	// This parameter is not supported for [CreateFleet].
 	//
 	// [CreateFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateFleet
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone of the instance.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both.
+	// If neither is specified, Amazon EC2 automatically selects an Availability Zone
+	// based on the load balancing criteria for the Region.
+	//
+	// This parameter is not supported for [CreateFleet].
+	//
+	// [CreateFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateFleet
+	AvailabilityZoneId *string
 
 	// The ID of the placement group that the instance is in. If you specify GroupId ,
 	// you can't specify GroupName .
@@ -15844,6 +15892,9 @@ type RequestLaunchTemplateData struct {
 	// Deprecated.
 	//
 	// Amazon Elastic Graphics reached end of life on January 8, 2024.
+	//
+	// Deprecated: Specifying Elastic Graphics accelerators is no longer supported on
+	// the RunInstances API.
 	ElasticGpuSpecifications []ElasticGpuSpecification
 
 	// Amazon Elastic Inference is no longer available.
@@ -15853,6 +15904,9 @@ type RequestLaunchTemplateData struct {
 	// instances to accelerate your Deep Learning (DL) inference workloads.
 	//
 	// You cannot specify accelerators from different generations in the same request.
+	//
+	// Deprecated: Specifying Elastic Inference accelerators is no longer supported on
+	// the RunInstances API.
 	ElasticInferenceAccelerators []LaunchTemplateElasticInferenceAccelerator
 
 	// Indicates whether the instance is enabled for Amazon Web Services Nitro
@@ -16750,6 +16804,10 @@ type Route struct {
 	// The ID of Amazon Web Services account that owns the instance.
 	InstanceOwnerId *string
 
+	// The next hop IP address for routes propagated by VPC Route Server into VPC
+	// route tables.
+	IpAddress *string
+
 	// The ID of the local gateway.
 	LocalGatewayId *string
 
@@ -17161,6 +17219,10 @@ type RouteTableAssociation struct {
 
 	// Indicates whether this is the main route table.
 	Main *bool
+
+	// The ID of a public IPv4 pool. A public IPv4 pool is a pool of IPv4 addresses
+	// that you've brought to Amazon Web Services with BYOIP.
+	PublicIpv4Pool *string
 
 	// The ID of the association.
 	RouteTableAssociationId *string
@@ -17936,7 +17998,14 @@ type ServiceConfiguration struct {
 	// endpoint to the service must first be accepted.
 	AcceptanceRequired *bool
 
+	// The IDs of the Availability Zones in which the service is available.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
+	AvailabilityZoneIds []string
+
 	// The Availability Zones in which the service is available.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
 	AvailabilityZones []string
 
 	// The DNS names for the service.
@@ -17996,7 +18065,14 @@ type ServiceDetail struct {
 	// accepted by the service owner.
 	AcceptanceRequired *bool
 
+	// The IDs of the Availability Zones in which the service is available.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
+	AvailabilityZoneIds []string
+
 	// The Availability Zones in which the service is available.
+	//
+	// Either AvailabilityZone or AvailabilityZoneId can be specified, but not both
 	AvailabilityZones []string
 
 	// The DNS names for the service.
@@ -18238,7 +18314,8 @@ type Snapshot struct {
 	TransferType TransferType
 
 	// The ID of the volume that was used to create the snapshot. Snapshots created by
-	// the CopySnapshotaction have an arbitrary volume ID that should not be used for any purpose.
+	// a copy snapshot operation have an arbitrary volume ID that you should not use
+	// for any purpose.
 	VolumeId *string
 
 	// The size of the volume, in GiB.
@@ -18970,7 +19047,16 @@ type SpotInstanceRequest struct {
 	LaunchSpecification *LaunchSpecification
 
 	// The Availability Zone in which the request is launched.
+	//
+	// Either launchedAvailabilityZone or launchedAvailabilityZoneId can be specified,
+	// but not both
 	LaunchedAvailabilityZone *string
+
+	// The ID of the Availability Zone in which the request is launched.
+	//
+	// Either launchedAvailabilityZone or launchedAvailabilityZoneId can be specified,
+	// but not both
+	LaunchedAvailabilityZoneId *string
 
 	// The product description associated with the Spot Instance.
 	ProductDescription RIProductDescription
@@ -19400,6 +19486,9 @@ type SpotPrice struct {
 
 	// The Availability Zone.
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone.
+	AvailabilityZoneId *string
 
 	// The instance type.
 	InstanceType InstanceType
@@ -22203,6 +22292,9 @@ type Volume struct {
 
 	// The Availability Zone for the volume.
 	AvailabilityZone *string
+
+	// The ID of the Availability Zone for the volume.
+	AvailabilityZoneId *string
 
 	// The time stamp when volume creation was initiated.
 	CreateTime *time.Time

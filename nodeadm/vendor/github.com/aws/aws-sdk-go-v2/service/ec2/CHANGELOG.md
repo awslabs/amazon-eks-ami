@@ -1,3 +1,40 @@
+# v1.244.0 (2025-08-14)
+
+* **Feature**: This release adds ModifyInstanceConnectEndpoint API to update configurations on existing EC2 Instance Connect Endpoints and improves IPv6 support through dualstack DNS names for EC2 Instance Connect Endpoints.
+
+# v1.243.0 (2025-08-12)
+
+* **Feature**: Release to allow route table association with a PublicIpv4Pool.
+
+# v1.242.0 (2025-08-11)
+
+* **Feature**: Add support for configuring per-service Options via callback on global config.
+* **Feature**: This release adds AvailabilityZoneId support for CreateVolume, DescribeVolume, LaunchTemplates, RunInstances, DescribeInstances, CreateDefaultSubnet, SpotInstances, and CreateDefaultSubnet APIs.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.241.0 (2025-08-06)
+
+* **Feature**: Mark Elastic Inference Accelerators and Elastic Graphics Processor parameters as deprecated on the RunInstances and LaunchTemplate APIs.
+
+# v1.240.0 (2025-08-04)
+
+* **Feature**: Support configurable auth scheme preferences in service clients via AWS_AUTH_SCHEME_PREFERENCE in the environment, auth_scheme_preference in the config file, and through in-code settings on LoadDefaultConfig and client constructor methods.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.239.0 (2025-07-31)
+
+* **Feature**: Added support for the force option for the EC2 instance terminate command. This feature enables customers to recover resources associated with an instance stuck in the shutting-down state as a result of rare issues caused by a frozen operating system or an underlying hardware problem.
+
+# v1.238.0 (2025-07-30)
+
+* **Feature**: Release to show the next hop IP address for routes propagated by VPC Route Server into VPC route tables.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.237.0 (2025-07-28)
+
+* **Feature**: Add support for HTTP interceptors.
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.236.0 (2025-07-25)
 
 * **Feature**: Transit Gateway native integration with AWS Network Firewall. Adding new enum value for the new Transit Gateway Attachment type.
