@@ -12,7 +12,7 @@ enable = true
 concurrent_download_chunk_size = "16mb"
 discard_unpacked_layers = true
 max_concurrent_downloads = -1
-max_concurrent_downloads_per_image = 32
+max_concurrent_downloads_per_image = 20
 max_concurrent_unpacks = -1
 max_concurrent_unpacks_per_image = 12
 

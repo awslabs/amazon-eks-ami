@@ -96,14 +96,15 @@ spec:
 
 When the `AggressiveImagePull` feature gate is enabled, `nodeadm` will configure the container runtime to pull and unpack container images in parallel.
 
-This has the benefit of potentially decreasing image pull time, at the cost of increased CPU and memory usage during image pull.
+This has the benefit of potentially decreasing image pull time, at the cost of increased CPU, memory and EBS usage during image pull.
 
 ⚠️ **Note**: This flag will be ignored on instance sizes below a certain vCPU and memory threshold.
 
 ### To enable this feature:
 1. Ensure your instance type is a larger instance type. Currently we recommend a 2xlarge instance or larger, but that value may change.
 2. Make sure your workloads can tolerate the increased CPU and memory usage during image pull. This makes the most sense when you need to pull a very large container image early in a node's lifecycle, before other workloads are running.
-3. Enable the feature gate in your user data:
+3. Ensure you've configured additional EBS throughput for your instance root volume. We recommend at least 600MiB/s throughput. Below that value, you may see longer image pull times with this flag. Higher values up to 1000MiB/s and 16k IOPs may result in better performance.
+4. Enable the feature gate in your user data:
 ```
 ---
 apiVersion: node.eks.aws/v1alpha1
