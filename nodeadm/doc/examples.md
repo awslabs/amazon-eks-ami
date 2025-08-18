@@ -155,3 +155,48 @@ spec:
             soft: 1024
             hard: 1024
 ```
+
+---
+
+## Using a custom image credential provider
+
+You can use a custom image credential provider by specifying the `imageCredentialProviderConfig` field in the `KubeletOptions` section of your `NodeConfig`. This allows you to define how image credentials are fetched for your workloads.
+
+Refer to the [Kubelet Credential Provider documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-credential-provider/#configure-a-kubelet-credential-provider) for the format of the file.
+
+```yaml
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  kubelet:
+    imageCredentialProviderConfig: |
+      {
+        "apiVersion": "{{.ConfigApiVersion}}",
+        "kind": "CredentialProviderConfig",
+        "providers": [
+          {
+            "name": "{{.EcrProviderName}}",
+            "matchImages": [
+              "*.dkr.ecr.*.amazonaws.com",
+              "*.dkr-ecr.*.on.aws",
+              "*.dkr.ecr.*.amazonaws.com.cn",
+              "*.dkr-ecr.*.on.amazonwebservices.com.cn",
+              "*.dkr.ecr-fips.*.amazonaws.com",
+              "*.dkr-ecr-fips.*.on.aws",
+              "*.dkr.ecr.*.c2s.ic.gov",
+              "*.dkr.ecr.*.sc2s.sgov.gov",
+              "*.dkr.ecr.*.cloud.adc-e.uk",
+              "*.dkr.ecr.*.csp.hci.ic.gov"
+            ],
+            "defaultCacheDuration": "12h",
+            "apiVersion": "{{.ProviderApiVersion}}"
+          },
+          {
+            "name": "custom",
+            "matchImages": ["custom-registry.example.com"],
+            "defaultCacheDuration": "12h",
+            "apiVersion": "{{.ProviderApiVersion}}"
+          }
+        ]
+      }
+```
