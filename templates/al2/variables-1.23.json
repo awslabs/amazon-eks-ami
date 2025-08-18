@@ -1,4 +1,0 @@
-{
-    "ami_component_description": "(k8s: {{ user `kubernetes_version` }}, docker: {{ user `docker_version` }}, containerd: {{ user `containerd_version` }})",
-    "docker_version": "25.0.*"
-}
