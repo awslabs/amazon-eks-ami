@@ -77,6 +77,19 @@ function mock::setup-local-disks() {
   chmod +x /usr/bin/setup-local-disks
 }
 
+function mock::pci-device() {
+  # since we cannot modify the kernel sysfs paths, we bind mount our mock
+  # directory on top of an existing pci device. the only requirement for the check
+  # is that the vendor ID file is correct.
+  #
+  # NOTE: this currently only supports mocking a single device at a time.
+  local pcie_vendor=$1
+  pci_mock_dst=/sys/bus/pci/devices/$(ls /sys/bus/pci/devices/ | head -n 1)
+  pci_mock_src=$(mktemp -d)
+  echo "$pcie_vendor" > $pci_mock_src/vendor
+  mount --bind $pci_mock_src $pci_mock_dst
+}
+
 function wait::path-exists() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: wait::path-exists TARGET_PATH"
