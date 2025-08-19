@@ -33,6 +33,7 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	Proxy      ProxyOptions      `json:"proxy,omitempty"`
 	// FeatureGates holds key-value pairs to enable or disable application features.
 	FeatureGates map[Feature]bool `json:"featureGates,omitempty"`
 }
@@ -85,6 +86,19 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+}
+
+// ProxyOptions configures HTTP proxy settings for nodeadm's outbound network connections.
+// These settings are used when nodeadm makes AWS API calls during node initialization.
+type ProxyOptions struct {
+	// HTTPProxy specifies the HTTP proxy server URL for non-TLS requests.
+	HTTPProxy string `json:"httpProxy,omitempty"`
+
+	// HTTPSProxy specifies the HTTP proxy server URL for TLS requests.
+	HTTPSProxy string `json:"httpsProxy,omitempty"`
+
+	// NoProxy specifies hosts and domains that should bypass the proxy.
+	NoProxy []string `json:"noProxy,omitempty"`
 }
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
