@@ -32,7 +32,6 @@ type NodeConfigSpec struct {
 	Containerd   ContainerdOptions `json:"containerd,omitempty"`
 	Instance     InstanceOptions   `json:"instance,omitempty"`
 	Kubelet      KubeletOptions    `json:"kubelet,omitempty"`
-	Proxy        ProxyOptions      `json:"proxy,omitempty"`
 	FeatureGates map[Feature]bool  `json:"featureGates,omitempty"`
 }
 
@@ -95,12 +94,7 @@ const (
 
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
-}
-
-type ProxyOptions struct {
-	HTTPProxy  string   `json:"httpProxy,omitempty"`
-	HTTPSProxy string   `json:"httpsProxy,omitempty"`
-	NoProxy    []string `json:"noProxy,omitempty"`
+	Environment  map[string]string   `json:"environment,omitempty"`
 }
 
 type LocalStorageOptions struct {
