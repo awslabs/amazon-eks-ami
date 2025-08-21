@@ -3,17 +3,40 @@ package imds
 import (
 	"context"
 	"io"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
 var Client *imds.Client
 
+// This function is a wrapper around the default `http.ProxyFromEnvironment` function
+// which cachces the proxy variables in environment when first invoked thus, preventing subsequent
+// configuration attempts of http proxy via derived from user-data. Since, the first outbound
+// API call in nodeadm is to the IMDS for fetching user-data, we bypass caching.
+// Ref: https://github.com/golang/go/blob/master/src/net/http/transport.go#L499
+func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
+	// Link-local addresses do not need to be going through a proxy
+	if req.URL.Host == "169.254.169.254" || req.URL.Host == "[fd00:ec2::254]" {
+		return nil, nil
+	}
+
+	return http.ProxyFromEnvironment(req)
+}
+
 func getClient() *imds.Client {
 	if Client == nil {
+		// Create HTTP client with dynamic proxy function
+		httpClient := awshttp.NewBuildableClient().WithTransportOptions(func(tr *http.Transport) {
+			tr.Proxy = dynamicProxyFunc
+		})
+
 		Client = imds.New(imds.Options{
+			HTTPClient:            httpClient,
 			DisableDefaultTimeout: true,
 			Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
 				so.MaxAttempts = 60
