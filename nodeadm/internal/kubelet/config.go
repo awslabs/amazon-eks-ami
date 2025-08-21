@@ -213,6 +213,10 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig) {
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
 		ksc.FeatureGates["DynamicResourceAllocation"] = true
 	}
+	// Enable MutableCSINodeAllocatableCount on 1.34+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
+		ksc.FeatureGates["MutableCSINodeAllocatableCount"] = true
+	}
 }
 
 func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[string]string) {

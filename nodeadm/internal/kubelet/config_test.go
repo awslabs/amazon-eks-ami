@@ -78,3 +78,28 @@ func TestProviderID(t *testing.T) {
 		// TODO assert that the --hostname-override == PrivateDnsName
 	}
 }
+
+func TestMutableCSINodeAllocatableCountFeatureGate(t *testing.T) {
+	tests := []struct {
+		kubeletVersion string
+		expected       bool
+	}{
+		{kubeletVersion: "v1.33.0", expected: false},
+		{kubeletVersion: "v1.34.0", expected: true},
+	}
+
+	for _, test := range tests {
+		kubeletConfig := defaultKubeletSubConfig()
+		nodeConfig := api.NodeConfig{
+			Status: api.NodeConfigStatus{
+				KubeletVersion: test.kubeletVersion,
+			},
+		}
+		kubeletConfig.withVersionToggles(&nodeConfig)
+		if test.expected {
+			assert.True(t, kubeletConfig.FeatureGates["MutableCSINodeAllocatableCount"])
+		} else {
+			assert.NotContains(t, kubeletConfig.FeatureGates, "MutableCSINodeAllocatableCount")
+		}
+	}
+}
