@@ -28,33 +28,30 @@ func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
 	return http.ProxyFromEnvironment(req)
 }
 
-func getClient() *imds.Client {
-	if Client == nil {
-		// Create HTTP client with dynamic proxy function
-		httpClient := awshttp.NewBuildableClient().WithTransportOptions(func(tr *http.Transport) {
-			tr.Proxy = dynamicProxyFunc
-		})
+func init() {
+	// Create HTTP client with dynamic proxy function
+	httpClient := awshttp.NewBuildableClient().WithTransportOptions(func(tr *http.Transport) {
+		tr.Proxy = dynamicProxyFunc
+	})
 
-		Client = imds.New(imds.Options{
-			HTTPClient:            httpClient,
-			DisableDefaultTimeout: true,
-			Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
-				so.MaxAttempts = 60
-				so.MaxBackoff = 1 * time.Second
-				so.Retryables = append(so.Retryables,
-					&retry.RetryableHTTPStatusCode{
-						Codes: map[int]struct{}{
-							// Retry 404s due to the rare occurrence that
-							// credentials take longer to propagate through IMDS and
-							// fail on the first call.
-							404: {},
-						},
+	Client = imds.New(imds.Options{
+		HTTPClient:            httpClient,
+		DisableDefaultTimeout: true,
+		Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
+			so.MaxAttempts = 60
+			so.MaxBackoff = 1 * time.Second
+			so.Retryables = append(so.Retryables,
+				&retry.RetryableHTTPStatusCode{
+					Codes: map[int]struct{}{
+						// Retry 404s due to the rare occurrence that
+						// credentials take longer to propagate through IMDS and
+						// fail on the first call.
+						404: {},
 					},
-				)
-			}),
-		})
-	}
-	return Client
+				},
+			)
+		}),
+	})
 }
 
 type IMDSProperty string
@@ -64,11 +61,11 @@ const (
 )
 
 func GetInstanceIdentityDocument(ctx context.Context) (*imds.GetInstanceIdentityDocumentOutput, error) {
-	return getClient().GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+	return Client.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
 }
 
 func GetUserData(ctx context.Context) ([]byte, error) {
-	res, err := getClient().GetUserData(ctx, &imds.GetUserDataInput{})
+	res, err := Client.GetUserData(ctx, &imds.GetUserDataInput{})
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +81,7 @@ func GetProperty(ctx context.Context, prop IMDSProperty) (string, error) {
 }
 
 func GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error) {
-	res, err := getClient().GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
+	res, err := Client.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
 	if err != nil {
 		return nil, err
 	}

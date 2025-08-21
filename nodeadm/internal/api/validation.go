@@ -1,8 +1,6 @@
 package api
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func ValidateNodeConfig(cfg *NodeConfig) error {
 	if cfg.Spec.Cluster.Name == "" {
@@ -22,6 +20,5 @@ func ValidateNodeConfig(cfg *NodeConfig) error {
 			return fmt.Errorf("CIDR is missing in cluster configuration")
 		}
 	}
-
 	return nil
 }
