@@ -1,6 +1,7 @@
 package init
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -24,22 +25,99 @@ func writeSystemEnvironmentVariables(log *zap.Logger, instanceOpts api.InstanceO
 
 	log.Info("Writing environment variables to /etc/environment", zap.Int("count", len(instanceOpts.Environment)))
 
-	// Write variables to /etc/environment in append mode
-	file, err := os.OpenFile(etcEnvironmentPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	lines, err := readEnvironmentFile()
 	if err != nil {
-		return fmt.Errorf("failed to open /etc/environment: %w", err)
+		return fmt.Errorf("failed to read /etc/environment: %w", err)
+	}
+
+	cleanedLines := removeNodeadmSection(lines)
+	updatedLines := addNodeadmSection(cleanedLines, instanceOpts.Environment)
+
+	if err := writeEnvironmentFile(updatedLines); err != nil {
+		return fmt.Errorf("failed to write /etc/environment: %w", err)
+	}
+
+	for key, value := range instanceOpts.Environment {
+		if err := os.Setenv(key, value); err != nil {
+			log.Warn("Failed to set environment variable", zap.String("key", key), zap.Error(err))
+		}
+		log.Info("Set environment variable", zap.String("key", key), zap.String("value", value))
+	}
+
+	return nil
+}
+
+func readEnvironmentFile() ([]string, error) {
+	file, err := os.Open(etcEnvironmentPath)
+	if os.IsNotExist(err) {
+		return []string{}, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	defer file.Close()
 
-	fmt.Fprintln(file, "")
-	fmt.Fprintln(file, nodeadmMarkerStart)
-
-	// Set environment variables in current process and write to file
-	for key, value := range instanceOpts.Environment {
-		os.Setenv(key, value)
-		fmt.Fprintf(file, "%s=%s\n", key, value)
-		log.Info("Set environment variable", zap.String("key", key), zap.String("value", value))
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
-	fmt.Fprintln(file, nodeadmMarkerEnd)
+	return lines, scanner.Err()
+}
+
+func removeNodeadmSection(lines []string) []string {
+	var result []string
+	inNodeadmSection := false
+
+	for _, line := range lines {
+		if line == nodeadmMarkerStart {
+			inNodeadmSection = true
+			continue
+		}
+		if line == nodeadmMarkerEnd {
+			inNodeadmSection = false
+			continue
+		}
+		if !inNodeadmSection {
+			result = append(result, line)
+		}
+	}
+	return result
+}
+
+func addNodeadmSection(lines []string, envVars map[string]string) []string {
+	result := make([]string, len(lines))
+	copy(result, lines)
+
+	if len(result) > 0 && result[len(result)-1] != "" {
+		result = append(result, "")
+	}
+
+	result = append(result, nodeadmMarkerStart)
+
+	for key, value := range envVars {
+		result = append(result, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	result = append(result, nodeadmMarkerEnd)
+	return result
+}
+
+func writeEnvironmentFile(lines []string) error {
+	file, err := os.Create(etcEnvironmentPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if err := file.Chmod(0600); err != nil {
+		return err
+	}
+
+	for _, line := range lines {
+		if _, err := fmt.Fprintln(file, line); err != nil {
+			return err
+		}
+	}
 	return nil
 }
