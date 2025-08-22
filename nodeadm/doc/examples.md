@@ -74,7 +74,7 @@ There are several benefits of doing this:
 1. [Create a new worker node IAM role](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html#create-worker-node-role)
     - ⚠️ **Note**: you should create a new role when migrating an existing cluster to avoid authentication failures on existing nodes.
 2. Configure authorization for the role using username `system:node:{{SessionName}}`, for example by [creating an access entry](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html) of type `EC2` for the new role:
-    -  ⚠️ **Note**: in some cases, this can be done [using the aws-auth ConfigMap](https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html#aws-auth-users) instead. This must be done using access entries if creating an [EKS Managed Node Group](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html) with the role.
+    -  ⚠️ **Note**: you can still use the [legacy `aws-auth` ConfigMap](https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html#aws-auth-users) to grant access, but services like [EKS Managed Node Groups](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html) will require the use of access entries.
 ```
 aws eks create-access-entry --cluster-name $CLUSTER_ARN --principal-arn $ROLE_CREATED_ABOVE --type EC2
 ```
