@@ -94,6 +94,7 @@ const (
 
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  map[string]string   `json:"environment,omitempty"`
 }
 
 type LocalStorageOptions struct {
