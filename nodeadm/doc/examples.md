@@ -76,7 +76,10 @@ There are several benefits of doing this:
 2. Configure authorization for the role using username `system:node:{{SessionName}}`, for example by [creating an access entry](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html) of type `EC2` for the new role:
     -  ⚠️ **Note**: you can still use the [legacy `aws-auth` ConfigMap](https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html#aws-auth-users) to grant access, but services like [EKS Managed Node Groups](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html) will require the use of access entries.
 ```
-aws eks create-access-entry --cluster-name $CLUSTER_ARN --principal-arn $ROLE_CREATED_ABOVE --type EC2
+aws eks create-access-entry \
+  --cluster-name $CLUSTER_NAME \
+  --principal-arn $ROLE_CREATED_ABOVE \
+  --type EC2
 ```
 
 3. Enable the feature gate in your user data:
