@@ -1,9 +1,10 @@
 package init
 
 import (
-	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"go.uber.org/zap"
 
@@ -11,30 +12,23 @@ import (
 )
 
 const (
-	etcEnvironmentPath = "/etc/environment"
-	nodeadmMarkerStart = "# nodeadm environment variables - start"
-	nodeadmMarkerEnd   = "# nodeadm environment variables - end"
+	systemdEnvironmentConfPath = "/etc/systemd/system.conf.d/environment.conf"
 )
 
 // making environment variables available system-wide to all processes and services.
-func writeSystemEnvironmentVariables(log *zap.Logger, instanceOpts api.InstanceOptions) error {
+func handleSystemEnvironmentVariables(log *zap.Logger, instanceOpts api.InstanceOptions) error {
 	if len(instanceOpts.Environment) == 0 {
 		log.Info("No environment variables to configure")
 		return nil
 	}
 
-	log.Info("Writing environment variables to /etc/environment", zap.Int("count", len(instanceOpts.Environment)))
-
-	lines, err := readEnvironmentFile()
-	if err != nil {
-		return fmt.Errorf("failed to read /etc/environment: %w", err)
-	}
-
-	cleanedLines := removeNodeadmSection(lines)
-	updatedLines := addNodeadmSection(cleanedLines, instanceOpts.Environment)
-
-	if err := writeEnvironmentFile(updatedLines); err != nil {
-		return fmt.Errorf("failed to write /etc/environment: %w", err)
+	// Configure systemd system.conf.d for all services
+	// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
+	// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
+	// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
+	// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
+	if err := writeSystemdEnvironmentConfig(log, instanceOpts.Environment); err != nil {
+		return fmt.Errorf("failed to write systemd environment config: %w", err)
 	}
 
 	for key, value := range instanceOpts.Environment {
@@ -47,77 +41,41 @@ func writeSystemEnvironmentVariables(log *zap.Logger, instanceOpts api.InstanceO
 	return nil
 }
 
-func readEnvironmentFile() ([]string, error) {
-	file, err := os.Open(etcEnvironmentPath)
-	if os.IsNotExist(err) {
-		return []string{}, nil
+func writeSystemdEnvironmentConfig(log *zap.Logger, envVars map[string]string) error {
+	if len(envVars) == 0 {
+		return nil
 	}
+
+	log.Info("Writing environment variables to systemd system.conf.d", zap.Int("count", len(envVars)))
+
+	if err := os.MkdirAll(filepath.Dir(systemdEnvironmentConfPath), 0750); err != nil {
+		return fmt.Errorf("failed to create systemd config directory: %w", err)
+	}
+
+	file, err := os.Create(systemdEnvironmentConfPath)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to create systemd config file: %w", err)
 	}
 	defer file.Close()
 
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	return lines, scanner.Err()
-}
-
-func removeNodeadmSection(lines []string) []string {
-	var result []string
-	inNodeadmSection := false
-
-	for _, line := range lines {
-		if line == nodeadmMarkerStart {
-			inNodeadmSection = true
-			continue
-		}
-		if line == nodeadmMarkerEnd {
-			inNodeadmSection = false
-			continue
-		}
-		if !inNodeadmSection {
-			result = append(result, line)
-		}
-	}
-	return result
-}
-
-func addNodeadmSection(lines []string, envVars map[string]string) []string {
-	result := make([]string, len(lines))
-	copy(result, lines)
-
-	if len(result) > 0 && result[len(result)-1] != "" {
-		result = append(result, "")
+	if err := file.Chmod(0644); err != nil {
+		return fmt.Errorf("failed to set systemd config file permissions: %w", err)
 	}
 
-	result = append(result, nodeadmMarkerStart)
+	if _, err := fmt.Fprintln(file, "[Manager]"); err != nil {
+		return fmt.Errorf("failed to write systemd config header: %w", err)
+	}
 
 	for key, value := range envVars {
-		result = append(result, fmt.Sprintf("%s=%s", key, value))
-	}
-
-	result = append(result, nodeadmMarkerEnd)
-	return result
-}
-
-func writeEnvironmentFile(lines []string) error {
-	file, err := os.Create(etcEnvironmentPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	if err := file.Chmod(0600); err != nil {
-		return err
-	}
-
-	for _, line := range lines {
-		if _, err := fmt.Fprintln(file, line); err != nil {
-			return err
+		if _, err := fmt.Fprintf(file, "DefaultEnvironment=\"%s=%s\"\n", key, value); err != nil {
+			return fmt.Errorf("failed to write environment variable %s: %w", key, err)
 		}
 	}
+
+	log.Info("Reloading systemd configuration")
+	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
+		return fmt.Errorf("failed to reload systemd configuration: %w", err)
+	}
+
 	return nil
 }

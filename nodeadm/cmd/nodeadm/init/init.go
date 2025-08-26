@@ -69,7 +69,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	// Set environment variables early so all AWS SDK calls and system processes use them
 	log.Info("Configuring system environment variables..")
-	if err := writeSystemEnvironmentVariables(log, nodeConfig.Spec.Instance); err != nil {
+	if err := handleSystemEnvironmentVariables(log, nodeConfig.Spec.Instance); err != nil {
 		return err
 	}
 
