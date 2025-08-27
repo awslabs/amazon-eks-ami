@@ -48,6 +48,9 @@ else
     us-isof-south-1)
       acct="676585237158"
       ;;
+    us-isof-east-1)
+      acct="171035529773"
+      ;;
     af-south-1)
       acct="877085696533"
       ;;
