@@ -39,6 +39,9 @@ else
     us-isob-east-1)
       acct="187977181151"
       ;;
+    us-isob-west-1)
+      acct="321162350305"
+      ;;
     eu-isoe-west-1)
       acct="249663109785"
       ;;
