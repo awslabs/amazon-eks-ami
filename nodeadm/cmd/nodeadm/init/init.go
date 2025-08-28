@@ -67,12 +67,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
-	// Set environment variables early so all AWS SDK calls and system processes use them
-	log.Info("Configuring system environment variables..")
-	if err := handleSystemEnvironmentVariables(log, nodeConfig.Spec.Instance); err != nil {
-		return err
-	}
-
 	log.Info("Enriching configuration..")
 	if err := enrichConfig(log, nodeConfig); err != nil {
 		return err
@@ -91,6 +85,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	defer daemonManager.Close()
 
 	aspects := []system.SystemAspect{
+		system.NewEnvironmentAspect(),
 		system.NewLocalDiskAspect(),
 	}
 
