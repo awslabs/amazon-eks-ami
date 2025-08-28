@@ -303,7 +303,7 @@ for binary in "${BINARIES[@]}"; do
   fi
   sudo sha256sum -c $binary.sha256
   sudo chmod +x $binary
-  sudo mv $binary /usr/bin/
+  sudo mv -Z $binary /usr/bin/
 done
 
 # Verify that the aws-iam-authenticator is at last v0.5.9 or greater. Otherwise, nodes will be
