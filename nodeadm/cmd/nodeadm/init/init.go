@@ -85,6 +85,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	defer daemonManager.Close()
 
 	aspects := []system.SystemAspect{
+		system.NewEnvironmentAspect(),
 		system.NewLocalDiskAspect(),
 	}
 
