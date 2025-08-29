@@ -279,7 +279,8 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "ENABLE_EFA={{user `enable_efa`}}"
+        "ENABLE_EFA={{user `enable_efa`}}",
+        "INSTALL_EFA_FROM_S3={{user `install_efa_from_s3`}}"
       ]
     },
     {
