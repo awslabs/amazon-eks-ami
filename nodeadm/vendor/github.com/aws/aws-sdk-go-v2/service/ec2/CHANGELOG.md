@@ -1,3 +1,25 @@
+# v1.249.0 (2025-08-29)
+
+* **Feature**: Release shows new route types such as filtered and advertisement.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.248.0 (2025-08-28)
+
+* **Feature**: This release adds support for copying Amazon EBS snapshot and AMIs to and from Local Zones.
+
+# v1.247.1 (2025-08-27)
+
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.247.0 (2025-08-26)
+
+* **Feature**: Add new APIs for viewing how your shared AMIs are used by other accounts, and identify resources in your account that are dependent on particular AMIs
+
+# v1.246.0 (2025-08-25)
+
+* **Feature**: Added IPv6 support for AWS Client VPN.
+
 # v1.245.2 (2025-08-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
