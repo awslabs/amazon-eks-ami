@@ -2182,6 +2182,27 @@ func (EndDateType) Values() []EndDateType {
 	}
 }
 
+type EndpointIpAddressType string
+
+// Enum values for EndpointIpAddressType
+const (
+	EndpointIpAddressTypeIpv4      EndpointIpAddressType = "ipv4"
+	EndpointIpAddressTypeIpv6      EndpointIpAddressType = "ipv6"
+	EndpointIpAddressTypeDualStack EndpointIpAddressType = "dual-stack"
+)
+
+// Values returns all known values for EndpointIpAddressType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (EndpointIpAddressType) Values() []EndpointIpAddressType {
+	return []EndpointIpAddressType{
+		"ipv4",
+		"ipv6",
+		"dual-stack",
+	}
+}
+
 type EphemeralNvmeSupport string
 
 // Enum values for EphemeralNvmeSupport
@@ -2975,6 +2996,50 @@ const (
 func (ImageBlockPublicAccessEnabledState) Values() []ImageBlockPublicAccessEnabledState {
 	return []ImageBlockPublicAccessEnabledState{
 		"block-new-sharing",
+	}
+}
+
+type ImageReferenceOptionName string
+
+// Enum values for ImageReferenceOptionName
+const (
+	ImageReferenceOptionNameStateName    ImageReferenceOptionName = "state-name"
+	ImageReferenceOptionNameVersionDepth ImageReferenceOptionName = "version-depth"
+)
+
+// Values returns all known values for ImageReferenceOptionName. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImageReferenceOptionName) Values() []ImageReferenceOptionName {
+	return []ImageReferenceOptionName{
+		"state-name",
+		"version-depth",
+	}
+}
+
+type ImageReferenceResourceType string
+
+// Enum values for ImageReferenceResourceType
+const (
+	ImageReferenceResourceTypeEc2Instance                 ImageReferenceResourceType = "ec2:Instance"
+	ImageReferenceResourceTypeEc2LaunchTemplate           ImageReferenceResourceType = "ec2:LaunchTemplate"
+	ImageReferenceResourceTypeSsmParameter                ImageReferenceResourceType = "ssm:Parameter"
+	ImageReferenceResourceTypeImageBuilderImageRecipe     ImageReferenceResourceType = "imagebuilder:ImageRecipe"
+	ImageReferenceResourceTypeImageBuilderContainerRecipe ImageReferenceResourceType = "imagebuilder:ContainerRecipe"
+)
+
+// Values returns all known values for ImageReferenceResourceType. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImageReferenceResourceType) Values() []ImageReferenceResourceType {
+	return []ImageReferenceResourceType{
+		"ec2:Instance",
+		"ec2:LaunchTemplate",
+		"ssm:Parameter",
+		"imagebuilder:ImageRecipe",
+		"imagebuilder:ContainerRecipe",
 	}
 }
 
@@ -7899,6 +7964,7 @@ const (
 	ResourceTypeFpgaImage                                              ResourceType = "fpga-image"
 	ResourceTypeHostReservation                                        ResourceType = "host-reservation"
 	ResourceTypeImage                                                  ResourceType = "image"
+	ResourceTypeImageUsageReport                                       ResourceType = "image-usage-report"
 	ResourceTypeImportImageTask                                        ResourceType = "import-image-task"
 	ResourceTypeImportSnapshotTask                                     ResourceType = "import-snapshot-task"
 	ResourceTypeInstance                                               ResourceType = "instance"
@@ -8003,6 +8069,7 @@ func (ResourceType) Values() []ResourceType {
 		"fpga-image",
 		"host-reservation",
 		"image",
+		"image-usage-report",
 		"import-image-task",
 		"import-snapshot-task",
 		"instance",
@@ -8134,6 +8201,7 @@ const (
 	RouteOriginCreateRouteTable          RouteOrigin = "CreateRouteTable"
 	RouteOriginCreateRoute               RouteOrigin = "CreateRoute"
 	RouteOriginEnableVgwRoutePropagation RouteOrigin = "EnableVgwRoutePropagation"
+	RouteOriginAdvertisement             RouteOrigin = "Advertisement"
 )
 
 // Values returns all known values for RouteOrigin. Note that this can be expanded
@@ -8145,6 +8213,7 @@ func (RouteOrigin) Values() []RouteOrigin {
 		"CreateRouteTable",
 		"CreateRoute",
 		"EnableVgwRoutePropagation",
+		"Advertisement",
 	}
 }
 
@@ -8423,6 +8492,7 @@ type RouteState string
 const (
 	RouteStateActive    RouteState = "active"
 	RouteStateBlackhole RouteState = "blackhole"
+	RouteStateFiltered  RouteState = "filtered"
 )
 
 // Values returns all known values for RouteState. Note that this can be expanded
@@ -8433,6 +8503,7 @@ func (RouteState) Values() []RouteState {
 	return []RouteState{
 		"active",
 		"blackhole",
+		"filtered",
 	}
 }
 
@@ -9365,6 +9436,27 @@ func (TrafficDirection) Values() []TrafficDirection {
 	return []TrafficDirection{
 		"ingress",
 		"egress",
+	}
+}
+
+type TrafficIpAddressType string
+
+// Enum values for TrafficIpAddressType
+const (
+	TrafficIpAddressTypeIpv4      TrafficIpAddressType = "ipv4"
+	TrafficIpAddressTypeIpv6      TrafficIpAddressType = "ipv6"
+	TrafficIpAddressTypeDualStack TrafficIpAddressType = "dual-stack"
+)
+
+// Values returns all known values for TrafficIpAddressType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TrafficIpAddressType) Values() []TrafficIpAddressType {
+	return []TrafficIpAddressType{
+		"ipv4",
+		"ipv6",
+		"dual-stack",
 	}
 }
 
