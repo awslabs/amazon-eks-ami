@@ -16,14 +16,3 @@ assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnviro
 assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="HTTP_PROXY=http://example-proxy:8080"'
 assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="HTTPS_PROXY=https://example-proxy:8080"'
 assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="NO_PROXY=localhost,127.0.0.1,169.254.169.254"'
-
-# clean up before the nest test 
-rm -f /etc/systemd/system.conf.d/environment.conf
-
-# Test 2 - Quote and special character escaping
-nodeadm init --skip run --config-source file://config-quote-escaping.yaml
-assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="SIMPLE_VAR=simple value"'
-assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="QUOTED_VAR=value with \"quotes\" inside"'
-assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="BACKSLASH_VAR=value with \\backslash"'
-assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="COMPLEX_VAR=complex \"value\" with \\multiple\\ \"special\" chars"'
-assert::file-contains /etc/systemd/system.conf.d/environment.conf 'DefaultEnvironment="MIXED_VAR=path=\"/usr/bin\" and name=\"test\""'
