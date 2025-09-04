@@ -182,5 +182,4 @@ func UseSOCISnapshotter(cfg *api.NodeConfig, resources system.Resources) bool {
 	}
 
 	return totalMemory >= 8*gibibyte && totalCPUMillicores >= 8000
-
 }

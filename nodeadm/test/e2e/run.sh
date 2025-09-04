@@ -39,14 +39,10 @@ function runTest() {
   else
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
   fi
-
-  CONTAINER_ID=$(docker run \
     -d \
-    --rm \
-    --privileged \
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \
-    "$image")
+    "$image"
 
   LOG_FILE=$(mktemp)
   if docker exec "$CONTAINER_ID" bash -c "cd /test-case && ./run.sh" > "$LOG_FILE" 2>&1; then
