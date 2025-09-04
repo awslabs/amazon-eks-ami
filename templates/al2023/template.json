@@ -20,6 +20,7 @@
     "enable_efa": null,
     "enable_fips": null,
     "encrypted": null,
+    "hardened_image": null,
     "iam_instance_profile": null,
     "instance_type": null,
     "kms_key_id": null,
@@ -147,6 +148,11 @@
     },
     {
       "type": "file",
+      "source": "{{template_dir}}/selinux",
+      "destination": "{{user `working_dir`}}/"
+    },
+    {
+      "type": "file",
       "source": "{{template_dir}}/../../log-collector-script/linux/",
       "destination": "{{user `working_dir`}}/log-collector-script/"
     },
@@ -226,6 +232,15 @@
         "AWS_REGION={{user `aws_region`}}",
         "BUILD_IMAGE={{user `nodeadm_build_image`}}",
         "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/hardened-images.sh",
+      "environment_vars": [
+        "HARDENED_IMAGE={{user `hardened_image`}}",
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {

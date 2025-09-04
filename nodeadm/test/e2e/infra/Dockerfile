@@ -4,9 +4,21 @@ RUN GOBIN=/bin go install github.com/aws/amazon-ec2-metadata-mock/cmd@v1.11.2
 RUN mv /bin/cmd /imds-mock
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+ARG CONTAINERD_VERSION
+RUN yum install -y --allowerasing curl && yum clean all
 RUN dnf -y update && \
-    dnf -y install systemd containerd jq python3 awscli nmap-ncat iptables && \
+    dnf -y install systemd jq python3 awscli tar nmap-ncat iptables && \
     dnf clean all
+# TO-DO: install containerd v2 from AL repo as well once it is available
+RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
+        dnf install -y containerd-${CONTAINERD_VERSION}; \
+    else \
+        curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz && \
+        mkdir -p /tmp/containerd && \
+        tar -C /tmp/containerd -xzf /tmp/containerd.tar.gz && \
+        cp /tmp/containerd/bin/* /usr/local/bin/ && \
+        rm -rf /tmp/containerd /tmp/containerd.tar.gz; \
+    fi
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py
