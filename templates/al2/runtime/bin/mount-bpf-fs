@@ -16,7 +16,7 @@ function debug() {
   fi
 }
 
-if [ $(mount --types "$FS_TYPE" | wc -l) -gt 0 ]; then
+if [ "$(mount --types "$FS_TYPE" | wc -l)" -gt 0 ]; then
   debug "$FS_TYPE filesystem already mounted!"
   exit 0
 elif mount | awk '{print $3}' | grep "$MOUNT_POINT"; then

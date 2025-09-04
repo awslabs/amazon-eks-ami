@@ -55,7 +55,8 @@ maybe_raid() {
   fi
 
   ## Check if the device symlink has changed on reboot to include a homehost identifier
-  local current_md_device=$(find /dev/md/ -type l -regex ".*/${md_name}_?[0-9a-z]*$" | tail -n1)
+  local current_md_device
+  current_md_device=$(find /dev/md/ -type l -regex ".*/${md_name}_?[0-9a-z]*$" | tail -n1)
   if [[ ! -z ${current_md_device} ]]; then
     md_device="${current_md_device}"
   fi
@@ -73,8 +74,9 @@ maybe_raid() {
   ## Create the mount directory
   mkdir -p "${array_mount_point}"
 
-  local dev_uuid=$(blkid -s UUID -o value "${md_device}")
-  local mount_unit_name="$(systemd-escape --path --suffix=mount "${array_mount_point}")"
+  local dev_uuid mount_unit_name
+  dev_uuid=$(blkid -s UUID -o value "${md_device}")
+  mount_unit_name="$(systemd-escape --path --suffix=mount "${array_mount_point}")"
   cat > "/etc/systemd/system/${mount_unit_name}" << EOF
   [Unit]
   Description=Mount EC2 Instance Store NVMe disk RAID0
@@ -129,12 +131,14 @@ EOF
 
   # Transfer state directories to the array, if they exist.
   for mount_point in ${needs_linked}; do
-    local unit="$(basename "${mount_point}")"
-    local array_mount_point_unit="${array_mount_point}/${unit}"
+    local unit array_mount_point_unit
+    unit="$(basename "${mount_point}")"
+    array_mount_point_unit="${array_mount_point}/${unit}"
     mkdir -p "${mount_point}"
     echo "Copying ${mount_point}/ to ${array_mount_point_unit}/"
     cp -a "${mount_point}/" "${array_mount_point_unit}/"
-    local mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
+    local mount_unit_name
+    mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
     cat > "/etc/systemd/system/${mount_unit_name}" << EOF
       [Unit]
       Description=Mount ${unit} on EC2 Instance Store NVMe RAID0
@@ -168,7 +172,8 @@ maybe_mount() {
       continue
     fi
     local mount_point="${MNT_DIR}/${idx}"
-    local mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
+    local mount_unit_name
+    mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
     mkdir -p "${mount_point}"
     cat > "/etc/systemd/system/${mount_unit_name}" << EOF
     [Unit]
@@ -250,6 +255,7 @@ if [ ! -d /dev/disk/by-id/ ]; then
   exit 0
 fi
 
+# shellcheck disable=SC2207
 disks=($(find -L /dev/disk/by-id/ -xtype l -name '*NVMe_Instance_Storage_*'))
 ## Bail early if there are no ephemeral disks to setup
 if [[ "${#disks[@]}" -eq 0 ]]; then
@@ -258,6 +264,7 @@ if [[ "${#disks[@]}" -eq 0 ]]; then
 fi
 
 ## Get devices of NVMe instance storage ephemeral disks
+# shellcheck disable=SC2207
 EPHEMERAL_DISKS=($(realpath "${disks[@]}" | sort -u))
 
 ## Also bail early if there are not enough disks for raid10
@@ -269,14 +276,14 @@ fi
 case "${DISK_SETUP}" in
   "raid0")
     maybe_raid 0
-    echo "Successfully setup RAID-0 consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup RAID-0 consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
   "raid10")
     maybe_raid 10
-    echo "Successfully setup RAID-10 consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup RAID-10 consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
   "mount")
     maybe_mount
-    echo "Successfully setup disk mounts consisting of ${EPHEMERAL_DISKS[@]}"
+    echo "Successfully setup disk mounts consisting of " "${EPHEMERAL_DISKS[@]}"
     ;;
 esac

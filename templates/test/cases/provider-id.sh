@@ -16,7 +16,7 @@ fi
 
 echo "--> Should fail when imds is unreachable"
 echo '#!/usr/bin/sh
-exit 1' > $(which imds)
+exit 1' > "$(which imds)"
 EXIT_CODE=0
 provider-id || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -eq 0 ]]; then

@@ -17,6 +17,14 @@ var (
 	cpusPath     = "/sys/devices/system/cpu"
 )
 
+type Resources interface {
+	GetMilliNumCores() (int, error)
+	GetOnlineMemory() (int64, error)
+}
+
+// Real implementation of Resources interface that reads values from sysfs.
+type SysfsResources struct{}
+
 const (
 	sysFsCPUTopology = "/topology"
 	cpuDirPattern    = "cpu*[0-9]"
@@ -24,6 +32,8 @@ const (
 
 	coreIDFilePath    = sysFsCPUTopology + "/core_id"
 	packageIDFilePath = sysFsCPUTopology + "/physical_package_id"
+
+	memoryPath = "/sys/devices/system/memory"
 )
 
 type core struct {
@@ -44,9 +54,9 @@ func init() {
 	}
 }
 
-// GetMilliNumCores this is a striped version of GetNodesInfo that only get information for NumCores
+// GetMilliNumCores this is a stripped version of GetNodesInfo that only get information for NumCores
 // https://github.com/google/cadvisor/blob/master/utils/sysinfo/sysinfo.go#L203
-func GetMilliNumCores() (int, error) {
+func (pr SysfsResources) GetMilliNumCores() (int, error) {
 	allLogicalCoresCount := 0
 
 	nodesDirs, err := getNodesPaths()
@@ -121,7 +131,7 @@ func getCoresInfo(cpuDirs []string) ([]core, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unexpected format of CPU directory, cpuDirRegExp %s, cpuDir: %s", cpuDirRegExp, cpuDir)
 		}
-		if !IsCPUOnline(cpuID) {
+		if !isCPUOnline(cpuID) {
 			continue
 		}
 
@@ -199,7 +209,7 @@ func getCoreID(cpuPath string) (string, error) {
 	return strings.TrimSpace(string(coreID)), err
 }
 
-func IsCPUOnline(cpuID uint64) bool {
+func isCPUOnline(cpuID uint64) bool {
 	cpuOnlinePath, err := filepath.Abs(cpusPath + "/online")
 	if err != nil {
 		zap.L().Info("Unable to get absolute path", zap.String("absolutPath", cpusPath+"/online"))
@@ -217,7 +227,7 @@ func IsCPUOnline(cpuID uint64) bool {
 			zap.Error(err))
 	}
 
-	isOnline, err := isCpuOnline(cpuOnlinePath, cpuID)
+	isOnline, err := isCpuOnlineAtPath(cpuOnlinePath, cpuID)
 	if err != nil {
 		zap.L().Error("Unable to get online CPUs list", zap.Error(err))
 		return false
@@ -225,7 +235,7 @@ func IsCPUOnline(cpuID uint64) bool {
 	return isOnline
 }
 
-func isCpuOnline(path string, cpuID uint64) (bool, error) {
+func isCpuOnlineAtPath(path string, cpuID uint64) (bool, error) {
 	// #nosec G304 // This path is cpuOnlinePath from isCPUOnline
 	fileContent, err := os.ReadFile(path)
 	if err != nil {
@@ -269,4 +279,58 @@ func isCpuOnline(path string, cpuID uint64) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// Gets the total amount of online memory on the node in bytes.
+func (pr SysfsResources) GetOnlineMemory() (int64, error) {
+	blockSizePath := filepath.Join(memoryPath, "block_size_bytes")
+	// #nosec G304 // This path is a constant sysfs path.
+	blockSizeContents, err := os.ReadFile(blockSizePath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read block size path '%s': %w", blockSizePath, err)
+	}
+
+	blockSize, err := strconv.ParseInt(strings.TrimSpace(string(blockSizeContents)), 16, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse block size '%s': %w", blockSizeContents, err)
+	}
+
+	files, err := os.ReadDir(memoryPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read memory dir '%s': %w", memoryPath, err)
+	}
+
+	onlineMemory := int64(0)
+	pattern := regexp.MustCompile(`memory[0-9]+`)
+	for _, file := range files {
+		if !pattern.MatchString(file.Name()) {
+			continue
+		}
+
+		onlinePath := filepath.Join(memoryPath, file.Name(), "online")
+		// #nosec G304 // This path will be a sysfs subpath.
+		onlineContents, err := os.ReadFile(onlinePath)
+		if err != nil {
+			return 0, fmt.Errorf("failed to read online path for memory '%s': %w", onlinePath, err)
+		}
+
+		if strings.TrimSpace(string(onlineContents)) == "1" {
+			onlineMemory += 1
+		}
+	}
+
+	return blockSize * onlineMemory, nil
+}
+
+type FakeResources struct {
+	Cpu    int
+	Memory int64
+}
+
+func (fr FakeResources) GetMilliNumCores() (int, error) {
+	return fr.Cpu * 1000, nil
+}
+
+func (fr FakeResources) GetOnlineMemory() (int64, error) {
+	return fr.Memory, nil
 }

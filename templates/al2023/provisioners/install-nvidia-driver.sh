@@ -21,7 +21,8 @@ function is-isolated-partition() {
 }
 
 function rpm_install() {
-  local RPMS=($@)
+  local RPMS
+  read -ra RPMS <<< "$@"
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
@@ -54,7 +55,7 @@ else
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
   else
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
   fi
 
   # update all current .repo sources to enable gpgcheck
@@ -70,16 +71,17 @@ sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
 
+KERNEL_PACKAGE="kernel"
 if [[ "$(uname -r)" == 6.12.* ]]; then
-  sudo dnf -y install kernel6.12-modules-extra-$(uname -r)
-else
-  sudo dnf -y install kernel-modules-extra-$(uname -r)
+  KERNEL_PACKAGE="kernel6.12"
 fi
-
 sudo dnf -y install \
-  kernel-devel-$(uname -r) \
-  kernel-headers-$(uname -r) \
-  kernel-modules-extra-common-$(uname -r)
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers" \
+  "${KERNEL_PACKAGE}-modules-extra" \
+  "${KERNEL_PACKAGE}-modules-extra-common"
+
+sudo dnf versionlock 'kernel*'
 
 # Install dkms dependency from amazonlinux repo
 sudo dnf -y install patch
@@ -92,7 +94,7 @@ else
     sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
   else
     sudo dnf -y remove dkms
-    sudo dnf config-manager --add-repo $(get_cuda_al2023_x86_repo)
+    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
     sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
     sudo dnf config-manager --set-disabled cuda-amzn2023-x86_64
     sudo rm /etc/yum.repos.d/cuda-amzn2023.repo
@@ -111,20 +113,15 @@ function archive-open-kmods() {
   # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
   # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
 
-  if is-isolated-partition; then
-    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia-open)
-    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/g' /var/lib/dkms/nvidia-open/$NVIDIA_OPEN_VERSION/source/dkms.conf
-  else
-    # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
-    # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
-    NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
-    sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
-    sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
-    sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
-    sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
-    sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
-    sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
-  fi
+  # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
+  # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+  sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+  sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
+  sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
   sudo kmod-util archive nvidia-open
 
@@ -148,7 +145,8 @@ function archive-open-kmods() {
 }
 
 function archive-grid-kmod() {
-  local MACHINE=$(uname -m)
+  local MACHINE
+  MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi

@@ -2044,6 +2044,9 @@ const (
 	Ec2InstanceConnectEndpointStateDeleteInProgress Ec2InstanceConnectEndpointState = "delete-in-progress"
 	Ec2InstanceConnectEndpointStateDeleteComplete   Ec2InstanceConnectEndpointState = "delete-complete"
 	Ec2InstanceConnectEndpointStateDeleteFailed     Ec2InstanceConnectEndpointState = "delete-failed"
+	Ec2InstanceConnectEndpointStateUpdateInProgress Ec2InstanceConnectEndpointState = "update-in-progress"
+	Ec2InstanceConnectEndpointStateUpdateComplete   Ec2InstanceConnectEndpointState = "update-complete"
+	Ec2InstanceConnectEndpointStateUpdateFailed     Ec2InstanceConnectEndpointState = "update-failed"
 )
 
 // Values returns all known values for Ec2InstanceConnectEndpointState. Note that
@@ -2059,6 +2062,9 @@ func (Ec2InstanceConnectEndpointState) Values() []Ec2InstanceConnectEndpointStat
 		"delete-in-progress",
 		"delete-complete",
 		"delete-failed",
+		"update-in-progress",
+		"update-complete",
+		"update-failed",
 	}
 }
 
@@ -2173,6 +2179,27 @@ func (EndDateType) Values() []EndDateType {
 	return []EndDateType{
 		"unlimited",
 		"limited",
+	}
+}
+
+type EndpointIpAddressType string
+
+// Enum values for EndpointIpAddressType
+const (
+	EndpointIpAddressTypeIpv4      EndpointIpAddressType = "ipv4"
+	EndpointIpAddressTypeIpv6      EndpointIpAddressType = "ipv6"
+	EndpointIpAddressTypeDualStack EndpointIpAddressType = "dual-stack"
+)
+
+// Values returns all known values for EndpointIpAddressType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (EndpointIpAddressType) Values() []EndpointIpAddressType {
+	return []EndpointIpAddressType{
+		"ipv4",
+		"ipv6",
+		"dual-stack",
 	}
 }
 
@@ -2972,6 +2999,50 @@ func (ImageBlockPublicAccessEnabledState) Values() []ImageBlockPublicAccessEnabl
 	}
 }
 
+type ImageReferenceOptionName string
+
+// Enum values for ImageReferenceOptionName
+const (
+	ImageReferenceOptionNameStateName    ImageReferenceOptionName = "state-name"
+	ImageReferenceOptionNameVersionDepth ImageReferenceOptionName = "version-depth"
+)
+
+// Values returns all known values for ImageReferenceOptionName. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImageReferenceOptionName) Values() []ImageReferenceOptionName {
+	return []ImageReferenceOptionName{
+		"state-name",
+		"version-depth",
+	}
+}
+
+type ImageReferenceResourceType string
+
+// Enum values for ImageReferenceResourceType
+const (
+	ImageReferenceResourceTypeEc2Instance                 ImageReferenceResourceType = "ec2:Instance"
+	ImageReferenceResourceTypeEc2LaunchTemplate           ImageReferenceResourceType = "ec2:LaunchTemplate"
+	ImageReferenceResourceTypeSsmParameter                ImageReferenceResourceType = "ssm:Parameter"
+	ImageReferenceResourceTypeImageBuilderImageRecipe     ImageReferenceResourceType = "imagebuilder:ImageRecipe"
+	ImageReferenceResourceTypeImageBuilderContainerRecipe ImageReferenceResourceType = "imagebuilder:ContainerRecipe"
+)
+
+// Values returns all known values for ImageReferenceResourceType. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImageReferenceResourceType) Values() []ImageReferenceResourceType {
+	return []ImageReferenceResourceType{
+		"ec2:Instance",
+		"ec2:LaunchTemplate",
+		"ssm:Parameter",
+		"imagebuilder:ImageRecipe",
+		"imagebuilder:ContainerRecipe",
+	}
+}
+
 type ImageState string
 
 // Enum values for ImageState
@@ -3038,6 +3109,25 @@ const (
 func (ImdsSupportValues) Values() []ImdsSupportValues {
 	return []ImdsSupportValues{
 		"v2.0",
+	}
+}
+
+type InitializationType string
+
+// Enum values for InitializationType
+const (
+	InitializationTypeDefault         InitializationType = "default"
+	InitializationTypeProvisionedRate InitializationType = "provisioned-rate"
+)
+
+// Values returns all known values for InitializationType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (InitializationType) Values() []InitializationType {
+	return []InitializationType{
+		"default",
+		"provisioned-rate",
 	}
 }
 
@@ -4384,6 +4474,20 @@ const (
 	InstanceTypeR8gd48xlarge       InstanceType = "r8gd.48xlarge"
 	InstanceTypeR8gdMetal24xl      InstanceType = "r8gd.metal-24xl"
 	InstanceTypeR8gdMetal48xl      InstanceType = "r8gd.metal-48xl"
+	InstanceTypeC8gnMedium         InstanceType = "c8gn.medium"
+	InstanceTypeC8gnLarge          InstanceType = "c8gn.large"
+	InstanceTypeC8gnXlarge         InstanceType = "c8gn.xlarge"
+	InstanceTypeC8gn2xlarge        InstanceType = "c8gn.2xlarge"
+	InstanceTypeC8gn4xlarge        InstanceType = "c8gn.4xlarge"
+	InstanceTypeC8gn8xlarge        InstanceType = "c8gn.8xlarge"
+	InstanceTypeC8gn12xlarge       InstanceType = "c8gn.12xlarge"
+	InstanceTypeC8gn16xlarge       InstanceType = "c8gn.16xlarge"
+	InstanceTypeC8gn24xlarge       InstanceType = "c8gn.24xlarge"
+	InstanceTypeC8gn48xlarge       InstanceType = "c8gn.48xlarge"
+	InstanceTypeC8gnMetal24xl      InstanceType = "c8gn.metal-24xl"
+	InstanceTypeC8gnMetal48xl      InstanceType = "c8gn.metal-48xl"
+	InstanceTypeF26xlarge          InstanceType = "f2.6xlarge"
+	InstanceTypeP6eGb20036xlarge   InstanceType = "p6e-gb200.36xlarge"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -5337,6 +5441,20 @@ func (InstanceType) Values() []InstanceType {
 		"r8gd.48xlarge",
 		"r8gd.metal-24xl",
 		"r8gd.metal-48xl",
+		"c8gn.medium",
+		"c8gn.large",
+		"c8gn.xlarge",
+		"c8gn.2xlarge",
+		"c8gn.4xlarge",
+		"c8gn.8xlarge",
+		"c8gn.12xlarge",
+		"c8gn.16xlarge",
+		"c8gn.24xlarge",
+		"c8gn.48xlarge",
+		"c8gn.metal-24xl",
+		"c8gn.metal-48xl",
+		"f2.6xlarge",
+		"p6e-gb200.36xlarge",
 	}
 }
 
@@ -7846,6 +7964,7 @@ const (
 	ResourceTypeFpgaImage                                              ResourceType = "fpga-image"
 	ResourceTypeHostReservation                                        ResourceType = "host-reservation"
 	ResourceTypeImage                                                  ResourceType = "image"
+	ResourceTypeImageUsageReport                                       ResourceType = "image-usage-report"
 	ResourceTypeImportImageTask                                        ResourceType = "import-image-task"
 	ResourceTypeImportSnapshotTask                                     ResourceType = "import-snapshot-task"
 	ResourceTypeInstance                                               ResourceType = "instance"
@@ -7950,6 +8069,7 @@ func (ResourceType) Values() []ResourceType {
 		"fpga-image",
 		"host-reservation",
 		"image",
+		"image-usage-report",
 		"import-image-task",
 		"import-snapshot-task",
 		"instance",
@@ -8081,6 +8201,7 @@ const (
 	RouteOriginCreateRouteTable          RouteOrigin = "CreateRouteTable"
 	RouteOriginCreateRoute               RouteOrigin = "CreateRoute"
 	RouteOriginEnableVgwRoutePropagation RouteOrigin = "EnableVgwRoutePropagation"
+	RouteOriginAdvertisement             RouteOrigin = "Advertisement"
 )
 
 // Values returns all known values for RouteOrigin. Note that this can be expanded
@@ -8092,6 +8213,7 @@ func (RouteOrigin) Values() []RouteOrigin {
 		"CreateRouteTable",
 		"CreateRoute",
 		"EnableVgwRoutePropagation",
+		"Advertisement",
 	}
 }
 
@@ -8370,6 +8492,7 @@ type RouteState string
 const (
 	RouteStateActive    RouteState = "active"
 	RouteStateBlackhole RouteState = "blackhole"
+	RouteStateFiltered  RouteState = "filtered"
 )
 
 // Values returns all known values for RouteState. Note that this can be expanded
@@ -8380,6 +8503,7 @@ func (RouteState) Values() []RouteState {
 	return []RouteState{
 		"active",
 		"blackhole",
+		"filtered",
 	}
 }
 
@@ -9315,6 +9439,27 @@ func (TrafficDirection) Values() []TrafficDirection {
 	}
 }
 
+type TrafficIpAddressType string
+
+// Enum values for TrafficIpAddressType
+const (
+	TrafficIpAddressTypeIpv4      TrafficIpAddressType = "ipv4"
+	TrafficIpAddressTypeIpv6      TrafficIpAddressType = "ipv6"
+	TrafficIpAddressTypeDualStack TrafficIpAddressType = "dual-stack"
+)
+
+// Values returns all known values for TrafficIpAddressType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TrafficIpAddressType) Values() []TrafficIpAddressType {
+	return []TrafficIpAddressType{
+		"ipv4",
+		"ipv6",
+		"dual-stack",
+	}
+}
+
 type TrafficMirrorFilterRuleField string
 
 // Enum values for TrafficMirrorFilterRuleField
@@ -9491,6 +9636,7 @@ const (
 	TransitGatewayAttachmentResourceTypeConnect              TransitGatewayAttachmentResourceType = "connect"
 	TransitGatewayAttachmentResourceTypePeering              TransitGatewayAttachmentResourceType = "peering"
 	TransitGatewayAttachmentResourceTypeTgwPeering           TransitGatewayAttachmentResourceType = "tgw-peering"
+	TransitGatewayAttachmentResourceTypeNetworkFunction      TransitGatewayAttachmentResourceType = "network-function"
 )
 
 // Values returns all known values for TransitGatewayAttachmentResourceType. Note
@@ -9506,6 +9652,7 @@ func (TransitGatewayAttachmentResourceType) Values() []TransitGatewayAttachmentR
 		"connect",
 		"peering",
 		"tgw-peering",
+		"network-function",
 	}
 }
 
@@ -10235,6 +10382,7 @@ const (
 	VolumeStatusInfoStatusOk               VolumeStatusInfoStatus = "ok"
 	VolumeStatusInfoStatusImpaired         VolumeStatusInfoStatus = "impaired"
 	VolumeStatusInfoStatusInsufficientData VolumeStatusInfoStatus = "insufficient-data"
+	VolumeStatusInfoStatusWarning          VolumeStatusInfoStatus = "warning"
 )
 
 // Values returns all known values for VolumeStatusInfoStatus. Note that this can
@@ -10246,6 +10394,7 @@ func (VolumeStatusInfoStatus) Values() []VolumeStatusInfoStatus {
 		"ok",
 		"impaired",
 		"insufficient-data",
+		"warning",
 	}
 }
 
@@ -10253,8 +10402,9 @@ type VolumeStatusName string
 
 // Enum values for VolumeStatusName
 const (
-	VolumeStatusNameIoEnabled     VolumeStatusName = "io-enabled"
-	VolumeStatusNameIoPerformance VolumeStatusName = "io-performance"
+	VolumeStatusNameIoEnabled           VolumeStatusName = "io-enabled"
+	VolumeStatusNameIoPerformance       VolumeStatusName = "io-performance"
+	VolumeStatusNameInitializationState VolumeStatusName = "initialization-state"
 )
 
 // Values returns all known values for VolumeStatusName. Note that this can be
@@ -10265,6 +10415,7 @@ func (VolumeStatusName) Values() []VolumeStatusName {
 	return []VolumeStatusName{
 		"io-enabled",
 		"io-performance",
+		"initialization-state",
 	}
 }
 

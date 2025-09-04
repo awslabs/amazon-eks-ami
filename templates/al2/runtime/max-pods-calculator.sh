@@ -81,7 +81,8 @@ PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
 
 if [ "$INSTANCE_TYPE_FROM_IMDS" = true ]; then
-  export AWS_DEFAULT_REGION=$(imds /latest/dynamic/instance-identity/document | jq .region -r)
+  AWS_DEFAULT_REGION=$(imds /latest/dynamic/instance-identity/document | jq .region -r)
+  export AWS_DEFAULT_REGION
   INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
 elif [ -z "$INSTANCE_TYPE" ]; then # There's no reasonable default for an instanceType so force one to be provided to the script.
   echo "You must specify an instance type to calculate max pods value."
@@ -109,6 +110,7 @@ min_number() {
   printf "%s\n" "$@" | sort -g | head -n1
 }
 
+# shellcheck disable=SC2206
 VERSION_SPLIT=(${CNI_VERSION//./ })
 CNI_MAJOR_VERSION="${VERSION_SPLIT[0]}"
 CNI_MINOR_VERSION="${VERSION_SPLIT[1]}"
@@ -154,7 +156,7 @@ if [ "$SHOW_MAX_ALLOWED" = true ]; then
 fi
 
 if [ "$CPU_COUNT" -gt 30 ]; then
-  echo $(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)
+  echo "$(min_number $MAX_POD_CEILING_FOR_HIGH_CPU $max_pods)"
 else
-  echo $(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)
+  echo "$(min_number $MAX_POD_CEILING_FOR_LOW_CPU $max_pods)"
 fi

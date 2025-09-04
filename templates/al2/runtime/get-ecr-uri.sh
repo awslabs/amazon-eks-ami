@@ -39,11 +39,20 @@ else
     us-isob-east-1)
       acct="187977181151"
       ;;
+    us-isob-west-1)
+      acct="321162350305"
+      ;;
     eu-isoe-west-1)
       acct="249663109785"
       ;;
+    eusc-de-east-1)
+      acct="877088126301"
+      ;;
     us-isof-south-1)
       acct="676585237158"
+      ;;
+    us-isof-east-1)
+      acct="171035529773"
       ;;
     af-south-1)
       acct="877085696533"
@@ -131,6 +140,10 @@ else
       acct="249663109785"
       region="eu-isoe-west-1"
       ;;
+    eusc-*)
+      acct="877088126301"
+      region="eusc-de-east-1"
+      ;;
     us-isof-*)
       acct="676585237158"
       region="us-isof-south-1"
@@ -147,7 +160,7 @@ ECR_DOMAIN="${acct}.dkr.ecr.${region}.${aws_domain}"
 # if FIPS is enabled on the machine, use the FIPS endpoint if it's available
 if [[ "$(sysctl -n crypto.fips_enabled)" == 1 ]]; then
   ECR_FIPS_DOMAIN="${acct}.dkr.ecr-fips.${region}.${aws_domain}"
-  if [ $(getent hosts "$ECR_FIPS_DOMAIN" | wc -l) -gt 0 ]; then
+  if [ "$(getent hosts "$ECR_FIPS_DOMAIN" | wc -l)" -gt 0 ]; then
     echo "$ECR_FIPS_DOMAIN"
     exit 0
   fi

@@ -56,7 +56,7 @@ sudo yum install -y \
   yum-plugin-versionlock
 
 # lock the version of the kernel and associated packages before we yum update
-sudo yum versionlock kernel-$(uname -r) kernel-headers-$(uname -r) kernel-devel-$(uname -r)
+sudo yum versionlock "kernel-$(uname -r)" "kernel-headers-$(uname -r)" "kernel-devel-$(uname -r)"
 
 # Update the OS to begin with to catch up to the latest packages.
 sudo yum update -y
@@ -149,8 +149,16 @@ sudo yum install -y runc-${RUNC_VERSION}
 sudo yum versionlock runc-*
 
 # install containerd and lock version
-sudo yum install -y containerd-${CONTAINERD_VERSION}
-sudo yum versionlock containerd-*
+if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
+  echo "Installing containerd from S3..."
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  sudo yum install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
+  # have to add versionlock explicitly as sudo yum versionlock containerd-* doesn't work for rpm installed outside al repo
+  sudo yum versionlock add containerd-${CONTAINERD_VERSION}.*
+else
+  sudo yum install -y containerd-${CONTAINERD_VERSION}
+  sudo yum versionlock containerd-*
+fi
 
 # install cri-tools for crictl, needed to interact with containerd's CRI server
 sudo yum install -y cri-tools
@@ -161,7 +169,11 @@ if [ -f "/etc/eks/containerd/containerd-config.toml" ]; then
   ## this means we are building a gpu ami and have already placed a containerd configuration file in /etc/eks
   echo "containerd config is already present"
 else
-  sudo mv $WORKING_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+  if [[ "${CONTAINERD_VERSION}" == 2.* ]]; then
+    sudo mv $WORKING_DIR/containerd-config2.toml /etc/eks/containerd/containerd-config.toml
+  else
+    sudo mv $WORKING_DIR/containerd-config.toml /etc/eks/containerd/containerd-config.toml
+  fi
 fi
 
 sudo mv $WORKING_DIR/kubelet-containerd.service /etc/eks/containerd/kubelet-containerd.service
@@ -220,7 +232,7 @@ fi
 if [[ "$INSTALL_DOCKER" == "true" ]]; then
   sudo amazon-linux-extras enable docker
   sudo groupadd -og 1950 docker
-  sudo useradd --gid $(getent group docker | cut -d: -f3) docker
+  sudo useradd --gid "$(getent group docker | cut -d: -f3)" docker
 
   # install docker and lock version
   sudo yum install -y docker-${DOCKER_VERSION}*
@@ -279,7 +291,7 @@ BINARIES=(
   kubelet
   aws-iam-authenticator
 )
-for binary in ${BINARIES[*]}; do
+for binary in "${BINARIES[@]}"; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
@@ -334,20 +346,6 @@ sudo mkdir -p /etc/kubernetes/kubelet
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 sudo mv $WORKING_DIR/kubelet-kubeconfig /var/lib/kubelet/kubeconfig
 sudo chown root:root /var/lib/kubelet/kubeconfig
-
-# Inject CSIServiceAccountToken feature gate to kubelet config if kubernetes version starts with 1.20.
-# This is only injected for 1.20 since CSIServiceAccountToken will be moved to beta starting 1.21.
-if [[ $KUBERNETES_VERSION == "1.20"* ]]; then
-  KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {CSIServiceAccountToken: true}')
-  echo $KUBELET_CONFIG_WITH_CSI_SERVICE_ACCOUNT_TOKEN_ENABLED > $WORKING_DIR/kubelet-config.json
-fi
-
-# Enable Feature Gate for KubeletCredentialProviders in versions less than 1.28 since this feature flag was removed in 1.28.
-# TODO: Remove this during 1.27 EOL
-if vercmp $KUBERNETES_VERSION lt "1.28"; then
-  KUBELET_CONFIG_WITH_KUBELET_CREDENTIAL_PROVIDER_FEATURE_GATE_ENABLED=$(cat $WORKING_DIR/kubelet-config.json | jq '.featureGates += {KubeletCredentialProviders: true}')
-  echo $KUBELET_CONFIG_WITH_KUBELET_CREDENTIAL_PROVIDER_FEATURE_GATE_ENABLED > $WORKING_DIR/kubelet-config.json
-fi
 
 sudo mv $WORKING_DIR/kubelet.service /etc/systemd/system/kubelet.service
 sudo chown root:root /etc/systemd/system/kubelet.service
@@ -450,8 +448,8 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   fi
 
   CACHE_IMGS=(
-    ${KUBE_PROXY_IMGS[@]:-}
-    ${VPC_CNI_IMGS[@]:-}
+    "${KUBE_PROXY_IMGS[@]}"
+    "${VPC_CNI_IMGS[@]}"
   )
   PULLED_IMGS=()
   REGIONS=$(aws ec2 describe-regions --all-regions --output text --query 'Regions[].[RegionName]')
@@ -481,7 +479,7 @@ if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BIN
   done
 
   #### Tag the pulled down image for all other regions in the partition
-  for region in ${REGIONS[*]}; do
+  for region in "${REGIONS[@]}"; do
     for img in "${PULLED_IMGS[@]:-}"; do
       if [ -z "${img}" ]; then continue; fi
       region_uri=$(/etc/eks/get-ecr-uri.sh "${region}" "${AWS_DOMAIN}")

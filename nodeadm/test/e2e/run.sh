@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-cd $(dirname $0)/../..
+cd "$(dirname $0)/../.."
 
 declare MOUNT_FLAGS=""
 declare -A MOUNT_TARGETS=(
@@ -31,32 +31,18 @@ echo "done! Test image with containerd v2: $CONTAINERD_V2_IMAGE"
 
 FAILED="false"
 
-
-CASE_PREFIX=${1:-}
-
-for CASE_DIR in $(ls -d test/e2e/cases/${CASE_PREFIX}*); do
-  CASE_NAME=$(basename $CASE_DIR)
-  printf "🧪 Testing $CASE_NAME..."
-
 function runTest() {
   local case_name=$1
   local image=$2
-  if [[ $image == $CONTAINERD_V1_IMAGE ]]; then
+  if [[ $image == "$CONTAINERD_V1_IMAGE" ]]; then
     printf "🧪 Testing %s with containerd v1 image..." "$case_name"
   else
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
   fi
-
-  CONTAINER_ID=$(docker run \
     -d \
-    --rm \
-    --privileged \
     $MOUNT_FLAGS \
-    -v $PWD/$CASE_DIR:/test-case \
-    $TEST_IMAGE)
-    -v "$NODEADM":/usr/local/bin/nodeadm \
     -v "$PWD/$CASE_DIR":/test-case \
-    "$image")
+    "$image"
 
   LOG_FILE=$(mktemp)
   if docker exec "$CONTAINER_ID" bash -c "cd /test-case && ./run.sh" > "$LOG_FILE" 2>&1; then
@@ -70,7 +56,8 @@ function runTest() {
 }
 
 # Run tests
-for CASE_DIR in $(ls -d test/e2e/cases/*); do
+CASE_PREFIX=${1:-}
+for CASE_DIR in test/e2e/cases/${CASE_PREFIX}*; do
   CASE_NAME=$(basename "$CASE_DIR")
   if [[ "$CASE_NAME" == containerdv2-* ]]; then
     runTest "$CASE_NAME" "$CONTAINERD_V2_IMAGE"

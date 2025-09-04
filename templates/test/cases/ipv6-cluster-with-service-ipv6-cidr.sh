@@ -3,7 +3,6 @@ set -euo pipefail
 
 echo "-> Should return IPv6 DNS cluster IP when --service-ipv6-cidr set"
 exit_code=0
-TEMP_DIR=$(mktemp -d)
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \

@@ -23,8 +23,10 @@ function log() {
 }
 
 function imdscurl() {
-  local OUTPUT_FILE=$(mktemp)
-  local CODE=$(curl \
+  local OUTPUT_FILE
+  OUTPUT_FILE=$(mktemp)
+  local CODE
+  CODE=$(curl \
     --silent \
     --show-error \
     --output $OUTPUT_FILE \

@@ -9,10 +9,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
-	"golang.org/x/mod/semver"
 )
 
 const (
@@ -32,7 +30,7 @@ var (
 	imageCredentialProviderConfigPath   = path.Join(imageCredentialProviderRoot, imageCredentialProviderConfig)
 )
 
-func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error {
+func (k *kubelet) writeImageCredentialProviderConfig() error {
 	// fallback default for image credential provider binary if not overridden
 	ecrCredentialProviderBinPath := path.Join(imageCredentialProviderRoot, "ecr-credential-provider")
 	if binPath, set := os.LookupEnv(ecrCredentialProviderBinPathEnvironmentName); set {
@@ -43,7 +41,7 @@ func (k *kubelet) writeImageCredentialProviderConfig(cfg *api.NodeConfig) error 
 		return err
 	}
 
-	config, err := generateImageCredentialProviderConfig(cfg, ecrCredentialProviderBinPath)
+	config, err := generateImageCredentialProviderConfig(ecrCredentialProviderBinPath)
 	if err != nil {
 		return err
 	}
@@ -60,17 +58,13 @@ type imageCredentialProviderTemplateVars struct {
 	EcrProviderName    string
 }
 
-func generateImageCredentialProviderConfig(cfg *api.NodeConfig, ecrCredentialProviderBinPath string) ([]byte, error) {
+func generateImageCredentialProviderConfig(ecrCredentialProviderBinPath string) ([]byte, error) {
 	templateVars := imageCredentialProviderTemplateVars{
-		EcrProviderName: filepath.Base(ecrCredentialProviderBinPath),
+		EcrProviderName:    filepath.Base(ecrCredentialProviderBinPath),
+		ConfigApiVersion:   "kubelet.config.k8s.io/v1",
+		ProviderApiVersion: "credentialprovider.kubelet.k8s.io/v1",
 	}
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.27.0") < 0 {
-		templateVars.ConfigApiVersion = "kubelet.config.k8s.io/v1alpha1"
-		templateVars.ProviderApiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"
-	} else {
-		templateVars.ConfigApiVersion = "kubelet.config.k8s.io/v1"
-		templateVars.ProviderApiVersion = "credentialprovider.kubelet.k8s.io/v1"
-	}
+
 	var buf bytes.Buffer
 	if err := imageCredentialProviderTemplate.Execute(&buf, templateVars); err != nil {
 		return nil, err
