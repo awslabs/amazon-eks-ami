@@ -38,7 +38,7 @@ function mount() {
 }
 export -f mount
 SYSTEMD_UNIT=/etc/systemd/system/sys-fs-bpf.mount
-mkdir -p $(dirname $SYSTEMD_UNIT)
+mkdir -p "$(dirname $SYSTEMD_UNIT)"
 echo "foo" > $SYSTEMD_UNIT
 EXIT_CODE=0
 mount-bpf-fs || EXIT_CODE=$?

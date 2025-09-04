@@ -11,12 +11,11 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-cd $(dirname $0)
+cd "$(dirname $0)"
 
 RUNFILE="${1}"
 RUNFILE_DIR=$(basename "${RUNFILE}" | sed s/\.run//g)
 TEMP_DIR=$(mktemp -d)
-DEVICE_FILE="devices.txt"
 SUPPORTED_GPUS_FILE="supported-gpus/supported-gpus.json"
 
 cp "${RUNFILE}" "${TEMP_DIR}"

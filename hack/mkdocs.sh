@@ -2,7 +2,7 @@
 
 set -o errexit
 
-cd $(dirname $0)
+cd "$(dirname $0)"
 
 IMAGE_ID=$(docker build --file mkdocs.Dockerfile --quiet .)
 cd ..

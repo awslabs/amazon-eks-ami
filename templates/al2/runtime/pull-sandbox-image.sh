@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1090
 source <(grep "sandbox_image" /etc/containerd/config.toml | tr -d ' ')
 
 ### skip if we don't have a sandbox_image set in config.toml

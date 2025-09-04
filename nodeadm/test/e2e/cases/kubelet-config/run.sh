@@ -7,7 +7,7 @@ set -o pipefail
 source /helpers.sh
 
 mock::aws
-mock::kubelet 1.27.0
+mock::kubelet 1.28.0
 wait::dbus-ready
 
 for config in config.*; do

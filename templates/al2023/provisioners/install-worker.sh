@@ -66,6 +66,19 @@ sudo dnf install -y \
   pigz \
   python3-dnf-plugin-versionlock
 
+# we need to handle different kernel packages depending on the namespace
+# associated with the minor version.
+KERNEL_PACKAGE="kernel"
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  KERNEL_PACKAGE="kernel6.12"
+fi
+sudo dnf -y install \
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers"
+
+# versionlock kernel packages so they remain consistent.
+sudo dnf versionlock 'kernel*'
+
 ################################################################################
 ### Networking #################################################################
 ################################################################################
@@ -133,10 +146,17 @@ fi
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
-
 sudo dnf install -y runc-${RUNC_VERSION}
-sudo dnf install -y containerd-${CONTAINERD_VERSION}
+if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  sudo dnf install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
+else
+  sudo dnf install -y containerd-${CONTAINERD_VERSION}
+fi
 sudo dnf versionlock containerd-*
+
+# generate and store containerd version in file /etc/eks/containerd-version.txt
+containerd --version | sudo tee /etc/eks/containerd-version.txt
 
 sudo systemctl enable ebs-initialize-bin@containerd
 
@@ -177,7 +197,7 @@ S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin
 BINARIES=(
   kubelet
 )
-for binary in ${BINARIES[*]}; do
+for binary in "${BINARIES[@]}"; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
@@ -217,6 +237,13 @@ fi
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
+
+###############################################################################
+### SOCI Snapshotter ##########################################################
+###############################################################################
+
+sudo dnf install -y soci-snapshotter
+sudo systemctl enable soci-snapshotter.socket
 
 ################################################################################
 ### SSM Agent ##################################################################
