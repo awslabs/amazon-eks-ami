@@ -43,7 +43,7 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2C
 	}, nil
 }
 
-const privateDNSNameAvailableTimeout = 3 * time.Minute
+const privateDNSNameAvailableTimeout = 10 * time.Minute
 
 // GetPrivateDNSName returns this instance's private DNS name as reported by the EC2 API, waiting until it's available if necessary.
 func getPrivateDNSName(ec2Client *ec2.Client, instanceID string) (string, error) {

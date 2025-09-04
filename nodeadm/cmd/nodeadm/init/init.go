@@ -72,7 +72,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		return err
 	}
 
-	zap.L().Info("Validating configuration..")
+	log.Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
 	}
@@ -86,7 +86,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	aspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
-		system.NewNetworkingAspect(),
 	}
 
 	daemons := []daemon.Daemon{
@@ -124,7 +123,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 				continue
 			}
-
 			nameField := zap.String("name", daemon.Name())
 
 			log.Info("Ensuring daemon is running..", nameField)
@@ -167,6 +165,15 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	)
 	if err != nil {
 		return err
+	}
+	if awsConfig.RetryMaxAttempts == 0 {
+		// use a very generous retry policy to accomodate delays in network readiness
+		// we only specify the max attempts if it is unset by the user
+		// so it's possible to override with the AWS_MAX_ATTEMPTS environment variable.
+		// NOTE that this is the number of attempts that will be made in a blocking fashion
+		// i.e. an SDK client.ExampleAPICall() will not return until these attempts are exhausted
+		// we'll give up after approximately 10 minutes
+		awsConfig.RetryMaxAttempts = 30
 	}
 	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
 	if err != nil {
