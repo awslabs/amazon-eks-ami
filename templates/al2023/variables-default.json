@@ -15,6 +15,7 @@
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
     "enable_efa": "false",
+    "install_efa_from_s3": "false",
     "enable_fips": "false",
     "encrypted": "false",
     "iam_instance_profile": "",
