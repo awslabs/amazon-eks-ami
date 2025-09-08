@@ -86,6 +86,9 @@ sudo dnf versionlock 'kernel*'
 # needed by kubelet
 sudo dnf install -y iptables-nft
 
+# TEMP: testing with the rules still disabled.
+sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
+
 ################################################################################
 ### SSH ########################################################################
 ################################################################################
