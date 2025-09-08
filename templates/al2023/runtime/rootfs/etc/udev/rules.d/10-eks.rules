@@ -1,1 +1,0 @@
-SUBSYSTEM=="net", ACTION=="add", PROGRAM="/usr/bin/nodeadm-internal udev-net-managed-by", RESULT!="io.systemd.Network", ENV{ID_NET_MANAGED_BY}="$result"
