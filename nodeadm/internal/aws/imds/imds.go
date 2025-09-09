@@ -2,6 +2,7 @@ package imds
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"path"
 	"time"
@@ -35,7 +36,6 @@ type IMDSClient interface {
 	GetInstanceIdentityDocument(ctx context.Context) (*imds.GetInstanceIdentityDocumentOutput, error)
 	GetUserData(ctx context.Context) ([]byte, error)
 	GetProperty(ctx context.Context, prop IMDSProperty) (string, error)
-	GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error)
 }
 
 func New(retry404s bool, fnOpts ...func(*imds.Options)) *imds.Client {
@@ -91,17 +91,13 @@ func (c *imdsClient) GetUserData(ctx context.Context) ([]byte, error) {
 }
 
 func (c *imdsClient) GetProperty(ctx context.Context, prop IMDSProperty) (string, error) {
-	bytes, err := c.GetPropertyBytes(ctx, prop)
+	res, err := c.client.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
+	if err != nil {
+		return "", fmt.Errorf("metadata property path %s: %w", prop, err)
+	}
+	bytes, err := io.ReadAll(res.Content)
 	if err != nil {
 		return "", err
 	}
 	return string(bytes), nil
-}
-
-func (c *imdsClient) GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error) {
-	res, err := c.client.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
-	if err != nil {
-		return nil, err
-	}
-	return io.ReadAll(res.Content)
 }

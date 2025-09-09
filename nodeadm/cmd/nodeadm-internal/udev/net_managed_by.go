@@ -12,11 +12,13 @@ import (
 	"strings"
 	"text/template"
 
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/integrii/flaggy"
+	"go.uber.org/zap"
+
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"github.com/integrii/flaggy"
-	"go.uber.org/zap"
 )
 
 var (
@@ -53,11 +55,12 @@ func (c *netManager) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	if len(c.iface) == 0 {
 		return fmt.Errorf("interface name cannot be empty")
 	}
+	log = log.With(zap.String("interface", c.iface))
 	switch c.action {
 	case "add":
-		return c.addAction()
+		return c.addAction(log)
 	case "remove":
-		return c.removeAction()
+		return c.removeAction(log)
 	}
 	return fmt.Errorf("unhandled action %q", c.action)
 }
@@ -79,19 +82,24 @@ const (
 	managerIpamd = "ipamd"
 )
 
-func (c *netManager) removeAction() error {
-	return os.RemoveAll(eksNetworkPath(c.iface))
+func (c *netManager) removeAction(log *zap.Logger) error {
+	configPath := eksNetworkPath(c.iface)
+	log.Info("removing interface network config", zap.String("configPath", configPath))
+	return os.RemoveAll(configPath)
 }
 
-func (c *netManager) addAction() error {
+func (c *netManager) addAction(log *zap.Logger) error {
+	log.Info("fetching interface mac")
 	mac, err := getInterfaceMAC(c.iface)
 	if err != nil {
 		return err
 	}
+	log.Info("found interface mac", zap.String("mac", mac))
 	manager, err := c.determineManager()
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %v", err)
 	}
+	log.Info("detected manager", zap.String("manager", manager))
 	if manager == managerSystemd {
 		if err := manageLink(c.iface, mac); err != nil {
 			return err
@@ -139,23 +147,27 @@ func eksNetworkPath(iface string) string {
 }
 
 func manageLink(iface, mac string) error {
-	imdsClient := imds.NewClient(imds.New(true /* retry 404s to be resilient */))
+	ctx := context.TODO()
 
-	deviceIndexString, err := imdsClient.GetProperty(context.Background(), imds.DeviceIndex(mac))
+	// in this first call, we use a client that tolerates and retries 404
+	// responses, because we require IMDS eventual consistency.
+	deviceIndex, err := getDeviceIndex(ctx, imds.NewClient(imds.New(true)), mac)
 	if err != nil {
 		return err
 	}
-	deviceIndex, err := strconv.Atoi(deviceIndexString)
+	// in this second call, we know that IMDS either works OR the program would
+	// have exited, so we dont use a client that tolerates 404s because the
+	// 'network-card' property will also NOT exist unless the instance type
+	// supports it. In those cases a 404 should translate to a 0-value.
+	networkCard, err := getNetworkCard(ctx, imds.NewClient(imds.New(false)), mac)
 	if err != nil {
-		return err
-	}
-	networkCardString, err := imdsClient.GetProperty(context.Background(), imds.NetworkCard(mac))
-	if err != nil {
-		return err
-	}
-	networkCard, err := strconv.Atoi(networkCardString)
-	if err != nil {
-		return err
+		var re *awshttp.ResponseError
+		if errors.As(err, &re) && re.Response.StatusCode == 404 {
+			networkCard = 0
+		} else {
+			// not a good error. should never happen.
+			return err
+		}
 	}
 
 	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L39
@@ -176,6 +188,22 @@ func manageLink(iface, mac string) error {
 	}
 
 	return util.WriteFileWithDir(eksNetworkPath(iface), buf.Bytes(), 0644)
+}
+
+func getDeviceIndex(ctx context.Context, imdsClient imds.IMDSClient, mac string) (int, error) {
+	deviceIndex, err := imdsClient.GetProperty(ctx, imds.DeviceIndex(mac))
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(deviceIndex)
+}
+
+func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string) (int, error) {
+	networkCard, err := imdsClient.GetProperty(ctx, imds.NetworkCard(mac))
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(networkCard)
 }
 
 func unmanageLink(iface, mac string) error {
