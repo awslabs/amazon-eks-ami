@@ -29,46 +29,37 @@ var (
 	unmanagedTemplate     = template.Must(template.New("eks-unmanaged").Parse(unmanagedTemplateData))
 )
 
-type netManagedByCommand struct {
-	cmd   *flaggy.Subcommand
-	iface string
+type netManager struct {
+	cmd    *flaggy.Subcommand
+	iface  string
+	action string
 }
 
-func NewNetManagedByCommand() cli.Command {
-	c := netManagedByCommand{
-		cmd: flaggy.NewSubcommand("udev-net-managed-by"),
+func NewNetManagerCommand() cli.Command {
+	c := netManager{
+		cmd: flaggy.NewSubcommand("udev-net-manager"),
 	}
-	flaggy.String(&c.iface, "i", "interface", "name of the interface")
-	c.cmd.Description = "A filter intended to be used in udev rules for network interfaces, which identifies interfaces owned/managed by the VPC CNI"
+	flaggy.String(&c.iface, "i", "interface", "the name of the interface")
+	flaggy.String(&c.action, "a", "action", "the udev action")
+	c.cmd.Description = "A utility for udev rules for network interfaces"
 	return &c
 }
 
-func (c *netManagedByCommand) Flaggy() *flaggy.Subcommand {
+func (c *netManager) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *netManagedByCommand) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
-	mac, err := getInterfaceMAC(c.iface)
-	if err != nil {
-		return err
+func (c *netManager) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+	if len(c.iface) == 0 {
+		return fmt.Errorf("interface name cannot be empty")
 	}
-	manager, err := c.determineManager()
-	if err != nil {
-		return fmt.Errorf("failed to determine manager: %v", err)
+	switch c.action {
+	case "add":
+		return c.addAction()
+	case "remove":
+		return c.removeAction()
 	}
-	if manager == managerSystemd {
-		if err := manageLink(c.iface, mac); err != nil {
-			return err
-		}
-	} else {
-		// TODO: after updating to a newer version of systemd we can remove this
-		// and let the ID_NET_MANAGED_BY mechanism work as expected.
-		if err := unmanageLink(c.iface, mac); err != nil {
-			return err
-		}
-	}
-	_, err = fmt.Fprint(os.Stdout, manager)
-	return err
+	return fmt.Errorf("unhandled action %q", c.action)
 }
 
 const (
@@ -88,7 +79,34 @@ const (
 	managerIpamd = "ipamd"
 )
 
-func (c *netManagedByCommand) determineManager() (string, error) {
+func (c *netManager) removeAction() error {
+	return os.RemoveAll(eksNetworkPath(c.iface))
+}
+
+func (c *netManager) addAction() error {
+	mac, err := getInterfaceMAC(c.iface)
+	if err != nil {
+		return err
+	}
+	manager, err := c.determineManager()
+	if err != nil {
+		return fmt.Errorf("failed to determine manager: %v", err)
+	}
+	if manager == managerSystemd {
+		if err := manageLink(c.iface, mac); err != nil {
+			return err
+		}
+	} else {
+		// TODO: after updating to a newer version of systemd we can remove this
+		// and let the ID_NET_MANAGED_BY mechanism work as expected.
+		if err := unmanageLink(c.iface, mac); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *netManager) determineManager() (string, error) {
 	// TODO: for now the goal is just to return 'io.systemd.Network' ONLY for
 	// interfaces present at boot, before the CNI is able to start managing
 	// network interfaces for the node.
@@ -108,10 +126,7 @@ func (c *netManagedByCommand) determineManager() (string, error) {
 }
 
 func getInterfaceMAC(iface string) (string, error) {
-	if len(iface) == 0 {
-		return "", fmt.Errorf("interface name cannot be empty")
-	}
-	// https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
 	macData, err := os.ReadFile(fmt.Sprintf("/sys/class/net/%s/address", iface))
 	if err != nil {
 		return "", err
