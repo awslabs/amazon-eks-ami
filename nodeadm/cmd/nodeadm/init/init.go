@@ -164,7 +164,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions)
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithClientLogMode(awsClientLogMode),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			o.Client = imds.NewClient(true /* treat 404's as retryable to make credential chain more resilient */)
+			o.Client = imds.New(true /* treat 404's as retryable to make credential chain more resilient */)
 		}),
 	)
 	if err != nil {
