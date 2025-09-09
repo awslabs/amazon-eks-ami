@@ -12,7 +12,6 @@ import (
 	"strings"
 	"text/template"
 
-	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 
@@ -161,12 +160,13 @@ func manageLink(iface, mac string) error {
 	// supports it. In those cases a 404 should translate to a 0-value.
 	networkCard, err := getNetworkCard(ctx, imds.NewClient(imds.New(false)), mac)
 	if err != nil {
-		var re *awshttp.ResponseError
-		if errors.As(err, &re) && re.Response.StatusCode == 404 {
+		// TODO: implement a more robust check. example data:
+		// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
+		if strings.Contains(err.Error(), "StatusCode: 404") {
 			networkCard = 0
 		} else {
-			// not a good error. should never happen.
-			return err
+			// not good. should never happen.
+			panic(err)
 		}
 	}
 
