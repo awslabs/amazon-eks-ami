@@ -11,7 +11,7 @@ func main() {
 		Description:    "Supporting tools for systems using nodeadm",
 		AdditionalHelp: "WARNING: There is no command-line stability guarantee!",
 		Commands: []cli.Command{
-			udev.NewNetManagedByCommand(),
+			udev.NewNetManagerCommand(),
 		},
 	}
 	m.Run()
