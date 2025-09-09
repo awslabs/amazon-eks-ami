@@ -4,6 +4,7 @@ Description=Setup network interface %i
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/nodeadm-internal udev-net-manager --action add --interface %i
+ExecStartPost=/usr/bin/networkctl reload
 RemainAfterExit=yes
 User=root
 Restart=on-failure
