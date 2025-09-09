@@ -3,6 +3,7 @@ package imds
 import (
 	"context"
 	"io"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
@@ -13,16 +14,21 @@ import (
 var _defaultClient *imds.Client
 
 func init() {
-	_defaultClient = NewClient(false /* do not retry 404s with default client */)
+	_defaultClient = New(false /* do not retry 404s with default client */)
 }
 
 type IMDSProperty string
 
 const (
 	ServicesDomain IMDSProperty = "services/domain"
-	LocalIPv4                   = "local-ipv4"
-	MAC                         = "mac"
-	MACs                        = "network/interfaces/macs/"
+	LocalIPv4      IMDSProperty = "local-ipv4"
+	MAC            IMDSProperty = "mac"
+	MACs           IMDSProperty = "network/interfaces/macs/"
+)
+
+var (
+	DeviceIndex = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "device-number")) }
+	NetworkCard = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "network-card")) }
 )
 
 type IMDSClient interface {
@@ -32,7 +38,7 @@ type IMDSClient interface {
 	GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error)
 }
 
-func NewClient(retry404s bool) *imds.Client {
+func New(retry404s bool) *imds.Client {
 	return imds.New(imds.Options{
 		DisableDefaultTimeout: true,
 		Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
@@ -56,25 +62,35 @@ func NewClient(retry404s bool) *imds.Client {
 	})
 }
 
+func NewClient(client *imds.Client) IMDSClient {
+	return &imdsClient{
+		client: client,
+	}
+}
+
 func DefaultClient() IMDSClient {
-	return &defaultClient{}
+	return &imdsClient{
+		client: _defaultClient,
+	}
 }
 
-type defaultClient struct{}
-
-func (c *defaultClient) GetInstanceIdentityDocument(ctx context.Context) (*imds.GetInstanceIdentityDocumentOutput, error) {
-	return _defaultClient.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+type imdsClient struct {
+	client *imds.Client
 }
 
-func (c *defaultClient) GetUserData(ctx context.Context) ([]byte, error) {
-	res, err := _defaultClient.GetUserData(ctx, &imds.GetUserDataInput{})
+func (c *imdsClient) GetInstanceIdentityDocument(ctx context.Context) (*imds.GetInstanceIdentityDocumentOutput, error) {
+	return c.client.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+}
+
+func (c *imdsClient) GetUserData(ctx context.Context) ([]byte, error) {
+	res, err := c.client.GetUserData(ctx, &imds.GetUserDataInput{})
 	if err != nil {
 		return nil, err
 	}
 	return io.ReadAll(res.Content)
 }
 
-func (c *defaultClient) GetProperty(ctx context.Context, prop IMDSProperty) (string, error) {
+func (c *imdsClient) GetProperty(ctx context.Context, prop IMDSProperty) (string, error) {
 	bytes, err := c.GetPropertyBytes(ctx, prop)
 	if err != nil {
 		return "", err
@@ -82,8 +98,8 @@ func (c *defaultClient) GetProperty(ctx context.Context, prop IMDSProperty) (str
 	return string(bytes), nil
 }
 
-func (c *defaultClient) GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error) {
-	res, err := _defaultClient.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
+func (c *imdsClient) GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error) {
+	res, err := c.client.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
 	if err != nil {
 		return nil, err
 	}
