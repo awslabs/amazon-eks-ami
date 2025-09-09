@@ -93,7 +93,7 @@ func (c *imdsClient) GetUserData(ctx context.Context) ([]byte, error) {
 func (c *imdsClient) GetProperty(ctx context.Context, prop IMDSProperty) (string, error) {
 	res, err := c.client.GetMetadata(ctx, &imds.GetMetadataInput{Path: string(prop)})
 	if err != nil {
-		return "", fmt.Errorf("metadata property path %s: %w", prop, err)
+		return "", fmt.Errorf("metadata property path %q: %w", prop, err)
 	}
 	bytes, err := io.ReadAll(res.Content)
 	if err != nil {
