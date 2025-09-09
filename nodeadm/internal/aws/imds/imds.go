@@ -38,7 +38,7 @@ type IMDSClient interface {
 	GetPropertyBytes(ctx context.Context, prop IMDSProperty) ([]byte, error)
 }
 
-func New(retry404s bool) *imds.Client {
+func New(retry404s bool, fnOpts ...func(*imds.Options)) *imds.Client {
 	return imds.New(imds.Options{
 		DisableDefaultTimeout: true,
 		Retryer: retry.NewStandard(func(so *retry.StandardOptions) {
@@ -59,7 +59,7 @@ func New(retry404s bool) *imds.Client {
 			// disable client-side rate-limiting
 			so.RateLimiter = ratelimit.None
 		}),
-	})
+	}, fnOpts...)
 }
 
 func NewClient(client *imds.Client) IMDSClient {
