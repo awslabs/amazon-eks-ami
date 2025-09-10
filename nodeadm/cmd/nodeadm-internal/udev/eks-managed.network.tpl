@@ -1,12 +1,9 @@
-# this is a combination of the ec2-net-util network config defaults, and the
-# interface config overrrides.
+# this is derived from the ec2-net-util network config defaults.
 #
 # see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/systemd/network/80-ec2.network
-# see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L354-L366
 
 [Match]
-Driver=ena ixgbevf vif
-MACAddress={{.MAC}}
+PermanentMACAddress={{.MAC}}
 
 [Link]
 MTUBytes=9001
@@ -18,9 +15,6 @@ LLMNR=no
 DNSDefaultRoute=yes
 
 [DHCPv4]
-RouteMetric={{.Metric}}
-UseRoutes=true
-UseGateway=true
 UseHostname=no
 UseDNS=yes
 UseNTP=yes
@@ -31,6 +25,16 @@ UseHostname=no
 UseDNS=yes
 UseNTP=yes
 WithoutRA=solicit
+
+# additional route optimization to promote the primary interface being more
+# likely to carry traffic from the instance on boot.
+#
+# see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L354-L366
+
+[DHCPv4]
+RouteMetric={{.Metric}}
+UseRoutes=true
+UseGateway=true
 
 [IPv6AcceptRA]
 RouteMetric={{.Metric}}

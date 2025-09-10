@@ -1,5 +1,5 @@
 [Match]
-MACAddress={{.MAC}}
+PermanentMACAddress={{.MAC}}
 
 [Link]
 Unmanaged=yes
