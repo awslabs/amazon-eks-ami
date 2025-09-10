@@ -26,10 +26,6 @@ var (
 	//go:embed eks-managed.network.tpl
 	managedTemplateData string
 	managedTemplate     = template.Must(template.New("eks-managed").Parse(managedTemplateData))
-
-	//go:embed eks-unmanaged.network.tpl
-	unmanagedTemplateData string
-	unmanagedTemplate     = template.Must(template.New("eks-unmanaged").Parse(unmanagedTemplateData))
 )
 
 type netManager struct {
@@ -56,12 +52,13 @@ func (c *netManager) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	if len(c.iface) == 0 {
 		return fmt.Errorf("interface name cannot be empty")
 	}
+	ctx := context.TODO()
 	log = log.With(zap.String("interface", c.iface))
 	switch c.action {
 	case "add":
-		return c.addAction(log)
+		return c.addAction(ctx, log)
 	case "remove":
-		return c.removeAction(log)
+		return c.removeAction(ctx, log)
 	}
 	return fmt.Errorf("unhandled action %q", c.action)
 }
@@ -80,16 +77,16 @@ const (
 	// NOTE: other manager names have no functional value, they only need to be
 	// differentiated from the managerSystemd name.
 
-	managerIpamd = "ipamd"
+	managerCNI = "cni"
 )
 
-func (c *netManager) removeAction(log *zap.Logger) error {
+func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
 	configPath := eksNetworkPath(c.iface)
 	log.Info("removing interface network config", zap.String("configPath", configPath))
 	return os.RemoveAll(configPath)
 }
 
-func (c *netManager) addAction(log *zap.Logger) error {
+func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	log.Info("fetching interface mac")
 	mac, err := getInterfaceMAC(c.iface)
 	if err != nil {
@@ -102,33 +99,31 @@ func (c *netManager) addAction(log *zap.Logger) error {
 	}
 	log.Info("detected manager", zap.String("manager", manager))
 	if manager == managerSystemd {
-		if err := manageLink(c.iface, mac); err != nil {
+		if err := manageLink(ctx, c.iface, mac); err != nil {
 			return err
 		}
 
-		// if the interface that we're configuring is the primary interface,
-		// perform a full systemd-networkd reload and prevent the default rule
-		// from matching.
-		primaryMac, err := imds.DefaultClient().GetProperty(context.Background(), imds.MAC)
+		// some default networking is required in order to setup interfaces that
+		// can communicate with IMDS. once we can reach IMDS to explicitly
+		// configure the primary interface, we disable default networking so
+		// that future links do not become managed unless we decide so.
+		primaryMac, err := imds.DefaultClient().GetProperty(ctx, imds.MAC)
 		if err != nil {
 			return err
 		}
+		// this condition also guarantees that we only create this file once
 		if primaryMac == mac {
 			configPath := filepath.Join(ec2NetworkDropinPath(), "10-eks-disable.conf")
 			log.Info("disabling default ec2 network", zap.String("configPath", configPath))
 			if err := util.WriteFileWithDir(configPath, []byte("[Match]\nName=none"), 0644); err != nil {
 				return err
 			}
+			// initiating a full flush of systemd networkd
+			// TODO: might not be necessary?
 			log.Info("restarting systemd-networkd..")
 			if err := exec.Command("systemctl", "restart", "systemd-networkd").Run(); err != nil {
 				return err
 			}
-		}
-	} else {
-		// TODO: after updating to a newer version of systemd we can remove this
-		// and let the ID_NET_MANAGED_BY mechanism work as expected.
-		if err := unmanageLink(c.iface, mac); err != nil {
-			return err
 		}
 	}
 	return nil
@@ -150,7 +145,7 @@ func (c *netManager) determineManager() (string, error) {
 		}
 		return "", err
 	}
-	return managerIpamd, nil
+	return managerCNI, nil
 }
 
 func getInterfaceMAC(iface string) (string, error) {
@@ -171,9 +166,7 @@ func ec2NetworkDropinPath() string {
 	return "/run/systemd/network/80-ec2.network.d"
 }
 
-func manageLink(iface, mac string) error {
-	ctx := context.TODO()
-
+func manageLink(ctx context.Context, iface, mac string) error {
 	// in this first call, we use a client that tolerates and retries 404
 	// responses, because we require IMDS eventual consistency.
 	deviceIndex, err := getDeviceIndex(ctx, imds.NewClient(imds.New(true)), mac)
@@ -240,15 +233,4 @@ func isNotFoundErr(err error) bool {
 	// TODO: implement a more robust check. example data:
 	// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
 	return strings.Contains(err.Error(), "StatusCode: 404")
-}
-
-func unmanageLink(iface, mac string) error {
-	var buf bytes.Buffer
-	if err := unmanagedTemplate.Execute(&buf, struct{ MAC string }{
-		MAC: mac,
-	}); err != nil {
-		return err
-	}
-
-	return util.WriteFileWithDir(eksNetworkPath(iface), buf.Bytes(), 0644)
 }
