@@ -172,17 +172,23 @@ func manageLink(iface, mac string) error {
 
 	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L39
 	const metricBase = 512
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L32
+	const ruleBase = 10000
 
 	var buf bytes.Buffer
 	if err := managedTemplate.Execute(&buf, struct {
-		MAC    string
-		Metric int
+		MAC     string
+		Metric  int
+		TableID int
 	}{
 		MAC: mac,
 		// setup route metics. this provides priority on good interfaces over
 		// ones that could potentially delay startup.
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L348-L366
 		Metric: metricBase + 100*networkCard + deviceIndex,
+		// setup table id for expected routes established by ec2-net-utils
+		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L349
+		TableID: ruleBase + 100*networkCard + deviceIndex,
 	}); err != nil {
 		return err
 	}
