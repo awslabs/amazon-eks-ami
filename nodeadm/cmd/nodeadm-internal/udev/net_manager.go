@@ -79,6 +79,12 @@ const (
 	managerCNI = "cni"
 )
 
+const (
+	// drop-in for the amazon-ec2-net-util default ENI config
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/systemd/network/80-ec2.network
+	ec2NetworkDropinPath = "/run/systemd/network/80-ec2.network.d"
+)
+
 func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
 	configPath := eksNetworkPath(c.iface)
 	log.Info("removing interface network config", zap.String("configPath", configPath))
@@ -102,18 +108,20 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 			return err
 		}
 
-		// some default networking is required in order to setup interfaces that
-		// can communicate with IMDS. once we can reach IMDS to explicitly
-		// configure the primary interface, we disable default networking so
-		// that future links do not become managed unless we decide so.
 		primaryMac, err := imds.DefaultClient().GetProperty(ctx, imds.MAC)
 		if err != nil {
 			return err
 		}
-		// this condition also guarantees that we only create this file once
-		// TODO: handle race condition with multi-nic boot interfaces?
+		// some default networking is required to obtain interfaces that can
+		// communicate with IMDS. once we can reach IMDS and explicitly
+		// configure the primary interface, we disable default networking so
+		// that future links do not become managed unless we intend to do so.
+		// this condition also guarantees that we only attempt to create this
+		// drop-in a single time.
+		//
+		// TODO: handle race condition with other interfaces attached at boot?
 		if primaryMac == mac {
-			configPath := filepath.Join(ec2NetworkDropinPath(), "10-eks-disable.conf")
+			configPath := filepath.Join(ec2NetworkDropinPath, "10-eks-disable.conf")
 			log.Info("disabling default ec2 network", zap.String("configPath", configPath))
 			if err := util.WriteFileWithDir(configPath, []byte("[Match]\nName=none"), 0644); err != nil {
 				return err
@@ -124,14 +132,17 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 }
 
 func (c *netManager) determineManager() (string, error) {
-	// TODO: for now the goal is just to return 'io.systemd.Network' ONLY for
-	// interfaces present at boot, before the CNI is able to start managing
-	// network interfaces for the node.
+	// TODO: for now we return 'io.systemd.Network' for any interface present at
+	// boot time; before the CNI is able to start managing and dynamically
+	// attaching additional interfaces to the instance. in the future we should
+	// communicate with another service/broker to get info on whether a given
+	// interface should be managed or not.
 
-	// TODO: this code checks whether cloud-init has finished booting the node,
-	// which is indicative of most user-influenced actions being completed. in
-	// the future we should communicate with another process to get an answer on
-	// whether this interface is managed or not.
+	// this code checks whether cloud-init has finished booting the node, which
+	// is indicative of most user-influenced actions being completed. it's not
+	// perfect but it works under the basic assumptions.
+	// IMPORTANT: you should not be re-running this after initial boot, because
+	// it will think any interface is managed by the CNI.
 	const cloudInitBootResultPath = "/run/cloud-init/result.json"
 	if _, err := os.Stat(cloudInitBootResultPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -152,14 +163,6 @@ func getInterfaceMAC(iface string) (string, error) {
 	return strings.TrimSpace(string(macData)), nil
 }
 
-func eksNetworkPath(iface string) string {
-	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
-}
-
-func ec2NetworkDropinPath() string {
-	return "/run/systemd/network/80-ec2.network.d"
-}
-
 func manageLink(ctx context.Context, iface, mac string) error {
 	// in this first call, we use a client that tolerates and retries 404
 	// responses, because we require IMDS eventual consistency.
@@ -168,9 +171,10 @@ func manageLink(ctx context.Context, iface, mac string) error {
 		return err
 	}
 	// in this second call, we know that IMDS either works OR the program would
-	// have exited, so we dont use a client that tolerates 404s because the
-	// 'network-card' property will also NOT exist unless the instance type
-	// supports it. In those cases a 404 should translate to a 0-value.
+	// have exited, so we dont use a client that tolerates 404s. The interface
+	// 'network-card' property in IMDS may or may not exist depending on the
+	// whether the instance type is multi-nic enabled, and in cases where it is
+	// not the 404 should be translated to the 0'th index.
 	networkCard, err := getNetworkCard(ctx, imds.NewClient(imds.New(false)), mac)
 	if err != nil {
 		if isNotFoundErr(err) {
@@ -181,10 +185,12 @@ func manageLink(ctx context.Context, iface, mac string) error {
 		}
 	}
 
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L39
-	const metricBase = 512
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L32
-	const ruleBase = 10000
+	const (
+		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L39
+		metricBase = 512
+		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L32
+		ruleBase = 10000
+	)
 
 	var buf bytes.Buffer
 	if err := managedTemplate.Execute(&buf, struct {
@@ -197,7 +203,7 @@ func manageLink(ctx context.Context, iface, mac string) error {
 		// ones that could potentially delay startup.
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L348-L366
 		Metric: metricBase + 100*networkCard + deviceIndex,
-		// setup table id for expected routes established by ec2-net-utils
+		// setup table id for expected routes established by amazon-ec2-net-utils
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L349
 		TableID: ruleBase + 100*networkCard + deviceIndex,
 	}); err != nil {
@@ -221,6 +227,10 @@ func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string)
 		return 0, err
 	}
 	return strconv.Atoi(networkCard)
+}
+
+func eksNetworkPath(iface string) string {
+	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
 }
 
 func isNotFoundErr(err error) bool {
