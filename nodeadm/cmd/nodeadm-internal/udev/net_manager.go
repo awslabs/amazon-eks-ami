@@ -23,19 +23,25 @@ import (
 
 var (
 	//go:embed eks-managed.network.tpl
-	managedTemplateData string
-	managedTemplate     = template.Must(template.New("eks-managed").Parse(managedTemplateData))
+	managedNetworkTemplateData string
+	managedNetworkTemplate     = template.Must(template.New("eks-managed").Parse(managedNetworkTemplateData))
 )
 
 type netManager struct {
 	cmd    *flaggy.Subcommand
 	iface  string
 	action string
+
+	// internal state
+	selfMac    string
+	primaryMac string
+	imds       imds.IMDSClient
 }
 
 func NewNetManagerCommand() cli.Command {
 	c := netManager{
-		cmd: flaggy.NewSubcommand("udev-net-manager"),
+		cmd:  flaggy.NewSubcommand("udev-net-manager"),
+		imds: imds.DefaultClient(),
 	}
 	flaggy.String(&c.iface, "i", "interface", "the name of the interface")
 	flaggy.String(&c.action, "a", "action", "the udev action")
@@ -79,12 +85,6 @@ const (
 	managerCNI = "cni"
 )
 
-const (
-	// drop-in for the amazon-ec2-net-util default ENI config
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/systemd/network/80-ec2.network
-	ec2NetworkDropinPath = "/run/systemd/network/80-ec2.network.d"
-)
-
 func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
 	configPath := eksNetworkPath(c.iface)
 	log.Info("removing interface network config", zap.String("configPath", configPath))
@@ -92,38 +92,40 @@ func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
 }
 
 func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
-	log.Info("fetching interface mac")
-	mac, err := getInterfaceMAC(c.iface)
-	if err != nil {
+	var err error
+
+	if c.selfMac, err = getInterfaceMAC(c.iface); err != nil {
 		return err
 	}
-	log.Info("found interface mac", zap.String("mac", mac))
+	log.Info("found self interface mac", zap.String("address", c.selfMac))
+
+	// this is the our first request to IMDS, so we use a client that tolerates
+	// and retries 404 responses to accomodate for eventual consistency.
+	if c.primaryMac, err = imds.NewClient(imds.New(true)).GetProperty(ctx, imds.MAC); err != nil {
+		return err
+	}
+	log.Info("found primary interface mac", zap.String("address", c.primaryMac))
+
 	manager, err := c.determineManager()
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %v", err)
 	}
-	log.Info("detected manager", zap.String("manager", manager))
+	log.Info("resolved net manager", zap.String("manager", manager))
+
 	if manager == managerSystemd {
-		if err := manageLink(ctx, c.iface, mac); err != nil {
+		if err := c.manageLink(ctx); err != nil {
 			return err
 		}
 
-		primaryMac, err := imds.DefaultClient().GetProperty(ctx, imds.MAC)
-		if err != nil {
-			return err
-		}
 		// some default networking is required to obtain interfaces that can
 		// communicate with IMDS. once we can reach IMDS and explicitly
 		// configure the primary interface, we disable default networking so
 		// that future links do not become managed unless we intend to do so.
 		// this condition also guarantees that we only attempt to create this
 		// drop-in a single time.
-		//
-		// TODO: handle race condition with other interfaces attached at boot?
-		if primaryMac == mac {
-			configPath := filepath.Join(ec2NetworkDropinPath, "10-eks-disable.conf")
-			log.Info("disabling default ec2 network", zap.String("configPath", configPath))
-			if err := util.WriteFileWithDir(configPath, []byte("[Match]\nName=none"), 0644); err != nil {
+		if c.selfMac == c.primaryMac {
+			log.Info("disabling default ec2 network configuration")
+			if err := disableDefaultEc2Networking(); err != nil {
 				return err
 			}
 		}
@@ -153,35 +155,21 @@ func (c *netManager) determineManager() (string, error) {
 	return managerCNI, nil
 }
 
-func getInterfaceMAC(iface string) (string, error) {
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
-	// #nosec G304 // read only operation on sysfs path
-	macData, err := os.ReadFile(path.Join("/sys/class/net/", iface, "address"))
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(macData)), nil
-}
-
-func manageLink(ctx context.Context, iface, mac string) error {
-	// in this first call, we use a client that tolerates and retries 404
-	// responses, because we require IMDS eventual consistency.
-	deviceIndex, err := getDeviceIndex(ctx, imds.NewClient(imds.New(true)), mac)
+func (c *netManager) manageLink(ctx context.Context) error {
+	deviceIndex, err := getDeviceIndex(ctx, c.imds, c.selfMac)
 	if err != nil {
 		return err
 	}
-	// in this second call, we know that IMDS either works OR the program would
-	// have exited, so we dont use a client that tolerates 404s. The interface
-	// 'network-card' property in IMDS may or may not exist depending on the
-	// whether the instance type is multi-nic enabled, and in cases where it is
-	// not the 404 should be translated to the 0'th index.
-	networkCard, err := getNetworkCard(ctx, imds.NewClient(imds.New(false)), mac)
+	networkCard, err := getNetworkCard(ctx, c.imds, c.selfMac)
 	if err != nil {
+		// the 'network-card' property in IMDS may or may not exist depending on
+		// the whether the instance type is multi-nic enabled, and in cases
+		// where it is not the 404 should be translated to the 0'th index.
 		if isNotFoundErr(err) {
 			networkCard = 0
 		} else {
 			// not good. should never happen.
-			panic(err)
+			return err
 		}
 	}
 
@@ -192,25 +180,59 @@ func manageLink(ctx context.Context, iface, mac string) error {
 		ruleBase = 10000
 	)
 
-	var buf bytes.Buffer
-	if err := managedTemplate.Execute(&buf, struct {
-		MAC     string
-		Metric  int
-		TableID int
-	}{
-		MAC: mac,
+	type networkTemplateVars struct {
+		MAC         string
+		Metric      int
+		TableID     int
+		InterfaceIP string
+	}
+
+	templateVars := networkTemplateVars{
+		MAC: c.selfMac,
 		// setup route metics. this provides priority on good interfaces over
 		// ones that could potentially delay startup.
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L348-L366
 		Metric: metricBase + 100*networkCard + deviceIndex,
-		// setup table id for expected routes established by amazon-ec2-net-utils
+	}
+
+	// we only need to add routes/rules to interfaces beyond the primary.
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/main/lib/lib.sh#L570-L580
+	if c.selfMac != c.primaryMac {
+		// setup table id for use in defining default routes.
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L349
-		TableID: ruleBase + 100*networkCard + deviceIndex,
-	}); err != nil {
+		templateVars.TableID = ruleBase + 100*networkCard + deviceIndex
+
+		// getting the interface ip allows us to create a policy rule through
+		// the gateway for the default route. we dont care about the error here,
+		// because if we get a 404 then we assume this is an ipv6 network then
+		// we wont setup the ip.
+		//
+		// TODO: no support for ipv6 today.
+		if ipv4s, _ := c.imds.GetProperty(ctx, imds.LocalIPv4s(c.selfMac)); len(ipv4s) > 0 {
+			// at the time we make this request, we expect no other ip addresses
+			// besides the one assigned on attachment, but we can still split
+			// this and take the first item since its not empty.
+			ipv4 := strings.Split(ipv4s, "\n")[0]
+			templateVars.InterfaceIP = strings.TrimSpace(ipv4)
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := managedNetworkTemplate.Execute(&buf, templateVars); err != nil {
 		return err
 	}
 
-	return util.WriteFileWithDir(eksNetworkPath(iface), buf.Bytes(), 0644)
+	return util.WriteFileWithDir(eksNetworkPath(c.iface), buf.Bytes(), 0644)
+}
+
+func getInterfaceMAC(iface string) (string, error) {
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
+	// #nosec G304 // read only operation on sysfs path
+	macData, err := os.ReadFile(path.Join("/sys/class/net/", iface, "address"))
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(macData)), nil
 }
 
 func getDeviceIndex(ctx context.Context, imdsClient imds.IMDSClient, mac string) (int, error) {
@@ -231,6 +253,17 @@ func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string)
 
 func eksNetworkPath(iface string) string {
 	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
+}
+
+func disableDefaultEc2Networking() error {
+	// drop-in for the amazon-ec2-net-util default ENI config
+	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/systemd/network/80-ec2.network
+	const ec2NetworkDropinPath = "/run/systemd/network/80-ec2.network.d"
+
+	dropinConfigPath := filepath.Join(ec2NetworkDropinPath, "10-eks-disable.conf")
+
+	// force the default network to match no real interfaces.
+	return util.WriteFileWithDir(dropinConfigPath, []byte("[Match]\nName=none"), 0644)
 }
 
 func isNotFoundErr(err error) bool {
