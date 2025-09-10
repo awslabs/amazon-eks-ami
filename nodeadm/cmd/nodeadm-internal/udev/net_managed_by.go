@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -134,7 +135,8 @@ func (c *netManager) determineManager() (string, error) {
 
 func getInterfaceMAC(iface string) (string, error) {
 	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
-	macData, err := os.ReadFile(fmt.Sprintf("/sys/class/net/%s/address", iface))
+	// #nosec G304 // read only operation on sysfs path
+	macData, err := os.ReadFile(path.Join("/sys/class/net/", iface, "address"))
 	if err != nil {
 		return "", err
 	}
@@ -160,9 +162,7 @@ func manageLink(iface, mac string) error {
 	// supports it. In those cases a 404 should translate to a 0-value.
 	networkCard, err := getNetworkCard(ctx, imds.NewClient(imds.New(false)), mac)
 	if err != nil {
-		// TODO: implement a more robust check. example data:
-		// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
-		if strings.Contains(err.Error(), "StatusCode: 404") {
+		if isNotFoundErr(err) {
 			networkCard = 0
 		} else {
 			// not good. should never happen.
@@ -204,6 +204,12 @@ func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string)
 		return 0, err
 	}
 	return strconv.Atoi(networkCard)
+}
+
+func isNotFoundErr(err error) bool {
+	// TODO: implement a more robust check. example data:
+	// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
+	return strings.Contains(err.Error(), "StatusCode: 404")
 }
 
 func unmanageLink(iface, mac string) error {
