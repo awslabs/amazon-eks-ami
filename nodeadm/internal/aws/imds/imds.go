@@ -30,6 +30,7 @@ const (
 var (
 	DeviceIndex = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "device-number")) }
 	NetworkCard = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "network-card")) }
+	LocalIPv4s  = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "local-ipv4s")) }
 )
 
 type IMDSClient interface {

@@ -40,7 +40,9 @@ UseGateway=true
 RouteMetric={{.Metric}}
 UseGateway=true
 
-# routes for expected tables.
+{{- if .TableID -}}
+# additional routes/rules are only needed for interfaces besides the primary, so
+# this block is optional depending on the route table id.
 
 [Route]
 Table={{.TableID}}
@@ -49,3 +51,12 @@ Gateway=_ipv6ra
 [Route]
 Table={{.TableID}}
 Gateway=_dhcp4
+
+{{- if .InterfaceIP -}}
+[RoutingPolicyRule]
+From={{.InterfaceIP}}
+Table={{.TableID}}
+# ref: https://github.com/aws/amazon-vpc-cni-k8s/blob/ee97808e926b2386846a0af772d468d99db5fc51/pkg/networkutils/network.go#L78
+Priority=32765
+{{- end -}}
+{{- end -}}
