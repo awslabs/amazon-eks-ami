@@ -39,3 +39,13 @@ UseGateway=true
 [IPv6AcceptRA]
 RouteMetric={{.Metric}}
 UseGateway=true
+
+# routes for expected tables.
+
+[Route]
+Table={{.TableID}}
+Gateway=_ipv6ra
+
+[Route]
+Table={{.TableID}}
+Gateway=_dhcp4
