@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -104,6 +105,25 @@ func (c *netManager) addAction(log *zap.Logger) error {
 		if err := manageLink(c.iface, mac); err != nil {
 			return err
 		}
+
+		// if the interface that we're configuring is the primary interface,
+		// perform a full systemd-networkd reload and prevent the default rule
+		// from matching.
+		primaryMac, err := imds.DefaultClient().GetProperty(context.Background(), imds.MAC)
+		if err != nil {
+			return err
+		}
+		if primaryMac == mac {
+			configPath := filepath.Join(ec2NetworkDropinPath(), "10-eks-disable.conf")
+			log.Info("disabling default ec2 network", zap.String("configPath", configPath))
+			if err := util.WriteFileWithDir(configPath, []byte("[Match]\nName=none"), 0644); err != nil {
+				return err
+			}
+			log.Info("restarting systemd-networkd..")
+			if err := exec.Command("systemctl", "restart", "systemd-networkd").Run(); err != nil {
+				return err
+			}
+		}
 	} else {
 		// TODO: after updating to a newer version of systemd we can remove this
 		// and let the ID_NET_MANAGED_BY mechanism work as expected.
@@ -145,6 +165,10 @@ func getInterfaceMAC(iface string) (string, error) {
 
 func eksNetworkPath(iface string) string {
 	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
+}
+
+func ec2NetworkDropinPath() string {
+	return "/run/systemd/network/80-ec2.network.d"
 }
 
 func manageLink(iface, mac string) error {
