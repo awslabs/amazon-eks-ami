@@ -4,8 +4,8 @@
 # see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/udev/99-vpc-policy-routes.rules#L2O
 
 # the 'add' workflow requires IMDS consistency, so we use a template unit to run
-# it non-blocking after the interface has been attached.
-SUBSYSTEM=="net", ACTION=="add", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl enable --now --no-block udev-net-manager@$name.service"
+# and provide native restarts.
+SUBSYSTEM=="net", ACTION=="add", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl enable --now udev-net-manager@$name.service"
 # the 'remove' workflow just disables the service, the action does not need to
 # be called because when the interface does not exist the network configuration
 # is a noop. if the interface returns, it is re-configured in-place.
