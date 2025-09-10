@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -112,16 +111,11 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 			return err
 		}
 		// this condition also guarantees that we only create this file once
+		// TODO: handle race condition with multi-nic boot interfaces?
 		if primaryMac == mac {
 			configPath := filepath.Join(ec2NetworkDropinPath(), "10-eks-disable.conf")
 			log.Info("disabling default ec2 network", zap.String("configPath", configPath))
 			if err := util.WriteFileWithDir(configPath, []byte("[Match]\nName=none"), 0644); err != nil {
-				return err
-			}
-			// initiating a full flush of systemd networkd
-			// TODO: might not be necessary?
-			log.Info("restarting systemd-networkd..")
-			if err := exec.Command("systemctl", "restart", "systemd-networkd").Run(); err != nil {
 				return err
 			}
 		}
