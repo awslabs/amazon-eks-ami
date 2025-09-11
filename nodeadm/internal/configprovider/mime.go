@@ -68,13 +68,7 @@ func ParseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 		}
 	}
 	if len(nodeConfigs) > 0 {
-		var config = nodeConfigs[0]
-		for _, nodeConfig := range nodeConfigs[1:] {
-			if err := config.Merge(nodeConfig); err != nil {
-				return nil, err
-			}
-		}
-		return config, nil
+		return internalapi.MergeNodeConfigs(nodeConfigs)
 	} else {
 		return nil, fmt.Errorf("could not find NodeConfig within UserData")
 	}
