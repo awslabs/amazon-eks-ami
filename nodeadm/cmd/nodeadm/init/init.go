@@ -2,6 +2,9 @@ package init
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,6 +15,7 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
@@ -19,6 +23,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const (
@@ -27,18 +32,24 @@ const (
 )
 
 func NewInitCommand() cli.Command {
-	init := initCmd{}
-	init.cmd = flaggy.NewSubcommand("init")
-	init.cmd.StringSlice(&init.daemons, "d", "daemon", "specify one or more of `containerd` and `kubelet`. This is intended for testing and should not be used in a production environment.")
-	init.cmd.StringSlice(&init.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
-	init.cmd.Description = "Initialize this instance as a node in an EKS cluster"
-	return &init
+	c := initCmd{
+		configCache: "/run/eks/nodeadm/config.json",
+	}
+	c.cmd = flaggy.NewSubcommand("init")
+	c.cmd.Description = "Initialize this instance as a node in an EKS cluster"
+	c.cmd.StringSlice(&c.daemons, "d", "daemon", "specify one or more of `containerd` and `kubelet`. This is intended for testing and should not be used in a production environment.")
+	c.cmd.StringSlice(&c.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
+	c.cmd.String(&c.configCache, "", "config-cache", "File path at which to cache the resolved/enriched config. This can make repeated init calls more efficient. JSON encoding will be used.")
+	cli.RegisterFlagConfigSources(c.cmd, &c.configSources)
+	return &c
 }
 
 type initCmd struct {
-	cmd        *flaggy.Subcommand
-	skipPhases []string
-	daemons    []string
+	cmd           *flaggy.Subcommand
+	configSources []string
+	configCache   string
+	skipPhases    []string
+	daemons       []string
 }
 
 func (c *initCmd) Flaggy() *flaggy.Subcommand {
@@ -56,16 +67,39 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		return cli.ErrMustRunAsRoot
 	}
 
-	log.Info("Loading configuration..", zap.String("configSource", opts.ConfigSource))
-	provider, err := configprovider.BuildConfigProvider(opts.ConfigSource)
+	c.configSources = cli.ResolveConfigSources(c.configSources)
+
+	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources))
+	var cachedConfig *api.NodeConfig
+	if len(c.configCache) > 0 {
+		c, err := loadCachedConfig(c.configCache)
+		if err != nil {
+			log.Warn("did not load cached config", zap.Error(err))
+		}
+		cachedConfig = c
+	}
+	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
 	if err != nil {
 		return err
 	}
 	nodeConfig, err := provider.Provide()
-	if err != nil {
+	// if we have a cached config, tolerate an empty result from the chain
+	if cachedConfig != nil && errors.Is(err, configprovider.ErrNoConfigInChain) {
+		log.Info("Using cached config...")
+	} else if err != nil {
 		return err
 	}
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
+
+	// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
+	configHasChanged := cachedConfig == nil || reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec)
+
+	if configHasChanged {
+		log.Info("Enriching configuration..")
+		if err := enrichConfig(log, nodeConfig, opts); err != nil {
+			return err
+		}
+	}
 
 	// This let's nodeadm respect any environment variables that may be critical for
 	// the node's initialization. For example, prior to config phase, we make calls to EC2's API to
@@ -83,11 +117,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		log.Info("Set up system init aspect", nameField)
 	}
 
-	log.Info("Enriching configuration..")
-	if err := enrichConfig(log, nodeConfig, opts); err != nil {
-		return err
-	}
-
+	// validate unconditionally, a cached config may no longer be valid
 	log.Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
@@ -109,28 +139,12 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
 	}
 
-	if !slices.Contains(c.skipPhases, configPhase) {
-		log.Info("Setting up system config aspects...")
-		for _, aspect := range configAspects {
-			nameField := zap.String("name", aspect.Name())
-			log.Info("Setting up system config aspect..", nameField)
-			if err := aspect.Setup(nodeConfig); err != nil {
-				return err
-			}
-			log.Info("Set up system config aspect", nameField)
+	if configHasChanged || !slices.Contains(c.skipPhases, configPhase) {
+		if err := c.configPhase(log, nodeConfig, daemons); err != nil {
+			return err
 		}
-		log.Info("Configuring daemons...")
-		for _, daemon := range daemons {
-			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
-				continue
-			}
-			nameField := zap.String("name", daemon.Name())
-
-			log.Info("Configuring daemon...", nameField)
-			if err := daemon.Configure(nodeConfig); err != nil {
-				return err
-			}
-			log.Info("Configured daemon", nameField)
+		if err := writeCachedConfig(nodeConfig, c.configCache); err != nil {
+			return fmt.Errorf("failed to cache config at path %q: %v", c.configCache, err)
 		}
 	}
 
@@ -139,32 +153,8 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
-		log.Info("Setting up system run aspects...")
-		for _, aspect := range runAspects {
-			nameField := zap.String("name", aspect.Name())
-			log.Info("Setting up system run aspect..", nameField)
-			if err := aspect.Setup(nodeConfig); err != nil {
-				return err
-			}
-			log.Info("Set up system run aspect", nameField)
-		}
-		for _, daemon := range daemons {
-			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
-				continue
-			}
-			nameField := zap.String("name", daemon.Name())
-
-			log.Info("Ensuring daemon is running..", nameField)
-			if err := daemon.EnsureRunning(); err != nil {
-				return err
-			}
-			log.Info("Daemon is running", nameField)
-
-			log.Info("Running post-launch tasks..", nameField)
-			if err := daemon.PostLaunch(nodeConfig); err != nil {
-				return err
-			}
-			log.Info("Finished post-launch tasks", nameField)
+		if err := c.runPhase(log, nodeConfig, daemons, runAspects); err != nil {
+			return err
 		}
 	}
 
@@ -219,5 +209,69 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions)
 		SandboxImage: "localhost/kubernetes/pause",
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
+	return nil
+}
+
+func loadCachedConfig(path string) (*api.NodeConfig, error) {
+	provider, err := configprovider.BuildConfigProvider("file://" + path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build provider for cached config path %q: %v", path, err)
+	}
+	return provider.Provide()
+}
+
+func writeCachedConfig(cfg *api.NodeConfig, path string) error {
+	data, err := apibridge.EncodeNodeConfig(cfg)
+	if err != nil {
+		return err
+	}
+	return util.WriteFileWithDir(path, data, 0644)
+}
+
+func (c *initCmd) configPhase(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
+	log.Info("Configuring daemons...")
+	for _, daemon := range daemons {
+		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
+			continue
+		}
+		nameField := zap.String("name", daemon.Name())
+
+		log.Info("Configuring daemon...", nameField)
+		if err := daemon.Configure(cfg); err != nil {
+			return err
+		}
+		log.Info("Configured daemon", nameField)
+	}
+	return nil
+}
+
+func (c *initCmd) runPhase(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon, aspects []system.SystemAspect) error {
+	log.Info("Setting up system aspects...")
+	for _, aspect := range aspects {
+		nameField := zap.String("name", aspect.Name())
+		log.Info("Setting up system aspect..", nameField)
+		if err := aspect.Setup(cfg); err != nil {
+			return err
+		}
+		log.Info("Set up system aspect", nameField)
+	}
+	for _, daemon := range daemons {
+		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
+			continue
+		}
+		nameField := zap.String("name", daemon.Name())
+
+		log.Info("Ensuring daemon is running..", nameField)
+		if err := daemon.EnsureRunning(); err != nil {
+			return err
+		}
+		log.Info("Daemon is running", nameField)
+
+		log.Info("Running post-launch tasks..", nameField)
+		if err := daemon.PostLaunch(cfg); err != nil {
+			return err
+		}
+		log.Info("Finished post-launch tasks", nameField)
+	}
 	return nil
 }
