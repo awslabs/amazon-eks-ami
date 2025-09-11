@@ -1,17 +1,13 @@
 package udev
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
-	"strconv"
 	"strings"
-	"text/template"
 
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -19,12 +15,6 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-)
-
-var (
-	//go:embed eks-managed.network.tpl
-	managedNetworkTemplateData string
-	managedNetworkTemplate     = template.Must(template.New("eks-managed").Parse(managedNetworkTemplateData))
 )
 
 type netManager struct {
@@ -85,12 +75,6 @@ const (
 	managerCNI = "cni"
 )
 
-func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
-	configPath := eksNetworkPath(c.iface)
-	log.Info("removing interface network config", zap.String("configPath", configPath))
-	return os.RemoveAll(configPath)
-}
-
 func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	var err error
 
@@ -110,7 +94,7 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %v", err)
 	}
-	log.Info("resolved net manager", zap.String("manager", manager))
+	log.Info("resolved net manager", zap.String("name", manager))
 
 	if manager == managerSystemd {
 		if err := c.manageLink(ctx); err != nil {
@@ -131,6 +115,12 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 		}
 	}
 	return nil
+}
+
+func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
+	configPath := eksNetworkPath(c.iface)
+	log.Info("removing interface network config", zap.String("path", configPath))
+	return os.RemoveAll(configPath)
 }
 
 func (c *netManager) determineManager() (string, error) {
@@ -162,15 +152,7 @@ func (c *netManager) manageLink(ctx context.Context) error {
 	}
 	networkCard, err := getNetworkCard(ctx, c.imds, c.selfMac)
 	if err != nil {
-		// the 'network-card' property in IMDS may or may not exist depending on
-		// the whether the instance type is multi-nic enabled, and in cases
-		// where it is not the 404 should be translated to the 0'th index.
-		if isNotFoundErr(err) {
-			networkCard = 0
-		} else {
-			// not good. should never happen.
-			return err
-		}
+		return err
 	}
 
 	const (
@@ -179,13 +161,6 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L32
 		ruleBase = 10000
 	)
-
-	type networkTemplateVars struct {
-		MAC         string
-		Metric      int
-		TableID     int
-		InterfaceIP string
-	}
 
 	templateVars := networkTemplateVars{
 		MAC: c.selfMac,
@@ -217,57 +192,20 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		}
 	}
 
-	var buf bytes.Buffer
-	if err := managedNetworkTemplate.Execute(&buf, templateVars); err != nil {
-		return err
+	networkConfig, err := renderNetworkTemplate(templateVars)
+	if err != nil {
+		return fmt.Errorf("failed to render network template: %w", err)
 	}
 
-	return util.WriteFileWithDir(eksNetworkPath(c.iface), buf.Bytes(), 0644)
+	return util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644)
 }
 
 func getInterfaceMAC(iface string) (string, error) {
 	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
 	// #nosec G304 // read only operation on sysfs path
-	macData, err := os.ReadFile(path.Join("/sys/class/net/", iface, "address"))
+	macData, err := os.ReadFile(path.Join("/sys/class/net", iface, "address"))
 	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(string(macData)), nil
-}
-
-func getDeviceIndex(ctx context.Context, imdsClient imds.IMDSClient, mac string) (int, error) {
-	deviceIndex, err := imdsClient.GetProperty(ctx, imds.DeviceIndex(mac))
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(deviceIndex)
-}
-
-func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string) (int, error) {
-	networkCard, err := imdsClient.GetProperty(ctx, imds.NetworkCard(mac))
-	if err != nil {
-		return 0, err
-	}
-	return strconv.Atoi(networkCard)
-}
-
-func eksNetworkPath(iface string) string {
-	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
-}
-
-func disableDefaultEc2Networking() error {
-	// drop-in for the amazon-ec2-net-util default ENI config
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/systemd/network/80-ec2.network
-	const ec2NetworkDropinPath = "/run/systemd/network/80-ec2.network.d"
-
-	dropinConfigPath := filepath.Join(ec2NetworkDropinPath, "10-eks-disable.conf")
-
-	// force the default network to match no real interfaces.
-	return util.WriteFileWithDir(dropinConfigPath, []byte("[Match]\nName=none"), 0644)
-}
-
-func isNotFoundErr(err error) bool {
-	// TODO: implement a more robust check. example data:
-	// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
-	return strings.Contains(err.Error(), "StatusCode: 404")
 }
