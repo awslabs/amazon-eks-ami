@@ -7,7 +7,7 @@ Before=cloud-init.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nodeadm init --skip run
+ExecStart=/usr/bin/nodeadm init --skip run --config-source imds://user-data
 
 [Install]
 WantedBy=multi-user.target
