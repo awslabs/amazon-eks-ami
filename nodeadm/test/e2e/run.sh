@@ -44,6 +44,7 @@ function runTest() {
     -d \
     --rm \
     --privileged \
+    --mac-address 0e:49:61:0f:c3:11 \
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \
     "$image")

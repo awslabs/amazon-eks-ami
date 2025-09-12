@@ -148,6 +148,26 @@ function mock::connection-timeout-server() {
   iptables -A INPUT -p tcp --dport ${1} -j DROP
 }
 
+function mock::networkctl() {
+  mv /networkctl-mock /mock/bin/networkctl
+  chmod +x /mock/bin/networkctl
+}
+
+function mock::set-link-state() {
+  local LINK_NAME=$1
+  local LINK_STATE=$2
+
+  CONFIG_FILE=${NETWORKCTL_MOCK_LIST_FILE:-"/mock/config/networkctl-list.json"}
+  mkdir -p "$(dirname $CONFIG_FILE)"
+  TEMP_CONFIG=$(mktemp)
+  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces[] |= if .Name == $name then .AdministrativeState = $state else . end' "$CONFIG_FILE" > "$TEMP_CONFIG"
+
+  LOCKFILE=${NETWORKCTL_MOCK_LOCK_FILE:-"/mock/config/networkctl-list.lock"}
+  flock "$LOCKFILE" -c "mv $TEMP_CONFIG $CONFIG_FILE"
+  cat $CONFIG_FILE
+  rm -f $TEMP_CONFIG
+}
+
 # common environment variables
 export AWS_ACCESS_KEY_ID='testing'
 export AWS_SECRET_ACCESS_KEY='testing'
