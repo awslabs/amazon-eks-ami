@@ -37,7 +37,7 @@ function runTest() {
     -d \
     --rm \
     --privileged \
-    $MOUNT_FLAGS \
+    -v $NODEADM:/usr/local/bin/nodeadm \
     -v "$PWD/$CASE_DIR":/test-case \
     "$image")
   LOG_FILE=$(mktemp)
