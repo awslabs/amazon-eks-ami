@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
@@ -14,6 +15,7 @@ import (
 )
 
 const (
+	networkingAspectName = "networking"
 	// the ephemeral networkd config directory, reset on reboot
 	administrationNetworkDir = "/run/systemd/network"
 	// the name of ec2 network configuration setup by amazon-ec2-net-utils:
@@ -39,34 +41,35 @@ var (
 // To address this issue temporarily, we use drop-ins to alter configuration of `80-ec2.network` after boot to make it match against primary ENI only.
 // TODO: there are limitations on current solutions as well, and we should figure long term solution for this:
 //  1. the altNames for ENIs(a new feature in AL2023) were setup by amazon-ec2-net-utils via udev rules, but it's disabled by eks.
-//
-// Returns true if the applied configuration requires a reload/restart of systemd-networkd
-func EnsureEKSNetworkConfiguration() (bool, error) {
+func EnsureEKSNetworkConfiguration() error {
 	primaryENIMac, err := imds.GetProperty(context.TODO(), "mac")
 	if err != nil {
-		return false, fmt.Errorf("failed to get MAC from IMDS: %w", err)
+		return fmt.Errorf("failed to get MAC from IMDS: %w", err)
 	}
 	networkCfgDropInDir := fmt.Sprintf("%s/%s.d", administrationNetworkDir, ec2NetworkConfigurationName)
 	eksPrimaryENIOnlyConfPathName := fmt.Sprintf("%s/%s", networkCfgDropInDir, eksPrimaryENIOnlyConfName)
 	if exists, err := util.IsFilePathExists(eksPrimaryENIOnlyConfPathName); err != nil {
-		return false, fmt.Errorf("failed to check eks_primary_eni_only network configuration existance: %w", err)
+		return fmt.Errorf("failed to check eks_primary_eni_only network configuration existance: %w", err)
 	} else if exists {
 		zap.L().Info("eks_primary_eni_only network configuration already exists, skipping configuration")
-		return false, nil
+		return nil
 	}
 
 	eksPrimaryENIOnlyConfContent, err := generateEKSPrimaryENIOnlyConfiguration(primaryENIMac)
 	if err != nil {
-		return false, fmt.Errorf("failed to generate eks_primary_eni_only network configuration: %w", err)
+		return fmt.Errorf("failed to generate eks_primary_eni_only network configuration: %w", err)
 	}
 	zap.L().Info("writing eks_primary_eni_only network configuration")
 	if err := os.MkdirAll(networkCfgDropInDir, networkConfDropInDirPerms); err != nil {
-		return false, fmt.Errorf("failed to create network configuration drop-in directory %s: %w", networkCfgDropInDir, err)
+		return fmt.Errorf("failed to create network configuration drop-in directory %s: %w", networkCfgDropInDir, err)
 	}
 	if err := os.WriteFile(eksPrimaryENIOnlyConfPathName, eksPrimaryENIOnlyConfContent, networkConfFilePerms); err != nil {
-		return false, fmt.Errorf("failed to write eks_primary_eni_only network configuration: %w", err)
+		return fmt.Errorf("failed to write eks_primary_eni_only network configuration: %w", err)
 	}
-	return true, nil
+	if err := reloadNetworkConfigurations(); err != nil {
+		return fmt.Errorf("failed to reload network configurations: %w", err)
+	}
+	return nil
 }
 
 // eksPrimaryENIOnlyTemplateVars holds the variables for eksPrimaryENIOnlyConfTemplate
@@ -85,4 +88,11 @@ func generateEKSPrimaryENIOnlyConfiguration(primaryENIMac string) ([]byte, error
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func reloadNetworkConfigurations() error {
+	cmd := exec.Command("networkctl", "reload")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
