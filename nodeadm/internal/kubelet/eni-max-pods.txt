@@ -682,6 +682,8 @@ m8i.large 59
 m8i.metal-48xl 1514
 m8i.metal-96xl 1514
 m8i.xlarge 118
+mac-m4.metal 234
+mac-m4pro.metal 234
 mac1.metal 234
 mac2-m1ultra.metal 234
 mac2-m2.metal 234
