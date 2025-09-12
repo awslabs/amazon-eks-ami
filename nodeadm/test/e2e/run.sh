@@ -6,19 +6,12 @@ set -o pipefail
 
 cd "$(dirname $0)/../.."
 
-declare MOUNT_FLAGS=""
-declare -A MOUNT_TARGETS=(
-  ['nodeadm']=$PWD/_bin/nodeadm
-  ['nodeadm-internal']=$PWD/_bin/nodeadm-internal
-)
+NODEADM=$PWD/_bin/nodeadm
 
-for binary in "${!MOUNT_TARGETS[@]}"; do
-  if [ ! -f "${MOUNT_TARGETS[$binary]}" ]; then
-    echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
-    exit 1
-  fi
-  MOUNT_FLAGS+=" -v ${MOUNT_TARGETS[$binary]}:/usr/local/bin/$binary"
-done
+if [ ! -f "${NODEADM}" ]; then
+  echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
+  exit 1
+fi
 
 # build image
 printf "🛠️ Building test infra image with containerd v1..."
@@ -47,7 +40,6 @@ function runTest() {
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \
     "$image")
-
   LOG_FILE=$(mktemp)
   if docker exec "$CONTAINER_ID" bash -c "cd /test-case && ./run.sh" > "$LOG_FILE" 2>&1; then
     echo "passed! ✅"
