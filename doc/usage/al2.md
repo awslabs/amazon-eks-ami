@@ -50,6 +50,7 @@
 | `user_data_file` | Path to a file that will be used for the user data when launching the instance. |
 | `volume_type` |  |
 | `working_dir` | Directory path for ephemeral resources on the builder instance |
+| `custom_endpoint_ec2` |  |
 <!-- template-variable-table-boundary -->
 
 ---
