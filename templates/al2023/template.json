@@ -45,7 +45,8 @@
     "temporary_security_group_source_cidrs": null,
     "user_data_file": null,
     "volume_type": null,
-    "working_dir": null
+    "working_dir": null,
+    "custom_endpoint_ec2": null
   },
   "builders": [
     {
@@ -54,6 +55,7 @@
       "source_ami": "{{user `source_ami_id`}}",
       "ami_users": "{{user `ami_users`}}",
       "snapshot_users": "{{user `ami_users`}}",
+      "custom_endpoint_ec2": "{{user `custom_endpoint_ec2`}}",
       "source_ami_filter": {
         "filters": {
           "name": "{{user `source_ami_filter_name`}}",
