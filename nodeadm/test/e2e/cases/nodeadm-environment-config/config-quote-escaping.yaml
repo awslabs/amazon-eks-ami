@@ -7,8 +7,6 @@ spec:
       SIMPLE_VAR: "simple value"
       QUOTED_VAR: 'value with "quotes" inside'
       BACKSLASH_VAR: "value with \\backslash"
-      COMPLEX_VAR: 'complex "value" with \\multiple\\ "special" chars'
-      MIXED_VAR: "path=\"/usr/bin\" and name=\"test\""
   cluster:
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=

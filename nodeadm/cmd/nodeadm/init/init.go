@@ -84,8 +84,11 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	defer daemonManager.Close()
 
-	aspects := []system.SystemAspect{
+	configAspects := []system.SystemAspect{
 		system.NewEnvironmentAspect(),
+	}
+
+	runAspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
 	}
 
@@ -95,6 +98,16 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, configPhase) {
+		log.Info("Setting up system config aspects...")
+		for _, aspect := range configAspects {
+			nameField := zap.String("name", aspect.Name())
+			log.Info("Setting up system config aspect..", nameField)
+			if err := aspect.Setup(nodeConfig); err != nil {
+				return err
+			}
+			log.Info("Set up system config aspect", nameField)
+		}
+
 		log.Info("Configuring daemons...")
 		for _, daemon := range daemons {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
@@ -111,14 +124,14 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
-		log.Info("Setting up system aspects...")
-		for _, aspect := range aspects {
+		log.Info("Setting up system run aspects...")
+		for _, aspect := range runAspects {
 			nameField := zap.String("name", aspect.Name())
-			log.Info("Setting up system aspect..", nameField)
+			log.Info("Setting up system run aspect..", nameField)
 			if err := aspect.Setup(nodeConfig); err != nil {
 				return err
 			}
-			log.Info("Set up system aspect", nameField)
+			log.Info("Set up system run aspect", nameField)
 		}
 		for _, daemon := range daemons {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
