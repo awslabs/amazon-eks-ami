@@ -48,20 +48,20 @@ function assert::file-contains() {
 }
 
 function assert::file-contains-literal() {
-    if [ "$#" -ne 2 ]; then
-        echo "Usage: assert::file-contains-literal FILE PATTERN"
-        exit 1
-    fi
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: assert::file-contains-literal FILE PATTERN"
+    exit 1
+  fi
 
-    local FILE=$1
-    local PATTERN=$2
+  local FILE=$1
+  local PATTERN=$2
 
-    if ! grep -F "$PATTERN" $FILE; then
-        echo "File $FILE does not contain literal pattern '$PATTERN'"
-        cat $FILE
-        echo ""
-        exit 1
-    fi
+  if ! grep -F "$PATTERN" $FILE; then
+    echo "File $FILE does not contain literal pattern '$PATTERN'"
+    cat $FILE
+    echo ""
+    exit 1
+  fi
 }
 
 function assert::file-not-contains() {
