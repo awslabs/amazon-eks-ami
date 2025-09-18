@@ -74,6 +74,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+| `environment` _object (keys:string, values:string)_ |  |
 
 #### KubeletOptions
 
