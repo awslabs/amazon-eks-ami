@@ -50,33 +50,35 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletConfig struct {
-	Address                  string                           `json:"address"`
-	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
-	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
-	CgroupDriver             string                           `json:"cgroupDriver"`
-	CgroupRoot               string                           `json:"cgroupRoot"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
-	ClusterDomain            string                           `json:"clusterDomain"`
-	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
-	ImageServiceEndpoint     string                           `json:"imageServiceEndpoint,omitempty"`
-	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
-	FeatureGates             map[string]bool                  `json:"featureGates"`
-	HairpinMode              string                           `json:"hairpinMode"`
-	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
-	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
-	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
-	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
-	Logging                  loggingConfiguration             `json:"logging"`
-	MaxPods                  int32                            `json:"maxPods,omitempty"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ProviderID               *string                          `json:"providerID,omitempty"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
-	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
-	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
-	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	metav1.TypeMeta          `json:",inline"`
+	Address                         string                           `json:"address"`
+	Authentication                  k8skubelet.KubeletAuthentication `json:"authentication"`
+	Authorization                   k8skubelet.KubeletAuthorization  `json:"authorization"`
+	CgroupDriver                    string                           `json:"cgroupDriver"`
+	CgroupRoot                      string                           `json:"cgroupRoot"`
+	ClusterDNS                      []string                         `json:"clusterDNS"`
+	ClusterDomain                   string                           `json:"clusterDomain"`
+	ContainerRuntimeEndpoint        string                           `json:"containerRuntimeEndpoint"`
+	ImageServiceEndpoint            string                           `json:"imageServiceEndpoint,omitempty"`
+	EvictionHard                    map[string]string                `json:"evictionHard,omitempty"`
+	FeatureGates                    map[string]bool                  `json:"featureGates"`
+	HairpinMode                     string                           `json:"hairpinMode"`
+	KubeAPIBurst                    *int                             `json:"kubeAPIBurst,omitempty"`
+	KubeAPIQPS                      *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeReserved                    map[string]string                `json:"kubeReserved,omitempty"`
+	KubeReservedCgroup              *string                          `json:"kubeReservedCgroup,omitempty"`
+	Logging                         loggingConfiguration             `json:"logging"`
+	MaxPods                         int32                            `json:"maxPods,omitempty"`
+	ProtectKernelDefaults           bool                             `json:"protectKernelDefaults"`
+	ProviderID                      *string                          `json:"providerID,omitempty"`
+	ReadOnlyPort                    int                              `json:"readOnlyPort"`
+	RegisterWithTaints              []v1.Taint                       `json:"registerWithTaints,omitempty"`
+	SerializeImagePulls             bool                             `json:"serializeImagePulls"`
+	ServerTLSBootstrap              bool                             `json:"serverTLSBootstrap"`
+	ShutdownGracePeriod             *metav1.Duration                 `json:"shutdownGracePeriod,omitempty"`
+	ShutdownGracePeriodCriticalPods *metav1.Duration                 `json:"shutdownGracePeriodCriticalPods,omitempty"`
+	SystemReservedCgroup            *string                          `json:"systemReservedCgroup,omitempty"`
+	TLSCipherSuites                 []string                         `json:"tlsCipherSuites"`
+	metav1.TypeMeta                 `json:",inline"`
 }
 
 type loggingConfiguration struct {
@@ -216,6 +218,15 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig) {
 	// Enable MutableCSINodeAllocatableCount on 1.34+
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
 		ksc.FeatureGates["MutableCSINodeAllocatableCount"] = true
+	}
+	// Enable graceful node shutdown in 1.34+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
+		ksc.ShutdownGracePeriod = &metav1.Duration{
+			Duration: time.Second * 150, // 2m30s
+		}
+		ksc.ShutdownGracePeriodCriticalPods = &metav1.Duration{
+			Duration: time.Second * 30, // allocated from the total above
+		}
 	}
 }
 
