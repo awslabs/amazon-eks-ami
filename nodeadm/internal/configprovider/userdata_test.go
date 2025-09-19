@@ -3,10 +3,12 @@ package configprovider
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -46,15 +48,6 @@ func compressAsGZIP(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("unable to close GZIP writer: %v", err)
 	}
 	return compressed.Bytes(), nil
-}
-
-type testUserDataProvider struct {
-	userData []byte
-	err      error
-}
-
-func (p *testUserDataProvider) GetUserData() ([]byte, error) {
-	return p.userData, p.err
 }
 
 func Test_Provide(t *testing.T) {
@@ -246,10 +239,12 @@ func Test_Provide(t *testing.T) {
 
 	for i, testCase := range testCases {
 		t.Run(fmt.Sprintf("%d_%s", i, testCase.scenario), func(t *testing.T) {
+			imdsClient := imds.FakeIMDSClient{}
+			imdsClient.GetUserDataFunc = func(ctx context.Context) ([]byte, error) {
+				return testCase.userData, nil
+			}
 			configProvider := userDataConfigProvider{
-				userDataProvider: &testUserDataProvider{
-					userData: testCase.userData,
-				},
+				userDataProvider: &imdsClient,
 			}
 			t.Logf("test case user data:\n%s", string(testCase.userData))
 			actualNodeConfig, err := configProvider.Provide()

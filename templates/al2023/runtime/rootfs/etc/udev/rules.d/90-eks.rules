@@ -1,0 +1,13 @@
+# this very closely resembles the amazon-ec2-net-utils udev rules, since they
+# follow the same lifecyle restaints.
+#
+# see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/udev/99-vpc-policy-routes.rules#L2O
+
+# the 'add' workflow requires IMDS consistency, so we use a template unit to run
+# and provide native restarts. it also executes non-blocking so that the udev
+# event fires and triggers systemd-networkd to start probing network readiness.
+SUBSYSTEM=="net", ACTION=="add", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl enable --now --no-block udev-net-manager@$name.service"
+# the 'remove' workflow just disables the service, the action does not need to
+# be called because when the interface does not exist the network configuration
+# is a noop. if the interface returns, it is re-configured in-place.
+SUBSYSTEM=="net", ACTION=="remove", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl disable --now udev-net-manager@$name.service"

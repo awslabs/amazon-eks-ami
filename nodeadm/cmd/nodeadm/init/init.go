@@ -164,9 +164,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions)
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithClientLogMode(awsClientLogMode),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
+			o.Client = imds.New(true /* treat 404's as retryable to make credential chain more resilient */)
 		}),
 	)
 	if err != nil {
@@ -181,7 +179,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions)
 		// we'll give up after approximately 10 minutes
 		awsConfig.RetryMaxAttempts = 30
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
 	if err != nil {
 		return err
 	}
