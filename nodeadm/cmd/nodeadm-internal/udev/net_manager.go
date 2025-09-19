@@ -3,7 +3,6 @@ package udev
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -26,12 +25,17 @@ type netManager struct {
 	selfMac    string
 	primaryMac string
 	imds       imds.IMDSClient
+	broker     NetworkInterfaceBroker
 }
 
 func NewNetManagerCommand() cli.Command {
 	c := netManager{
 		cmd:  flaggy.NewSubcommand("udev-net-manager"),
 		imds: imds.DefaultClient(),
+		// TODO: in the future we should communicate with another broker that
+		// checks with the CNI (IPAMD) to get info on whether a given interface
+		// should be managed or not.
+		broker: NewFSBroker(),
 	}
 	flaggy.String(&c.iface, "i", "interface", "the name of the interface")
 	flaggy.String(&c.action, "a", "action", "the udev action")
@@ -90,7 +94,7 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	}
 	log.Info("found primary interface mac", zap.String("address", c.primaryMac))
 
-	manager, err := c.determineManager()
+	manager, err := c.broker.ManagerFor(c.iface)
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %v", err)
 	}
@@ -121,28 +125,6 @@ func (c *netManager) removeAction(_ context.Context, log *zap.Logger) error {
 	configPath := eksNetworkPath(c.iface)
 	log.Info("removing interface network config", zap.String("path", configPath))
 	return os.RemoveAll(configPath)
-}
-
-func (c *netManager) determineManager() (string, error) {
-	// TODO: for now we return 'io.systemd.Network' for any interface present at
-	// boot time; before the CNI is able to start managing and dynamically
-	// attaching additional interfaces to the instance. in the future we should
-	// communicate with another service/broker to get info on whether a given
-	// interface should be managed or not.
-
-	// this code checks whether cloud-init has finished booting the node, which
-	// is indicative of most user-influenced actions being completed. it's not
-	// perfect but it works under the basic assumptions.
-	// IMPORTANT: you should not be re-running this after initial boot, because
-	// it will think any interface is managed by the CNI.
-	const cloudInitBootResultPath = "/run/cloud-init/result.json"
-	if _, err := os.Stat(cloudInitBootResultPath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return managerSystemd, nil
-		}
-		return "", err
-	}
-	return managerCNI, nil
 }
 
 func (c *netManager) manageLink(ctx context.Context) error {

@@ -62,6 +62,18 @@ function assert::file-not-contains() {
   fi
 }
 
+function assert::file-not-exists() {
+  if [ "$#" -ne 1 ]; then
+    echo "Usage: assert::file-not-exists FILE"
+    exit 1
+  fi
+  local FILE=$1
+  if [ -f "$FILE" ]; then
+    echo "File $FILE should not exist."
+    exit 1
+  fi
+}
+
 function mock::kubelet() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: mock::kubelet VERSION"
