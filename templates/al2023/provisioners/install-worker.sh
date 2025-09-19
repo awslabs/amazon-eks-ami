@@ -200,7 +200,7 @@ for binary in "${BINARIES[@]}"; do
   sudo sha256sum -c $binary.sha256
   sudo chmod +x $binary
   sudo chown root:root $binary
-  sudo mv $binary /usr/bin/
+  sudo mv -Z $binary /usr/bin/
 done
 
 sudo rm ./*.sha256
