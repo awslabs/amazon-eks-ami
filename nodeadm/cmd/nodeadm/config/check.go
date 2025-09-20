@@ -8,25 +8,29 @@ import (
 	"go.uber.org/zap"
 )
 
-type fileCmd struct {
+type checkCmd struct {
 	cmd *flaggy.Subcommand
+
+	configSources []string
 }
 
 func NewCheckCommand() cli.Command {
-	cmd := flaggy.NewSubcommand("check")
-	cmd.Description = "Verify configuration"
-	return &fileCmd{
-		cmd: cmd,
-	}
+	c := checkCmd{}
+	c.cmd = flaggy.NewSubcommand("check")
+	c.cmd.Description = "Verify configuration"
+	cli.RegisterFlagConfigSources(c.cmd, &c.configSources)
+	return &c
 }
 
-func (c *fileCmd) Flaggy() *flaggy.Subcommand {
+func (c *checkCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *fileCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
-	log.Info("Checking configuration", zap.String("source", opts.ConfigSource))
-	provider, err := configprovider.BuildConfigProvider(opts.ConfigSource)
+func (c *checkCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+	c.configSources = cli.ResolveConfigSources(c.configSources)
+
+	log.Info("Checking configuration", zap.Strings("source", c.configSources))
+	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
 	if err != nil {
 		return err
 	}
