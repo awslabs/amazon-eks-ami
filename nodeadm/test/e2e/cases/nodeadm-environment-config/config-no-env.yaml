@@ -3,11 +3,8 @@ apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   instance:
-    environment:
-      default:
-        SIMPLE_VAR: "simple value"
-        QUOTED_VAR: 'value with "quotes" inside'
-        BACKSLASH_VAR: "value with \\backslash"
+    # No environment section at all
+    localStorage: {}
   cluster:
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=

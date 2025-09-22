@@ -94,7 +94,13 @@ const (
 
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
-	Environment  map[string]string   `json:"environment,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+}
+
+type EnvironmentOptions struct {
+	Default           map[string]string `json:"default,omitempty"`
+	SystemdKubelet    map[string]string `json:"systemd_kubelet,omitempty"`
+	SystemdContainerd map[string]string `json:"systemd_containerd,omitempty"`
 }
 
 type LocalStorageOptions struct {

@@ -97,6 +97,29 @@ spec:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.
                 properties:
+                  environment:
+                    description: EnvironmentOptions configures environment variables
+                      for the system and systemd services.
+                    properties:
+                      default:
+                        additionalProperties:
+                          type: string
+                        description: Default environment variables applied system-wide
+                          to all systemd services
+                        type: object
+                      systemd_containerd:
+                        additionalProperties:
+                          type: string
+                        description: SystemdContainerd environment variables applied
+                          specifically to the containerd service
+                        type: object
+                      systemd_kubelet:
+                        additionalProperties:
+                          type: string
+                        description: SystemdKubelet environment variables applied
+                          specifically to the kubelet service
+                        type: object
+                    type: object
                   localStorage:
                     description: |-
                       LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)

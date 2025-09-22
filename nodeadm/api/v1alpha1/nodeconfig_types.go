@@ -85,7 +85,19 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
-	Environment  map[string]string   `json:"environment,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+}
+
+// EnvironmentOptions configures environment variables for the system and systemd services.
+type EnvironmentOptions struct {
+	// Default environment variables applied system-wide to all systemd services
+	Default map[string]string `json:"default,omitempty"`
+
+	// SystemdKubelet environment variables applied specifically to the kubelet service
+	SystemdKubelet map[string]string `json:"systemd_kubelet,omitempty"`
+
+	// SystemdContainerd environment variables applied specifically to the containerd service
+	SystemdContainerd map[string]string `json:"systemd_containerd,omitempty"`
 }
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)

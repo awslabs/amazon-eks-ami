@@ -52,6 +52,19 @@ _Appears in:_
 .Validation:
 - Enum: [Containerd PodLogs]
 
+#### EnvironmentOptions
+
+EnvironmentOptions configures environment variables for the system and systemd services.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
+| Field | Description |
+| --- | --- |
+| `default` _object (keys:string, values:string)_ | Default environment variables applied system-wide to all systemd services |
+| `systemd_kubelet` _object (keys:string, values:string)_ | SystemdKubelet environment variables applied specifically to the kubelet service |
+| `systemd_containerd` _object (keys:string, values:string)_ | SystemdContainerd environment variables applied specifically to the containerd service |
+
 #### Feature
 
 _Underlying type:_ _string_
@@ -74,7 +87,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
-| `environment` _object (keys:string, values:string)_ |  |
+| `environment` _[EnvironmentOptions](#environmentoptions)_ |  |
 
 #### KubeletOptions
 
