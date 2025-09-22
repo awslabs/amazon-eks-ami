@@ -9,9 +9,14 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 )
 
+var (
+	version = "0.0.0"
+)
+
 func main() {
 	flaggy.SetName("nodeadm")
 	flaggy.SetDescription("From zero to Node faster than you can say Elastic Kubernetes Service")
+	flaggy.SetVersion(version)
 	flaggy.DefaultParser.AdditionalHelpPrepend = "\nhttp://github.com/awslabs/amazon-eks-ami/nodeadm"
 	flaggy.DefaultParser.ShowHelpOnUnexpected = true
 

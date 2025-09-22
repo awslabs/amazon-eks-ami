@@ -9,12 +9,14 @@ type Main struct {
 	Name           string
 	Description    string
 	AdditionalHelp string
+	Version        string
 	Commands       []Command
 }
 
 func (m *Main) Run() {
 	flaggy.SetName(m.Name)
 	flaggy.SetDescription(m.Description)
+	flaggy.SetVersion(m.Version)
 	if m.AdditionalHelp != "" {
 		flaggy.DefaultParser.AdditionalHelpPrepend = "\n" + m.AdditionalHelp
 	}
