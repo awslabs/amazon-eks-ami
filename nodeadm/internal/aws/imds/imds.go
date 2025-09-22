@@ -15,7 +15,7 @@ import (
 var Client *imds.Client
 
 // This function is a wrapper around the default `http.ProxyFromEnvironment` function
-// which cachces the proxy variables in environment when first invoked thus, preventing subsequent
+// which caches the proxy variables in environment when first invoked, thus preventing subsequent
 // configuration attempts of http proxy via derived from user-data. Since, the first outbound
 // API call in nodeadm is to the IMDS for fetching user-data, we bypass caching.
 // Ref: https://github.com/golang/go/blob/ba1109feb515c2eb013399f53be5f17cfe1f189f/src/net/http/transport.go#L506
