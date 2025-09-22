@@ -34,7 +34,11 @@ func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 		// kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
 		//   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
 		//   - otherwise, the cluster id will use the id returned by "aws eks describe-cluster".
+		// for outposts, we need to provide both bootstrap-kubeconfig and kubeconfig, otherwise kubelet will fail to start
+		// Kubelet TLS bootstrapping process:
+		// https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#bootstrap-initialization
 		k.flags["bootstrap-kubeconfig"] = kubeconfigBootstrapPath
+		k.flags["kubeconfig"] = kubeconfigPath
 		return util.WriteFileWithDir(kubeconfigBootstrapPath, kubeconfig, kubeconfigPerm)
 	} else {
 		k.flags["kubeconfig"] = kubeconfigPath
