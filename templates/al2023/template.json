@@ -168,7 +168,7 @@
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/../../hack/",
+      "source": "{{template_dir}}/../../hack",
       "destination": "{{user `working_dir`}}/hack"
     },
     {
