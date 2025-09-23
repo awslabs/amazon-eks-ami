@@ -127,7 +127,7 @@ function archive-open-kmods() {
   echo "Downloading NVIDIA runfile to generate supported devices file..."
 
   TEMP_DIR=$(mktemp -d)
-  trap "rm -rf $TEMP_DIR" EXIT
+  trap 'rm -rf $TEMP_DIR' EXIT
 
   NVIDIA_FULL_VERSION=$(sudo kmod-util module-version nvidia-open)
   NVIDIA_RUNFILE_URL="https://us.download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_FULL_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
