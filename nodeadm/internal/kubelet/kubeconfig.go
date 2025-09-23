@@ -30,6 +30,7 @@ func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 	if err != nil {
 		return err
 	}
+	k.flags["kubeconfig"] = kubeconfigPath
 	if enabled := cfg.Spec.Cluster.EnableOutpost; enabled != nil && *enabled {
 		// kubelet bootstrap kubeconfig uses aws-iam-authenticator with cluster id to authenticate to cluster
 		//   - if "aws eks describe-cluster" is bypassed, for local outpost, the value of CLUSTER_NAME parameter will be cluster id.
@@ -38,12 +39,9 @@ func (k *kubelet) writeKubeconfig(cfg *api.NodeConfig) error {
 		// Kubelet TLS bootstrapping process:
 		// https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#bootstrap-initialization
 		k.flags["bootstrap-kubeconfig"] = kubeconfigBootstrapPath
-		k.flags["kubeconfig"] = kubeconfigPath
 		return util.WriteFileWithDir(kubeconfigBootstrapPath, kubeconfig, kubeconfigPerm)
-	} else {
-		k.flags["kubeconfig"] = kubeconfigPath
-		return util.WriteFileWithDir(kubeconfigPath, kubeconfig, kubeconfigPerm)
 	}
+	return util.WriteFileWithDir(kubeconfigPath, kubeconfig, kubeconfigPerm)
 }
 
 type kubeconfigTemplateVars struct {
