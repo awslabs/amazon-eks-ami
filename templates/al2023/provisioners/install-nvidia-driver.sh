@@ -126,11 +126,21 @@ function archive-open-kmods() {
   # Download the corresponding NVIDIA runfile and use the hack script to generate supported devices
   echo "Downloading NVIDIA runfile to generate supported devices file..."
 
+  # Download the runfiles from official release.json docs
+  # Ref: https://docs.nvidia.com/datacenter/tesla/drivers/releases.json
+  if [[ $AWS_REGION == cn-* ]]; then
+    RUNFILE_DOWNLOAD_DOMAIN="cn.download.nvidia.com"
+  else
+    RUNFILE_DOWNLOAD_DOMAIN="us.download.nvidia.com"
+  fi
   NVIDIA_FULL_VERSION=$(sudo kmod-util module-version nvidia-open)
-  NVIDIA_RUNFILE_URL="https://us.download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_FULL_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
+  NVIDIA_RUNFILE_URL="https://${RUNFILE_DOWNLOAD_DOMAIN}/tesla/${NVIDIA_FULL_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
   NVIDIA_RUNFILE="${WORKING_DIR}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
 
-  curl -L -o "$NVIDIA_RUNFILE" "$NVIDIA_RUNFILE_URL"
+  if ! curl -L -o "$NVIDIA_RUNFILE" "$NVIDIA_RUNFILE_URL"; then
+    echo "Error: Failed to download NVIDIA runfile from $NVIDIA_RUNFILE_URL"
+    exit 1
+  fi
   echo "Successfully downloaded NVIDIA runfile"
   mkdir -p "${WORKING_DIR}/templates/al2023/runtime/gpu"
 
