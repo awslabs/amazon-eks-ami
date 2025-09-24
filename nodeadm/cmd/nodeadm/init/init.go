@@ -3,7 +3,7 @@ package init
 import (
 	"context"
 	"errors"
-	"fmt"
+	"os"
 	"reflect"
 	"time"
 
@@ -15,7 +15,7 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
-	apibridge "github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
@@ -33,9 +33,8 @@ const (
 
 func NewInitCommand() cli.Command {
 	c := initCmd{
-		configCache: "/run/eks/nodeadm/config.json",
+		cmd: flaggy.NewSubcommand("init"),
 	}
-	c.cmd = flaggy.NewSubcommand("init")
 	c.cmd.Description = "Initialize this instance as a node in an EKS cluster"
 	c.cmd.StringSlice(&c.daemons, "d", "daemon", "specify one or more of `containerd` and `kubelet`. This is intended for testing and should not be used in a production environment.")
 	c.cmd.StringSlice(&c.skipPhases, "s", "skip", "phases of the bootstrap you want to skip")
@@ -69,39 +68,18 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
-	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources))
-	var cachedConfig *api.NodeConfig
-	if len(c.configCache) > 0 {
-		c, err := loadCachedConfig(c.configCache)
-		if err != nil {
-			log.Warn("did not load cached config", zap.Error(err))
-		}
-		cachedConfig = c
-	}
-	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
+	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources), zap.String("configCache", c.configCache))
+	nodeConfig, configModified, err := c.resolveConfig(log, opts)
 	if err != nil {
 		return err
 	}
-	nodeConfig, err := provider.Provide()
-	// if we have a cached config, tolerate an empty result from the chain
-	if cachedConfig != nil && errors.Is(err, configprovider.ErrNoConfigInChain) {
-		log.Info("Using cached config...")
-	} else if err != nil {
+	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig), zap.Bool("configModified", configModified))
+
+	log.Info("Enriching configuration..")
+	if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
 		return err
 	}
-	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
-	// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
-	configHasChanged := cachedConfig == nil || reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec)
-
-	if configHasChanged {
-		log.Info("Enriching configuration..")
-		if err := enrichConfig(log, nodeConfig, opts); err != nil {
-			return err
-		}
-	}
-
-	// validate unconditionally, a cached config may no longer be valid
 	log.Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
 		return err
@@ -123,12 +101,18 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
 	}
 
-	if configHasChanged || !slices.Contains(c.skipPhases, configPhase) {
+	// TODO: consider making this behavior a default-true feature gate. forcibly
+	// running the config-phase is potentially a breaking change, but we
+	// guarantee that we ONLY force if all the following are true:
+	//	1. the cached config was preset.
+	//  2. there was no valid config in the provider chain OR the specs between both fully-loaded configs differ.
+	if configModified || !slices.Contains(c.skipPhases, configPhase) {
 		if err := c.configPhase(log, nodeConfig, daemons); err != nil {
 			return err
 		}
-		if err := writeCachedConfig(nodeConfig, c.configCache); err != nil {
-			return fmt.Errorf("failed to cache config at path %q: %v", c.configCache, err)
+		// this is not fatal, so do not use a blocking error.
+		if err := saveCachedConfig(nodeConfig, c.configCache); err != nil {
+			log.Error("Failed to cache config", zap.String("configCache", c.configCache), zap.Error(err))
 		}
 	}
 
@@ -143,9 +127,45 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	return nil
 }
 
-// Various initializations and verifications of the NodeConfig and
-// perform in-place updates when allowed by the user
-func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
+// resolveConfig returns either the cached config or the provided config chain.
+func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, changed bool, err error) {
+	var cachedConfig *api.NodeConfig
+	if len(c.configCache) > 0 {
+		config, err := loadCachedConfig(c.configCache)
+		if err != nil {
+			log.Warn("failed to load cached config", zap.Error(err))
+		}
+		cachedConfig = config
+	}
+
+	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
+	if err != nil {
+		return nil, false, err
+	}
+	nodeConfig, err := provider.Provide()
+	// if the error is just that no config is provided, then attempt to use the
+	// cached config as a fallback. otherwise, treat this as a fatal error.
+	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
+		log.Info("Using cached config...")
+		return cachedConfig, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+
+	// if there was no cached config, then we assume there was no change.
+	// otherwise we need to use a deep equality between ONLY the .spec fields to
+	// determine whether the user performed any overrides between now and the
+	// last time config was run.
+	//
+	// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
+	configHasChanged := cachedConfig != nil && !reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec)
+
+	return nodeConfig, configHasChanged, nil
+}
+
+// enrichConfig populates the internal .status portion of the NodeConfig, used
+// only for internal implementation details.
+func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
 	log.Info("Fetching kubelet version..")
 	kubeletVersion, err := kubelet.GetKubeletVersion()
 	if err != nil {
@@ -193,15 +213,17 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions)
 }
 
 func loadCachedConfig(path string) (*api.NodeConfig, error) {
-	provider, err := configprovider.BuildConfigProvider("file://" + path)
+	// #nosec G304 // intended mechanism to read user-provided config file
+	nodeConfigData, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build provider for cached config path %q: %v", path, err)
+		return nil, err
 	}
-	return provider.Provide()
+	gvk := bridge.InternalGroupVersion.WithKind(api.KindNodeConfig)
+	return bridge.DecodeNodeConfig(nodeConfigData, &gvk)
 }
 
-func writeCachedConfig(cfg *api.NodeConfig, path string) error {
-	data, err := apibridge.EncodeNodeConfig(cfg)
+func saveCachedConfig(cfg *api.NodeConfig, path string) error {
+	data, err := bridge.EncodeNodeConfig(cfg)
 	if err != nil {
 		return err
 	}
