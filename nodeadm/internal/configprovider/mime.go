@@ -23,7 +23,7 @@ func ParseMaybeMultipart(data []byte) (*internalapi.NodeConfig, error) {
 		}
 		return config, nil
 	} else {
-		config, err := apibridge.DecodeNodeConfig(data)
+		config, err := apibridge.DecodeNodeConfig(data, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func ParseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 				if err != nil {
 					return nil, err
 				}
-				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart)
+				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart, nil)
 				if err != nil {
 					return nil, err
 				}
