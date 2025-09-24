@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const KindNodeConfig = "NodeConfig"
+
 // +kubebuilder:skipversion
 // +kubebuilder:object:root=true
 

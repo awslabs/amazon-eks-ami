@@ -23,7 +23,6 @@ func BuildConfigProviderChain(rawConfigSourceURLs []string) (ConfigProvider, err
 // BuildConfigProvider returns a ConfigProvider appropriate for the given source URL.
 // The source URL must have a scheme, and the supported schemes are:
 // - `file`. To use configuration from the filesystem: `file:///path/to/file/or/directory`.
-// - `cache`. A special type of `file` provider that handles empty input.
 // - `imds`. To use configuration from the instance's user data: `imds://user-data`.
 func BuildConfigProvider(rawConfigSourceURL string) (ConfigProvider, error) {
 	parsedURL, err := url.Parse(rawConfigSourceURL)
