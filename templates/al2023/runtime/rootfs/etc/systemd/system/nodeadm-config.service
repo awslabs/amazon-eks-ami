@@ -8,7 +8,7 @@ After=systemd-networkd-wait-online.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nodeadm init --skip run --config-source imds://user-data
+ExecStart=/usr/bin/nodeadm init --skip run --config-source imds://user-data --config-cache /run/eks/nodeadm/config.json
 
 [Install]
 WantedBy=multi-user.target

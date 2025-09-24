@@ -22,6 +22,6 @@ func EncodeNodeConfig(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
 		return nil, fmt.Errorf("JSON did not match any supported media type")
 	}
 	// always encode to the internal version so we don't lose any internal state
-	codec := codecs.EncoderForVersion(info.Serializer, internalGroupVersion)
+	codec := codecs.EncoderForVersion(info.Serializer, InternalGroupVersion)
 	return runtime.Encode(codec, nodeConfig)
 }

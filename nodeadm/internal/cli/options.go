@@ -7,7 +7,8 @@ import (
 
 var DefaultConfigSources = []string{
 	"imds://user-data",
-	"file:///etc/eks/nodeadm.d/",
+	// TODO: consider adding file:///etc/eks/nodeadm.d/. this is a breaking
+	// change, but users can override the default if it does not work for them.
 }
 
 type GlobalOptions struct {

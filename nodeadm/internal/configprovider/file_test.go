@@ -88,12 +88,6 @@ func TestFileConfigProvider_EmptyDirectory(t *testing.T) {
 }
 
 func TestFileConfigProvider_SingleFile(t *testing.T) {
-	tempFile, err := os.CreateTemp("", "nodeconfig-single-*.yaml")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	defer os.Remove(tempFile.Name())
-
 	config := `---
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
@@ -102,12 +96,12 @@ spec:
     name: single-file-cluster
 `
 
-	if _, err := tempFile.WriteString(config); err != nil {
+	tempFile := filepath.Join(t.TempDir(), "nodeconfig-single.yaml")
+	if err := os.WriteFile(tempFile, []byte(config), 0644); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
-	tempFile.Close()
 
-	provider := NewFileConfigProvider(tempFile.Name())
+	provider := NewFileConfigProvider(tempFile)
 	result, err := provider.Provide()
 	assert.Nil(t, err, "unexpected error from file config provider")
 

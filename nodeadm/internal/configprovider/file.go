@@ -74,13 +74,7 @@ func (fcs *fileConfigProvider) provideFromDirectory() (*internalapi.NodeConfig, 
 	if len(nodeConfigs) == 0 {
 		return nil, fmt.Errorf("no valid configuration found in directory: %s", fcs.path)
 	}
-	config := nodeConfigs[0]
-	for _, nodeConfig := range nodeConfigs[1:] {
-		if err := config.Merge(nodeConfig); err != nil {
-			return nil, fmt.Errorf("failed to merge configuration: %w", err)
-		}
-	}
-	return config, nil
+	return internalapi.MergeNodeConfigs(nodeConfigs)
 }
 
 func (fcs *fileConfigProvider) isConfigFile(filename string) bool {

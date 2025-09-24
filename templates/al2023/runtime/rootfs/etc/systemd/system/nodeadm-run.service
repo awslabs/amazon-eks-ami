@@ -8,7 +8,8 @@ Requires=nodeadm-config.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nodeadm init --skip config --config-source file:///etc/eks/nodeadm.d/
+# ignores IMDS as a config source, because nodeadm-config should have cached the config.
+ExecStart=/usr/bin/nodeadm init --skip config --config-source file:///etc/eks/nodeadm.d/ --config-cache /run/eks/nodeadm/config.json
 
 [Install]
 WantedBy=multi-user.target
