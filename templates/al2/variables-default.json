@@ -39,6 +39,5 @@
     "user_data_file": null,
     "volume_type": "gp2",
     "working_dir": "{{user `remote_folder`}}/worker",
-    "aws_domain": "amazonaws.com",
-    "custom_endpoint_ec2": "https://ec2.{{user `aws_region`}}.{{user `aws_domain`}}"
+    "custom_endpoint_ec2": ""
 }
