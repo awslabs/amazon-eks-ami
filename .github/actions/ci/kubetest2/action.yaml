@@ -18,7 +18,10 @@ inputs:
   log_bucket:
     required: true
     type: string
-  additional_arguments:
+  deploy_arguments:
+    required: false
+    type: string
+  test_arguments:
     required: false
     type: string
 runs:
@@ -35,10 +38,10 @@ runs:
 
         case "${{ inputs.os_distro }}" in
           al2)
-            KUBETEST2_ARGS="--user-data-format=bootstrap.sh"
+            DEPLOYER_ARGS="--user-data-format=bootstrap.sh"
             ;;
           al2023)
-            KUBETEST2_ARGS="--user-data-format=nodeadm"
+            DEPLOYER_ARGS="--user-data-format=nodeadm"
             ;;
           *)
             echo >&2 "unknown os_distro: ${{ inputs.os_distro }}"
@@ -46,14 +49,15 @@ runs:
           ;;
         esac
 
-        if [ ! "${{ inputs.additional_arguments }}" = "" ]; then
-          KUBETEST2_ARGS="${KUBETEST2_ARGS} ${{ inputs.additional_arguments }}"
+        if [ ! "${{ inputs.deploy_arguments }}" = "" ]; then
+          DEPLOYER_ARGS="${DEPLOYER_ARGS} ${{ inputs.deploy_arguments }}"
         fi
 
-        TESTER_NAME=ginkgo
-        # k8s_version below 1.26 use the older ginkgo tester
-        if [ "${{ inputs.k8s_version }}" = "$(echo -e "${{ inputs.k8s_version }}\n1.26" | sort -V | head -n1)" ]; then
-          TESTER_NAME=ginkgo-v1
+        # run k8s conformance suite if no tests specified
+        if [ "${{ inputs.test_arguments }}" = "" ]; then
+          TESTER_ARGS="ginkgo --test-package-marker=latest-${{ inputs.k8s_version }}.txt --parallel=6 --focus-regex='\[Conformance\]' --skip-regex='\[Serial\]|\[Disruptive\]|\[Slow\]|Garbage.collector'"
+        else
+          TESTER_ARGS="${{ inputs.test_arguments }}"
         fi
 
         set -o xtrace
@@ -67,10 +71,9 @@ runs:
           --unmanaged-nodes \
           --ami=${{ inputs.ami_id }} \
           --region=${{ inputs.aws_region }} \
-          $KUBETEST2_ARGS \
-          --test=$TESTER_NAME \
+          ${DEPLOYER_ARGS} \
+          --test=multi \
           -- \
-          --test-package-marker=latest-${{ inputs.k8s_version }}.txt \
-          --parallel=6 \
-          --focus-regex='\[Conformance\]' \
-          --skip-regex='\[Serial\]|\[Disruptive\]|\[Slow\]|Garbage.collector'
+          --fail-fast=false \
+          -- \
+          ${TESTER_ARGS}
