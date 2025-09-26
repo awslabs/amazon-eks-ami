@@ -136,3 +136,6 @@ $(GOIMPORTS): $(LOCALBIN)
 .PHONY: update-deps
 update-deps:
 	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all) && go mod tidy && go mod vendor
+
+generate-instance-info:
+	go run ./tools/instance-info/main.go > internal/kubelet/instance-info.jsonl

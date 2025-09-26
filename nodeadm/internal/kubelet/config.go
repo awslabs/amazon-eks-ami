@@ -252,11 +252,11 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, resources system.Resources) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
-		// #nosec G115 // known source from ec2 apis within int32 range
-		ksc.MaxPods = int32(maxPods)
+	if instanceInfo, err := GetInstanceInfo(context.TODO(), cfg.Status.Instance.Region, cfg.Status.Instance.Type); err != nil {
+		zap.L().Warn("Failed to retrieve instance info, falling back to default", zap.Error(err))
+		ksc.MaxPods = defaultMaxPods
 	} else {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+		ksc.MaxPods = CalcMaxPods(instanceInfo, cfg.Spec.Kubelet.MaxPodsExpression)
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve(resources)),

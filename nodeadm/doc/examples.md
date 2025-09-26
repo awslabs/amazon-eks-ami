@@ -156,3 +156,39 @@ spec:
             soft: 1024
             hard: 1024
 ```
+
+---
+
+## Defining a Max Pods Expression
+
+Under certain circumstances, the desired max pods value for a given node or instance type can diverge from the
+defaults calculated. Since the use of a static `NodeConfig` is encouraged as the input source for nodeadm, nodeadm
+accepts a `maxPodsExpression`, to determine the final `maxPods` value passed to kubelet. This string is interpreted
+as a [CEL](https://cel.dev/overview/cel-overview) expression with three variables set in the environment:
+
+* `default_enis` - the maximum number of network interfaces attachable on the default network card
+* `ips_per_eni` - the maximum number of IPv4 addresses attachable to a single interface
+* `max_pods` - the standard `maxPods` for the current instance type. This can be equivalently expressed in CEL as `(default_enis * (ips_per_eni - 1)) + 2`
+
+⚠️ **Note**: These values will vary between instance types and may require `ec2:DescribeInstanceTypes` API calls. Expressions should be tested to confirm desired outputs before final use in the intended environment.
+
+Some common use cases:
+
+1. Offset the final max pods value to account for known host networking pods
+   * e.g. `max_pods + 2` to allow two additional pods
+2. Limit the final `maxPods` value to some set value
+   * e.g. `max_pods < 30 ? max_pods : 30`
+3. Limit the number of ENIs that can be used for pods
+   * e.g. `((default_enis - 2) * (ips_per_eni - 1)) + 2` to reserve two ENIs
+   * For instances utilizing the [AWS VPC CNI's Custom Networking](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html) feature, reserving a single ENI may be necessary
+
+```yaml
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster: ...
+  kubelet:
+    maxPodsExpression: "((default_enis - 1) * (ips_per_eni - 1)) + 2"
+```
+⚠️ **Note**: Values set for `maxPods` in the `kubelet` config will take precedence over the result of the `maxPodsExpression`
