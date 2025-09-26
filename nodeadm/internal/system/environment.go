@@ -32,11 +32,8 @@ func (a *environmentAspect) Name() string {
 func (a *environmentAspect) Setup(cfg *api.NodeConfig) error {
 	envOpts := cfg.Spec.Instance.Environment
 
-	// Check if any environment configuration exists
-	// Handle cases where maps might be nil (missing section) or empty
-	if (envOpts.Default == nil || len(envOpts.Default) == 0) &&
-		(envOpts.SystemdKubelet == nil || len(envOpts.SystemdKubelet) == 0) &&
-		(envOpts.SystemdContainerd == nil || len(envOpts.SystemdContainerd) == 0) {
+	// Check if any environment configuration exists. If nothing to configure, don't invoke systemctl daemon-reload
+	if len(envOpts.Default) == 0 && len(envOpts.SystemdKubelet) == 0 && len(envOpts.SystemdContainerd) == 0 {
 		zap.L().Info("No environment variables to configure")
 		return nil
 	}
@@ -46,39 +43,43 @@ func (a *environmentAspect) Setup(cfg *api.NodeConfig) error {
 
 // configureEnvironment makes environment variables available system-wide and to specific services.
 func (a *environmentAspect) configureEnvironment(envOpts api.EnvironmentOptions) error {
-	log := zap.L()
-
 	// Configure systemd system.conf.d for all services
 	// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
 	// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
 	// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
 	// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
-	if envOpts.Default != nil && len(envOpts.Default) > 0 {
+	if len(envOpts.Default) > 0 {
 		if err := a.writeSystemdEnvironmentConfig(envOpts.Default); err != nil {
 			return fmt.Errorf("failed to write systemd environment config: %w", err)
 		}
 
 		for key, value := range envOpts.Default {
 			if err := os.Setenv(key, value); err != nil {
-				log.Warn("Failed to set environment variable", zap.String("key", key), zap.Error(err))
+				zap.L().Warn("Failed to set environment variable", zap.String("key", key), zap.Error(err))
 				continue
 			}
-			log.Info("Set default environment variable", zap.String("key", key), zap.String("value", value))
+			zap.L().Info("Set default environment variable", zap.String("key", key), zap.String("value", value))
 		}
 	}
 
 	// Configure kubelet-specific environment variables
-	if envOpts.SystemdKubelet != nil && len(envOpts.SystemdKubelet) > 0 {
+	if len(envOpts.SystemdKubelet) > 0 {
 		if err := a.writeServiceDropinConfig("kubelet", kubeletServiceDropinPath, envOpts.SystemdKubelet); err != nil {
 			return fmt.Errorf("failed to write kubelet environment config: %w", err)
 		}
 	}
 
 	// Configure containerd-specific environment variables
-	if envOpts.SystemdContainerd != nil && len(envOpts.SystemdContainerd) > 0 {
+	if len(envOpts.SystemdContainerd) > 0 {
 		if err := a.writeServiceDropinConfig("containerd", containerdServiceDropinPath, envOpts.SystemdContainerd); err != nil {
 			return fmt.Errorf("failed to write containerd environment config: %w", err)
 		}
+	}
+
+	// Reload systemd configuration once after all config files are written
+	zap.L().Info("Reloading systemd configuration")
+	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
+		return fmt.Errorf("failed to reload systemd configuration: %w", err)
 	}
 
 	return nil
@@ -96,11 +97,6 @@ func (a *environmentAspect) writeSystemdEnvironmentConfig(envVars map[string]str
 
 	if err := util.WriteFileWithDir(systemdEnvironmentConfPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write systemd environment config: %w", err)
-	}
-
-	log.Info("Reloading systemd configuration")
-	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
-		return fmt.Errorf("failed to reload systemd configuration: %w", err)
 	}
 
 	return nil
@@ -133,11 +129,6 @@ func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath str
 
 	if err := util.WriteFileWithDir(dropinPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write service drop-in config: %w", err)
-	}
-
-	log.Info("Reloading systemd configuration for service drop-in", zap.String("service", serviceName))
-	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
-		return fmt.Errorf("failed to reload systemd configuration: %w", err)
 	}
 
 	return nil
