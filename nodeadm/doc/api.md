@@ -74,6 +74,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+| `maxPodsExpression` _string_ |  |
 
 #### KubeletOptions
 

@@ -93,7 +93,8 @@ const (
 )
 
 type InstanceOptions struct {
-	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	LocalStorage      LocalStorageOptions `json:"localStorage,omitempty"`
+	MaxPodsExpression *string             `json:"maxPodsExpression,omitempty"`
 }
 
 type LocalStorageOptions struct {
