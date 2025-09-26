@@ -25,17 +25,12 @@ type netManager struct {
 	selfMac    string
 	primaryMac string
 	imds       imds.IMDSClient
-	broker     NetworkInterfaceBroker
 }
 
 func NewNetManagerCommand() cli.Command {
 	c := netManager{
 		cmd:  flaggy.NewSubcommand("udev-net-manager"),
 		imds: imds.DefaultClient(),
-		// TODO: in the future we should communicate with another broker that
-		// checks with the CNI (IPAMD) to get info on whether a given interface
-		// should be managed or not.
-		broker: NewFSBroker(),
 	}
 	flaggy.String(&c.iface, "i", "interface", "the name of the interface")
 	flaggy.String(&c.action, "a", "action", "the udev action")
@@ -71,12 +66,12 @@ const (
 	//
 	// see: https://github.com/systemd/systemd/pull/29782
 	// see: https://github.com/systemd/systemd/blob/9709deba913c9c2c2e9764bcded35c6081b05197/src/network/networkd-link.c#L1372-L1396
-	managerSystemd = "io.systemd.Network"
+	ManagerSystemd = "io.systemd.Network"
 
 	// NOTE: other manager names have no functional value, they only need to be
 	// differentiated from the managerSystemd name.
 
-	managerCNI = "cni"
+	ManagerCNI = "cni"
 )
 
 func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
@@ -94,13 +89,20 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	}
 	log.Info("found primary interface mac", zap.String("address", c.primaryMac))
 
-	manager, err := c.broker.ManagerFor(c.iface)
+	identity, err := imds.DefaultClient().GetInstanceIdentityDocument(ctx)
+	if err != nil {
+		return err
+	}
+	// TODO: in the future we should communicate with another broker that checks
+	// with the CNI (IPAMD) to get info on whether a given interface should be
+	// managed or not.
+	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(c.iface)
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %v", err)
 	}
 	log.Info("resolved net manager", zap.String("name", manager))
 
-	if manager == managerSystemd {
+	if manager == ManagerSystemd {
 		if err := c.manageLink(ctx); err != nil {
 			return err
 		}

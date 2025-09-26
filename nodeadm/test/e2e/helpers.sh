@@ -170,13 +170,23 @@ function mock::set-link-state() {
   local LINK_STATE=$2
 
   CONFIG_FILE=${NETWORKCTL_MOCK_LIST_FILE:-"/mock/config/networkctl-list.json"}
-  mkdir -p "$(dirname $CONFIG_FILE)"
+
+  if [ ! -f "$CONFIG_FILE" ]; then
+    mkdir -p "$(dirname $CONFIG_FILE)"
+    echo '{"Interfaces": []}' > "$CONFIG_FILE"
+  fi
+
   TEMP_CONFIG=$(mktemp)
-  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces[] |= if .Name == $name then .AdministrativeState = $state else . end' "$CONFIG_FILE" > "$TEMP_CONFIG"
+  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces = (
+    [ {"Name": $name, "AdministrativeState": $state} ] + .Interfaces | unique_by(.Name)
+  )' "$CONFIG_FILE" > "$TEMP_CONFIG"
 
   LOCKFILE=${NETWORKCTL_MOCK_LOCK_FILE:-"/mock/config/networkctl-list.lock"}
   flock "$LOCKFILE" -c "mv $TEMP_CONFIG $CONFIG_FILE"
+
+  echo "updating networkctl mock link status:"
   cat $CONFIG_FILE
+
   rm -f $TEMP_CONFIG
 }
 
