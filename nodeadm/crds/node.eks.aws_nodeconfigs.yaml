@@ -132,6 +132,8 @@ spec:
                         - Mount
                         type: string
                     type: object
+                  maxPodsExpression:
+                    type: string
                 type: object
               kubelet:
                 description: KubeletOptions are additional parameters passed to `kubelet`.

@@ -84,7 +84,8 @@ type ContainerdOptions struct {
 
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
-	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	LocalStorage      LocalStorageOptions `json:"localStorage,omitempty"`
+	MaxPodsExpression *string             `json:"maxPodsExpression,omitempty"`
 }
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
