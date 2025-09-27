@@ -48,7 +48,7 @@ sudo nerdctl image prune --force
 
 # move the nodeadm binaries into bin folder
 sudo chmod a+x $PROJECT_DIR/_bin/*
-sudo mv \
+sudo mv --context \
   $PROJECT_DIR/_bin/nodeadm \
   $PROJECT_DIR/_bin/nodeadm-internal \
   /usr/bin/
