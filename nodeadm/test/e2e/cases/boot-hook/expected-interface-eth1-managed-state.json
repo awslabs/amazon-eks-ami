@@ -1,0 +1,16 @@
+{
+    "Interfaces": [
+        {
+            "Name": "eth0",
+            "AdministrativeState": "configured"
+        },
+        {
+            "Name": "eth1",
+            "AdministrativeState": "configured"
+        },
+        {
+            "Name": "lo",
+            "AdministrativeState": "unmanaged"
+        }
+    ]
+}

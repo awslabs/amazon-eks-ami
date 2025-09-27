@@ -53,6 +53,12 @@ type DescribeInstanceTypesInput struct {
 	//   - dedicated-hosts-supported - Indicates whether the instance type supports
 	//   Dedicated Hosts. ( true | false )
 	//
+	//   - ebs-info.attachment-limit-type - The type of Amazon EBS volume attachment
+	//   limit ( shared | dedicated ).
+	//
+	//   - ebs-info.maximum-ebs-attachments - The maximum number of Amazon EBS volumes
+	//   that can be attached to the instance type.
+	//
 	//   - ebs-info.ebs-optimized-info.baseline-bandwidth-in-mbps - The baseline
 	//   bandwidth performance for an EBS-optimized instance type, in Mbps.
 	//
@@ -308,6 +314,36 @@ func (c *Client) addOperationDescribeInstanceTypesMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

@@ -92,25 +92,6 @@ sudo dnf versionlock amazon-ec2-net-utils
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
 
-# Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
-sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
-cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
-# Do not clobber any routes or rules added by CNI.
-[Network]
-ManageForeignRoutes=no
-ManageForeignRoutingPolicyRules=no
-EOF
-
-# Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-sudo mkdir -p /etc/systemd/network/99-default.link.d/
-cat << EOF | sudo tee /etc/systemd/network/99-default.link.d/99-no-policy.conf
-# Ensure MACAddressPolicy=none, reinstalling systemd-udev writes /usr/lib/systemd/network/99-default.link
-# with value set to persistent
-# https://github.com/aws/amazon-vpc-cni-k8s/issues/2103#issuecomment-1321698870
-[Link]
-MACAddressPolicy=none
-EOF
-
 ################################################################################
 ### SSH ########################################################################
 ################################################################################
@@ -124,8 +105,12 @@ sudo systemctl restart sshd.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
-ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1 us-isof-south-1}"
-if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+
+PARTITION=$(imds /latest/meta-data/services/partition)
+if [[ "${PARTITION}" =~ ^aws-iso ]]; then
+  echo "Installing awscli package"
+  sudo dnf install -y awscli
+else
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR="${WORKING_DIR}/awscli-install"
@@ -138,9 +123,6 @@ if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
     -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
   unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
   sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/ --update
-else
-  echo "Installing awscli package"
-  sudo dnf install -y awscli
 fi
 
 ###############################################################################
@@ -179,19 +161,8 @@ sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-S3_DOMAIN="amazonaws.com"
-if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-  S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" = "us-iso-west-1" ]; then
-  S3_DOMAIN="c2s.ic.gov"
-elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
-  S3_DOMAIN="sc2s.sgov.gov"
-elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
-  S3_DOMAIN="cloud.adc-e.uk"
-elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
-  S3_DOMAIN="csp.hci.ic.gov"
-fi
-S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$AWS_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
 BINARIES=(
@@ -254,7 +225,7 @@ if dnf list installed | grep amazon-ssm-agent; then
 else
   if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
     echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
-    sudo dnf install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+    sudo dnf install -y https://s3.${BINARY_BUCKET_REGION}.${AWS_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
     echo "Installing amazon-ssm-agent from AL core repository"
     sudo dnf install -y amazon-ssm-agent

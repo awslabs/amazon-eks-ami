@@ -7,7 +7,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG CONTAINERD_VERSION
 RUN yum install -y --allowerasing curl && yum clean all
 RUN dnf -y update && \
-    dnf -y install systemd jq python3 awscli nmap-ncat iptables tar && \
+    dnf -y install systemd jq python3 awscli nmap-ncat iptables tar procps && \
     dnf clean all
 # TO-DO: install containerd v2 from AL repo as well once it is available
 RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
@@ -45,10 +45,14 @@ COPY test/e2e/infra/systemd/kubelet.service /usr/lib/systemd/system/kubelet.serv
 COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/containerd.service
 COPY test/e2e/infra/mock/ /sys_devices_system_mock/
 COPY test/e2e/helpers.sh /helpers.sh
+COPY test/e2e/infra/mock/system/ /
 
 RUN mkdir -p /etc/eks/image-credential-provider/
 RUN touch /etc/eks/image-credential-provider/ecr-credential-provider
 ENV CPU_DIR /sys_devices_system_mock/cpu
 ENV NODE_DIR /sys_devices_system_mock/node
+
+RUN mkdir -p /mock/bin
+ENV PATH "/mock/bin/:$PATH"
 
 ENTRYPOINT ["/usr/lib/systemd/systemd","--system"]

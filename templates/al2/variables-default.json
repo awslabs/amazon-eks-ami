@@ -13,7 +13,7 @@
     "binary_bucket_region": "us-west-2",
     "cache_container_images": "false",
     "cni_plugin_version": "v1.2.0",
-    "containerd_version": "1.7.27",
+    "containerd_version": "1.7.*",
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
     "docker_version": "none",
@@ -38,5 +38,6 @@
     "temporary_security_group_source_cidrs": "",
     "user_data_file": null,
     "volume_type": "gp2",
-    "working_dir": "{{user `remote_folder`}}/worker"
+    "working_dir": "{{user `remote_folder`}}/worker",
+    "custom_endpoint_ec2": ""
 }

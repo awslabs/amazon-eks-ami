@@ -848,6 +848,26 @@ get_containerd_info() {
   fi
 
   ok
+
+  try "collect containerd snapshotter information"
+  get_soci_snapshotter_info
+
+  ok
+}
+
+get_soci_snapshotter_info() {
+  if ! systemctl is-active --quiet soci-snapshotter 2> /dev/null; then
+    return
+  fi
+
+  try "Collect soci snapshotter information"
+
+  mkdir -p "${COLLECT_DIR}"/containerd/soci-snapshotter
+  systemctl status soci-snapshotter > "${COLLECT_DIR}"/containerd/soci-snapshotter/soci-snapshotter-status.txt 2>&1
+  timeout 75 journalctl -u soci-snapshotter --since "${DAYS_10}" > "${COLLECT_DIR}"/containerd/soci-snapshotter/soci-snapshotter-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"soci-snapshotter log output \" "
+  cp --force /etc/soci-snapshotter-grpc/config.toml "${COLLECT_DIR}"/containerd/soci-snapshotter/config.toml 2> /dev/null
+
+  ok
 }
 
 get_sandboxImage_info() {

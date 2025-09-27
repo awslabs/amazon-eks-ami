@@ -68,7 +68,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Enriching configuration..")
-	if err := enrichConfig(log, nodeConfig); err != nil {
+	if err := enrichConfig(log, nodeConfig, opts); err != nil {
 		return err
 	}
 
@@ -160,7 +160,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 // Various initializations and verifications of the NodeConfig and
 // perform in-place updates when allowed by the user
-func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
+func enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
 	log.Info("Fetching kubelet version..")
 	kubeletVersion, err := kubelet.GetKubeletVersion()
 	if err != nil {
@@ -169,12 +169,16 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 	cfg.Status.KubeletVersion = kubeletVersion
 	log.Info("Fetched kubelet version", zap.String("version", kubeletVersion))
 	log.Info("Fetching instance details..")
+	awsClientLogMode := aws.LogRetries
+	if opts.DevelopmentMode {
+		// SDK v2 log modes are just bitwise operations, toggle all bits for maximum verbosity
+		// https://github.com/aws/aws-sdk-go-v2/blob/838fb872e9701fc62b7b86164389791f5313bfcb/aws/logging.go#L18
+		awsClientLogMode = aws.ClientLogMode((1 << 64) - 1)
+	}
 	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithClientLogMode(aws.LogRetries),
+		config.WithClientLogMode(awsClientLogMode),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			// Use our pre-configured IMDS client to avoid hitting common retry
-			// issues with the default config.
-			o.Client = imds.Client
+			o.Client = imds.New(true /* treat 404's as retryable to make credential chain more resilient */)
 		}),
 	)
 	if err != nil {
@@ -189,7 +193,7 @@ func enrichConfig(log *zap.Logger, cfg *api.NodeConfig) error {
 		// we'll give up after approximately 10 minutes
 		awsConfig.RetryMaxAttempts = 30
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig))
+	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
 	if err != nil {
 		return err
 	}

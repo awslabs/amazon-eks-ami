@@ -10,7 +10,7 @@
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "containerd_version": "2.0.5",
+    "containerd_version": "2.*",
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
@@ -37,5 +37,6 @@
     "temporary_security_group_source_cidrs": "",
     "user_data_file": null,
     "volume_type": "gp3",
-    "working_dir": "{{user `remote_folder`}}/worker"
+    "working_dir": "{{user `remote_folder`}}/worker",
+    "custom_endpoint_ec2": ""
 }

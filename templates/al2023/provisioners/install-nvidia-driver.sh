@@ -8,21 +8,13 @@ if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
 fi
 
-#Detect Isolated partitions
 function is-isolated-partition() {
-  PARTITION=$(imds /latest/meta-data/services/partition)
-  NON_ISOLATED_PARTITIONS=("aws" "aws-cn" "aws-us-gov")
-  for NON_ISOLATED_PARTITION in "${NON_ISOLATED_PARTITIONS[@]}"; do
-    if [ "${NON_ISOLATED_PARTITION}" = "${PARTITION}" ]; then
-      return 1
-    fi
-  done
-  return 0
+  [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]
 }
 
 function rpm_install() {
   local RPMS
-  mapfile -t RPMS <<< "$@"
+  read -ra RPMS <<< "$@"
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
     aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}

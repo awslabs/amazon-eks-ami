@@ -39,6 +39,9 @@ else
     us-isob-east-1)
       acct="187977181151"
       ;;
+    us-isob-west-1)
+      acct="321162350305"
+      ;;
     eu-isoe-west-1)
       acct="249663109785"
       ;;
@@ -47,6 +50,9 @@ else
       ;;
     us-isof-south-1)
       acct="676585237158"
+      ;;
+    us-isof-east-1)
+      acct="171035529773"
       ;;
     af-south-1)
       acct="877085696533"

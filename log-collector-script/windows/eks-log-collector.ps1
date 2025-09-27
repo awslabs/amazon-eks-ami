@@ -52,6 +52,7 @@ Function create_working_dir{
         Write-Host "Creating temporary directory"
         New-Item -type directory -path $info_system -Force >$null
         New-Item -type directory -path $info_system\eks -Force >$null
+        New-Item -type directory -path $info_system\gmsa\filelogs -Force >$null
         New-Item -type directory -path $info_system\docker -Force >$null
         New-Item -type directory -path $info_system\containerd -Force >$null
         New-Item -type directory -path $info_system\firewall -Force >$null
@@ -260,7 +261,24 @@ Function get_eks_logs{
         Write-Host "OK" -foregroundcolor "green"
     }
     catch{
-        Write-Error "Unable to collect ECS Agent logs"
+        Write-Error "Unable to collect EKS logs"
+        Break
+    }
+}
+
+Function get_gmsa_logs{
+    try {
+        Write-Host "Collecting gMSA logs"
+        if (Test-Path "C:\ProgramData\Amazon\gmsa-plugin\*") {
+            copy C:\ProgramData\Amazon\gmsa-plugin\* $info_system\gmsa\filelogs\
+        }
+        if (Get-WinEvent -ListProvider gMSA -ErrorAction SilentlyContinue) {
+            Get-WinEvent -ProviderName gMSA | Export-CSV $info_system/gmsa/eventlogs.csv
+        }
+        Write-Host "OK" -foregroundcolor "green"
+    }
+    catch{
+        Write-Error "Unable to collect gMSA logs"
         Break
     }
 }
@@ -359,7 +377,9 @@ Function get_windows_events{
         Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Containers*.evtx" -Destination $info_system\events
         Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Host-Network-Service*.evtx" -Destination $info_system\events
         Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\\Microsoft-Windows-Hyper-V-Compute*.evtx" -Destination $info_system\events
-
+        if (Test-Path "$env:SystemDrive\Windows\System32\Winevt\Logs\AWS-Windows-Containers.evtx") {
+            Copy-Item "$env:SystemDrive\Windows\System32\Winevt\Logs\AWS-Windows-Containers.evtx" -Destination $info_system\events
+        }
         Write-Host "OK" -ForegroundColor "green"
     }
     catch {
@@ -409,6 +429,7 @@ Function collect{
     get_docker_logs
     get_containerd_logs
     get_eks_logs
+    get_gmsa_logs
     get_network_info
     get_windows_events
 }
