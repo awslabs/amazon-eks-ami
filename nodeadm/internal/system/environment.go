@@ -150,5 +150,9 @@ func (a *environmentAspect) escapeSystemdValue(value string) string {
 	// properly escapes special characters in systemd configuration values
 	value = strings.ReplaceAll(value, "\\", "\\\\")
 	value = strings.ReplaceAll(value, "\"", "\\\"")
+	// systemd does not recognize \% as an escape sequence
+	// so we use %% to specify a single percent sign
+	// Ref: https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html#Specifiers
+	value = strings.ReplaceAll(value, "%", "%%")
 	return value
 }
