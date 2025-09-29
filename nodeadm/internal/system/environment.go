@@ -78,8 +78,8 @@ func (a *environmentAspect) configureEnvironment(envOpts api.EnvironmentOptions)
 
 	// Reload systemd configuration once after all config files are written
 	zap.L().Info("Reloading systemd configuration")
-	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
-		return fmt.Errorf("failed to reload systemd configuration: %w", err)
+	if output, err := exec.Command("systemctl", "daemon-reload").CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to reload systemd configuration: %w, output: %s", err, string(output))
 	}
 
 	return nil
