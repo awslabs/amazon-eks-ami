@@ -90,8 +90,7 @@ func (a *environmentAspect) writeSystemdEnvironmentConfig(envVars map[string]str
 		return nil
 	}
 
-	log := zap.L()
-	log.Info("Writing environment variables to systemd system.conf.d", zap.Int("count", len(envVars)))
+	zap.L().Info("Writing environment variables to systemd system.conf.d", zap.Int("count", len(envVars)))
 
 	content := a.generateSystemdConfig(envVars)
 
@@ -119,8 +118,7 @@ func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath str
 		return nil
 	}
 
-	log := zap.L()
-	log.Info("Writing environment variables to service drop-in",
+	zap.L().Info("Writing environment variables to service drop-in",
 		zap.String("service", serviceName),
 		zap.String("path", dropinPath),
 		zap.Int("count", len(envVars)))
