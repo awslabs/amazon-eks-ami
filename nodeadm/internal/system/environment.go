@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -159,12 +160,12 @@ func (a *environmentAspect) generateServiceDropinConfig(envVars map[string]strin
 }
 
 func escapeSystemdValue(value string) string {
-	// properly escapes special characters in systemd configuration values
-	value = strings.ReplaceAll(value, "\\", "\\\\")
-	value = strings.ReplaceAll(value, "\"", "\\\"")
+	quotedValue := strconv.Quote(value)
+	// Prevent specifier expansion in Environment=/DefaultEnvironment=
 	// systemd does not recognize \% as an escape sequence
 	// so we use %% to specify a single percent sign
 	// Ref: https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html#Specifiers
-	value = strings.ReplaceAll(value, "%", "%%")
-	return value
+	quotedValue = strings.ReplaceAll(quotedValue, "%", "%%")
+	// just the inner (escaped) content for VALUE (since KEY=VALUE is quoted outside)
+	return strings.Trim(quotedValue, `"`)
 }
