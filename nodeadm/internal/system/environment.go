@@ -1,10 +1,12 @@
 package system
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"text/template"
 
 	"go.uber.org/zap"
 
@@ -18,6 +20,18 @@ const (
 	kubeletServiceDropinPath    = "/etc/systemd/system/kubelet.service.d/environment.conf"
 	containerdServiceDropinPath = "/etc/systemd/system/containerd.service.d/environment.conf"
 )
+
+const systemdConfigTemplate = `[Manager]
+{{range $key, $value := .}}DefaultEnvironment="{{$key}}={{escape $value}}"
+{{end}}`
+
+const serviceDropinConfigTemplate = `[Service]
+{{range $key, $value := .}}Environment="{{$key}}={{escape $value}}"
+{{end}}`
+
+var templateFuncs = template.FuncMap{
+	"escape": escapeSystemdValue,
+}
 
 func NewEnvironmentAspect() SystemAspect {
 	return &environmentAspect{}
@@ -102,15 +116,15 @@ func (a *environmentAspect) writeSystemdEnvironmentConfig(envVars map[string]str
 }
 
 func (a *environmentAspect) generateSystemdConfig(envVars map[string]string) string {
-	var builder strings.Builder
-	builder.WriteString("[Manager]\n")
+	tmpl := template.Must(template.New("systemdConfig").Funcs(templateFuncs).Parse(systemdConfigTemplate))
 
-	for key, value := range envVars {
-		escapedValue := a.escapeSystemdValue(value)
-		builder.WriteString(fmt.Sprintf("DefaultEnvironment=\"%s=%s\"\n", key, escapedValue))
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, envVars); err != nil {
+		zap.L().Error("Failed to execute systemd config template", zap.Error(err))
+		return ""
 	}
 
-	return builder.String()
+	return buf.String()
 }
 
 func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath string, envVars map[string]string) error {
@@ -133,18 +147,18 @@ func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath str
 }
 
 func (a *environmentAspect) generateServiceDropinConfig(envVars map[string]string) string {
-	var builder strings.Builder
-	builder.WriteString("[Service]\n")
+	tmpl := template.Must(template.New("serviceDropinConfig").Funcs(templateFuncs).Parse(serviceDropinConfigTemplate))
 
-	for key, value := range envVars {
-		escapedValue := a.escapeSystemdValue(value)
-		builder.WriteString(fmt.Sprintf("Environment=\"%s=%s\"\n", key, escapedValue))
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, envVars); err != nil {
+		zap.L().Error("Failed to execute service dropin config template", zap.Error(err))
+		return ""
 	}
 
-	return builder.String()
+	return buf.String()
 }
 
-func (a *environmentAspect) escapeSystemdValue(value string) string {
+func escapeSystemdValue(value string) string {
 	// properly escapes special characters in systemd configuration values
 	value = strings.ReplaceAll(value, "\\", "\\\\")
 	value = strings.ReplaceAll(value, "\"", "\\\"")
