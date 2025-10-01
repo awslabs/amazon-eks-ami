@@ -98,27 +98,14 @@ spec:
                   and devices are configured.
                 properties:
                   environment:
-                    description: EnvironmentOptions configures environment variables
-                      for the system and systemd services.
-                    properties:
-                      default:
-                        additionalProperties:
-                          type: string
-                        description: Default environment variables applied system-wide
-                          to all systemd services
-                        type: object
-                      systemd_containerd:
-                        additionalProperties:
-                          type: string
-                        description: SystemdContainerd environment variables applied
-                          specifically to the containerd service
-                        type: object
-                      systemd_kubelet:
-                        additionalProperties:
-                          type: string
-                        description: SystemdKubelet environment variables applied
-                          specifically to the kubelet service
-                        type: object
+                    additionalProperties:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    description: |-
+                      EnvironmentOptions configures environment variables for the system and systemd services.
+                      The key `default` is reserved for configuring the environment across all services on the instance
+                      The key can be set to a systemd service name to configure environment only for a particular service.
                     type: object
                   localStorage:
                     description: |-

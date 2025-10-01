@@ -54,16 +54,14 @@ _Appears in:_
 
 #### EnvironmentOptions
 
+_Underlying type:_ _object_
+
 EnvironmentOptions configures environment variables for the system and systemd services.
+The key `default` is reserved for configuring the environment across all services on the instance
+The key can be set to a systemd service name to configure environment only for a particular service.
 
 _Appears in:_
 - [InstanceOptions](#instanceoptions)
-
-| Field | Description |
-| --- | --- |
-| `default` _object (keys:string, values:string)_ | Default environment variables applied system-wide to all systemd services |
-| `systemd_kubelet` _object (keys:string, values:string)_ | SystemdKubelet environment variables applied specifically to the kubelet service |
-| `systemd_containerd` _object (keys:string, values:string)_ | SystemdContainerd environment variables applied specifically to the containerd service |
 
 #### Feature
 
