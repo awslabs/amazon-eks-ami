@@ -315,7 +315,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/validate-selinux.sh"
+      "script": "{{template_dir}}/provisioners/configure-selinux.sh"
     }
   ],
   "post-processors": [
