@@ -18,4 +18,5 @@ validate_directory_selinux_contexts() {
   echo "Validated SELinux contexts in $DIR"
 }
 
+sudo restorecon -R -v /usr/bin
 validate_directory_selinux_contexts /usr/bin
