@@ -117,10 +117,6 @@ function archive-open-kmods() {
 
   sudo kmod-util archive nvidia-open
 
-  # Copy the source files to a new directory for GRID driver installation
-  sudo mkdir /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
-  sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
-
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
@@ -169,7 +165,7 @@ function archive-grid-kmod() {
   pushd "${EXTRACT_DIR}"
 
   # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique archive names
-  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kenel-open/dkms.conf
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kernel-open/dkms.conf
   echo "Installing NVIDIA GRID kernel modules..."
   sudo ./nvidia-installer \
       --dkms \
