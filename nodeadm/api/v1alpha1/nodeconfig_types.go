@@ -89,16 +89,9 @@ type InstanceOptions struct {
 }
 
 // EnvironmentOptions configures environment variables for the system and systemd services.
-type EnvironmentOptions struct {
-	// Default environment variables applied system-wide to all systemd services
-	Default map[string]string `json:"default,omitempty"`
-
-	// SystemdKubelet environment variables applied specifically to the kubelet service
-	SystemdKubelet map[string]string `json:"systemd_kubelet,omitempty"`
-
-	// SystemdContainerd environment variables applied specifically to the containerd service
-	SystemdContainerd map[string]string `json:"systemd_containerd,omitempty"`
-}
+// The key `default` is reserved for configuring the environment across all services on the instance
+// The key can be set to a systemd service name to configure environment only for a particular service.
+type EnvironmentOptions map[string]map[string]string
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
 // are used when available.

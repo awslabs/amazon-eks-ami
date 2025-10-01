@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -16,78 +17,92 @@ import (
 )
 
 const (
-	environmentAspectName       = "environment"
-	systemdEnvironmentConfPath  = "/etc/systemd/system.conf.d/environment.conf"
-	kubeletServiceDropinPath    = "/etc/systemd/system/kubelet.service.d/environment.conf"
-	containerdServiceDropinPath = "/etc/systemd/system/containerd.service.d/environment.conf"
+	instanceEnvironmentAspectName = "instance-environment"
+	nodeamdEnvironmentAspectName  = "nodeadm-environment"
+	systemdEnvironmentConfPath    = "/etc/systemd/system.conf.d/environment.conf"
+	serviceDropinPathBase         = "/etc/systemd/system"
 )
 
 const systemdConfigTemplate = `[Manager]
-{{range $key, $value := .}}DefaultEnvironment="{{$key}}={{escape $value}}"
+{{range .}}DefaultEnvironment="{{.Key}}={{escape .Value}}"
 {{end}}`
 
 const serviceDropinConfigTemplate = `[Service]
-{{range $key, $value := .}}Environment="{{$key}}={{escape $value}}"
+{{range .}}Environment="{{.Key}}={{escape .Value}}"
 {{end}}`
 
 var templateFuncs = template.FuncMap{
 	"escape": escapeSystemdValue,
 }
 
-func NewEnvironmentAspect() SystemAspect {
-	return &environmentAspect{}
+func NewNodeadmEnvironmentAspect() SystemAspect {
+	return &nodeadmEnvironmentAspect{}
 }
 
-type environmentAspect struct{}
-
-func (a *environmentAspect) Name() string {
-	return environmentAspectName
+func NewInstanceEnvironmentAspect() SystemAspect {
+	return &instanceEnvironmentAspect{}
 }
 
-func (a *environmentAspect) Setup(cfg *api.NodeConfig) error {
+type nodeadmEnvironmentAspect struct{}
+
+type instanceEnvironmentAspect struct{}
+
+func (a *nodeadmEnvironmentAspect) Name() string {
+	return nodeamdEnvironmentAspectName
+}
+
+func (a *nodeadmEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
 	envOpts := cfg.Spec.Instance.Environment
-
-	// Check if any environment configuration exists. If nothing to configure, don't invoke systemctl daemon-reload
-	if len(envOpts.Default) == 0 && len(envOpts.SystemdKubelet) == 0 && len(envOpts.SystemdContainerd) == 0 {
-		zap.L().Info("No environment variables to configure")
-		return nil
-	}
-
-	return a.configureEnvironment(envOpts)
-}
-
-// configureEnvironment makes environment variables available system-wide and to specific services.
-func (a *environmentAspect) configureEnvironment(envOpts api.EnvironmentOptions) error {
-	// Configure systemd system.conf.d for all services
-	// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
-	// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
-	// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
-	// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
-	if len(envOpts.Default) > 0 {
-		if err := a.writeSystemdEnvironmentConfig(envOpts.Default); err != nil {
-			return fmt.Errorf("failed to write systemd environment config: %w", err)
-		}
-
-		for key, value := range envOpts.Default {
+	if defaultEnv, exists := envOpts["default"]; exists && len(defaultEnv) > 0 {
+		for key, value := range defaultEnv {
 			if err := os.Setenv(key, value); err != nil {
 				zap.L().Warn("Failed to set environment variable", zap.String("key", key), zap.Error(err))
 				continue
 			}
-			zap.L().Info("Set default environment variable", zap.String("key", key), zap.String("value", value))
+			zap.L().Info("Set nodeadm environment variable", zap.String("key", key), zap.String("value", value))
 		}
 	}
+	return nil
+}
 
-	// Configure kubelet-specific environment variables
-	if len(envOpts.SystemdKubelet) > 0 {
-		if err := a.writeServiceDropinConfig("kubelet", kubeletServiceDropinPath, envOpts.SystemdKubelet); err != nil {
-			return fmt.Errorf("failed to write kubelet environment config: %w", err)
-		}
+func (a *instanceEnvironmentAspect) Name() string {
+	return instanceEnvironmentAspectName
+}
+
+func (a *instanceEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
+	envOpts := cfg.Spec.Instance.Environment
+
+	// Check if any environment configuration exists. If nothing to configure, don't invoke systemctl daemon-reload
+	if len(envOpts) == 0 {
+		zap.L().Info("No environment variables to configure")
+		return nil
 	}
 
-	// Configure containerd-specific environment variables
-	if len(envOpts.SystemdContainerd) > 0 {
-		if err := a.writeServiceDropinConfig("containerd", containerdServiceDropinPath, envOpts.SystemdContainerd); err != nil {
-			return fmt.Errorf("failed to write containerd environment config: %w", err)
+	return a.configureInstanceEnvironment(envOpts)
+}
+
+// configureInstanceEnvironment makes environment variables available system-wide and to specific services.
+func (a *instanceEnvironmentAspect) configureInstanceEnvironment(envOpts api.EnvironmentOptions) error {
+
+	zap.L().Info("All envOpts: ", zap.Any("=", envOpts))
+	for serviceName, envVars := range envOpts {
+		if len(envVars) > 0 {
+			if serviceName == "default" {
+				// Configure systemd system.conf.d for all services
+				// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
+				// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
+				// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
+				// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
+				if err := a.writeSystemdEnvironmentConfig(envOpts["default"]); err != nil {
+					return fmt.Errorf("failed to write systemd environment config: %w", err)
+				}
+			} else {
+				// Create a dropin config for all the services
+				dropinPath := fmt.Sprintf("%s/%s.service.d/environment.conf", serviceDropinPathBase, serviceName)
+				if err := a.writeServiceDropinConfig(serviceName, dropinPath, envVars); err != nil {
+					return fmt.Errorf("failed to write %s environment config: %w", serviceName, err)
+				}
+			}
 		}
 	}
 
@@ -100,14 +115,10 @@ func (a *environmentAspect) configureEnvironment(envOpts api.EnvironmentOptions)
 	return nil
 }
 
-func (a *environmentAspect) writeSystemdEnvironmentConfig(envVars map[string]string) error {
-	if len(envVars) == 0 {
-		return nil
-	}
-
+func (a *instanceEnvironmentAspect) writeSystemdEnvironmentConfig(envVars map[string]string) error {
 	zap.L().Info("Writing environment variables to systemd system.conf.d", zap.Int("count", len(envVars)))
 
-	content := a.generateSystemdConfig(envVars)
+	content := a.generateEnvironmentConfig(envVars, systemdConfigTemplate)
 
 	if err := util.WriteFileWithDir(systemdEnvironmentConfPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write systemd environment config: %w", err)
@@ -116,29 +127,13 @@ func (a *environmentAspect) writeSystemdEnvironmentConfig(envVars map[string]str
 	return nil
 }
 
-func (a *environmentAspect) generateSystemdConfig(envVars map[string]string) string {
-	tmpl := template.Must(template.New("systemdConfig").Funcs(templateFuncs).Parse(systemdConfigTemplate))
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, envVars); err != nil {
-		zap.L().Error("Failed to execute systemd config template", zap.Error(err))
-		return ""
-	}
-
-	return buf.String()
-}
-
-func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath string, envVars map[string]string) error {
-	if len(envVars) == 0 {
-		return nil
-	}
-
+func (a *instanceEnvironmentAspect) writeServiceDropinConfig(serviceName, dropinPath string, envVars map[string]string) error {
 	zap.L().Info("Writing environment variables to service drop-in",
 		zap.String("service", serviceName),
 		zap.String("path", dropinPath),
 		zap.Int("count", len(envVars)))
 
-	content := a.generateServiceDropinConfig(envVars)
+	content := a.generateEnvironmentConfig(envVars, serviceDropinConfigTemplate)
 
 	if err := util.WriteFileWithDir(dropinPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write service drop-in config: %w", err)
@@ -147,12 +142,23 @@ func (a *environmentAspect) writeServiceDropinConfig(serviceName, dropinPath str
 	return nil
 }
 
-func (a *environmentAspect) generateServiceDropinConfig(envVars map[string]string) string {
-	tmpl := template.Must(template.New("serviceDropinConfig").Funcs(templateFuncs).Parse(serviceDropinConfigTemplate))
+func (c *instanceEnvironmentAspect) generateEnvironmentConfig(envVars map[string]string, templateStr string) string {
+	// sort keys to generate a deterministic config output
+	keys := make([]string, 0, len(envVars))
+	for k := range envVars {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
+	configData := make([]struct{ Key, Value string }, len(keys))
+	for i, k := range keys {
+		configData[i] = struct{ Key, Value string }{k, envVars[k]}
+	}
+
+	tmpl := template.Must(template.New("envConfig").Funcs(templateFuncs).Parse(templateStr))
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, envVars); err != nil {
-		zap.L().Error("Failed to execute service dropin config template", zap.Error(err))
+	if err := tmpl.Execute(&buf, configData); err != nil {
+		zap.L().Error("Failed to execute environment config template", zap.Error(err))
 		return ""
 	}
 

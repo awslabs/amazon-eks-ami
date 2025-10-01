@@ -3,11 +3,8 @@ apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   instance:
-    environment:
-      # All fields empty/missing
-      default: {}
-      kubelet: {}
-      containerd: {}
+    # No environment section at all
+    localStorage: {}
   cluster:
     apiServerEndpoint: https://example.com
     certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=

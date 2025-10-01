@@ -67,22 +67,20 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
-	preConfigAspects := []system.SystemAspect{
-		system.NewEnvironmentAspect(),
-	}
-
-	// We set up any environment variables before nodeadm's config phase.
 	// This let's nodeadm respect any environment variables that may be critical for
-	// the node's setup. For example, prior to config phase, we make calls to EC2's API to
+	// the node's initialization. For example, prior to config phase, we make calls to EC2's API to
 	// get instance details which could pass through an HTTP(s) proxy.
-	log.Info("Setting up pre-config aspects...")
-	for _, aspect := range preConfigAspects {
+	initAspects := []system.SystemAspect{
+		system.NewNodeadmEnvironmentAspect(),
+	}
+	log.Info("Setting up system init aspects...")
+	for _, aspect := range initAspects {
 		nameField := zap.String("name", aspect.Name())
-		log.Info("Setting up pre-config aspect..", nameField)
+		log.Info("Setting up system init aspect..", nameField)
 		if err := aspect.Setup(nodeConfig); err != nil {
 			return err
 		}
-		log.Info("Set up pre-config aspect", nameField)
+		log.Info("Set up system init aspect", nameField)
 	}
 
 	log.Info("Enriching configuration..")
@@ -102,6 +100,10 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	defer daemonManager.Close()
 
+	configAspects := []system.SystemAspect{
+		system.NewInstanceEnvironmentAspect(),
+	}
+
 	runAspects := []system.SystemAspect{
 		system.NewLocalDiskAspect(),
 	}
@@ -112,6 +114,15 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, configPhase) {
+		log.Info("Setting up system config aspects...")
+		for _, aspect := range configAspects {
+			nameField := zap.String("name", aspect.Name())
+			log.Info("Setting up system config aspect..", nameField)
+			if err := aspect.Setup(nodeConfig); err != nil {
+				return err
+			}
+			log.Info("Set up system config aspect", nameField)
+		}
 		log.Info("Configuring daemons...")
 		for _, daemon := range daemons {
 			if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
