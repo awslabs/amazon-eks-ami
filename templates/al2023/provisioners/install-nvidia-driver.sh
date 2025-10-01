@@ -57,8 +57,8 @@ fi
 ################################################################################
 ### Install drivers ############################################################
 ################################################################################
-sudo mv ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
-sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
+sudo mv --context ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
+sudo mv --context ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
@@ -110,7 +110,7 @@ function archive-open-kmods() {
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
   sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+  sudo mv --context /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
   sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
   sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
   sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
@@ -119,7 +119,7 @@ function archive-open-kmods() {
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
-  sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
+  sudo mv --context "${SUPPORTED_DEVICE_FILE}" /etc/eks/
 
   sudo kmod-util remove nvidia-open
 
@@ -142,36 +142,36 @@ function archive-grid-kmod() {
   fi
 
   echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://ec2-linux-nvidia-drivers/ | \
-      grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_MAJOR_VERSION}" | \
-      sort -k1,2 | \
-      tail -1 | \
-      awk '{print $4}')
-  
+  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://ec2-linux-nvidia-drivers/ \
+    | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_MAJOR_VERSION}" \
+    | sort -k1,2 \
+    | tail -1 \
+    | awk '{print $4}')
+
   if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
-      echo "ERROR: No GRID driver found for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-      return 1
+    echo "ERROR: No GRID driver found for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+    return 1
   fi
 
   echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
   local GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
-  
+
   echo "Downloading GRID driver runfile..."
   aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   chmod +x "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   echo "Extracting NVIDIA GRID driver runfile..."
   sudo "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
-  
+
   pushd "${EXTRACT_DIR}"
 
   # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique archive names
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kernel-open/dkms.conf
   echo "Installing NVIDIA GRID kernel modules..."
   sudo ./nvidia-installer \
-      --dkms \
-      --kernel-modules-type open \
-      --silent || sudo cat /var/log/nvidia-installer.log
-  
+    --dkms \
+    --kernel-module-type open \
+    --silent || sudo cat /var/log/nvidia-installer.log
+
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
@@ -215,9 +215,9 @@ fi
 ### Prepare for nvidia init ####################################################
 ################################################################################
 
-sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
-sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
-sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
+sudo mv --context ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
+sudo mv --context ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
+sudo mv --context ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
 sudo systemctl daemon-reload
 sudo systemctl enable nvidia-kmod-load.service
 sudo systemctl enable set-nvidia-clocks.service
