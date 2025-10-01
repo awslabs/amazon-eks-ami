@@ -138,20 +138,51 @@ function archive-open-kmods() {
 
 function archive-grid-kmod() {
   local MACHINE
+  local EXTRACT_DIR="${WORKING_DIR}/NVIDIA-GRID-extract"
+  local NVIDIA_GRID_RUNFILE_NAME=""
   MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi
-  echo "Archiving GRID kmods"
-  NVIDIA_OPEN_VERSION=$(ls -d /usr/src/nvidia-open-grid-* | sed 's/.*nvidia-open-grid-//')
-  sudo sed -i 's/PACKAGE_NAME="nvidia-open"/PACKAGE_NAME="nvidia-open-grid"/g' /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo sed -i "s/MAKE\[0\]=\"'make'/MAKE\[0\]=\"'make' GRID_BUILD=1 GRID_BUILD_CSP=1 /g" /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo dkms build -m nvidia-open-grid -v $NVIDIA_OPEN_VERSION
-  sudo dkms install nvidia-open-grid/$NVIDIA_OPEN_VERSION
 
+  echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://ec2-linux-nvidia-drivers/ | \
+      grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_MAJOR_VERSION}" | \
+      sort -k1,2 | \
+      tail -1 | \
+      awk '{print $4}')
+  
+  if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
+      echo "ERROR: No GRID driver found for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+      return 1
+  fi
+
+  echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
+  local GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
+  
+  echo "Downloading GRID driver runfile..."
+  aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  chmod +x "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  echo "Extracting NVIDIA GRID driver runfile..."
+  sudo "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
+  
+  pushd "${EXTRACT_DIR}"
+
+  # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique archive names
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kenel-open/dkms.conf
+  echo "Installing NVIDIA GRID kernel modules..."
+  sudo ./nvidia-installer \
+      --dkms \
+      --kernel-modules-type open \
+      --silent || sudo cat /var/log/nvidia-installer.log
+  
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
+  popd
+  # Clean up downloaded runfiles
+  sudo rm -rf "${EXTRACT_DIR}"
+  sudo rm "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
 }
 
 function archive-proprietary-kmod() {
