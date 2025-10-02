@@ -157,16 +157,16 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 		},
 		{
 			// expression cannot evaluate as negative
-			expression:          "- max_pods",
-			standardMaxPods:     17,
+			expression:          "max_pods - 2",
+			standardMaxPods:     1,
 			expectErr:           true,
-			expectedErrContents: fmt.Sprintf("max pods value -17 from custom expression evaluation is invalid: value must be a positive integer less than %d", math.MaxInt32),
+			expectedErrContents: fmt.Sprintf("max pods value -1 from custom expression evaluation is invalid: value must be a positive integer less than %d", math.MaxInt32),
 		},
 		{
 			// cannot evaluate a boolean as the max pods value
 			expression:          "true",
 			expectErr:           true,
-			expectedErrContents: "could not interpret result",
+			expectedErrContents: "could not interpret result \"true\" from evaluation of custom max pods expression as an integer: type conversion error from 'bool' to 'int'",
 		},
 	}
 	for _, test := range tests {
@@ -290,9 +290,7 @@ func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
 	}
-	cachedInfoReader := bytes.NewReader(cachedInstanceInfoBytes)
-	s := bufio.NewScanner(cachedInfoReader)
-	for s.Scan() {
+	for s := bufio.NewScanner(bytes.NewReader(cachedInstanceInfoBytes)); s.Scan(); {
 		var instanceInfo util.InstanceInfo
 		if err := json.Unmarshal(s.Bytes(), &instanceInfo); err != nil {
 			assert.NoError(t, err)

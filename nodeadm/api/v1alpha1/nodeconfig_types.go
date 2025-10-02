@@ -71,7 +71,8 @@ type KubeletOptions struct {
 
 	// MaxPodsExpression is a CEL expression used to compute a max pods value for
 	// the kubelet configuration. Any MaxPods value set in Config takes precedence
-	// over the result of this expression.
+	// over the result of this expression. If the expression is successfully evaluated,
+	// kubeReserved will always be calculated on its result.
 	MaxPodsExpression string `json:"maxPodsExpression,omitempty"`
 }
 

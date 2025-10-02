@@ -86,7 +86,7 @@ _Appears in:_
 | --- | --- |
 | `config` _object (keys:string, values:[RawExtension](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg))_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/)<br />that will be merged with the defaults. |
 | `flags` _string array_ | Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).<br />that will be appended to the defaults. |
-| `maxPodsExpression` _string_ | MaxPodsExpression is a CEL expression used to compute a max pods value for<br />the kubelet configuration. Any MaxPods value set in Config takes precedence<br />over the result of this expression. |
+| `maxPodsExpression` _string_ | MaxPodsExpression is a CEL expression used to compute a max pods value for<br />the kubelet configuration. Any MaxPods value set in Config takes precedence<br />over the result of this expression. If the expression is successfully evaluated,<br />kubeReserved will always be calculated on its result. |
 
 #### LocalStorageOptions
 

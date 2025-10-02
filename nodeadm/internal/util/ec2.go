@@ -33,18 +33,22 @@ func (c *EC2Client) DescribeInstanceTypes(ctx context.Context, params *ec2.Descr
 
 func getInstanceInfoFromDescribeResponse(ec2Info types.InstanceTypeInfo) (InstanceInfo, error) {
 	instanceType := string(ec2Info.InstanceType)
-	defaultMaxENIs := int32(-1)
+	var defaultMaxENIs *int32
 	for _, networkCard := range ec2Info.NetworkInfo.NetworkCards {
 		if aws.ToInt32(networkCard.NetworkCardIndex) == aws.ToInt32(ec2Info.NetworkInfo.DefaultNetworkCardIndex) {
-			defaultMaxENIs = aws.ToInt32(networkCard.MaximumNetworkInterfaces)
+			defaultMaxENIs = networkCard.MaximumNetworkInterfaces
+			break
 		}
 	}
-	if defaultMaxENIs <= 0 {
-		return InstanceInfo{}, fmt.Errorf("failed to find a value or found a non-positive value for the maximum number of network interfaces on default network card: %d", defaultMaxENIs)
+	if defaultMaxENIs == nil {
+		return InstanceInfo{}, fmt.Errorf("failed to find maximum number of network interfaces on network card index %d for instance type %s", aws.ToInt32(ec2Info.NetworkInfo.DefaultNetworkCardIndex), instanceType)
+	}
+	if aws.ToInt32(defaultMaxENIs) <= 0 {
+		return InstanceInfo{}, fmt.Errorf("found a non-positive value for the maximum number of interfaces supported on the network card index %d for instance type %s: %d", aws.ToInt32(ec2Info.NetworkInfo.DefaultNetworkCardIndex), instanceType, aws.ToInt32(defaultMaxENIs))
 	}
 	return InstanceInfo{
-		InstanceType:              string(instanceType),
-		DefaultMaxENIs:            int32(defaultMaxENIs),
+		InstanceType:              instanceType,
+		DefaultMaxENIs:            aws.ToInt32(defaultMaxENIs),
 		Ipv4AddressesPerInterface: ptr.ToInt32(ec2Info.NetworkInfo.Ipv4AddressesPerInterface),
 	}, nil
 }
@@ -100,7 +104,7 @@ func (c *EC2Client) DescribeRegions(ctx context.Context) ([]string, error) {
 
 	var regionNames []string
 	for _, region := range output.Regions {
-		regionNames = append(regionNames, *region.RegionName)
+		regionNames = append(regionNames, aws.ToString(region.RegionName))
 	}
 	sort.Strings(regionNames)
 	return regionNames, nil
@@ -118,7 +122,7 @@ func addInstanceTypeInfoFromRegion(ctx context.Context, cfg aws.Config, region s
 		for _, instanceTypeResponse := range page.InstanceTypes {
 			instanceInfo, err := getInstanceInfoFromDescribeResponse(instanceTypeResponse)
 			if err != nil {
-				return fmt.Errorf("failed to extract instance info for %s in %s: %v", instanceTypeResponse.InstanceType, region, instanceInfo)
+				return fmt.Errorf("failed to extract instance info for instance type %s in region %s: %v", instanceTypeResponse.InstanceType, region, instanceInfo)
 			}
 			infoByInstanceType[string(instanceTypeResponse.InstanceType)] = instanceInfo
 		}
@@ -130,7 +134,7 @@ func addInstanceTypeSupplements(infoByInstanceType map[string]InstanceInfo) {
 	// This list is not intended to be expanded, it exists solely to help in the migration from the legacy
 	// eni-max-pods.txt file to the new JSON lines format. This list should only include all the instance
 	// types that existed in the text file but were not discovered by default.
-	// TODO: remove supplements as they become unnecessary, below log line is intended to help do so.
+	// TODO: remove supplements as they become unnecessary
 	supplementaryInfos := []InstanceInfo{
 		{
 			InstanceType:              "cr1.8xlarge",

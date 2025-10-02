@@ -51,7 +51,7 @@ func GetInstanceInfo(ctx context.Context, awsRegion string, instanceType string)
 	return util.GetInstanceInfo(ctx, ec2Client, instanceType)
 }
 
-// Calcaultes a max pods value based on the provided instanceInfo and customExpression.
+// CalcMaxPods calcaultes a max pods value based on the provided instanceInfo and customExpression.
 // If a custom expression is not set, the default behavior should align with AL2,
 // which essentially is:
 //
@@ -102,7 +102,7 @@ func evaluateCustomMaxPodsExpression(expression string, instanceInfo util.Instan
 		maxPodsVar:     standardMaxPods,
 	})
 	if castVal := rawVal.ConvertToType(cel.IntType); types.IsError(castVal) {
-		return -1, fmt.Errorf("could not interpret result %q from evaluation of custom max pods expression as an integer: %w", rawVal.Value(), err)
+		return -1, fmt.Errorf("could not interpret result \"%v\" from evaluation of custom max pods expression as an integer: %v", rawVal.Value(), castVal.Value())
 	} else if int64Value, castOk := castVal.Value().(int64); !castOk {
 		return -1, fmt.Errorf("could not cast %v from evaluation of custom max pods expression to an integer", int64Value)
 	} else if int64Value > math.MaxInt32 || int64Value <= 0 {

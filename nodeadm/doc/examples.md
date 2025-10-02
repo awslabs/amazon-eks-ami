@@ -162,8 +162,8 @@ spec:
 ## Defining a Max Pods Expression
 
 Under certain circumstances, the desired max pods value for a given node or instance type can diverge from the
-defaults calculated. Since the use of a static `NodeConfig` is encouraged as the input source for nodeadm, nodeadm
-accepts a `maxPodsExpression`, to determine the final `maxPods` value passed to kubelet. This string is interpreted
+default calculation. Since the use of a static `NodeConfig` is encouraged as the input source for nodeadm, nodeadm
+accepts a `maxPodsExpression` to determine the final `maxPods` value passed to kubelet. This string is interpreted
 as a [CEL](https://cel.dev/overview/cel-overview) expression with three variables set in the environment:
 
 * `default_enis` - the maximum number of network interfaces attachable on the default network card
@@ -174,12 +174,12 @@ as a [CEL](https://cel.dev/overview/cel-overview) expression with three variable
 
 Some common use cases:
 
-1. Offset the final max pods value to account for known host networking pods
+1. Offset the final `maxPods` value to account for known host networking pods
    * e.g. `max_pods + 2` to allow two additional pods
-2. Limit the final `maxPods` value to some set value
+2. Limit the final `maxPods` value to a fixed value
    * e.g. `max_pods < 30 ? max_pods : 30`
 3. Limit the number of ENIs that can be used for pods
-   * e.g. `((default_enis - 2) * (ips_per_eni - 1)) + 2` to reserve two ENIs
+   * e.g. `((default_enis - 3) * (ips_per_eni - 1)) + 2` to reserve three ENIs
    * For instances utilizing the [AWS VPC CNI's Custom Networking](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html) feature, reserving a single ENI may be necessary
 
 ```yaml
@@ -191,4 +191,5 @@ spec:
   kubelet:
     maxPodsExpression: "((default_enis - 1) * (ips_per_eni - 1)) + 2"
 ```
-⚠️ **Note**: Values set for `maxPods` in the `kubelet` config will take precedence over the result of the `maxPodsExpression`
+⚠️ **Note**: Values set for `maxPods` in the `kubelet` config will take precedence over the result of the `maxPodsExpression`. `kubeReserved` will be calculated using the result of the expression or
+the internally calculated max pods value, if the expression cannot be evaluated.

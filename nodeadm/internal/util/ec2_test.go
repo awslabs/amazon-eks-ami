@@ -50,6 +50,7 @@ func TestGetInstanceInfo(t *testing.T) {
 							DefaultNetworkCardIndex: aws.Int32(0),
 							NetworkCards: []types.NetworkCardInfo{
 								{
+									NetworkCardIndex:         aws.Int32(0),
 									MaximumNetworkInterfaces: aws.Int32(3),
 								},
 							},
@@ -60,6 +61,85 @@ func TestGetInstanceInfo(t *testing.T) {
 			},
 			mockError:     nil,
 			expectedError: nil,
+		},
+		{
+			instanceType: "t3.medium",
+			expectedResult: ec2util.InstanceInfo{
+				InstanceType:              "t3.medium",
+				DefaultMaxENIs:            2,
+				Ipv4AddressesPerInterface: 6,
+			},
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(1),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(1),
+									MaximumNetworkInterfaces: aws.Int32(2),
+								},
+								{
+									NetworkCardIndex:         aws.Int32(0),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: nil,
+		},
+		{
+			instanceType: "t3.medium",
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(0),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(1),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+								{
+									NetworkCardIndex:         aws.Int32(2),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: fmt.Errorf("failed to find maximum number of network interfaces on network card index 0 for instance type t3.medium"),
+		},
+		{
+			instanceType: "t3.medium",
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(0),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(0),
+									MaximumNetworkInterfaces: aws.Int32(0),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: fmt.Errorf("found a non-positive value for the maximum number of interfaces supported on the network card index 0 for instance type t3.medium: 0"),
 		},
 		{
 			instanceType:   "t3.medium",
