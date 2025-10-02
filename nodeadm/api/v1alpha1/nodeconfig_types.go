@@ -85,7 +85,13 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
 }
+
+// EnvironmentOptions configures environment variables for the system and systemd services.
+// The key `default` is reserved for configuring the environment across all services on the instance
+// The key can be set to a systemd service name to configure environment only for a particular service.
+type EnvironmentOptions map[string]map[string]string
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
 // are used when available.

@@ -97,6 +97,16 @@ spec:
                 description: InstanceOptions determines how the node's operating system
                   and devices are configured.
                 properties:
+                  environment:
+                    additionalProperties:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    description: |-
+                      EnvironmentOptions configures environment variables for the system and systemd services.
+                      The key `default` is reserved for configuring the environment across all services on the instance
+                      The key can be set to a systemd service name to configure environment only for a particular service.
+                    type: object
                   localStorage:
                     description: |-
                       LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)

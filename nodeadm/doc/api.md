@@ -52,6 +52,17 @@ _Appears in:_
 .Validation:
 - Enum: [Containerd PodLogs]
 
+#### EnvironmentOptions
+
+_Underlying type:_ _object_
+
+EnvironmentOptions configures environment variables for the system and systemd services.
+The key `default` is reserved for configuring the environment across all services on the instance
+The key can be set to a systemd service name to configure environment only for a particular service.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
 #### Feature
 
 _Underlying type:_ _string_
@@ -74,6 +85,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+| `environment` _[EnvironmentOptions](#environmentoptions)_ |  |
 
 #### KubeletOptions
 

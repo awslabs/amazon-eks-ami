@@ -94,7 +94,10 @@ const (
 
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
 }
+
+type EnvironmentOptions map[string]map[string]string
 
 type LocalStorageOptions struct {
 	Strategy       LocalStorageStrategy `json:"strategy,omitempty"`
