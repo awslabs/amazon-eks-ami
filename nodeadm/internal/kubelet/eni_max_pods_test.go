@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -16,41 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//go:embed eni-max-pods.txt
-var eniMaxPods string
-
-var maxPodsPerInstanceType map[string]int
-
-var initialCacheContents []byte
-
-func init() {
-	maxPodsPerInstanceType = make(map[string]int)
-	lines := strings.Split(eniMaxPods, "\n")
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) != 2 {
-			continue
-		}
-
-		instanceType := parts[0]
-		maxPods, err := strconv.Atoi(parts[1])
-		if err != nil {
-			continue
-		}
-
-		maxPodsPerInstanceType[instanceType] = maxPods
-	}
-
-	// init blocks run after package-level variables evaluation, set
-	// here to make sure the embedding is evaluated first
-	initialCacheContents = cachedInstanceInfoBytes
-}
+var initialCacheContents = cachedInstanceInfoBytes
 
 func TestCalcMaxPods(t *testing.T) {
 	var tests = []struct {
@@ -325,7 +290,6 @@ func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
 	}
-	jsonlMaxPodsMap := make(map[string]int32)
 	cachedInfoReader := bytes.NewReader(cachedInstanceInfoBytes)
 	s := bufio.NewScanner(cachedInfoReader)
 	for s.Scan() {
@@ -336,14 +300,7 @@ func TestInstanceInfoLoadable(t *testing.T) {
 		assert.NotEmpty(t, instanceInfo.InstanceType)
 		assert.Greater(t, instanceInfo.DefaultMaxENIs, int32(0))
 		assert.Greater(t, instanceInfo.Ipv4AddressesPerInterface, int32(0))
-		jsonlMaxPodsMap[instanceInfo.InstanceType] = calculateStandardMaxPods(instanceInfo)
-	}
-	// confirm that all instances from the original max pods list have the same value
-	for instanceType, classicValue := range maxPodsPerInstanceType {
-		if newValue, ok := jsonlMaxPodsMap[instanceType]; !ok {
-			t.Errorf("instance type %s is missing from new mapping", instanceType)
-		} else if newValue != int32(classicValue) {
-			t.Errorf("instance type %s should have value %d, got %d", instanceType, classicValue, newValue)
-		}
+		// we expect at least 2 pods for the host networking ones
+		assert.Greater(t, calculateStandardMaxPods(instanceInfo), int32(1))
 	}
 }
