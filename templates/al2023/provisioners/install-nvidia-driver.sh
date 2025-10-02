@@ -154,7 +154,8 @@ function archive-grid-kmod() {
   fi
 
   echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
-  local GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
+  local GRID_RUNFILE_LOCAL_NAME
+  GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
 
   echo "Downloading GRID driver runfile..."
   aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
