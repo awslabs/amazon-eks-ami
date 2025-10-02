@@ -18,7 +18,7 @@ import (
 
 const (
 	instanceEnvironmentAspectName = "instance-environment"
-	nodeamdEnvironmentAspectName  = "nodeadm-environment"
+	nodeadmEnvironmentAspectName  = "nodeadm-environment"
 	systemdEnvironmentConfPath    = "/etc/systemd/system.conf.d/environment.conf"
 	serviceDropinPathBase         = "/etc/systemd/system"
 )
@@ -48,7 +48,7 @@ type nodeadmEnvironmentAspect struct{}
 type instanceEnvironmentAspect struct{}
 
 func (a *nodeadmEnvironmentAspect) Name() string {
-	return nodeamdEnvironmentAspectName
+	return nodeadmEnvironmentAspectName
 }
 
 func (a *nodeadmEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
@@ -85,31 +85,36 @@ func (a *instanceEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
 func (a *instanceEnvironmentAspect) configureInstanceEnvironment(envOpts api.EnvironmentOptions) error {
 
 	zap.L().Info("All envOpts: ", zap.Any("=", envOpts))
+	configWritten := false
 	for serviceName, envVars := range envOpts {
-		if len(envVars) > 0 {
-			if serviceName == "default" {
-				// Configure systemd system.conf.d for all services
-				// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
-				// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
-				// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
-				// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
-				if err := a.writeSystemdEnvironmentConfig(envOpts["default"]); err != nil {
-					return fmt.Errorf("failed to write systemd environment config: %w", err)
-				}
-			} else {
-				// Create a dropin config for all the services
-				dropinPath := fmt.Sprintf("%s/%s.service.d/environment.conf", serviceDropinPathBase, serviceName)
-				if err := a.writeServiceDropinConfig(serviceName, dropinPath, envVars); err != nil {
-					return fmt.Errorf("failed to write %s environment config: %w", serviceName, err)
-				}
+		if len(envVars) == 0 {
+			continue
+		}
+		configWritten = true
+		if serviceName == "default" {
+			// Configure systemd system.conf.d for all services
+			// Nodeadm will use the lowest precedence directive i.e. DefaultEnvironment= to configure environment
+			// Note that EnvironmentFile= and Environment= directives will take precedence over DefaultEnvironment=.
+			// Reference: systemd.exec(5) and systemd-system.conf(5) man pages
+			// https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment
+			if err := a.writeSystemdEnvironmentConfig(envOpts["default"]); err != nil {
+				return fmt.Errorf("failed to write systemd environment config: %w", err)
+			}
+		} else {
+			// Create a dropin config for all the services
+			dropinPath := fmt.Sprintf("%s/%s.service.d/environment.conf", serviceDropinPathBase, serviceName)
+			if err := a.writeServiceDropinConfig(serviceName, dropinPath, envVars); err != nil {
+				return fmt.Errorf("failed to write %s environment config: %w", serviceName, err)
 			}
 		}
 	}
 
-	// Reload systemd configuration once after all config files are written
-	zap.L().Info("Reloading systemd configuration")
-	if output, err := exec.Command("systemctl", "daemon-reload").CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to reload systemd configuration: %w, output: %s", err, string(output))
+	// Reload systemd configuration if any config files are written
+	if configWritten {
+		zap.L().Info("Reloading systemd configuration")
+		if output, err := exec.Command("systemctl", "daemon-reload").CombinedOutput(); err != nil {
+			return fmt.Errorf("failed to reload systemd configuration: %w, output: %s", err, string(output))
+		}
 	}
 
 	return nil
@@ -118,7 +123,10 @@ func (a *instanceEnvironmentAspect) configureInstanceEnvironment(envOpts api.Env
 func (a *instanceEnvironmentAspect) writeSystemdEnvironmentConfig(envVars map[string]string) error {
 	zap.L().Info("Writing environment variables to systemd system.conf.d", zap.Int("count", len(envVars)))
 
-	content := a.generateEnvironmentConfig(envVars, systemdConfigTemplate)
+	content, err := a.generateEnvironmentConfig(envVars, systemdConfigTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to generate systemd environment config: %w", err)
+	}
 
 	if err := util.WriteFileWithDir(systemdEnvironmentConfPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write systemd environment config: %w", err)
@@ -133,7 +141,10 @@ func (a *instanceEnvironmentAspect) writeServiceDropinConfig(serviceName, dropin
 		zap.String("path", dropinPath),
 		zap.Int("count", len(envVars)))
 
-	content := a.generateEnvironmentConfig(envVars, serviceDropinConfigTemplate)
+	content, err := a.generateEnvironmentConfig(envVars, serviceDropinConfigTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to generate %s service environment config: %w", serviceName, err)
+	}
 
 	if err := util.WriteFileWithDir(dropinPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write service drop-in config: %w", err)
@@ -142,7 +153,7 @@ func (a *instanceEnvironmentAspect) writeServiceDropinConfig(serviceName, dropin
 	return nil
 }
 
-func (c *instanceEnvironmentAspect) generateEnvironmentConfig(envVars map[string]string, templateStr string) string {
+func (c *instanceEnvironmentAspect) generateEnvironmentConfig(envVars map[string]string, templateStr string) (string, error) {
 	// sort keys to generate a deterministic config output
 	keys := make([]string, 0, len(envVars))
 	for k := range envVars {
@@ -158,11 +169,10 @@ func (c *instanceEnvironmentAspect) generateEnvironmentConfig(envVars map[string
 	tmpl := template.Must(template.New("envConfig").Funcs(templateFuncs).Parse(templateStr))
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, configData); err != nil {
-		zap.L().Error("Failed to execute environment config template", zap.Error(err))
-		return ""
+		return "", fmt.Errorf("failed to execute environment config template: %w", err)
 	}
 
-	return buf.String()
+	return buf.String(), nil
 }
 
 func escapeSystemdValue(value string) string {

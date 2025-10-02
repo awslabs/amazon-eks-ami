@@ -104,10 +104,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		system.NewInstanceEnvironmentAspect(),
 	}
 
-	runAspects := []system.SystemAspect{
-		system.NewLocalDiskAspect(),
-	}
-
 	daemons := []daemon.Daemon{
 		containerd.NewContainerdDaemon(daemonManager, system.SysfsResources{}),
 		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
@@ -136,6 +132,10 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			}
 			log.Info("Configured daemon", nameField)
 		}
+	}
+
+	runAspects := []system.SystemAspect{
+		system.NewLocalDiskAspect(),
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
