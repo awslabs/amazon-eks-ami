@@ -208,14 +208,6 @@ function archive-grid-kmod() {
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
 
-  # Uninstall the GRID driver userspace components since we only needed to archive the kernel modules
-  # This leaves a clean state for the open driver installation to handle userspace components
-  sudo ./nvidia-installer --uninstall --silent || {
-    echo "ERROR: Failed to uninstall GRID driver userspace components"
-    sudo cat /var/log/nvidia-installer.log
-    exit 1
-  }
-
   popd
   # Clean up downloaded runfiles
   sudo rm -rf "${EXTRACT_DIR}"
