@@ -23,6 +23,12 @@ jobs:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
           path: amazon-eks-ami/
+        run: |
+          #!/usr/bin/env bash
+          set -o errexit
+          cd amazon-eks-ami/nodeadm
+          make generate-instance-info
+      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # 7.0.8
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
         with:
           repository: aws/amazon-vpc-cni-k8s
@@ -34,7 +40,6 @@ jobs:
           cd amazon-vpc-cni-k8s/
           make generate-limits
           cp misc/eni-max-pods.txt ../amazon-eks-ami/templates/shared/runtime/eni-max-pods.txt
-          cp misc/eni-max-pods.txt ../amazon-eks-ami/nodeadm/internal/kubelet/eni-max-pods.txt
       - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # 7.0.8
         with:
           branch: update-eni-max-pods

@@ -68,6 +68,12 @@ type KubeletOptions struct {
 	// Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
 	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
+
+	// MaxPodsExpression is a CEL expression used to compute a max pods value for
+	// the kubelet configuration. Any MaxPods value set in Config takes precedence
+	// over the result of this expression. If the expression is successfully evaluated,
+	// kubeReserved will always be calculated on its result.
+	MaxPodsExpression string `json:"maxPodsExpression,omitempty"`
 }
 
 // ContainerdOptions are additional parameters passed to `containerd`.
