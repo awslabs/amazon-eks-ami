@@ -64,8 +64,8 @@ fi
 ################################################################################
 ### Install drivers ############################################################
 ################################################################################
-sudo mv --context ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
-sudo mv --context ${WORKING_DIR}/gpu/kmod-util /usr/bin/
+sudo mv ${WORKING_DIR}/gpu/gpu-ami-util /usr/bin/
+sudo mv ${WORKING_DIR}/gpu/kmod-util /usr/bin/
 
 sudo mkdir -p /etc/dkms
 echo "MAKE[0]=\"'make' -j$(grep -c processor /proc/cpuinfo) module\"" | sudo tee /etc/dkms/nvidia.conf
@@ -105,7 +105,7 @@ function archive-open-kmods() {
 
   if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
     echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. The archive-grid-kmod step must succeed."
-    return 1
+    exit 1
   fi
 
   if is-isolated-partition; then
@@ -120,18 +120,19 @@ function archive-open-kmods() {
 
   # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
   # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  local NVIDIA_OPEN_VERSION
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
 
   # Sanity check to have consistent NVIDIA driver versions
   if [[ "$NVIDIA_OPEN_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
     echo "ERROR: NVIDIA open driver version ($NVIDIA_OPEN_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
     echo "All NVIDIA drivers must be on the same version."
-    return 1
+    exit 1
   fi
 
   sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo mv --context /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
+  sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
   sudo dkms add -m nvidia-open -v $NVIDIA_OPEN_VERSION
   sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
   sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
@@ -140,7 +141,7 @@ function archive-open-kmods() {
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
-  sudo mv --context "${SUPPORTED_DEVICE_FILE}" /etc/eks/
+  sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
 
   sudo kmod-util remove nvidia-open
 
@@ -171,7 +172,7 @@ function archive-grid-kmod() {
 
   if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
     echo "ERROR: No GRID driver found for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-    return 1
+    exit 1
   fi
 
   echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
@@ -182,7 +183,7 @@ function archive-grid-kmod() {
 
   if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
     echo "ERROR: Could not extract full version from GRID runfile name: ${GRID_RUNFILE_LOCAL_NAME}"
-    return 1
+    exit 1
   fi
 
   echo "Setting NVIDIA driver full version to: ${NVIDIA_DRIVER_FULL_VERSION} (from GRID driver)"
@@ -195,7 +196,7 @@ function archive-grid-kmod() {
 
   pushd "${EXTRACT_DIR}"
 
-  # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique archive names
+  # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique dkms archive names
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kernel-open/dkms.conf
   echo "Installing NVIDIA GRID kernel modules..."
   sudo ./nvidia-installer \
@@ -212,7 +213,7 @@ function archive-grid-kmod() {
   sudo ./nvidia-installer --uninstall --silent || {
     echo "ERROR: Failed to uninstall GRID driver userspace components"
     sudo cat /var/log/nvidia-installer.log
-    return 1
+    exit 1
   }
 
   popd
@@ -226,7 +227,7 @@ function archive-proprietary-kmod() {
 
   if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
     echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. GRID driver must be installed first."
-    return 1
+    exit 1
   fi
 
   if is-isolated-partition; then
@@ -235,12 +236,13 @@ function archive-proprietary-kmod() {
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
   fi
 
+  local NVIDIA_PROPRIETARY_VERSION
   NVIDIA_PROPRIETARY_VERSION=$(kmod-util module-version nvidia)
 
   if [[ "$NVIDIA_PROPRIETARY_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
     echo "ERROR: NVIDIA proprietary driver version ($NVIDIA_PROPRIETARY_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
     echo "All NVIDIA drivers must be on the same version. GRID driver determines the version."
-    return 1
+    exit 1
   fi
 
   sudo kmod-util archive nvidia
@@ -270,9 +272,9 @@ fi
 ### Prepare for nvidia init ####################################################
 ################################################################################
 
-sudo mv --context ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
-sudo mv --context ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
-sudo mv --context ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
+sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.sh /etc/eks/
+sudo mv ${WORKING_DIR}/gpu/nvidia-kmod-load.service /etc/systemd/system/nvidia-kmod-load.service
+sudo mv ${WORKING_DIR}/gpu/set-nvidia-clocks.service /etc/systemd/system/set-nvidia-clocks.service
 sudo systemctl daemon-reload
 sudo systemctl enable nvidia-kmod-load.service
 sudo systemctl enable set-nvidia-clocks.service
