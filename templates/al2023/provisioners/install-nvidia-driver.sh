@@ -122,7 +122,7 @@ function archive-open-kmods() {
   # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
 
-  # Sanity check to have consisten NVIDIA driver versions
+  # Sanity check to have consistent NVIDIA driver versions
   if [[ "$NVIDIA_OPEN_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
     echo "ERROR: NVIDIA open driver version ($NVIDIA_OPEN_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
     echo "All NVIDIA drivers must be on the same version."
@@ -206,7 +206,7 @@ function archive-grid-kmod() {
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
-  
+
   # Uninstall the GRID driver userspace components since we only needed to archive the kernel modules
   # This leaves a clean state for the open driver installation to handle userspace components
   sudo ./nvidia-installer --uninstall --silent || {
@@ -214,7 +214,7 @@ function archive-grid-kmod() {
     sudo cat /var/log/nvidia-installer.log
     return 1
   }
-  
+
   popd
   # Clean up downloaded runfiles
   sudo rm -rf "${EXTRACT_DIR}"
