@@ -24,6 +24,13 @@ function rpm_install() {
 
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
+# The AL2023 GPU AMI currently builds and archives the following nvidia kernel modules
+# in /var/lib/dkms-archive: nvidia, nvidia-open, nvidia-open-grid. To maintain the stability
+# of the AMI, we want to ensure that all three kernel modules (and also the userspace modules)
+# are on the same NVIDIA driver version. Currently, the script installs the NVIDIA GRID drivers
+# first and decides the full NVIDIA driver version that the AMI will adhere to
+NVIDIA_DRIVER_FULL_VERSION=""
+
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
@@ -95,6 +102,12 @@ fi
 
 function archive-open-kmods() {
   echo "Archiving open kmods"
+
+  if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
+    echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. The archive-grid-kmod step must succeed."
+    return 1
+  fi
+
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -108,6 +121,14 @@ function archive-open-kmods() {
   # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
   # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+
+  # Sanity check to have consisten NVIDIA driver versions
+  if [[ "$NVIDIA_OPEN_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+    echo "ERROR: NVIDIA open driver version ($NVIDIA_OPEN_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
+    echo "All NVIDIA drivers must be on the same version."
+    return 1
+  fi
+
   sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
   sudo mv --context /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
@@ -157,6 +178,15 @@ function archive-grid-kmod() {
   local GRID_RUNFILE_LOCAL_NAME
   GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
 
+  NVIDIA_DRIVER_FULL_VERSION=$(echo "${GRID_RUNFILE_LOCAL_NAME}" | sed -n 's/NVIDIA-Linux-x86_64-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-grid-aws\.run/\1/p')
+
+  if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+    echo "ERROR: Could not extract full version from GRID runfile name: ${GRID_RUNFILE_LOCAL_NAME}"
+    return 1
+  fi
+
+  echo "Setting NVIDIA driver full version to: ${NVIDIA_DRIVER_FULL_VERSION} (from GRID driver)"
+
   echo "Downloading GRID driver runfile..."
   aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   chmod +x "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
@@ -184,18 +214,33 @@ function archive-grid-kmod() {
 
 function archive-proprietary-kmod() {
   echo "Archiving proprietary kmods"
+
+  if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
+    echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. GRID driver must be installed first."
+    return 1
+  fi
+
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
     sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
   fi
+
+  NVIDIA_PROPRIETARY_VERSION=$(kmod-util module-version nvidia)
+
+  if [[ "$NVIDIA_PROPRIETARY_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+    echo "ERROR: NVIDIA proprietary driver version ($NVIDIA_PROPRIETARY_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
+    echo "All NVIDIA drivers must be on the same version. GRID driver determines the version."
+    return 1
+  fi
+
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
 }
 
-archive-open-kmods
 archive-grid-kmod
+archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
