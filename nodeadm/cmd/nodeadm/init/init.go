@@ -69,11 +69,11 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
 	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources), zap.String("configCache", c.configCache))
-	nodeConfig, configModified, err := c.resolveConfig(log, opts)
+	nodeConfig, isCached, isChanged, err := c.resolveConfig(log, opts)
 	if err != nil {
 		return err
 	}
-	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig), zap.Bool("configModified", configModified))
+	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	initAspects := []system.SystemAspect{
 		// This aspect enables nodeadm to respect environment variables that
@@ -87,10 +87,9 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		return err
 	}
 
-	// NOTE: we only need to enrich the config if we don't have a cache, or the
-	// specs are not identical to the previously cached record. this avoids
-	// needing network calls when using a purely-cached config.
-	if configModified {
+	// we don't need to enrich config when defaulting to a cache, since that is
+	// the only time we already have the NodeConfig .status details populated.
+	if !isCached {
 		log.Info("Enriching configuration..")
 		if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
 			return err
@@ -114,12 +113,17 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
 	}
 
-	// TODO: consider making this behavior a default-true feature gate. forcibly
-	// running the config-phase is potentially a breaking change, but we
-	// guarantee that we ONLY force if all the following are true:
-	//	1. the cached config was preset.
-	//  2. there was no valid config in the provider chain OR the specs between both fully-loaded configs differ.
-	if configModified || !slices.Contains(c.skipPhases, configPhase) {
+	// to handle edge cases where the cached config is stale (because the user
+	// added configuration in between two invocations of nodeadm) we forcibly
+	// re-run the the config phase to keep the system in sync.
+	//
+	// to make sure this is safe and mostly non-breaking, We ONLY enforce this
+	// when we detect all the following:
+	//  1. the caller is trying to use a cached config
+	//  2. the specs between a cached config and regular config differ
+	needsRecache := len(c.configCache) > 0 && isChanged
+
+	if needsRecache || !slices.Contains(c.skipPhases, configPhase) {
 		log.Info("Setting up system config aspects...")
 		configAspects := []system.SystemAspect{
 			system.NewInstanceEnvironmentAspect(),
@@ -160,7 +164,11 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 }
 
 // resolveConfig returns either the cached config or the provided config chain.
-func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, changed bool, err error) {
+//
+// `isCached` indicates whether the resolved config spec differs from a
+// successfully loaded cached config. it is false if the cached config cannot be
+// resolved.
+func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, isCached, isChanged bool, err error) {
 	var cachedConfig *api.NodeConfig
 	if len(c.configCache) > 0 {
 		config, err := loadCachedConfig(c.configCache)
@@ -173,27 +181,31 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *
 
 	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
 	if err != nil {
-		return nil, false, err
+		return nil, false, false, err
 	}
 	nodeConfig, err := provider.Provide()
 	// if the error is just that no config is provided, then attempt to use the
 	// cached config as a fallback. otherwise, treat this as a fatal error.
 	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
 		log.Info("Using cached config...")
-		return cachedConfig, false, nil
+		return cachedConfig, true, false, nil
 	} else if err != nil {
-		return nil, false, err
+		return nil, false, false, err
 	}
 
-	// if there was no cached config, then we assume there was no change.
-	// otherwise we need to use a deep equality between ONLY the .spec fields to
-	// determine whether the user performed any overrides between now and the
-	// last time config was run.
-	//
-	// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
-	configHasChanged := cachedConfig != nil && !reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec)
-
-	return nodeConfig, configHasChanged, nil
+	if cachedConfig != nil {
+		// if the cached and the provider config specs are the same, we'll just
+		// use the cached spec because it also has the internal NodeConfig
+		// .status information cached.
+		//
+		// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
+		if reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec) {
+			return cachedConfig, true, false, nil
+		}
+		return nodeConfig, false, true, nil
+	} else {
+		return nodeConfig, false, false, nil
+	}
 }
 
 // enrichConfig populates the internal .status portion of the NodeConfig, used
