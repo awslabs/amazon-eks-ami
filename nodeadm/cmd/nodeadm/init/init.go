@@ -75,9 +75,26 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig), zap.Bool("configModified", configModified))
 
-	log.Info("Enriching configuration..")
-	if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
+	initAspects := []system.SystemAspect{
+		// This aspect enables nodeadm to respect environment variables that
+		// could be vital for bootstrapping. For example, to enrich node config
+		// we might need to make EC2 API calls, which may need to pass through
+		// an HTTP(s) proxy.
+		system.NewNodeadmEnvironmentAspect(),
+	}
+	log.Info("Setting up system init aspects...")
+	if err := c.setupAspects(log, nodeConfig, initAspects); err != nil {
 		return err
+	}
+
+	// NOTE: we only need to enrich the config if we don't have a cache, or the
+	// specs are not identical to the previously cached record. this avoids
+	// needing network calls when using a purely-cached config.
+	if configModified {
+		log.Info("Enriching configuration..")
+		if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
+			return err
+		}
 	}
 
 	log.Info("Validating configuration..")
@@ -103,12 +120,19 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	//	1. the cached config was preset.
 	//  2. there was no valid config in the provider chain OR the specs between both fully-loaded configs differ.
 	if configModified || !slices.Contains(c.skipPhases, configPhase) {
+		log.Info("Setting up system config aspects...")
 		configAspects := []system.SystemAspect{
 			system.NewInstanceEnvironmentAspect(),
 		}
-		if err := c.configPhase(log, nodeConfig, daemons, configAspects); err != nil {
+		if err := c.setupAspects(log, nodeConfig, configAspects); err != nil {
 			return err
 		}
+
+		log.Info("Configuring daemons...")
+		if err := c.configureDaemons(log, nodeConfig, daemons); err != nil {
+			return err
+		}
+
 		// this is not fatal, so do not use a blocking error.
 		if err := saveCachedConfig(nodeConfig, c.configCache); err != nil {
 			log.Error("Failed to cache config", zap.String("configCache", c.configCache), zap.Error(err))
@@ -116,10 +140,16 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
+		log.Info("Setting up system run aspects...")
 		runAspects := []system.SystemAspect{
 			system.NewLocalDiskAspect(),
 		}
-		if err := c.runPhase(log, nodeConfig, daemons, runAspects); err != nil {
+		if err := c.setupAspects(log, nodeConfig, runAspects); err != nil {
+			return err
+		}
+
+		log.Info("Running daemons...")
+		if err := c.runDaemons(log, nodeConfig, daemons); err != nil {
 			return err
 		}
 	}
@@ -233,60 +263,53 @@ func saveCachedConfig(cfg *api.NodeConfig, path string) error {
 	return util.WriteFileWithDir(path, data, 0644)
 }
 
-func (c *initCmd) configPhase(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon, aspects []system.SystemAspect) error {
-	log.Info("Setting up system aspects...")
-	for _, aspect := range aspects {
-		nameField := zap.String("name", aspect.Name())
-		log.Info("Setting up system aspect..", nameField)
-		if err := aspect.Setup(cfg); err != nil {
-			return err
-		}
-		log.Info("Set up system aspect", nameField)
-	}
-	log.Info("Configuring daemons...")
+func (c *initCmd) configureDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
 	for _, daemon := range daemons {
 		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 			continue
 		}
-		nameField := zap.String("name", daemon.Name())
+		log := log.With(zap.String("name", daemon.Name()))
 
-		log.Info("Configuring daemon...", nameField)
+		log.Info("Configuring daemon...")
 		if err := daemon.Configure(cfg); err != nil {
 			return err
 		}
-		log.Info("Configured daemon", nameField)
+		log.Info("Configured daemon")
 	}
 	return nil
 }
 
-func (c *initCmd) runPhase(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon, aspects []system.SystemAspect) error {
-	log.Info("Setting up system aspects...")
-	for _, aspect := range aspects {
-		nameField := zap.String("name", aspect.Name())
-		log.Info("Setting up system aspect..", nameField)
-		if err := aspect.Setup(cfg); err != nil {
-			return err
-		}
-		log.Info("Set up system aspect", nameField)
-	}
-	log.Info("Running daemons...")
+func (c *initCmd) runDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
 	for _, daemon := range daemons {
 		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 			continue
 		}
-		nameField := zap.String("name", daemon.Name())
+		log := log.With(zap.String("name", daemon.Name()))
 
-		log.Info("Ensuring daemon is running..", nameField)
+		log.Info("Ensuring daemon is running..")
 		if err := daemon.EnsureRunning(); err != nil {
 			return err
 		}
-		log.Info("Daemon is running", nameField)
+		log.Info("Daemon is running")
 
-		log.Info("Running post-launch tasks..", nameField)
+		log.Info("Running post-launch tasks..")
 		if err := daemon.PostLaunch(cfg); err != nil {
 			return err
 		}
-		log.Info("Finished post-launch tasks", nameField)
+		log.Info("Finished post-launch tasks")
+	}
+	return nil
+}
+
+func (c *initCmd) setupAspects(log *zap.Logger, cfg *api.NodeConfig, aspects []system.SystemAspect) error {
+	for _, aspect := range aspects {
+		log := log.With(zap.String("name", aspect.Name()))
+
+		log.Info("Setting up system aspect..")
+		if err := aspect.Setup(cfg); err != nil {
+			return err
+		}
+		log.Info("Set up system aspect")
 	}
 	return nil
 }
