@@ -10,6 +10,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
+var (
+	ErrNodeConfigDecodingFailure = fmt.Errorf("failed to decode node config")
+)
+
 // DecodeNodeConfig unmarshals the given data into an internal NodeConfig object.
 // The data may be JSON or YAML.
 func DecodeNodeConfig(data []byte, gvk *schema.GroupVersionKind) (*internalapi.NodeConfig, error) {
@@ -21,7 +25,7 @@ func DecodeNodeConfig(data []byte, gvk *schema.GroupVersionKind) (*internalapi.N
 	codecs := serializer.NewCodecFactory(scheme)
 	obj, gvk, err := codecs.UniversalDecoder().Decode(data, gvk, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w, %w", ErrNodeConfigDecodingFailure, err)
 	}
 	if gvk.Kind != api.KindNodeConfig {
 		return nil, fmt.Errorf("failed to decode %q (wrong Kind)", gvk.Kind)

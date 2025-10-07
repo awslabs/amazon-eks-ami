@@ -15,9 +15,7 @@ func BuildConfigProviderChain(rawConfigSourceURLs []string) (ConfigProvider, err
 		}
 		providers = append(providers, provider)
 	}
-	return &configProviderChain{
-		providers: providers,
-	}, nil
+	return NewConfigProviderChain(providers), nil
 }
 
 // BuildConfigProvider returns a ConfigProvider appropriate for the given source URL.
