@@ -4564,6 +4564,20 @@ const (
 	InstanceTypeI8ge48xlarge       InstanceType = "i8ge.48xlarge"
 	InstanceTypeI8geMetal24xl      InstanceType = "i8ge.metal-24xl"
 	InstanceTypeI8geMetal48xl      InstanceType = "i8ge.metal-48xl"
+	InstanceTypeMacM4Metal         InstanceType = "mac-m4.metal"
+	InstanceTypeMacM4proMetal      InstanceType = "mac-m4pro.metal"
+	InstanceTypeR8gnMedium         InstanceType = "r8gn.medium"
+	InstanceTypeR8gnLarge          InstanceType = "r8gn.large"
+	InstanceTypeR8gnXlarge         InstanceType = "r8gn.xlarge"
+	InstanceTypeR8gn2xlarge        InstanceType = "r8gn.2xlarge"
+	InstanceTypeR8gn4xlarge        InstanceType = "r8gn.4xlarge"
+	InstanceTypeR8gn8xlarge        InstanceType = "r8gn.8xlarge"
+	InstanceTypeR8gn12xlarge       InstanceType = "r8gn.12xlarge"
+	InstanceTypeR8gn16xlarge       InstanceType = "r8gn.16xlarge"
+	InstanceTypeR8gn24xlarge       InstanceType = "r8gn.24xlarge"
+	InstanceTypeR8gn48xlarge       InstanceType = "r8gn.48xlarge"
+	InstanceTypeR8gnMetal24xl      InstanceType = "r8gn.metal-24xl"
+	InstanceTypeR8gnMetal48xl      InstanceType = "r8gn.metal-48xl"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -5588,6 +5602,20 @@ func (InstanceType) Values() []InstanceType {
 		"i8ge.48xlarge",
 		"i8ge.metal-24xl",
 		"i8ge.metal-48xl",
+		"mac-m4.metal",
+		"mac-m4pro.metal",
+		"r8gn.medium",
+		"r8gn.large",
+		"r8gn.xlarge",
+		"r8gn.2xlarge",
+		"r8gn.4xlarge",
+		"r8gn.8xlarge",
+		"r8gn.12xlarge",
+		"r8gn.16xlarge",
+		"r8gn.24xlarge",
+		"r8gn.48xlarge",
+		"r8gn.metal-24xl",
+		"r8gn.metal-48xl",
 	}
 }
 

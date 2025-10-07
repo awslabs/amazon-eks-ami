@@ -3323,6 +3323,28 @@ type CreateVolumePermissionModifications struct {
 	noSmithyDocumentSerde
 }
 
+// The maximum age for allowed images.
+type CreationDateCondition struct {
+
+	// The maximum number of days that have elapsed since the image was created. For
+	// example, a value of 300 allows images that were created within the last 300
+	// days.
+	MaximumDaysSinceCreated *int32
+
+	noSmithyDocumentSerde
+}
+
+// The maximum age for allowed images.
+type CreationDateConditionRequest struct {
+
+	// The maximum number of days that have elapsed since the image was created. For
+	// example, a value of 300 allows images that were created within the last 300
+	// days.
+	MaximumDaysSinceCreated *int32
+
+	noSmithyDocumentSerde
+}
+
 // Describes the credit option for CPU usage of a T instance.
 type CreditSpecification struct {
 
@@ -3602,6 +3624,26 @@ type DeleteSnapshotReturnCode struct {
 
 	// The ID of the snapshot.
 	SnapshotId *string
+
+	noSmithyDocumentSerde
+}
+
+// The maximum period since deprecation for allowed images.
+type DeprecationTimeCondition struct {
+
+	// The maximum number of days that have elapsed since the image was deprecated.
+	// When set to 0 , no deprecated images are allowed.
+	MaximumDaysSinceDeprecated *int32
+
+	noSmithyDocumentSerde
+}
+
+// The maximum period since deprecation for allowed images.
+type DeprecationTimeConditionRequest struct {
+
+	// The maximum number of days that have elapsed since the image was deprecated.
+	// Set to 0 to exclude all deprecated images.
+	MaximumDaysSinceDeprecated *int32
 
 	noSmithyDocumentSerde
 }
@@ -4182,7 +4224,7 @@ type EbsBlockDevice struct {
 	//
 	// The following are the supported values for each volume type:
 	//
-	//   - gp3 : 3,000 - 16,000 IOPS
+	//   - gp3 : 3,000 - 80,000 IOPS
 	//
 	//   - io1 : 100 - 64,000 IOPS
 	//
@@ -4222,7 +4264,7 @@ type EbsBlockDevice struct {
 	//
 	// This parameter is valid only for gp3 volumes.
 	//
-	// Valid Range: Minimum value of 125. Maximum value of 1000.
+	// Valid Range: Minimum value of 125. Maximum value of 2,000.
 	Throughput *int32
 
 	// Specifies the Amazon EBS Provisioned Rate for Volume Initialization (volume
@@ -4260,7 +4302,9 @@ type EbsBlockDevice struct {
 	//
 	// The following are the supported sizes for each volume type:
 	//
-	//   - gp2 and gp3 : 1 - 16,384 GiB
+	//   - gp2 : 1 - 16,384 GiB
+	//
+	//   - gp3 : 1 - 65,536 GiB
 	//
 	//   - io1 : 4 - 16,384 GiB
 	//
@@ -5723,7 +5767,7 @@ type FleetEbsBlockDeviceRequest struct {
 	//
 	// The following are the supported values for each volume type:
 	//
-	//   - gp3 : 3,000 - 16,000 IOPS
+	//   - gp3 : 3,000 - 80,000 IOPS
 	//
 	//   - io1 : 100 - 64,000 IOPS
 	//
@@ -5756,7 +5800,7 @@ type FleetEbsBlockDeviceRequest struct {
 	//
 	// This parameter is valid only for gp3 volumes.
 	//
-	// Valid Range: Minimum value of 125. Maximum value of 1000.
+	// Valid Range: Minimum value of 125. Maximum value of 2,000.
 	Throughput *int32
 
 	// The size of the volume, in GiBs. You must specify either a snapshot ID or a
@@ -5765,7 +5809,9 @@ type FleetEbsBlockDeviceRequest struct {
 	//
 	// The following are the supported sizes for each volume type:
 	//
-	//   - gp2 and gp3 : 1 - 16,384 GiB
+	//   - gp2 : 1 - 16,384 GiB
+	//
+	//   - gp3 : 1 - 65,536 GiB
 	//
 	//   - io1 : 4 - 16,384 GiB
 	//
@@ -6996,67 +7042,139 @@ type Image struct {
 	noSmithyDocumentSerde
 }
 
-// The list of criteria that are evaluated to determine whch AMIs are discoverable
-// and usable in the account in the specified Amazon Web Services Region.
-// Currently, the only criteria that can be specified are AMI providers.
+// The criteria that are evaluated to determine which AMIs are discoverable and
+// usable in your account for the specified Amazon Web Services Region.
 //
-// Up to 10 imageCriteria objects can be specified, and up to a total of 200
-// values for all imageProviders . For more information, see [JSON configuration for the Allowed AMIs criteria] in the Amazon EC2
-// User Guide.
+// For more information, see [How Allowed AMIs works] in the Amazon EC2 User Guide.
 //
-// [JSON configuration for the Allowed AMIs criteria]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html#allowed-amis-json-configuration
+// [How Allowed AMIs works]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html#how-allowed-amis-works
 type ImageCriterion struct {
 
-	// A list of AMI providers whose AMIs are discoverable and useable in the account.
-	// Up to a total of 200 values can be specified.
+	// The maximum age for allowed images.
+	CreationDateCondition *CreationDateCondition
+
+	// The maximum period since deprecation for allowed images.
+	DeprecationTimeCondition *DeprecationTimeCondition
+
+	// The names of allowed images. Names can include wildcards ( ? and * ).
+	//
+	// Length: 1–128 characters. With ? , the minimum is 3 characters.
+	//
+	// Valid characters:
+	//
+	//   - Letters: A–Z, a–z
+	//
+	//   - Numbers: 0–9
+	//
+	//   - Special characters: ( ) [ ] . / - ' @ _ * ?
+	//
+	//   - Spaces
+	//
+	// Maximum: 50 values
+	ImageNames []string
+
+	// The image providers whose images are allowed.
 	//
 	// Possible values:
 	//
-	// amazon : Allow AMIs created by Amazon Web Services.
+	//   - amazon : Allow AMIs created by Amazon or verified providers.
 	//
-	// aws-marketplace : Allow AMIs created by verified providers in the Amazon Web
-	// Services Marketplace.
+	//   - aws-marketplace : Allow AMIs created by verified providers in the Amazon Web
+	//   Services Marketplace.
 	//
-	// aws-backup-vault : Allow AMIs created by Amazon Web Services Backup.
+	//   - aws-backup-vault : Allow AMIs created by Amazon Web Services Backup.
 	//
-	// 12-digit account ID: Allow AMIs created by this account. One or more account
-	// IDs can be specified.
+	//   - 12-digit account ID: Allow AMIs created by this account. One or more
+	//   account IDs can be specified.
 	//
-	// none : Allow AMIs created by your own account only.
+	//   - none : Allow AMIs created by your own account only.
+	//
+	// Maximum: 200 values
 	ImageProviders []string
+
+	// The Amazon Web Services Marketplace product codes for allowed images.
+	//
+	// Length: 1-25 characters
+	//
+	// Valid characters: Letters ( A–Z, a–z ) and numbers ( 0–9 )
+	//
+	// Maximum: 50 values
+	MarketplaceProductCodes []string
 
 	noSmithyDocumentSerde
 }
 
-// The list of criteria that are evaluated to determine whch AMIs are discoverable
-// and usable in the account in the specified Amazon Web Services Region.
-// Currently, the only criteria that can be specified are AMI providers.
+// The criteria that are evaluated to determine which AMIs are discoverable and
+// usable in your account for the specified Amazon Web Services Region.
 //
-// Up to 10 imageCriteria objects can be specified, and up to a total of 200
-// values for all imageProviders . For more information, see [JSON configuration for the Allowed AMIs criteria] in the Amazon EC2
-// User Guide.
+// The ImageCriteria can include up to:
 //
-// [JSON configuration for the Allowed AMIs criteria]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html#allowed-amis-json-configuration
+//   - 10 ImageCriterion
+//
+// Each ImageCriterion can include up to:
+//
+//   - 200 values for ImageProviders
+//
+//   - 50 values for ImageNames
+//
+//   - 50 values for MarketplaceProductCodes
+//
+// For more information, see [How Allowed AMIs works] in the Amazon EC2 User Guide.
+//
+// [How Allowed AMIs works]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html#how-allowed-amis-works
 type ImageCriterionRequest struct {
 
-	// A list of image providers whose AMIs are discoverable and useable in the
-	// account. Up to a total of 200 values can be specified.
+	// The maximum age for allowed images.
+	CreationDateCondition *CreationDateConditionRequest
+
+	// The maximum period since deprecation for allowed images.
+	DeprecationTimeCondition *DeprecationTimeConditionRequest
+
+	// The names of allowed images. Names can include wildcards ( ? and * ).
+	//
+	// Length: 1–128 characters. With ? , the minimum is 3 characters.
+	//
+	// Valid characters:
+	//
+	//   - Letters: A–Z, a–z
+	//
+	//   - Numbers: 0–9
+	//
+	//   - Special characters: ( ) [ ] . / - ' @ _ * ?
+	//
+	//   - Spaces
+	//
+	// Maximum: 50 values
+	ImageNames []string
+
+	// The image providers whose images are allowed.
 	//
 	// Possible values:
 	//
-	// amazon : Allow AMIs created by Amazon Web Services.
+	//   - amazon : Allow AMIs created by Amazon or verified providers.
 	//
-	// aws-marketplace : Allow AMIs created by verified providers in the Amazon Web
-	// Services Marketplace.
+	//   - aws-marketplace : Allow AMIs created by verified providers in the Amazon Web
+	//   Services Marketplace.
 	//
-	// aws-backup-vault : Allow AMIs created by Amazon Web Services Backup.
+	//   - aws-backup-vault : Allow AMIs created by Amazon Web Services Backup.
 	//
-	// 12-digit account ID: Allow AMIs created by this account. One or more account
-	// IDs can be specified.
+	//   - 12-digit account ID: Allow AMIs created by the specified accounts. One or
+	//   more account IDs can be specified.
 	//
-	// none : Allow AMIs created by your own account only. When none is specified, no
-	// other values can be specified.
+	//   - none : Allow AMIs created by your own account only. When none is specified,
+	//   no other values can be specified.
+	//
+	// Maximum: 200 values
 	ImageProviders []string
+
+	// The Amazon Web Services Marketplace product codes for allowed images.
+	//
+	// Length: 1-25 characters
+	//
+	// Valid characters: Letters ( A–Z, a–z ) and numbers ( 0–9 )
+	//
+	// Maximum: 50 values
+	MarketplaceProductCodes []string
 
 	noSmithyDocumentSerde
 }
@@ -11528,7 +11646,7 @@ type LaunchTemplateEbsBlockDeviceRequest struct {
 	//
 	// The following are the supported values for each volume type:
 	//
-	//   - gp3 : 3,000 - 16,000 IOPS
+	//   - gp3 : 3,000 - 80,000 IOPS
 	//
 	//   - io1 : 100 - 64,000 IOPS
 	//
@@ -11549,9 +11667,9 @@ type LaunchTemplateEbsBlockDeviceRequest struct {
 	// The ID of the snapshot.
 	SnapshotId *string
 
-	// The throughput to provision for a gp3 volume, with a maximum of 1,000 MiB/s.
+	// The throughput to provision for a gp3 volume, with a maximum of 2,000 MiB/s.
 	//
-	// Valid Range: Minimum value of 125. Maximum value of 1000.
+	// Valid Range: Minimum value of 125. Maximum value of 2,000.
 	Throughput *int32
 
 	// Specifies the Amazon EBS Provisioned Rate for Volume Initialization (volume
@@ -11583,7 +11701,9 @@ type LaunchTemplateEbsBlockDeviceRequest struct {
 	// The size of the volume, in GiBs. You must specify either a snapshot ID or a
 	// volume size. The following are the supported volumes sizes for each volume type:
 	//
-	//   - gp2 and gp3 : 1 - 16,384 GiB
+	//   - gp2 : 1 - 16,384 GiB
+	//
+	//   - gp3 : 1 - 65,536 GiB
 	//
 	//   - io1 : 4 - 16,384 GiB
 	//
@@ -11613,9 +11733,7 @@ type LaunchTemplateElasticInferenceAccelerator struct {
 	// This member is required.
 	Type *string
 
-	//  The number of elastic inference accelerators to attach to the instance.
-	//
-	// Default: 1
+	// The number of elastic inference accelerators to attach to the instance.
 	Count *int32
 
 	noSmithyDocumentSerde
@@ -11626,13 +11744,11 @@ type LaunchTemplateElasticInferenceAccelerator struct {
 // Describes an elastic inference accelerator.
 type LaunchTemplateElasticInferenceAcceleratorResponse struct {
 
-	//  The number of elastic inference accelerators to attach to the instance.
-	//
-	// Default: 1
+	// The number of elastic inference accelerators to attach to the instance.
 	Count *int32
 
-	//  The type of elastic inference accelerator. The possible values are
-	// eia1.medium, eia1.large, and eia1.xlarge.
+	// The type of elastic inference accelerator. The possible values are eia1.medium,
+	// eia1.large, and eia1.xlarge.
 	Type *string
 
 	noSmithyDocumentSerde
@@ -11815,8 +11931,6 @@ type LaunchTemplateInstanceMetadataOptions struct {
 
 	// The desired HTTP PUT response hop limit for instance metadata requests. The
 	// larger the number, the further instance metadata requests can travel.
-	//
-	// Default: 1
 	//
 	// Possible values: Integers from 1 to 64
 	HttpPutResponseHopLimit *int32
@@ -17060,6 +17174,8 @@ type Route struct {
 	//   - CreateRoute - The route was manually added to the route table.
 	//
 	//   - EnableVgwRoutePropagation - The route was propagated by route propagation.
+	//
+	//   - Advertisement - The route was created dynamically by Amazon VPC Route Server.
 	Origin RouteOrigin
 
 	// The state of the route. The blackhole state indicates that the route's target
