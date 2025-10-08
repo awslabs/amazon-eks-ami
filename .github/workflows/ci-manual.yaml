@@ -58,7 +58,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # 8.0.0
         with:
           script: |
             github.rest.issues.createComment({
@@ -90,7 +90,7 @@ jobs:
       - setup
       - ci
     steps:
-      - uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # 7.0.1
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # 8.0.0
         with:
           script: |
             const { data } = await github.rest.actions.listJobsForWorkflowRun({

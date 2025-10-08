@@ -18,31 +18,42 @@ type MockEC2Client struct {
 	mock.Mock
 }
 
+func (m *MockEC2Client) DescribeRegions(ctx context.Context) ([]string, error) {
+	panic("DescribeRegions is unimplemented")
+}
+
 func (m *MockEC2Client) DescribeInstanceTypes(ctx context.Context, params *ec2.DescribeInstanceTypesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceTypesOutput, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).(*ec2.DescribeInstanceTypesOutput), args.Error(1)
 }
 
-func TestGetEniInfoForInstanceType(t *testing.T) {
+func TestGetInstanceInfo(t *testing.T) {
 	tests := []struct {
 		instanceType   string
-		expectedResult ec2util.EniInfo
+		expectedResult ec2util.InstanceInfo
 		mockResponse   ec2.DescribeInstanceTypesOutput
 		mockError      error
 		expectedError  error
 	}{
 		{
 			instanceType: "t3.medium",
-			expectedResult: ec2util.EniInfo{
-				EniCount:        int32(3),
-				PodsPerEniCount: int32(6),
+			expectedResult: ec2util.InstanceInfo{
+				InstanceType:              "t3.medium",
+				DefaultMaxENIs:            3,
+				Ipv4AddressesPerInterface: 6,
 			},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{
 					{
 						InstanceType: "t3.medium",
 						NetworkInfo: &types.NetworkInfo{
-							MaximumNetworkInterfaces:  aws.Int32(3),
+							DefaultNetworkCardIndex: aws.Int32(0),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(0),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
 							Ipv4AddressesPerInterface: aws.Int32(6),
 						},
 					},
@@ -52,8 +63,87 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			instanceType: "t3.medium",
+			expectedResult: ec2util.InstanceInfo{
+				InstanceType:              "t3.medium",
+				DefaultMaxENIs:            2,
+				Ipv4AddressesPerInterface: 6,
+			},
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(1),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(1),
+									MaximumNetworkInterfaces: aws.Int32(2),
+								},
+								{
+									NetworkCardIndex:         aws.Int32(0),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: nil,
+		},
+		{
+			instanceType: "t3.medium",
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(0),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(1),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+								{
+									NetworkCardIndex:         aws.Int32(2),
+									MaximumNetworkInterfaces: aws.Int32(3),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: fmt.Errorf("failed to find maximum number of network interfaces on network card index 0 for instance type t3.medium"),
+		},
+		{
+			instanceType: "t3.medium",
+			mockResponse: ec2.DescribeInstanceTypesOutput{
+				InstanceTypes: []types.InstanceTypeInfo{
+					{
+						InstanceType: "t3.medium",
+						NetworkInfo: &types.NetworkInfo{
+							DefaultNetworkCardIndex: aws.Int32(0),
+							NetworkCards: []types.NetworkCardInfo{
+								{
+									NetworkCardIndex:         aws.Int32(0),
+									MaximumNetworkInterfaces: aws.Int32(0),
+								},
+							},
+							Ipv4AddressesPerInterface: aws.Int32(6),
+						},
+					},
+				},
+			},
+			mockError:     nil,
+			expectedError: fmt.Errorf("found a non-positive value for the maximum number of interfaces supported on the network card index 0 for instance type t3.medium: 0"),
+		},
+		{
 			instanceType:   "t3.medium",
-			expectedResult: ec2util.EniInfo{},
+			expectedResult: ec2util.InstanceInfo{},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{},
 			},
@@ -62,7 +152,7 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 		},
 		{
 			instanceType:   "mock-type.large",
-			expectedResult: ec2util.EniInfo{},
+			expectedResult: ec2util.InstanceInfo{},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{},
 			},
@@ -75,7 +165,7 @@ func TestGetEniInfoForInstanceType(t *testing.T) {
 		mockEC2 := &MockEC2Client{}
 		mockEC2.On("DescribeInstanceTypes", mock.Anything, mock.AnythingOfType("*ec2.DescribeInstanceTypesInput")).Return(&test.mockResponse, test.mockError)
 
-		result, err := ec2util.GetEniInfoForInstanceType(mockEC2, test.instanceType)
+		result, err := ec2util.GetInstanceInfo(context.Background(), mockEC2, test.instanceType)
 		assert.Equal(t, test.expectedError, err)
 		assert.Equal(t, test.expectedResult, result)
 	}

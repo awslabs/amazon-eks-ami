@@ -40,10 +40,13 @@ function runTest() {
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
   fi
 
+  # NOTE: we force the mac address of the container to be the one from the
+  # ec2-metadata-mock to make expectations match.
   CONTAINER_ID=$(docker run \
     -d \
     --rm \
     --privileged \
+    --mac-address 0e:49:61:0f:c3:11 \
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \
     "$image")

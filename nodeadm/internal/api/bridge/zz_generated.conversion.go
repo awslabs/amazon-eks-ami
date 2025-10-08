@@ -160,6 +160,7 @@ func autoConvert_v1alpha1_InstanceOptions_To_api_InstanceOptions(in *v1alpha1.In
 	if err := Convert_v1alpha1_LocalStorageOptions_To_api_LocalStorageOptions(&in.LocalStorage, &out.LocalStorage, s); err != nil {
 		return err
 	}
+	out.Environment = *(*api.EnvironmentOptions)(unsafe.Pointer(&in.Environment))
 	return nil
 }
 
@@ -172,6 +173,7 @@ func autoConvert_api_InstanceOptions_To_v1alpha1_InstanceOptions(in *api.Instanc
 	if err := Convert_api_LocalStorageOptions_To_v1alpha1_LocalStorageOptions(&in.LocalStorage, &out.LocalStorage, s); err != nil {
 		return err
 	}
+	out.Environment = *(*v1alpha1.EnvironmentOptions)(unsafe.Pointer(&in.Environment))
 	return nil
 }
 
@@ -183,6 +185,7 @@ func Convert_api_InstanceOptions_To_v1alpha1_InstanceOptions(in *api.InstanceOpt
 func autoConvert_v1alpha1_KubeletOptions_To_api_KubeletOptions(in *v1alpha1.KubeletOptions, out *api.KubeletOptions, s conversion.Scope) error {
 	out.Config = *(*api.InlineDocument)(unsafe.Pointer(&in.Config))
 	out.Flags = *(*api.KubeletFlags)(unsafe.Pointer(&in.Flags))
+	out.MaxPodsExpression = in.MaxPodsExpression
 	return nil
 }
 
@@ -194,6 +197,7 @@ func Convert_v1alpha1_KubeletOptions_To_api_KubeletOptions(in *v1alpha1.KubeletO
 func autoConvert_api_KubeletOptions_To_v1alpha1_KubeletOptions(in *api.KubeletOptions, out *v1alpha1.KubeletOptions, s conversion.Scope) error {
 	out.Config = *(*map[string]runtime.RawExtension)(unsafe.Pointer(&in.Config))
 	out.Flags = *(*[]string)(unsafe.Pointer(&in.Flags))
+	out.MaxPodsExpression = in.MaxPodsExpression
 	return nil
 }
 

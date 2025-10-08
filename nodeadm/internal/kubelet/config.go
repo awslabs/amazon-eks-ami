@@ -50,33 +50,35 @@ func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
 // KubeletConfiguration types:
 // https://pkg.go.dev/k8s.io/kubelet/config/v1beta1#KubeletConfiguration
 type kubeletConfig struct {
-	Address                  string                           `json:"address"`
-	Authentication           k8skubelet.KubeletAuthentication `json:"authentication"`
-	Authorization            k8skubelet.KubeletAuthorization  `json:"authorization"`
-	CgroupDriver             string                           `json:"cgroupDriver"`
-	CgroupRoot               string                           `json:"cgroupRoot"`
-	ClusterDNS               []string                         `json:"clusterDNS"`
-	ClusterDomain            string                           `json:"clusterDomain"`
-	ContainerRuntimeEndpoint string                           `json:"containerRuntimeEndpoint"`
-	ImageServiceEndpoint     string                           `json:"imageServiceEndpoint,omitempty"`
-	EvictionHard             map[string]string                `json:"evictionHard,omitempty"`
-	FeatureGates             map[string]bool                  `json:"featureGates"`
-	HairpinMode              string                           `json:"hairpinMode"`
-	KubeAPIBurst             *int                             `json:"kubeAPIBurst,omitempty"`
-	KubeAPIQPS               *int                             `json:"kubeAPIQPS,omitempty"`
-	KubeReserved             map[string]string                `json:"kubeReserved,omitempty"`
-	KubeReservedCgroup       *string                          `json:"kubeReservedCgroup,omitempty"`
-	Logging                  loggingConfiguration             `json:"logging"`
-	MaxPods                  int32                            `json:"maxPods,omitempty"`
-	ProtectKernelDefaults    bool                             `json:"protectKernelDefaults"`
-	ProviderID               *string                          `json:"providerID,omitempty"`
-	ReadOnlyPort             int                              `json:"readOnlyPort"`
-	RegisterWithTaints       []v1.Taint                       `json:"registerWithTaints,omitempty"`
-	SerializeImagePulls      bool                             `json:"serializeImagePulls"`
-	ServerTLSBootstrap       bool                             `json:"serverTLSBootstrap"`
-	SystemReservedCgroup     *string                          `json:"systemReservedCgroup,omitempty"`
-	TLSCipherSuites          []string                         `json:"tlsCipherSuites"`
-	metav1.TypeMeta          `json:",inline"`
+	Address                         string                           `json:"address"`
+	Authentication                  k8skubelet.KubeletAuthentication `json:"authentication"`
+	Authorization                   k8skubelet.KubeletAuthorization  `json:"authorization"`
+	CgroupDriver                    string                           `json:"cgroupDriver"`
+	CgroupRoot                      string                           `json:"cgroupRoot"`
+	ClusterDNS                      []string                         `json:"clusterDNS"`
+	ClusterDomain                   string                           `json:"clusterDomain"`
+	ContainerRuntimeEndpoint        string                           `json:"containerRuntimeEndpoint"`
+	ImageServiceEndpoint            string                           `json:"imageServiceEndpoint,omitempty"`
+	EvictionHard                    map[string]string                `json:"evictionHard,omitempty"`
+	FeatureGates                    map[string]bool                  `json:"featureGates"`
+	HairpinMode                     string                           `json:"hairpinMode"`
+	KubeAPIBurst                    *int                             `json:"kubeAPIBurst,omitempty"`
+	KubeAPIQPS                      *int                             `json:"kubeAPIQPS,omitempty"`
+	KubeReserved                    map[string]string                `json:"kubeReserved,omitempty"`
+	KubeReservedCgroup              *string                          `json:"kubeReservedCgroup,omitempty"`
+	Logging                         loggingConfiguration             `json:"logging"`
+	MaxPods                         int32                            `json:"maxPods,omitempty"`
+	ProtectKernelDefaults           bool                             `json:"protectKernelDefaults"`
+	ProviderID                      *string                          `json:"providerID,omitempty"`
+	ReadOnlyPort                    int                              `json:"readOnlyPort"`
+	RegisterWithTaints              []v1.Taint                       `json:"registerWithTaints,omitempty"`
+	SerializeImagePulls             bool                             `json:"serializeImagePulls"`
+	ServerTLSBootstrap              bool                             `json:"serverTLSBootstrap"`
+	ShutdownGracePeriod             *metav1.Duration                 `json:"shutdownGracePeriod,omitempty"`
+	ShutdownGracePeriodCriticalPods *metav1.Duration                 `json:"shutdownGracePeriodCriticalPods,omitempty"`
+	SystemReservedCgroup            *string                          `json:"systemReservedCgroup,omitempty"`
+	TLSCipherSuites                 []string                         `json:"tlsCipherSuites"`
+	metav1.TypeMeta                 `json:",inline"`
 }
 
 type loggingConfiguration struct {
@@ -199,7 +201,7 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 }
 
 func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
-	nodeIp, err := getNodeIp(context.TODO(), cfg)
+	nodeIp, err := getNodeIp(context.TODO(), cfg, imds.DefaultClient())
 	if err != nil {
 		return err
 	}
@@ -216,6 +218,15 @@ func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig) {
 	// Enable MutableCSINodeAllocatableCount on 1.34+
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
 		ksc.FeatureGates["MutableCSINodeAllocatableCount"] = true
+	}
+	// Enable graceful node shutdown in 1.34+
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.34.0") >= 0 {
+		ksc.ShutdownGracePeriod = &metav1.Duration{
+			Duration: time.Second * 150, // 2m30s
+		}
+		ksc.ShutdownGracePeriodCriticalPods = &metav1.Duration{
+			Duration: time.Second * 30, // allocated from the total above
+		}
 	}
 }
 
@@ -241,11 +252,11 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, resources system.Resources) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
-	if maxPods, ok := MaxPodsPerInstanceType[cfg.Status.Instance.Type]; ok {
-		// #nosec G115 // known source from ec2 apis within int32 range
-		ksc.MaxPods = int32(maxPods)
+	if instanceInfo, err := GetInstanceInfo(context.TODO(), cfg.Status.Instance.Region, cfg.Status.Instance.Type); err != nil {
+		zap.L().Warn("Failed to retrieve instance info, falling back to default", zap.Error(err))
+		ksc.MaxPods = defaultMaxPods
 	} else {
-		ksc.MaxPods = CalcMaxPods(cfg.Status.Instance.Region, cfg.Status.Instance.Type)
+		ksc.MaxPods = CalcMaxPods(instanceInfo, cfg.Spec.Kubelet.MaxPodsExpression)
 	}
 	ksc.KubeReserved = map[string]string{
 		"cpu":               fmt.Sprintf("%dm", getCPUMillicoresToReserve(resources)),
@@ -386,20 +397,21 @@ func getProviderId(availabilityZone, instanceId string) string {
 }
 
 // Get the IP of the node depending on the ipFamily configured for the cluster
-func getNodeIp(ctx context.Context, cfg *api.NodeConfig) (string, error) {
+func getNodeIp(ctx context.Context, cfg *api.NodeConfig, imdsClient imds.IMDSClient) (string, error) {
 	ipFamily, err := api.GetCIDRIpFamily(cfg.Spec.Cluster.CIDR)
 	if err != nil {
 		return "", err
 	}
 	switch ipFamily {
 	case api.IPFamilyIPv4:
-		ipv4, err := imds.GetProperty(ctx, "local-ipv4")
+		ipv4, err := imdsClient.GetProperty(ctx, imds.LocalIPv4)
 		if err != nil {
 			return "", err
 		}
 		return ipv4, nil
 	case api.IPFamilyIPv6:
-		ipv6, err := imds.GetProperty(ctx, imds.IMDSProperty(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC)))
+		prop := fmt.Sprintf("network/interfaces/macs/%s/ipv6s", cfg.Status.Instance.MAC)
+		ipv6, err := imdsClient.GetProperty(ctx, imds.IMDSProperty(prop))
 		if err != nil {
 			return "", err
 		}

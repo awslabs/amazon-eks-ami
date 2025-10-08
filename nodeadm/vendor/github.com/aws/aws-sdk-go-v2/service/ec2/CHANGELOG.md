@@ -1,3 +1,19 @@
+# v1.251.2 (2025-09-10)
+
+* No change notes available for this release.
+
+# v1.251.1 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.251.0 (2025-09-04)
+
+* **Feature**: Add m8i, m8i-flex and i8ge instance types.
+
+# v1.250.0 (2025-09-02)
+
+* **Feature**: MaximumEbsAttachments and AttachmentLimitType fields added to DescribeInstanceTypesResponse. G6f, Gr6f, R8i, R8i-flex and p5.4xlarge instance types added to InstanceTypes enum.
+
 # v1.249.0 (2025-08-29)
 
 * **Feature**: Release shows new route types such as filtered and advertisement.

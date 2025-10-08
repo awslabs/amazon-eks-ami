@@ -6,6 +6,12 @@ set -o errexit
 IFS=$'\n\t'
 export AWS_DEFAULT_OUTPUT="json"
 
+AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+
+function is-isolated-partition() {
+  [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]
+}
+
 ################################################################################
 ### Validate Required Arguments ################################################
 ################################################################################
@@ -105,8 +111,7 @@ sudo mv $WORKING_DIR/iptables-restore.service /etc/eks/iptables-restore.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through yum
-ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1 us-isof-south-1}"
-if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+if ! is-isolated-partition; then
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR="${WORKING_DIR}/awscli-install"
@@ -271,21 +276,9 @@ sudo mkdir -p /var/lib/kubernetes
 sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
-echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-S3_DOMAIN="amazonaws.com"
-if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-  S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" = "us-iso-west-1" ]; then
-  S3_DOMAIN="c2s.ic.gov"
-elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
-  S3_DOMAIN="sc2s.sgov.gov"
-elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
-  S3_DOMAIN="cloud.adc-e.uk"
-elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
-  S3_DOMAIN="csp.hci.ic.gov"
-fi
-S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
-S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+echo "Downloading binaries from: s3://${BINARY_BUCKET_NAME}"
+S3_URL_BASE="https://${BINARY_BUCKET_NAME}.s3.${BINARY_BUCKET_REGION}.${AWS_DOMAIN}/${KUBERNETES_VERSION}/${KUBERNETES_BUILD_DATE}/bin/linux/${ARCH}"
+S3_PATH="s3://${BINARY_BUCKET_NAME}/${KUBERNETES_VERSION}/${KUBERNETES_BUILD_DATE}/bin/linux/${ARCH}"
 
 BINARIES=(
   kubelet
@@ -394,8 +387,7 @@ sudo mv $WORKING_DIR/ecr-credential-provider-config.json /etc/eks/image-credenti
 ### Cache Images ###############################################################
 ################################################################################
 
-if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
-  AWS_DOMAIN=$(imds 'latest/meta-data/services/domain')
+if [[ "$CACHE_CONTAINER_IMAGES" == "true" ]] && ! is-isolated-partition; then
   ECR_URI=$(/etc/eks/get-ecr-uri.sh "${BINARY_BUCKET_REGION}" "${AWS_DOMAIN}")
 
   sudo systemctl daemon-reload
@@ -508,7 +500,7 @@ if yum list installed | grep amazon-ssm-agent; then
 else
   if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
     echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
-    sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+    sudo yum install -y https://s3.${BINARY_BUCKET_REGION}.${AWS_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
     echo "Installing amazon-ssm-agent from AL core repository"
     sudo yum install -y amazon-ssm-agent

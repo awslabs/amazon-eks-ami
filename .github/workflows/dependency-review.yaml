@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
-      - uses: actions/dependency-review-action@bc41886e18ea39df68b1b1245f4184881938e050 # 4.7.2
+      - uses: actions/dependency-review-action@56339e523c0409420f6c2c9a2f4292bbb3c07dd3 # 4.8.0
   gosec:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
-      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # 5.5.0
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # 6.0.0
         with:
           go-version-file: 'nodeadm/go.mod'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest

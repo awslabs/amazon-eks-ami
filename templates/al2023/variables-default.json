@@ -37,5 +37,6 @@
     "temporary_security_group_source_cidrs": "",
     "user_data_file": null,
     "volume_type": "gp3",
-    "working_dir": "{{user `remote_folder`}}/worker"
+    "working_dir": "{{user `remote_folder`}}/worker",
+    "custom_endpoint_ec2": ""
 }
