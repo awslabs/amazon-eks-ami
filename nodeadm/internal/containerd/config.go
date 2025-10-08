@@ -181,6 +181,8 @@ func UseSOCISnapshotter(cfg *api.NodeConfig, resources system.Resources) bool {
 		return false
 	}
 
-	return totalMemory >= 8*gibibyte && totalCPUMillicores >= 8000
-
+	// This should be usable on most xlarge instance types.
+	// Lower the memory threshold since an instance will have less available RAM shown in the kernel than its specs.
+	// e.g. in my test a c6a.2xlarge with 16GiB of memory showed 15.75GiB available.
+	return totalMemory >= 7*gibibyte && totalCPUMillicores >= 4000
 }
