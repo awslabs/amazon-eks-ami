@@ -1,6 +1,7 @@
 package containerd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -67,7 +68,7 @@ func TestContainerdConfig(t *testing.T) {
 	}{
 		{
 			cfg:            &api.NodeConfig{},
-			resources:      system.FakeResources{Cpu: 8, Memory: 16 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 4, Memory: 7 * 1024 * 1024 * 1024},
 			isContainerdV2: false,
 			// Flag not enabled
 			expectSOCIEnabled: false,
@@ -80,7 +81,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 4, Memory: 16 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 2, Memory: 4 * 1024 * 1024 * 1024},
 			isContainerdV2: false,
 			// Cpu too low
 			expectSOCIEnabled: false,
@@ -93,7 +94,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 8, Memory: 7 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 4, Memory: 6 * 1024 * 1024 * 1024},
 			isContainerdV2: false,
 			// Memory too low
 			expectSOCIEnabled: false,
@@ -106,13 +107,13 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:         system.FakeResources{Cpu: 8, Memory: 16 * 1024 * 1024 * 1024},
+			resources:         system.FakeResources{Cpu: 4, Memory: 7.5 * 1024 * 1024 * 1024},
 			isContainerdV2:    false,
 			expectSOCIEnabled: true,
 		},
 		{
 			cfg:            &api.NodeConfig{},
-			resources:      system.FakeResources{Cpu: 8, Memory: 16 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 4, Memory: 7 * 1024 * 1024 * 1024},
 			isContainerdV2: true,
 			// Flag not enabled
 			expectSOCIEnabled: false,
@@ -125,7 +126,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 4, Memory: 16 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 2, Memory: 4 * 1024 * 1024 * 1024},
 			isContainerdV2: true,
 			// Cpu too low
 			expectSOCIEnabled: false,
@@ -138,7 +139,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 8, Memory: 7 * 1024 * 1024 * 1024},
+			resources:      system.FakeResources{Cpu: 4, Memory: 6 * 1024 * 1024 * 1024},
 			isContainerdV2: true,
 			// Memory too low
 			expectSOCIEnabled: false,
@@ -151,52 +152,53 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:         system.FakeResources{Cpu: 8, Memory: 16 * 1024 * 1024 * 1024},
+			resources:         system.FakeResources{Cpu: 4, Memory: 7.5 * 1024 * 1024 * 1024},
 			isContainerdV2:    true,
 			expectSOCIEnabled: true,
 		},
 	}
 
-	for _, test := range tests {
-		template, err := getConfigTemplateVersion(test.cfg, test.isContainerdV2)
-		assert.NoError(t, err)
-		containerdConfig, err := generateContainerdConfig(test.cfg, test.resources, template)
-		assert.NoError(t, err)
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
+			template, err := getConfigTemplateVersion(test.cfg, test.isContainerdV2)
+			assert.NoError(t, err)
+			containerdConfig, err := generateContainerdConfig(test.cfg, test.resources, template)
+			assert.NoError(t, err)
 
-		var configMap map[string]any
-		err = toml.Unmarshal(containerdConfig, &configMap)
-		assert.NoError(t, err)
+			var configMap map[string]any
+			err = toml.Unmarshal(containerdConfig, &configMap)
+			assert.NoError(t, err)
 
-		var containerdSettings map[string]any
-		if test.isContainerdV2 {
-			plugins, ok := configMap["plugins"].(map[string]any)
-			assert.True(t, ok)
-			containerdSettings, ok = plugins["io.containerd.cri.v1.images"].(map[string]any)
-			assert.True(t, ok)
-		} else {
-			plugins, ok := configMap["plugins"].(map[string]any)
-			assert.True(t, ok)
-			criPlugin, ok := plugins["io.containerd.grpc.v1.cri"].(map[string]any)
-			assert.True(t, ok)
-			containerdSettings, ok = criPlugin["containerd"].(map[string]any)
-			assert.True(t, ok)
+			var containerdSettings map[string]any
+			if test.isContainerdV2 {
+				plugins, ok := configMap["plugins"].(map[string]any)
+				assert.True(t, ok)
+				containerdSettings, ok = plugins["io.containerd.cri.v1.images"].(map[string]any)
+				assert.True(t, ok)
+			} else {
+				plugins, ok := configMap["plugins"].(map[string]any)
+				assert.True(t, ok)
+				criPlugin, ok := plugins["io.containerd.grpc.v1.cri"].(map[string]any)
+				assert.True(t, ok)
+				containerdSettings, ok = criPlugin["containerd"].(map[string]any)
+				assert.True(t, ok)
 
-		}
-
-		if test.expectSOCIEnabled {
-			proxyPlugins, ok := configMap["proxy_plugins"].(map[string]any)
-			assert.True(t, ok)
-			soci, ok := proxyPlugins["soci"].(map[string]any)
-			assert.True(t, ok)
-			assert.Equal(t, "snapshot", soci["type"], "incorrect type for proxy_plugin ")
-
-			assert.Equal(t, "soci", containerdSettings["snapshotter"], "incorrect snapshotter configuration")
-		} else {
-			snapshotter, exists := containerdSettings["snapshotter"]
-			if exists {
-				assert.NotEqual(t, "soci", snapshotter, "snapshotter should not be set to soci when feature is disabled")
 			}
-		}
-	}
 
+			if test.expectSOCIEnabled {
+				proxyPlugins, ok := configMap["proxy_plugins"].(map[string]any)
+				assert.True(t, ok)
+				soci, ok := proxyPlugins["soci"].(map[string]any)
+				assert.True(t, ok)
+				assert.Equal(t, "snapshot", soci["type"], "incorrect type for proxy_plugin ")
+
+				assert.Equal(t, "soci", containerdSettings["snapshotter"], "incorrect snapshotter configuration")
+			} else {
+				snapshotter, exists := containerdSettings["snapshotter"]
+				if exists {
+					assert.NotEqual(t, "soci", snapshotter, "snapshotter should not be set to soci when feature is disabled")
+				}
+			}
+		})
+	}
 }
