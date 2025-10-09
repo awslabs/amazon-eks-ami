@@ -9,6 +9,12 @@ import (
 	imds "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
+var (
+	// represents when there is no NodeConfig present within an IMDS user-data
+	// document. this does NOT capture when there are errors parsing configs.
+	ErrNoConfigInUserData = fmt.Errorf("could not find NodeConfig within UserData")
+)
+
 const (
 	contentTypeHeader          = "Content-Type"
 	mimeBoundaryParam          = "boundary"

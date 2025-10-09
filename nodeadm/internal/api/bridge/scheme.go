@@ -13,11 +13,12 @@ var (
 		v1alpha1.AddToScheme,
 		addInternalTypes,
 	)
+
+	InternalGroupVersion = schema.GroupVersion{Group: api.GroupName, Version: runtime.APIVersionInternal}
 )
 
 func addInternalTypes(scheme *runtime.Scheme) error {
-	groupVersion := schema.GroupVersion{Group: api.GroupName, Version: runtime.APIVersionInternal}
-	scheme.AddKnownTypes(groupVersion,
+	scheme.AddKnownTypes(InternalGroupVersion,
 		&internalapi.NodeConfig{},
 	)
 	return nil
