@@ -1,7 +1,8 @@
 package main
 
 import (
-	boothook "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/boot-hook"
+	bootbook "github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/boot-book"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/udev"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 )
 
@@ -11,7 +12,8 @@ func main() {
 		Description:    "Supporting tools for systems using nodeadm",
 		AdditionalHelp: "WARNING: There is no command-line stability guarantee!",
 		Commands: []cli.Command{
-			boothook.NewBootHookCommand(),
+			udev.NewNetManagerCommand(),
+			bootbook.NewBootHookCommand(),
 		},
 	}
 	m.Run()

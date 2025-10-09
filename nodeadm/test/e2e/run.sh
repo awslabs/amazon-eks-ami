@@ -6,7 +6,8 @@ set -o pipefail
 
 cd "$(dirname $0)/../.."
 
-declare MOUNT_FLAGS=""
+declare 
+=""
 declare -A MOUNT_TARGETS=(
   ['nodeadm']=$PWD/_bin/nodeadm
   ['nodeadm-internal']=$PWD/_bin/nodeadm-internal
@@ -39,6 +40,7 @@ function runTest() {
   else
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
   fi
+  CONTAINER_ID=$(docker run \
     -d \
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \

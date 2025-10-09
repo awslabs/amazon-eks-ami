@@ -46,11 +46,9 @@ sudo nerdctl rmi \
 # cleanup dangling images
 sudo nerdctl image prune --force
 
-# move the nodeadm binary into bin folder
-sudo chmod a+x \
-  $PROJECT_DIR/_bin/nodeadm \
-  $PROJECT_DIR/_bin/nodeadm-internal
-sudo mv \
+# move the nodeadm binaries into bin folder
+sudo chmod a+x $PROJECT_DIR/_bin/*
+sudo mv --context \
   $PROJECT_DIR/_bin/nodeadm \
   $PROJECT_DIR/_bin/nodeadm-internal \
   /usr/bin/

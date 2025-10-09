@@ -62,6 +62,18 @@ function assert::file-not-contains() {
   fi
 }
 
+function assert::file-not-exists() {
+  if [ "$#" -ne 1 ]; then
+    echo "Usage: assert::file-not-exists FILE"
+    exit 1
+  fi
+  local FILE=$1
+  if [ -f "$FILE" ]; then
+    echo "File $FILE should not exist."
+    exit 1
+  fi
+}
+
 function mock::kubelet() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: mock::kubelet VERSION"
@@ -146,6 +158,36 @@ function mock::connection-timeout-server() {
     return 1
   fi
   iptables -A INPUT -p tcp --dport ${1} -j DROP
+}
+
+function mock::networkctl() {
+  mv /networkctl-mock /mock/bin/networkctl
+  chmod +x /mock/bin/networkctl
+}
+
+function mock::set-link-state() {
+  local LINK_NAME=$1
+  local LINK_STATE=$2
+
+  CONFIG_FILE=${NETWORKCTL_MOCK_LIST_FILE:-"/mock/config/networkctl-list.json"}
+
+  if [ ! -f "$CONFIG_FILE" ]; then
+    mkdir -p "$(dirname $CONFIG_FILE)"
+    echo '{"Interfaces": []}' > "$CONFIG_FILE"
+  fi
+
+  TEMP_CONFIG=$(mktemp)
+  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces = (
+    [ {"Name": $name, "AdministrativeState": $state} ] + .Interfaces | unique_by(.Name)
+  )' "$CONFIG_FILE" > "$TEMP_CONFIG"
+
+  LOCKFILE=${NETWORKCTL_MOCK_LOCK_FILE:-"/mock/config/networkctl-list.lock"}
+  flock "$LOCKFILE" -c "mv $TEMP_CONFIG $CONFIG_FILE"
+
+  echo "updating networkctl mock link status:"
+  cat $CONFIG_FILE
+
+  rm -f $TEMP_CONFIG
 }
 
 # common environment variables

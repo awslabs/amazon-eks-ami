@@ -13,17 +13,12 @@ fi
 ##########################################################################################
 EFA_VERSION="latest"
 EFA_PACKAGE="aws-efa-installer-${EFA_VERSION}.tar.gz"
-EFA_DOMAIN="https://efa-installer.amazonaws.com"
-PARTITION=$(imds "/latest/meta-data/services/partition")
+EFA_URL="https://efa-installer.amazonaws.com"
 
-if [ ${PARTITION} == "aws-iso" ]; then
-  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.c2s.ic.gov"
-elif [ ${PARTITION} == "aws-iso-b" ]; then
-  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.sc2s.sgov.gov"
-elif [ ${PARTITION} == "aws-iso-e" ]; then
-  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.cloud.adc-e.uk"
-elif [ ${PARTITION} == "aws-iso-f" ]; then
-  EFA_DOMAIN="https://aws-efa-installer.s3.${AWS_REGION}.csp.hci.ic.gov"
+PARTITION=$(imds "/latest/meta-data/services/partition")
+if [[ "${PARTITION}" =~ ^aws-iso ]]; then
+  AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+  EFA_URL="https://aws-efa-installer.s3.${AWS_REGION}.${AWS_DOMAIN}"
 fi
 
 mkdir -p /tmp/efa-installer
@@ -40,9 +35,9 @@ if [ ${PARTITION} == "aws-iso-e" ]; then
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
   aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
 else
-  curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}
-  curl -O ${EFA_DOMAIN}/aws-efa-installer.key && gpg --import aws-efa-installer.key
-  curl -O ${EFA_DOMAIN}/${EFA_PACKAGE}.sig
+  curl -O "${EFA_URL}/${EFA_PACKAGE}"
+  curl -O "${EFA_URL}/aws-efa-installer.key" && gpg --import aws-efa-installer.key
+  curl -O "${EFA_URL}/${EFA_PACKAGE}.sig"
 fi
 
 if ! gpg --verify ./aws-efa-installer-${EFA_VERSION}.tar.gz.sig &> /dev/null; then
