@@ -17,6 +17,7 @@
     "enable_efa": "false",
     "enable_fips": "false",
     "encrypted": "false",
+    "hardened_image": "false",
     "iam_instance_profile": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "20",

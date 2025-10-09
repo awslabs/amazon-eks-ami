@@ -6,7 +6,8 @@ set -o pipefail
 
 cd "$(dirname $0)/../.."
 
-declare MOUNT_FLAGS=""
+declare 
+=""
 declare -A MOUNT_TARGETS=(
   ['nodeadm']=$PWD/_bin/nodeadm
   ['nodeadm-internal']=$PWD/_bin/nodeadm-internal
@@ -39,17 +40,11 @@ function runTest() {
   else
     printf "🧪 Testing %s with containerd v2 image..." "$case_name"
   fi
-
-  # NOTE: we force the mac address of the container to be the one from the
-  # ec2-metadata-mock to make expectations match.
   CONTAINER_ID=$(docker run \
     -d \
-    --rm \
-    --privileged \
-    --mac-address 0e:49:61:0f:c3:11 \
     $MOUNT_FLAGS \
     -v "$PWD/$CASE_DIR":/test-case \
-    "$image")
+    "$image"
 
   LOG_FILE=$(mktemp)
   if docker exec "$CONTAINER_ID" bash -c "cd /test-case && ./run.sh" > "$LOG_FILE" 2>&1; then
