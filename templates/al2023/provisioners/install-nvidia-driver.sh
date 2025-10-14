@@ -41,7 +41,6 @@ if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
   exit 1
 fi
 
-
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
@@ -161,10 +160,13 @@ function archive-open-kmods() {
 }
 
 function archive-grid-kmod() {
-  local MACHINE  
-  local NVIDIA_GRID_RUNFILE_NAME=""
-  local GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
-  local EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
+  local MACHINE
+  local NVIDIA_GRID_RUNFILE_NAME
+  local GRID_INSTALLATION_TEMP_DIR
+  local EXTRACT_DIR
+
+  GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
+  EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
   trap 'sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"' EXIT
 
   MACHINE=$(uname -m)
