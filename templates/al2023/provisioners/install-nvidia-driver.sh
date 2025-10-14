@@ -29,7 +29,18 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 # of the AMI, we want to ensure that all three kernel modules (and also the userspace modules)
 # are on the same NVIDIA driver version. Currently, the script installs the NVIDIA GRID drivers
 # first and decides the full NVIDIA driver version that the AMI will adhere to
-NVIDIA_DRIVER_FULL_VERSION=""
+EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
+NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+  | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
+  | cut -d'-' -f4 \
+  | sort -V \
+  | tail -1)
+
+if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+  echo "ERROR: Could not determine the full nvidia driver version to install"
+  exit 1
+fi
+
 
 ################################################################################
 ### Add repository #############################################################
@@ -103,11 +114,6 @@ fi
 function archive-open-kmods() {
   echo "Archiving open kmods"
 
-  if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
-    echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. The archive-grid-kmod step must succeed."
-    exit 1
-  fi
-
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
@@ -167,28 +173,20 @@ function archive-grid-kmod() {
   fi
 
   echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-  # TODO use better sorting algo
-  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://ec2-linux-nvidia-drivers/ \
-    | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_MAJOR_VERSION}" \
+  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+    | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
     | sort -k1,2 \
     | tail -1 \
     | awk '{print $4}')
 
   if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
-    echo "ERROR: No GRID driver found for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+    echo "ERROR: No GRID driver found for driver version ${NVIDIA_DRIVER_FULL_VERSION} in EC2 S3 bucket"
     exit 1
   fi
 
   echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
   local GRID_RUNFILE_LOCAL_NAME
   GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
-
-  NVIDIA_DRIVER_FULL_VERSION=$(echo "${GRID_RUNFILE_LOCAL_NAME}" | sed -n 's/NVIDIA-Linux-x86_64-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-grid-aws\.run/\1/p')
-
-  if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
-    echo "ERROR: Could not extract full version from GRID runfile name: ${GRID_RUNFILE_LOCAL_NAME}"
-    exit 1
-  fi
 
   echo "Setting NVIDIA driver full version to: ${NVIDIA_DRIVER_FULL_VERSION} (from GRID driver)"
 
