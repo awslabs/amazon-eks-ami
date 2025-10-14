@@ -1,6 +1,6 @@
 <p align="center">
 
-<img src="https://raw.githubusercontent.com/integrii/flaggy/master/logo.png" />
+<img width=240 src="https://raw.githubusercontent.com/integrii/flaggy/master/assets/flaggy-gopher.png" />
 <br />
 <a href="https://goreportcard.com/report/github.com/integrii/flaggy"><img src="https://goreportcard.com/badge/github.com/integrii/flaggy"></a>
 <a href="https://travis-ci.org/integrii/flaggy"><img src="https://travis-ci.org/integrii/flaggy.svg?branch=master"></a> 
@@ -8,6 +8,7 @@
 <a href="http://unlicense.org/"><img src="https://img.shields.io/badge/license-Unlicense-blue.svg"></a>
 <a href="https://github.com/avelino/awesome-go"><img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg"></a>
 <a href="https://gophers.slack.com/messages/CBMUGQYRH" target="_blank"><img src="https://img.shields.io/badge/slack-@gophers/flaggy-blue.svg?logo=slack"></a>
+
 </p>
 
 Sensible and _fast_ command-line flag parsing with excellent support for **subcommands** and **positional values**. Flags can be at any position. Flaggy has no required project or package layout like [Cobra requires](https://github.com/spf13/cobra/issues/641), and **no external dependencies**!
@@ -38,10 +39,11 @@ Check out the [go doc](http://pkg.go.dev/github.com/integrii/flaggy), [examples 
 - Flags can use a single dash or double dash (`--flag`, `-flag`, `-f`, `--f`)
 - Flags can have `=` assignment operators, or use a space (`--flag=value`, `--flag value`)
 - Flags support single quote globs with spaces (`--flag 'this is all one value'`)
-- Flags of slice types can be passed multiple times (`-f one -f two -f three`)
+- Flags of slice types can be passed multiple times (`-f one -f two -f three`).
 - Optional but default version output with `--version`
 - Optional but default help output with `-h` or `--help`
 - Optional but default help output when any invalid or unknown parameter is passed
+- bash and zsh shell completion generation by default
 - It's _fast_. All flag and subcommand parsing takes less than `1ms` in most programs.
 
 # Example Help Output
@@ -171,6 +173,14 @@ Other more specific types can also be used as flag types.  They will be automati
 - []net.IPMask
 - time.Duration
 - []time.Duration
+
+# Shell Completion
+
+Flaggy generates `bash` and `zsh` completion scripts automatically.
+
+```bash
+source <(./app completion bash)
+```
 
 # An Example Program
 
