@@ -155,15 +155,19 @@ function archive-open-kmods() {
 }
 
 function archive-grid-kmod() {
-  local MACHINE
-  local EXTRACT_DIR="${WORKING_DIR}/NVIDIA-GRID-extract"
+  local MACHINE  
   local NVIDIA_GRID_RUNFILE_NAME=""
+  local GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
+  local EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
+  trap 'sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"' EXIT
+
   MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi
 
   echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+  # TODO use better sorting algo
   NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://ec2-linux-nvidia-drivers/ \
     | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_MAJOR_VERSION}" \
     | sort -k1,2 \
@@ -189,10 +193,10 @@ function archive-grid-kmod() {
   echo "Setting NVIDIA driver full version to: ${NVIDIA_DRIVER_FULL_VERSION} (from GRID driver)"
 
   echo "Downloading GRID driver runfile..."
-  aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
-  chmod +x "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   echo "Extracting NVIDIA GRID driver runfile..."
-  sudo "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
+  sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
 
   pushd "${EXTRACT_DIR}"
 
@@ -209,9 +213,6 @@ function archive-grid-kmod() {
   sudo rm -rf /usr/src/nvidia-open-grid*
 
   popd
-  # Clean up downloaded runfiles
-  sudo rm -rf "${EXTRACT_DIR}"
-  sudo rm "${WORKING_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
 }
 
 function archive-proprietary-kmod() {
