@@ -111,13 +111,14 @@ else
 fi
 
 function archive-open-kmods() {
+  local KMOD_NVIDIA_OPEN_DKMS_VERSION
   echo "Archiving open kmods"
 
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
-    sudo dnf -y module install ${NVIDIA_DNF_MODULE_VERSION}
+    KMOD_NVIDIA_OPEN_DKMS_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
+    sudo dnf -y module install ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
   fi
   dkms status
   ls -la /var/lib/dkms/
@@ -155,9 +156,8 @@ function archive-open-kmods() {
     sudo dnf -y remove --all nvidia-driver
     sudo dnf -y remove --all "kmod-nvidia-open*"
   else
-    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
-    sudo dnf -y module remove --all ${NVIDIA_DNF_MODULE_VERSION}
-    sudo dnf -y module reset ${NVIDIA_DNF_MODULE_VERSION}
+    sudo dnf -y module remove --all ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
+    sudo dnf -y module reset ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
   fi
 }
 
@@ -216,13 +216,14 @@ function archive-grid-kmod() {
   # that of archive-open-kmods fucntion (/lib/modules/$(uname -r)/extra) which the kmod-util remove does not clean up.
   # We manually clean these up since archiving is done and rebuild the kernel module dependency.
   sudo rm -rf "/lib/modules/$(uname -r)/kernel/drivers/video/nvidia*"
-  depmod -a
+  sudo depmod -a
 
   popd
   sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"
 }
 
 function archive-proprietary-kmod() {
+  local KMOD_NVIDIA_LATEST_DKMS_VERSION
   echo "Archiving proprietary kmods"
 
   if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
@@ -233,8 +234,8 @@ function archive-proprietary-kmod() {
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
-    sudo dnf -y module install ${NVIDIA_DNF_MODULE_VERSION}
+    KMOD_NVIDIA_LATEST_DKMS_VERSION=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
+    sudo dnf -y module install ${KMOD_NVIDIA_LATEST_DKMS_VERSION}
   fi
 
   local NVIDIA_PROPRIETARY_VERSION
