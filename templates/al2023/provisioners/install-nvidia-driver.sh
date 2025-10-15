@@ -215,7 +215,7 @@ function archive-grid-kmod() {
   # The grid driver installed from a runfile places several nvidia*.ko files at a different location from
   # that of archive-open-kmods fucntion (/lib/modules/$(uname -r)/extra) which the kmod-util remove does not clean up.
   # We manually clean these up since archiving is done and rebuild the kernel module dependency.
-  sudo rm -rf "/lib/modules/$(uname -r)/kernel/drivers/video/nvidia*"
+  sudo rm -rf "/lib/modules/$(uname -r)/kernel/drivers/video/nvidia"*
   sudo depmod -a
 
   popd
