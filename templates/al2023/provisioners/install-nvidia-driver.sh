@@ -205,7 +205,7 @@ sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 if is-isolated-partition; then
   sudo dnf -y install nvidia-container-toolkit
   sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  sudo dnf -y install "nvidia-driver-*${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+  sudo dnf -y install "nvidia-driver-cuda-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
 else
   sudo dnf -y install nvidia-container-toolkit
 fi
