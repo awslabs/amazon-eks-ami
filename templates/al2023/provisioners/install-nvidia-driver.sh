@@ -116,7 +116,7 @@ function archive-open-kmods() {
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}-1.* | grep Module | cut -d':' -f2-6)
+    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
     sudo dnf -y module install ${NVIDIA_DNF_MODULE_VERSION}
   fi
   dkms status
@@ -227,7 +227,7 @@ function archive-proprietary-kmod() {
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}-1.* | grep Module | cut -d':' -f2-6)
+    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
     sudo dnf -y module install ${NVIDIA_DNF_MODULE_VERSION}
   fi
 
