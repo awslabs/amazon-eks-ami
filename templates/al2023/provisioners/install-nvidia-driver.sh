@@ -155,8 +155,9 @@ function archive-open-kmods() {
     sudo dnf -y remove --all nvidia-driver
     sudo dnf -y remove --all "kmod-nvidia-open*"
   else
-    sudo dnf -y module remove --all nvidia-driver
-    sudo dnf -y module reset nvidia-driver
+    NVIDIA_DNF_MODULE_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
+    sudo dnf -y module remove --all ${NVIDIA_DNF_MODULE_VERSION}
+    sudo dnf -y module reset ${NVIDIA_DNF_MODULE_VERSION}
   fi
 }
 
@@ -168,7 +169,6 @@ function archive-grid-kmod() {
 
   GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
   EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
-  trap 'sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"' EXIT
 
   MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
@@ -212,8 +212,14 @@ function archive-grid-kmod() {
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
+  # The grid driver installed from a runfile places several nvidia*.ko files at a different location from
+  # that of archive-open-kmods fucntion (/lib/modules/$(uname -r)/extra) which the kmod-util remove does not clean up.
+  # We manually clean these up since archiving is done and rebuild the kernel module dependency.
+  sudo rm -rf /lib/modules/$(uname -r)/kernel/drivers/video/nvidia*
+  depmod -a
 
   popd
+  sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"
 }
 
 function archive-proprietary-kmod() {
