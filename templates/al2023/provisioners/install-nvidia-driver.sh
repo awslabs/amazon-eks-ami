@@ -122,8 +122,41 @@ function archive-open-kmods() {
   sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
-  SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
-  sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
+
+  # Download the corresponding NVIDIA runfile and use the hack script to generate supported devices
+  echo "Downloading NVIDIA runfile to generate supported devices file..."
+
+  # Download the runfiles from official release.json docs
+  # Ref: https://docs.nvidia.com/datacenter/tesla/drivers/releases.json
+  if [[ $AWS_REGION == cn-* ]]; then
+    RUNFILE_DOWNLOAD_DOMAIN="cn.download.nvidia.com"
+  else
+    RUNFILE_DOWNLOAD_DOMAIN="us.download.nvidia.com"
+  fi
+  NVIDIA_FULL_VERSION=$(sudo kmod-util module-version nvidia-open)
+  NVIDIA_RUNFILE_URL="https://${RUNFILE_DOWNLOAD_DOMAIN}/tesla/${NVIDIA_FULL_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
+  NVIDIA_RUNFILE="${WORKING_DIR}/NVIDIA-Linux-x86_64-${NVIDIA_FULL_VERSION}.run"
+
+  if ! curl -L -o "$NVIDIA_RUNFILE" "$NVIDIA_RUNFILE_URL"; then
+    echo "Error: Failed to download NVIDIA runfile from $NVIDIA_RUNFILE_URL"
+    exit 1
+  fi
+  echo "Successfully downloaded NVIDIA runfile"
+  mkdir -p "${WORKING_DIR}/templates/al2023/runtime/gpu"
+
+  CURRENT_DIR=$(pwd)
+  cd "${WORKING_DIR}/hack"
+  bash "./generate-nvidia-open-supported-devices.sh" "$NVIDIA_RUNFILE"
+  cd "$CURRENT_DIR"
+
+  GENERATED_FILE="${WORKING_DIR}/templates/al2023/runtime/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
+  if [ -f "$GENERATED_FILE" ]; then
+    sudo mv "$GENERATED_FILE" "/etc/eks/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
+    echo "Successfully generated nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
+  else
+    echo "Error: Generated file not found at expected location"
+    exit 1
+  fi
 
   sudo kmod-util remove nvidia-open
 
