@@ -28,6 +28,9 @@ on:
       build_arguments:
         required: false
         type: string
+      deploy_arguments:
+        required: false
+        type: string
       test_arguments:
         required: false
         type: string
@@ -104,4 +107,5 @@ jobs:
           build_id: ${{ inputs.resource_id }}
           aws_region: ${{ secrets.AWS_REGION }}
           log_bucket: ${{ secrets.CI_LOG_BUCKET }}
-          additional_arguments: ${{ inputs.test_arguments }}
+          deploy_arguments: ${{ inputs.deploy_arguments }}
+          test_arguments: ${{ inputs.test_arguments }}
