@@ -201,22 +201,23 @@ function archive-grid-kmod() {
 
   pushd "${EXTRACT_DIR}"
 
-  # When building the kernel module rename the package to `nvidia-open-grid` to maintain unique dkms archive names
-  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/g' kernel-open/dkms.conf
   echo "Installing NVIDIA GRID kernel modules..."
   sudo ./nvidia-installer \
     --dkms \
     --kernel-module-type open \
     --silent || sudo cat /var/log/nvidia-installer.log
 
+  # Manual DKMS registration with package name changed to `nvidia-open-grid`
+  sudo dkms remove "nvidia/$NVIDIA_DRIVER_FULL_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/' /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION /usr/src/nvidia-open-grid-$NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms add -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms build -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms install -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
-  # The grid driver installed from a runfile places several nvidia*.ko files at a different location from
-  # that of archive-open-kmods fucntion (/lib/modules/$(uname -r)/extra) which the kmod-util remove does not clean up.
-  # We manually clean these up since archiving is done and rebuild the kernel module dependency.
-  sudo rm -rf "/lib/modules/$(uname -r)/kernel/drivers/video/nvidia"*
-  sudo depmod -a
 
   popd
   sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"
