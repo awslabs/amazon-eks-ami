@@ -45,7 +45,7 @@ func TestDynamicProxyFuncBehavior(t *testing.T) {
 			name:           "no_env_vars",
 			envVars:        map[string]string{},
 			testURL:        "https://ec2.amazonaws.com",
-			shouldUseProxy: true,
+			shouldUseProxy: false,
 		},
 	}
 
