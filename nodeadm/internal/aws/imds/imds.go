@@ -23,7 +23,9 @@ var _defaultClient *imds.Client
 // API call in nodeadm is to the IMDS for fetching user-data, we bypass caching.
 // Ref: https://github.com/golang/go/blob/master/src/net/http/transport.go#L499
 func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
-	// Link-local addresses do not need to be going through a proxy
+	// Link-local addresses for IMDS do not need to be going through a proxy
+	// The IMDS has two endpoints on an instance: IPv4 (169.254.169.254) and IPv6 ([fd00:ec2::254])
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
 	if req.URL.Host == "169.254.169.254" || req.URL.Host == "[fd00:ec2::254]" {
 		return nil, nil
 	}
