@@ -55,6 +55,5 @@ sudo mv --context \
 
 # enable nodeadm bootstrap systemd units
 sudo systemctl enable \
-  nodeadm-boot-hook \
   nodeadm-config \
   nodeadm-run
