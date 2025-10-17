@@ -111,14 +111,16 @@ else
 fi
 
 function archive-open-kmods() {
-  local KMOD_NVIDIA_OPEN_DKMS_VERSION
+  local NVIDIA_OPEN_MODULE
   echo "Archiving open kmods"
 
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    KMOD_NVIDIA_OPEN_DKMS_VERSION=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
-    sudo dnf -y module install ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
+    # Output of `sudo dnf module provides -q kmod-nvidia-open-dkms-570.172.08* | grep Module` is:
+    # Module   : nvidia-driver:570-open:20251009011129:f132e61741:x86_64
+    NVIDIA_OPEN_MODULE=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    sudo dnf -y module install ${NVIDIA_OPEN_MODULE}
   fi
   dkms status
   ls -la /var/lib/dkms/
@@ -156,8 +158,8 @@ function archive-open-kmods() {
     sudo dnf -y remove --all nvidia-driver
     sudo dnf -y remove --all "kmod-nvidia-open*"
   else
-    sudo dnf -y module remove --all ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
-    sudo dnf -y module reset ${KMOD_NVIDIA_OPEN_DKMS_VERSION}
+    sudo dnf -y module remove --all ${NVIDIA_OPEN_MODULE}
+    sudo dnf -y module reset ${NVIDIA_OPEN_MODULE}
   fi
 }
 
@@ -191,8 +193,6 @@ function archive-grid-kmod() {
   local GRID_RUNFILE_LOCAL_NAME
   GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
 
-  echo "Setting NVIDIA driver full version to: ${NVIDIA_DRIVER_FULL_VERSION} (from GRID driver)"
-
   echo "Downloading GRID driver runfile..."
   aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
@@ -224,19 +224,16 @@ function archive-grid-kmod() {
 }
 
 function archive-proprietary-kmod() {
-  local KMOD_NVIDIA_LATEST_DKMS_VERSION
+  local NVIDIA_PROPRIETARY_MODULE
   echo "Archiving proprietary kmods"
-
-  if [[ -z "${NVIDIA_DRIVER_FULL_VERSION:-}" ]]; then
-    echo "ERROR: NVIDIA_DRIVER_FULL_VERSION not set. GRID driver must be installed first."
-    exit 1
-  fi
 
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    KMOD_NVIDIA_LATEST_DKMS_VERSION=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}-1.* | grep Module | cut -d':' -f2-6)
-    sudo dnf -y module install ${KMOD_NVIDIA_LATEST_DKMS_VERSION}
+    # Output of `sudo dnf module provides -q kmod-nvidia-latest-dkms-570.172.08* | grep Module` is:
+    # Module   : nvidia-driver:570-dkms:20251009011129:61f77618b4:x86_64
+    NVIDIA_PROPRIETARY_MODULE=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    sudo dnf -y module install ${NVIDIA_PROPRIETARY_MODULE}
   fi
 
   local NVIDIA_PROPRIETARY_VERSION
