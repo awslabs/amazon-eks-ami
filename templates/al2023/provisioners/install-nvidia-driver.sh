@@ -24,6 +24,23 @@ function rpm_install() {
 
 echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
+# The AL2023 GPU AMI currently builds and archives the following nvidia kernel modules
+# in /var/lib/dkms-archive: nvidia, nvidia-open, nvidia-open-grid. To maintain the stability
+# of the AMI, we want to ensure that all three kernel modules (and also the userspace modules)
+# are on the same NVIDIA driver version. Currently, the script installs the NVIDIA GRID drivers
+# first and decides the full NVIDIA driver version that the AMI will adhere to
+EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
+NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+  | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
+  | cut -d'-' -f4 \
+  | sort -V \
+  | tail -1)
+
+if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+  echo "ERROR: Could not determine the full nvidia driver version to install"
+  exit 1
+fi
+
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
@@ -94,11 +111,16 @@ else
 fi
 
 function archive-open-kmods() {
+  local NVIDIA_OPEN_MODULE
   echo "Archiving open kmods"
+
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
+    # Output of `sudo dnf module provides -q kmod-nvidia-open-dkms-570.172.08* | grep Module` is:
+    # Module   : nvidia-driver:570-open:20251009011129:f132e61741:x86_64
+    NVIDIA_OPEN_MODULE=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    sudo dnf -y module install ${NVIDIA_OPEN_MODULE}
   fi
   dkms status
   ls -la /var/lib/dkms/
@@ -107,7 +129,16 @@ function archive-open-kmods() {
 
   # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
   # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  local NVIDIA_OPEN_VERSION
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+
+  # Sanity check to have consistent NVIDIA driver versions
+  if [[ "$NVIDIA_OPEN_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+    echo "ERROR: NVIDIA open driver version ($NVIDIA_OPEN_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
+    echo "All NVIDIA drivers must be on the same version."
+    exit 1
+  fi
+
   sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
   sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
@@ -116,10 +147,6 @@ function archive-open-kmods() {
   sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
   sudo kmod-util archive nvidia-open
-
-  # Copy the source files to a new directory for GRID driver installation
-  sudo mkdir /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
-  sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
@@ -131,43 +158,100 @@ function archive-open-kmods() {
     sudo dnf -y remove --all nvidia-driver
     sudo dnf -y remove --all "kmod-nvidia-open*"
   else
-    sudo dnf -y module remove --all nvidia-driver
-    sudo dnf -y module reset nvidia-driver
+    sudo dnf -y module remove --all ${NVIDIA_OPEN_MODULE}
+    sudo dnf -y module reset ${NVIDIA_OPEN_MODULE}
   fi
 }
 
 function archive-grid-kmod() {
   local MACHINE
+  local NVIDIA_GRID_RUNFILE_NAME
+  local GRID_INSTALLATION_TEMP_DIR
+  local EXTRACT_DIR
+
+  GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
+  EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
+
   MACHINE=$(uname -m)
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi
-  echo "Archiving GRID kmods"
-  NVIDIA_OPEN_VERSION=$(ls -d /usr/src/nvidia-open-grid-* | sed 's/.*nvidia-open-grid-//')
-  sudo sed -i 's/PACKAGE_NAME="nvidia-open"/PACKAGE_NAME="nvidia-open-grid"/g' /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo sed -i "s/MAKE\[0\]=\"'make'/MAKE\[0\]=\"'make' GRID_BUILD=1 GRID_BUILD_CSP=1 /g" /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo dkms build -m nvidia-open-grid -v $NVIDIA_OPEN_VERSION
-  sudo dkms install nvidia-open-grid/$NVIDIA_OPEN_VERSION
+
+  echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+    | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
+    | sort -k1,2 \
+    | tail -1 \
+    | awk '{print $4}')
+
+  if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
+    echo "ERROR: No GRID driver found for driver version ${NVIDIA_DRIVER_FULL_VERSION} in EC2 S3 bucket"
+    exit 1
+  fi
+
+  echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
+  local GRID_RUNFILE_LOCAL_NAME
+  GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
+
+  echo "Downloading GRID driver runfile..."
+  aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  echo "Extracting NVIDIA GRID driver runfile..."
+  sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
+
+  pushd "${EXTRACT_DIR}"
+
+  echo "Installing NVIDIA GRID kernel modules..."
+  sudo ./nvidia-installer \
+    --dkms \
+    --kernel-module-type open \
+    --silent || sudo cat /var/log/nvidia-installer.log
+
+  # Manual DKMS registration with package name changed to `nvidia-open-grid`
+  sudo dkms remove "nvidia/$NVIDIA_DRIVER_FULL_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/' /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION /usr/src/nvidia-open-grid-$NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms add -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms build -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms install -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
 
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
+
+  popd
+  sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"
 }
 
 function archive-proprietary-kmod() {
+  local NVIDIA_PROPRIETARY_MODULE
   echo "Archiving proprietary kmods"
+
   if is-isolated-partition; then
     sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
   else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
+    # Output of `sudo dnf module provides -q kmod-nvidia-latest-dkms-570.172.08* | grep Module` is:
+    # Module   : nvidia-driver:570-dkms:20251009011129:61f77618b4:x86_64
+    NVIDIA_PROPRIETARY_MODULE=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    sudo dnf -y module install ${NVIDIA_PROPRIETARY_MODULE}
   fi
+
+  local NVIDIA_PROPRIETARY_VERSION
+  NVIDIA_PROPRIETARY_VERSION=$(kmod-util module-version nvidia)
+
+  if [[ "$NVIDIA_PROPRIETARY_VERSION" != "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+    echo "ERROR: NVIDIA proprietary driver version ($NVIDIA_PROPRIETARY_VERSION) does not match GRID driver version ($NVIDIA_DRIVER_FULL_VERSION)"
+    echo "All NVIDIA drivers must be on the same version. GRID driver determines the version."
+    exit 1
+  fi
+
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
 }
 
-archive-open-kmods
 archive-grid-kmod
+archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
