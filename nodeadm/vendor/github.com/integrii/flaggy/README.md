@@ -3,7 +3,6 @@
 <img width=240 src="https://raw.githubusercontent.com/integrii/flaggy/master/assets/flaggy-gopher.png" />
 <br />
 <a href="https://goreportcard.com/report/github.com/integrii/flaggy"><img src="https://goreportcard.com/badge/github.com/integrii/flaggy"></a>
-<a href="https://travis-ci.org/integrii/flaggy"><img src="https://travis-ci.org/integrii/flaggy.svg?branch=master"></a> 
 <a href="https://pkg.go.dev/github.com/integrii/flaggy"> <img src="https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white"></a>
 <a href="http://unlicense.org/"><img src="https://img.shields.io/badge/license-Unlicense-blue.svg"></a>
 <a href="https://github.com/avelino/awesome-go"><img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg"></a>
@@ -43,7 +42,7 @@ Check out the [go doc](http://pkg.go.dev/github.com/integrii/flaggy), [examples 
 - Optional but default version output with `--version`
 - Optional but default help output with `-h` or `--help`
 - Optional but default help output when any invalid or unknown parameter is passed
-- bash and zsh shell completion generation by default
+- bash, zsh, fish, PowerShell, and Nushell shell completion generation by default
 - It's _fast_. All flag and subcommand parsing takes less than `1ms` in most programs.
 
 # Example Help Output
@@ -155,31 +154,39 @@ print(flaggy.TrailingArguments[0])
 
 # Supported Flag Types
 
-Flaggy has specific flag types for all basic types included in go as well as a slice of any of those types.  This includes all of the following types:
+Flaggy has specific flag types for all basic Go types as well as slice variants, plus a selection of helpful standard library structures. You can target any of the following assignments when defining a flag:
 
-- string and []string
-- bool and []bool
-- all int types and all []int types
-- all float types and all []float types
-- all uint types and all []uint types
-
-Other more specific types can also be used as flag types.  They will be automatically parsed using the standard parsing functions included with those types in those packages.  This includes:
-
-- net.IP
-- []net.IP
-- net.HardwareAddr
-- []net.HardwareAddr
-- net.IPMask
-- []net.IPMask
-- time.Duration
-- []time.Duration
+- Text and truthy values: `string`, `[]string`, `bool`, `[]bool`
+- Signed integers: `int`, `int64`, `int32`, `int16`, `int8`, and a slice form for each type
+- Unsigned integers: `uint`, `uint64`, `uint32`, `uint16`, `uint8` (aka `byte`), and slice forms for each type
+- Floating point numbers: `float64`, `float32`, and slices of both precisions
+- Time utilities: `time.Duration`, `[]time.Duration`, `time.Time`, `time.Location`, `time.Month`, `time.Weekday`
+- Network primitives: `net.IP`, `[]net.IP`, `net.HardwareAddr`, `[]net.HardwareAddr`, `net.IPMask`, `[]net.IPMask`, `net.IPNet`, `net.TCPAddr`, `net.UDPAddr`
+- Modern IP types: `netip.Addr`, `netip.Prefix`, `netip.AddrPort`
+- URLs and filesystem helpers: `url.URL`, `os.FileMode`
+- Pattern and math types: `regexp.Regexp`, `big.Int`, `big.Rat`
+- Encoded byte helpers: `Base64Bytes` (a base64-decoded `[]byte`)
 
 # Shell Completion
 
-Flaggy generates `bash` and `zsh` completion scripts automatically.
+Flaggy generates `bash`, `zsh`, `fish`, `PowerShell`, and `Nushell` completion scripts automatically.
 
 ```bash
+# Bash
 source <(./app completion bash)
+
+# Zsh
+source <(./app completion zsh)
+
+# Fish
+./app completion fish | source
+
+# PowerShell
+./app completion powershell | Out-String | Invoke-Expression
+
+# Nushell
+./app completion nushell | save --force ~/.cache/app-completions.nu
+source ~/.cache/app-completions.nu
 ```
 
 # An Example Program

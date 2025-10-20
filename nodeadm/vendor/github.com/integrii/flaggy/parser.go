@@ -30,6 +30,24 @@ type Parser struct {
 	SortFlagsReverse           bool               // when true with SortFlags, sort order is reversed (Z..A)
 }
 
+// supportedCompletionShells lists every shell that can receive generated completion output.
+var supportedCompletionShells = []string{"bash", "zsh", "fish", "powershell", "nushell"}
+
+// completionShellList joins the supported completion shell names into a space separated string.
+func completionShellList() string {
+	return strings.Join(supportedCompletionShells, " ")
+}
+
+// isSupportedCompletionShell reports whether the provided shell is eligible for generated completions.
+func isSupportedCompletionShell(shell string) bool {
+	for _, supported := range supportedCompletionShells {
+		if shell == supported {
+			return true
+		}
+	}
+	return false
+}
+
 // TrailingSubcommand returns the last and most specific subcommand invoked.
 func (p *Parser) TrailingSubcommand() *Subcommand {
 	return p.subcommandContext
@@ -98,19 +116,17 @@ func (p *Parser) ParseArgs(args []string) error {
 		if len(args) >= 1 && strings.EqualFold(args[0], "completion") {
 			// no shell provided
 			if len(args) < 2 {
-				fmt.Fprintln(os.Stderr, "Please specify a shell for completion. Supported shells: bash zsh")
+				fmt.Fprintf(os.Stderr, "Please specify a shell for completion. Supported shells: %s\n", completionShellList())
 				exitOrPanic(2)
 			}
 
 			shell := strings.ToLower(args[1])
-			switch shell {
-			case "bash", "zsh":
+			if isSupportedCompletionShell(shell) {
 				p.Completion(shell)
 				exitOrPanic(0)
-			default:
-				fmt.Fprintf(os.Stderr, "Unsupported shell specified for completion: %s\nSupported shells: bash zsh\n", args[1])
-				exitOrPanic(2)
 			}
+			fmt.Fprintf(os.Stderr, "Unsupported shell specified for completion: %s\nSupported shells: %s\n", args[1], completionShellList())
+			exitOrPanic(2)
 		}
 	}
 
@@ -141,13 +157,19 @@ func (p *Parser) ParseArgs(args []string) error {
 // Completion takes in a shell type and outputs the completion script for
 // that shell.
 func (p *Parser) Completion(completionType string) {
-	switch {
-	case strings.ToLower(completionType) == "bash":
+	switch strings.ToLower(completionType) {
+	case "bash":
 		fmt.Print(GenerateBashCompletion(p))
-	case strings.ToLower(completionType) == "zsh":
+	case "zsh":
 		fmt.Print(GenerateZshCompletion(p))
+	case "fish":
+		fmt.Print(GenerateFishCompletion(p))
+	case "powershell":
+		fmt.Print(GeneratePowerShellCompletion(p))
+	case "nushell":
+		fmt.Print(GenerateNushellCompletion(p))
 	default:
-		fmt.Fprintf(os.Stderr, "Unsupported shell specified for completion: %s\n", completionType)
+		fmt.Fprintf(os.Stderr, "Unsupported shell specified for completion: %s\nSupported shells: %s\n", completionType, completionShellList())
 	}
 }
 
