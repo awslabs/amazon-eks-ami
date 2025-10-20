@@ -30,19 +30,22 @@ func TestDynamicProxyFuncBehavior(t *testing.T) {
 			envVars: map[string]string{
 				"HTTPS_PROXY": "http://example-proxy:8080",
 			},
-			testURL: "http://169.254.169.254/latest/user-data",
+			testURL:       "http://169.254.169.254/latest/user-data",
+			expectedProxy: "",
 		},
 		{
 			name: "imds_ipv6_no_proxy",
 			envVars: map[string]string{
 				"HTTPS_PROXY": "http://example-proxy:8080",
 			},
-			testURL: "http://[fd00:ec2::254]/latest/user-data",
+			testURL:       "http://[fd00:ec2::254]/latest/user-data",
+			expectedProxy: "",
 		},
 		{
-			name:    "no_env_vars",
-			envVars: map[string]string{},
-			testURL: "https://ec2.amazonaws.com",
+			name:          "no_env_vars",
+			envVars:       map[string]string{},
+			testURL:       "https://ec2.amazonaws.com",
+			expectedProxy: "",
 		},
 	}
 
