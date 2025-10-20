@@ -166,11 +166,6 @@
       "destination": "{{user `working_dir`}}/nodeadm"
     },
     {
-      "type": "file",
-      "source": "{{template_dir}}/../../hack",
-      "destination": "{{user `working_dir`}}/hack"
-    },
-    {
       "type": "shell",
       "inline": [
         "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
