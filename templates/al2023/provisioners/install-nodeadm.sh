@@ -58,3 +58,6 @@ sudo systemctl enable \
   nodeadm-boot-hook \
   nodeadm-config \
   nodeadm-run
+
+# create the drop-in config directory
+sudo mkdir -p /etc/eks/nodeadm.d/
