@@ -6,46 +6,43 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDynamicProxyFuncBehavior(t *testing.T) {
 	tests := []struct {
-		name           string
-		envVars        map[string]string
-		testURL        string
-		shouldUseProxy bool
-		expectedProxy  string
+		name          string
+		envVars       map[string]string
+		testURL       string
+		expectedProxy string
 	}{
 		{
 			name: "external_url_with_proxy",
 			envVars: map[string]string{
 				"HTTPS_PROXY": "http://example-proxy:8080",
 			},
-			testURL:        "https://ec2.amazonaws.com",
-			shouldUseProxy: true,
-			expectedProxy:  "http://example-proxy:8080",
+			testURL:       "https://ec2.amazonaws.com",
+			expectedProxy: "http://example-proxy:8080",
 		},
 		{
 			name: "imds_ipv4_no_proxy",
 			envVars: map[string]string{
 				"HTTPS_PROXY": "http://example-proxy:8080",
 			},
-			testURL:        "http://169.254.169.254/latest/user-data",
-			shouldUseProxy: false,
+			testURL: "http://169.254.169.254/latest/user-data",
 		},
 		{
 			name: "imds_ipv6_no_proxy",
 			envVars: map[string]string{
 				"HTTPS_PROXY": "http://example-proxy:8080",
 			},
-			testURL:        "http://[fd00:ec2::254]/latest/user-data",
-			shouldUseProxy: false,
+			testURL: "http://[fd00:ec2::254]/latest/user-data",
 		},
 		{
-			name:           "no_env_vars",
-			envVars:        map[string]string{},
-			testURL:        "https://ec2.amazonaws.com",
-			shouldUseProxy: false,
+			name:    "no_env_vars",
+			envVars: map[string]string{},
+			testURL: "https://ec2.amazonaws.com",
 		},
 	}
 
@@ -59,7 +56,6 @@ func TestDynamicProxyFuncBehavior(t *testing.T) {
 			cmd.Env = os.Environ()
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_NAME=%s", tt.name))
 			cmd.Env = append(cmd.Env, fmt.Sprintf("TEST_URL=%s", tt.testURL))
-			cmd.Env = append(cmd.Env, fmt.Sprintf("SHOULD_USE_PROXY=%t", tt.shouldUseProxy))
 			cmd.Env = append(cmd.Env, fmt.Sprintf("EXPECTED_PROXY=%s", tt.expectedProxy))
 
 			// add the env variables for the actual proxy test
@@ -82,7 +78,6 @@ func TestSingleProxyCase(t *testing.T) {
 	}
 
 	testURL := os.Getenv("TEST_URL")
-	shouldUseProxy := os.Getenv("SHOULD_USE_PROXY") == "true"
 	expectedProxy := os.Getenv("EXPECTED_PROXY")
 
 	req, _ := http.NewRequest("GET", testURL, nil)
@@ -92,15 +87,10 @@ func TestSingleProxyCase(t *testing.T) {
 		t.Fatalf("dynamicProxyFunc returned error: %v", err)
 	}
 
-	if shouldUseProxy {
-		if proxyURL == nil {
-			t.Errorf("Should detect proxy for %s", testURL)
-		} else if proxyURL.String() != expectedProxy {
-			t.Errorf("Expected proxy '%s', got '%s'", expectedProxy, proxyURL.String())
-		}
-	} else {
-		if proxyURL != nil {
-			t.Errorf("Should NOT use proxy for %s, got: %s", testURL, proxyURL.String())
-		}
+	var actualProxy string
+	if proxyURL != nil {
+		actualProxy = proxyURL.String()
 	}
+
+	assert.Equal(t, expectedProxy, actualProxy)
 }
