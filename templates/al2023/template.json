@@ -46,8 +46,7 @@
     "user_data_file": null,
     "volume_type": null,
     "working_dir": null,
-    "custom_endpoint_ec2": null,
-    "aws_domain": null
+    "custom_endpoint_ec2": null
   },
   "builders": [
     {
@@ -317,6 +316,11 @@
       "inline": [
         "sudo rm -rf {{user `working_dir`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/configure-selinux.sh"
     }
   ],
   "post-processors": [

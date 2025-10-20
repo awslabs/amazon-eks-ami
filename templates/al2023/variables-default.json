@@ -20,7 +20,7 @@
     "iam_instance_profile": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "20",
-    "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.24",
+    "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.25",
     "nvidia_driver_major_version": "570",
     "nvidia_repository_url": null,
     "pause_container_image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.10",
@@ -38,6 +38,5 @@
     "user_data_file": null,
     "volume_type": "gp3",
     "working_dir": "{{user `remote_folder`}}/worker",
-    "aws_domain": "amazonaws.com",
-    "custom_endpoint_ec2": "https://ec2.{{user `aws_region`}}.{{user `aws_domain`}}"
+    "custom_endpoint_ec2": ""
 }

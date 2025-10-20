@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"dario.cat/mergo"
@@ -9,6 +10,19 @@ import (
 	"github.com/pelletier/go-toml/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+func MergeNodeConfigs(nodeConfigs []*NodeConfig) (*NodeConfig, error) {
+	if len(nodeConfigs) == 0 {
+		return nil, fmt.Errorf("no node configs to merge")
+	}
+	nc := nodeConfigs[0]
+	for _, nodeConfig := range nodeConfigs[1:] {
+		if err := nc.Merge(nodeConfig); err != nil {
+			return nil, fmt.Errorf("failed to merge node configs %v: %v", nodeConfigs, err)
+		}
+	}
+	return nc, nil
+}
 
 // Merges two NodeConfigs with custom collision handling
 func (dst *NodeConfig) Merge(src *NodeConfig) error {

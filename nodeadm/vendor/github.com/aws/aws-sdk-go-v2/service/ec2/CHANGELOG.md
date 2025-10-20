@@ -1,3 +1,42 @@
+# v1.257.2 (2025-10-17)
+
+* **Documentation**: Documentation updates for Amazon EC2.
+
+# v1.257.1 (2025-10-16)
+
+* **Dependency Update**: Bump minimum Go version to 1.23.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.257.0 (2025-10-15)
+
+* **Feature**: Introducing EC2 Capacity Manager for monitoring and analyzing capacity usage across On-Demand Instances, Spot Instances, and Capacity Reservations.
+
+# v1.256.0 (2025-10-14)
+
+* **Feature**: This release adds support for creating instant, point-in-time copies of EBS volumes within the same Availability Zone
+
+# v1.255.0 (2025-10-13)
+
+* **Feature**: Release Amazon EC2 c8i, c8i-flex, m8a, and r8gb
+
+# v1.254.1 (2025-09-26)
+
+* **Documentation**: This release includes documentation updates for Amazon EBS General Purpose SSD (gp3) volumes with larger size and higher IOPS and throughput.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.254.0 (2025-09-23)
+
+* **Feature**: Add Amazon EC2 R8gn instance types
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.253.0 (2025-09-18)
+
+* **Feature**: Allowed AMIs adds support for four new parameters - marketplaceProductCodes, deprecationTimeCondition, creationDateCondition and imageNames
+
+# v1.252.0 (2025-09-17)
+
+* **Feature**: Add mac-m4.metal and mac-m4pro.metal instance types.
+
 # v1.251.2 (2025-09-10)
 
 * No change notes available for this release.

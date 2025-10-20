@@ -1,0 +1,20 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  instance:
+    environment:
+      default:
+        HTTP_PROXY: "http://default-proxy:8080"
+        HTTPS_PROXY: "https://default-proxy:8080"
+        NO_PROXY: "localhost,127.0.0.1,169.254.169.254"
+      kubelet:
+        KUBELET_SPECIFIC_VAR: "kubelet-value"
+        HTTP_PROXY: "http://kubelet-proxy:8080"  # Override default
+      containerd:
+        CONTAINERD_SPECIFIC_VAR: "containerd-value"
+  cluster:
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+    name: my-cluster

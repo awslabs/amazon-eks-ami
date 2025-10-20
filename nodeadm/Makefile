@@ -46,7 +46,7 @@ generate: generate-code generate-doc ## Generate code and documentation.
 .PHONY: generate-code
 generate-code: controller-gen conversion-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object paths="./..."
-	$(CONVERSION_GEN) --input-dirs="./internal/api/bridge" --output-file-base=zz_generated.conversion --output-base="./" --go-header-file=/dev/null -v0
+	$(CONVERSION_GEN) --output-file="./zz_generated.conversion.go" --go-header-file=/dev/null -v0 "./internal/api/bridge"
 
 .PHONY: generate-doc
 generate-doc: crd-ref-docs
@@ -102,10 +102,10 @@ CRD_REF_DOCS ?= $(LOCALBIN)/crd-ref-docs
 GOIMPORTS ?= $(LOCALBIN)/goimports
 
 ## Tool Versions
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
-CODE_GENERATOR_VERSION ?= v0.28.1
-CRD_REF_DOCS_VERSION ?= v0.1.0
-GOIMPORTS_VERSION ?= v0.34.0
+CONTROLLER_TOOLS_VERSION ?= v0.19.0
+CODE_GENERATOR_VERSION ?= v0.34.1
+CRD_REF_DOCS_VERSION ?= v0.2.0
+GOIMPORTS_VERSION ?= v0.37.0
 
 tools: controller-gen conversion-gen crd-ref-docs goimports ## Install the toolchain.
 
@@ -136,3 +136,6 @@ $(GOIMPORTS): $(LOCALBIN)
 .PHONY: update-deps
 update-deps:
 	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all) && go mod tidy && go mod vendor
+
+generate-instance-info:
+	go run ./tools/instance-info/main.go > internal/kubelet/instance-info.jsonl
