@@ -4,6 +4,9 @@ on:
     # twice daily at 8pm and 8am PST
     - cron: "0 3,15 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   setup:
     # Don't run if this is on a fork
