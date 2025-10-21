@@ -5,6 +5,9 @@ on:
       - opened
       - reopened
       - synchronize
+permissions:
+  contents: read
+
 jobs:
   lint-docs:
     runs-on: ubuntu-latest
