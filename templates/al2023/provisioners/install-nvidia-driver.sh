@@ -119,7 +119,9 @@ function archive-open-kmods() {
   else
     # Output of `sudo dnf module provides -q kmod-nvidia-open-dkms-570.172.08* | grep Module` is:
     # Module   : nvidia-driver:570-open:20251009011129:f132e61741:x86_64
-    NVIDIA_OPEN_MODULE=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    # There is also a latest module stream that may provide the same package version, so we select only
+    # the one with the version in the name
+    NVIDIA_OPEN_MODULE=$(sudo dnf module provides -q kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}' | grep "$NVIDIA_DRIVER_MAJOR_VERSION")
     sudo dnf -y module install ${NVIDIA_OPEN_MODULE}
   fi
   dkms status
@@ -232,7 +234,9 @@ function archive-proprietary-kmod() {
   else
     # Output of `sudo dnf module provides -q kmod-nvidia-latest-dkms-570.172.08* | grep Module` is:
     # Module   : nvidia-driver:570-dkms:20251009011129:61f77618b4:x86_64
-    NVIDIA_PROPRIETARY_MODULE=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}')
+    # There is also a latest module stream that may provide the same package version, so we select only
+    # the one with the version in the name
+    NVIDIA_PROPRIETARY_MODULE=$(sudo dnf module provides -q kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}* | grep Module | awk -F' : ' '{print $2}' | grep "$NVIDIA_DRIVER_MAJOR_VERSION")
     sudo dnf -y module install ${NVIDIA_PROPRIETARY_MODULE}
   fi
 
@@ -282,14 +286,30 @@ sudo systemctl enable set-nvidia-clocks.service
 ################################################################################
 ### Install other dependencies #################################################
 ################################################################################
-sudo dnf -y install "nvidia-fabric-manager-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -lt "580" ]]; then
+  # versions before 580 used to have a dash between fabric and manager
+  sudo dnf -y install "nvidia-fabric-manager-${NVIDIA_DRIVER_FULL_VERSION}"
+else
+  sudo dnf -y install "nvidia-fabricmanager-${NVIDIA_DRIVER_FULL_VERSION}"
+fi
+# versions of nvidia-imex < 580 use nvidia-imex-<major-version>-<full-version>
+sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}*"
 
 # NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
 if is-isolated-partition; then
   sudo dnf -y install nvidia-container-toolkit
-  sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  sudo dnf -y install "nvidia-driver-cuda-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
+  sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_FULL_VERSION}"
+  sudo dnf -y install "nvidia-driver-cuda-${NVIDIA_DRIVER_FULL_VERSION}"
+  # TODO: standardize this across partitions
+  if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -ge "580" ]]; then
+    sudo dnf -y install \
+      "libnvidia-fbc-${NVIDIA_DRIVER_FULL_VERSION}" \
+      "nvidia-driver-${NVIDIA_DRIVER_FULL_VERSION}" \
+      "nvidia-libXNVCtrl-devel-${NVIDIA_DRIVER_FULL_VERSION}" \
+      "nvidia-settings-${NVIDIA_DRIVER_FULL_VERSION}" \
+      "nvidia-xconfig-${NVIDIA_DRIVER_FULL_VERSION}" \
+      "xorg-x11-nvidia-${NVIDIA_DRIVER_FULL_VERSION}"
+  fi
 else
   sudo dnf -y install nvidia-container-toolkit
 fi

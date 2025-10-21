@@ -73,6 +73,10 @@ else
   MODULE_NAME="nvidia"
 fi
 
+# TODO: disable dkms autoinstall and write these configurations to /run to ensure even lower
+# priority (more room for user overrides) and expected behavior between reboots
+# dkms install is enabled by default for nvidia modules through the AUTOINSTALL="yes" line
+# in the dkms.conf, which is picked up and ran by dkms.service at boot
 function disable-gsp() {
   echo "options nvidia NVreg_EnableGpuFirmware=0" > /etc/modprobe.d/nvidia-disable-gsp.conf
 }
@@ -84,7 +88,7 @@ case "${INSTANCE_TYPE}" in
   g4dn.* | g5.* | g5g.*)
     echo "Disabling GSP for instance type: ${INSTANCE_TYPE}"
     disable-gsp
-    echo "Using propreitary module for instance type: ${INSTANCE_TYPE}"
+    echo "Using proprietary module for instance type: ${INSTANCE_TYPE}"
     MODULE_NAME="nvidia"
     ;;
 
@@ -92,5 +96,9 @@ case "${INSTANCE_TYPE}" in
     echo "No special handling for instance type: ${INSTANCE_TYPE}"
     ;;
 esac
+
+# Enable CDMM, only applies for driver versions 580 or later and machines with coherent memory (e.g. GB200)
+# https://nvdam.widen.net/s/gpqp6wmz7s/cuda-whitepaper--cdmm-pdf
+echo "options nvidia NVreg_CoherentGPUMemoryMode=driver" > /etc/modprobe.d/40-eks-nvidia-openrm.conf
 
 kmod-util load "${MODULE_NAME}"
