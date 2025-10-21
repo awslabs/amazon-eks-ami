@@ -16,7 +16,7 @@ assert::json-files-equal <(jq .spec /run/eks/nodeadm/config.json) cached-config-
 
 # assert that nodeadm does not crash and should load an existing cache. we dont
 # need any phase to go with this because the parsing happens first.
-nodeadm init --skip config,run --config-cache /run/eks/nodeadm/config.json
+nodeadm init --skip config --skip run --config-cache /run/eks/nodeadm/config.json
 assert::json-files-equal <(jq .spec /run/eks/nodeadm/config.json) cached-config-1.json
 
 # trigger changes by writing out a new drop-in
@@ -39,17 +39,17 @@ EOF
 
 # assert that if nodeadm tries to use the drop-in directory without the base
 # config from IMDS, then the verification should fail even if we have a cache.
-if nodeadm init --skip config,run --config-source file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json; then
+if nodeadm init --skip config --skip run --config-source file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json; then
   echo "running nodeadm with only a partial drop-in NodeConfig as the source should not work!"
   exit 1
 fi
 
 # with a fixed config-source, assert that nodeadm generates a new cache config.
-nodeadm init --skip config,run --config-source imds://user-data,file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json
+nodeadm init --skip config --skip run --config-source imds://user-data --config-source file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json
 assert::json-files-equal <(jq .spec /run/eks/nodeadm/config.json) cached-config-2.json
 
 # cleanup the drop-ins, and assert that if no config could be resolved through a
 # chain, then the cache should get used (this scenario is ideally for
 # nodeadm-run.service using a cached config from nodeadm-config.service).
 rm /etc/eks/nodeadm.d/*
-nodeadm init --skip config,run --config-source file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json
+nodeadm init --skip config --skip run --config-source file:///etc/eks/nodeadm.d --config-cache /run/eks/nodeadm/config.json
