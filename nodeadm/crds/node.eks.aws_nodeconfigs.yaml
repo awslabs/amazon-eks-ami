@@ -141,6 +141,22 @@ spec:
                         - Mount
                         type: string
                     type: object
+                  network:
+                    description: NetworkOptions are options to configure host networking.
+                    properties:
+                      domains:
+                        description: Domains are search entries for the instance's
+                          network name resolution.
+                        items:
+                          type: string
+                        type: array
+                      nameservers:
+                        description: Nameservers are servers for the instance's network
+                          name resolution.
+                        items:
+                          type: string
+                        type: array
+                    type: object
                 type: object
               kubelet:
                 description: KubeletOptions are additional parameters passed to `kubelet`.

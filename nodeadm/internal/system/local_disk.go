@@ -9,8 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const localDiskAspectName = "local-disk"
-
 func NewLocalDiskAspect() SystemAspect {
 	return &localDiskAspect{}
 }
@@ -18,7 +16,7 @@ func NewLocalDiskAspect() SystemAspect {
 type localDiskAspect struct{}
 
 func (a *localDiskAspect) Name() string {
-	return localDiskAspectName
+	return "local-disk"
 }
 
 func (a *localDiskAspect) Setup(cfg *api.NodeConfig) error {
