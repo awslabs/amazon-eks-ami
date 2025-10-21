@@ -92,6 +92,15 @@ type ContainerdOptions struct {
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
 	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+	Network      NetworkOptions      `json:"network,omitempty"`
+}
+
+// NetworkOptions are options to configure host networking.
+type NetworkOptions struct {
+	// Nameservers are servers for the instance's network name resolution.
+	Nameservers []string `json:"nameservers,omitempty"`
+	// Domains are search entries for the instance's network name resolution.
+	Domains []string `json:"domains,omitempty"`
 }
 
 // EnvironmentOptions configures environment variables for the system and systemd services.

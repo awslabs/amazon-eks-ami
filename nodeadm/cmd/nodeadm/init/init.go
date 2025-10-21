@@ -118,6 +118,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		log.Info("Setting up system config aspects...")
 		configAspects := []system.SystemAspect{
 			system.NewInstanceEnvironmentAspect(),
+			system.NewResolveAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, configAspects); err != nil {
 			return err
