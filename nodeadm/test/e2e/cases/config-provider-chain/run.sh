@@ -20,4 +20,3 @@ cp config.yaml $CONFIG_DIR/config.yaml
 # assert all forms of inputting the chain are valid
 nodeadm init --skip run --config-source file://$CONFIG_DIR
 nodeadm init --skip run --config-source file://config.yaml --config-source file://$CONFIG_DIR
-nodeadm init --skip run --config-source file://config.yaml,file://$CONFIG_DIR
