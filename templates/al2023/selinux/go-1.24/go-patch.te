@@ -3,9 +3,9 @@ policy_module(go-patch, 1.0)
 require {
         type kernel_t;
         type container_t;
-        class tcp_socket { read write };
+        class tcp_socket { read };
 }
 
 #============= container_t ==============
 
-allow container_t kernel_t:tcp_socket { read write };
+allow container_t kernel_t:tcp_socket { read };
