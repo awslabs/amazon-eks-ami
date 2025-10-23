@@ -1,23 +1,21 @@
-policy_module(node-exporter, 1.0)
+policy_module(node_exporter, 1.0)
 
 require {
     type container_t;
-    type kernel_t;
     type security_t;
     type init_t;
-    class tcp_socket { read write };
     class file { open read getattr };
     class dir { search };
 }
 
-# Allow TCP socket read/write
-allow container_t kernel_t:tcp_socket { read write };
-
-# Allow reading and inspecting selinuxfs enforce file
+# Allow node_exporter to read SELinux enforcement status
+# Reads /sys/fs/selinux/enforce
 allow container_t security_t:file { open read getattr };
 
-# Allow listing /proc directories
+# Allow node_exporter to search init process directory
+# Searches /proc/1
 allow container_t init_t:dir search;
 
-# Allow opening and reading /proc/1/mountinfo
-allow container_t init_t:file { open read };
+# Allow node_exporter to read init process files
+# Reads files like /proc/1/mountinfo, /proc/1/stat, etc.
+allow container_t init_t:file { open read getattr };

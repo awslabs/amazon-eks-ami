@@ -6,20 +6,10 @@ set -o pipefail
 
 cd "$(dirname $0)/../.."
 
-declare 
-=""
 declare -A MOUNT_TARGETS=(
   ['nodeadm']=$PWD/_bin/nodeadm
   ['nodeadm-internal']=$PWD/_bin/nodeadm-internal
 )
-
-for binary in "${!MOUNT_TARGETS[@]}"; do
-  if [ ! -f "${MOUNT_TARGETS[$binary]}" ]; then
-    echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
-    exit 1
-  fi
-  MOUNT_FLAGS+=" -v ${MOUNT_TARGETS[$binary]}:/usr/local/bin/$binary"
-done
 
 # build image
 printf "🛠️ Building test infra image with containerd v1..."
@@ -33,28 +23,54 @@ echo "done! Test image with containerd v2: $CONTAINERD_V2_IMAGE"
 FAILED="false"
 
 function runTest() {
-  local case_name=$1
+  local case_dir=$1
   local image=$2
-  if [[ $image == "$CONTAINERD_V1_IMAGE" ]]; then
-    printf "🧪 Testing %s with containerd v1 image..." "$case_name"
-  else
-    printf "🧪 Testing %s with containerd v2 image..." "$case_name"
-  fi
-  CONTAINER_ID=$(docker run \
-    -d \
-    $MOUNT_FLAGS \
-    -v "$PWD/$CASE_DIR":/test-case \
-    "$image"
 
-  LOG_FILE=$(mktemp)
-  if docker exec "$CONTAINER_ID" bash -c "cd /test-case && ./run.sh" > "$LOG_FILE" 2>&1; then
+  local case_name
+  case_name=$(basename "$case_dir")
+
+  if [ $image = "$CONTAINERD_V1_IMAGE" ]; then
+    echo -n "🧪 Testing $case_name with containerd v1 image..."
+  else
+    echo -n "🧪 Testing $case_name with containerd v2 image..."
+  fi
+
+  local workdir=/test-case
+  local docker_args=(
+    --detach
+    --rm
+    --privileged
+    # NOTE: we force the mac address of the container to be the one from the
+    # ec2-metadata-mock to make expectations match.
+    --mac-address "$(jq -r '.metadata.values.mac' $case_dir/../../infra/aemm-default-config.json)"
+    --workdir "$workdir"
+    --volume "$(pwd)/$case_dir:$workdir"
+  )
+
+  for binary in "${!MOUNT_TARGETS[@]}"; do
+    if [ ! -f "${MOUNT_TARGETS[$binary]}" ]; then
+      echo >&2 "error: you must build nodeadm (run \`make\`) before you can run the e2e tests!"
+      exit 1
+    fi
+    docker_args+=(--volume "${MOUNT_TARGETS[$binary]}:/usr/local/bin/$binary")
+  done
+
+  local containerd_id
+  containerd_id=$(docker run "${docker_args[@]}" "$image")
+
+  local logfile
+  logfile=$(mktemp)
+
+  if docker exec "$containerd_id" ./run.sh > "$logfile" 2>&1; then
     echo "passed! ✅"
   else
     echo "failed! ❌"
-    cat "$LOG_FILE"
+    cat "$logfile"
     FAILED="true"
   fi
-  docker kill "$CONTAINER_ID" > /dev/null 2>&1
+
+  # killing a container should not take more than 5 seconds.
+  timeout 5 docker kill "$containerd_id" > /dev/null 2>&1
 }
 
 # Run tests
@@ -62,12 +78,12 @@ CASE_PREFIX=${1:-}
 for CASE_DIR in test/e2e/cases/${CASE_PREFIX}*; do
   CASE_NAME=$(basename "$CASE_DIR")
   if [[ "$CASE_NAME" == containerdv2-* ]]; then
-    runTest "$CASE_NAME" "$CONTAINERD_V2_IMAGE"
+    runTest "$CASE_DIR" "$CONTAINERD_V2_IMAGE"
     continue
   elif [[ "$CASE_NAME" == containerd-* ]]; then
-    runTest "$CASE_NAME" "$CONTAINERD_V2_IMAGE"
+    runTest "$CASE_DIR" "$CONTAINERD_V2_IMAGE"
   fi
-  runTest "$CASE_NAME" "$CONTAINERD_V1_IMAGE"
+  runTest "$CASE_DIR" "$CONTAINERD_V1_IMAGE"
 done
 
 if [ "$FAILED" = "true" ]; then
