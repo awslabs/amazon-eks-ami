@@ -72,3 +72,34 @@ if command -v dkms > /dev/null; then
     exit 1
   fi
 fi
+
+if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
+  # Validate that for every nvidia module archived, it is one of nvidia, nvidia-open-grid, or nvidia-open,
+  # and they all have the same version
+  VERSION=""
+  MODULE_COUNT=0
+  for ARCHIVE in /var/lib/dkms-archive/nvidia*; do
+    for MODULE in "$ARCHIVE"/*; do
+      CURRENT_VERSION=$(basename "$MODULE" | sed -E 's/nvidia-(open-grid-|open-)?([0-9]+\.[0-9]+\.[0-9]+).*/\2/')
+      if [[ -n "$VERSION" ]] && [[ "$VERSION" != "$CURRENT_VERSION" ]]; then
+        echo "Mismatch in driver versions in dkms archive: saw $VERSION and $CURRENT_VERSION"
+        ls --recursive /var/lib/dkms-archive/nvidia*
+        exit 1
+      else
+        MODULE_COUNT=$((MODULE_COUNT + 1))
+        VERSION="$CURRENT_VERSION"
+      fi
+    done
+  done
+
+  if [[ "$(uname -m)" == "x86_64" ]] && [[ "$MODULE_COUNT" != "3" ]]; then
+    echo "Expected 3 nvidia modules archived, have $MODULE_COUNT"
+    ls --recursive /var/lib/dkms-archive/nvidia*
+    exit 1
+  elif [[ "$(uname -m)" == "aarch64" ]] && [[ "$MODULE_COUNT" != "2" ]]; then
+    # there are no grid drivers installed for aarch64 at the moment
+    echo "Expected 2 nvidia modules archived, found $MODULE_COUNT"
+    ls --recursive /var/lib/dkms-archive/nvidia*
+    exit 1
+  fi
+fi
