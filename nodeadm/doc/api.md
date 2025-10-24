@@ -86,6 +86,7 @@ _Appears in:_
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
 | `environment` _[EnvironmentOptions](#environmentoptions)_ |  |
+| `network` _[NetworkOptions](#networkoptions)_ |  |
 
 #### KubeletOptions
 
@@ -125,6 +126,18 @@ _Appears in:_
 
 .Validation:
 - Enum: [RAID0 RAID10 Mount]
+
+#### NetworkOptions
+
+NetworkOptions are options to configure host networking.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
+| Field | Description |
+| --- | --- |
+| `nameservers` _string array_ | Nameservers are servers for the instance's network name resolution. |
+| `domains` _string array_ | Domains are search entries for the instance's network name resolution. |
 
 #### NodeConfig
 
