@@ -1,4 +1,3 @@
 {
-    "containerd_version": "1.7.*",
-    "nvidia_driver_major_version": "570"
+    "containerd_version": "1.7.*"
 }
