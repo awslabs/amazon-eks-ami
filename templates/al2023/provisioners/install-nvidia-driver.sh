@@ -112,7 +112,7 @@ function archive-open-kmods() {
   echo "Archiving open kmods"
   # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
   # enabled by default, so only the latest open driver package can be installed by default. Enabling module
-  # hotfixes disables module filtering, allowing us to find any package regardless of stream, more similar
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
   # to how the amazonlinux-nvidia repository functions
   sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
   dkms status
@@ -205,7 +205,7 @@ function archive-proprietary-kmod() {
   echo "Archiving proprietary kmods"
   # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
   # enabled by default, so only the latest open driver package can be installed by default. Enabling module
-  # hotfixes disables module filtering, allowing us to find any package regardless of stream, more similar
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
   # to how the amazonlinux-nvidia repository functions
   sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
 
