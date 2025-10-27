@@ -110,6 +110,32 @@ else
   fi
 fi
 
+# A utility function to ensure that nvidia-open-supported-devices.txt is correctly generated
+validate_nvidia_supported_devices_file() {
+  local NVIDIA_DRIVER_MAJOR_VERSION="$1"
+  # add some quick validations to ensure that the build fails if supported devices file is missing
+  GENERATED_SUPPORTED_DEVICES_FILE="/etc/eks/nvidia-open-supported-devices-${NVIDIA_DRIVER_MAJOR_VERSION}.txt"
+  if [ ! -s "$GENERATED_SUPPORTED_DEVICES_FILE" ]; then
+    echo "ERROR: Generated supported devices file is empty or missing"
+    exit 1
+  fi
+
+  # check to ensure that the file is not empty
+  TOTAL_SUPPORTED_GPU_ENTRY_COUNT=$(grep -c "^0x" "$GENERATED_SUPPORTED_DEVICES_FILE" 2> /dev/null || echo "0")
+  echo "Count of GPU entries in ${GENERATED_SUPPORTED_DEVICES_FILE}: ${TOTAL_SUPPORTED_GPU_ENTRY_COUNT}"
+  if [ "$TOTAL_SUPPORTED_GPU_ENTRY_COUNT" -eq 0 ]; then
+    echo "ERROR: No GPU entries found in generated nvidia-open-supported-devices.txt file"
+    exit 1
+  fi
+
+  # check to ensure that the format of the file is correct
+  if ! grep -E "^0x[0-9A-F]{4} .+" "$GENERATED_SUPPORTED_DEVICES_FILE" > /dev/null; then
+    echo "ERROR: Generated file contains malformed entries"
+    echo "Expected format: '0xXXXX GPU_NAME'"
+    exit 1
+  fi
+}
+
 function archive-open-kmods() {
   local NVIDIA_OPEN_MODULE
   echo "Archiving open kmods"
@@ -149,11 +175,6 @@ function archive-open-kmods() {
   sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
   sudo kmod-util archive nvidia-open
-
-  KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
-  SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
-  sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
-
   sudo kmod-util remove nvidia-open
 
   if is-isolated-partition; then
@@ -208,6 +229,17 @@ function archive-grid-kmod() {
     --dkms \
     --kernel-module-type open \
     --silent || sudo cat /var/log/nvidia-installer.log
+
+  # assemble the list of supported nvidia devices for the open kernel modules
+  echo -e "# This file was generated from supported-gpus/supported-gpus.json\n$(sed -e 's/^/# /g' supported-gpus/LICENSE)" \
+    | sudo tee -a /etc/eks/nvidia-open-supported-devices-$NVIDIA_DRIVER_MAJOR_VERSION.txt
+
+  cat supported-gpus/supported-gpus.json \
+    | jq -r '.chips[] | select(.features[] | contains("kernelopen")) | "\(.devid) \(.name)"' \
+    | sort -u \
+    | sudo tee -a /etc/eks/nvidia-open-supported-devices-$NVIDIA_DRIVER_MAJOR_VERSION.txt
+
+  validate_nvidia_supported_devices_file $NVIDIA_DRIVER_MAJOR_VERSION
 
   # Manual DKMS registration with package name changed to `nvidia-open-grid`
   sudo dkms remove "nvidia/$NVIDIA_DRIVER_FULL_VERSION" --all
