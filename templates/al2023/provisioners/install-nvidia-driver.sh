@@ -74,7 +74,7 @@ echo "Latest available Nvidia open module version: ${LATEST_OPEN_MODULE_VERSION}
 # userspace components. If one of the open module or the grid driver runfile version are older, we
 # use that version for all installations. Assumes that the open and proprietary module will always be
 # available at the same version, and that each source will always eventually have the same versions.
-if vercmp "$LATEST_OPEN_MODULE_VERSION" gteq "$LATEST_GRID_DRIVER_VERSION"; then
+if vercmp "$LATEST_OPEN_MODULE_VERSION" lteq "$LATEST_GRID_DRIVER_VERSION"; then
   readonly NVIDIA_DRIVER_FULL_VERSION="$LATEST_OPEN_MODULE_VERSION"
 else
   readonly NVIDIA_DRIVER_FULL_VERSION="$LATEST_GRID_DRIVER_VERSION"
@@ -114,7 +114,7 @@ function archive-open-kmods() {
   echo "Archiving open kmods"
   # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
   # enabled by default, so only the latest open driver package can be installed by default. Enabling module
-  # hotfixes disables module filtering, allowing us to find any package regardless of stream, more similar
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
   # to how the amazonlinux-nvidia repository functions
   sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
   dkms status
@@ -157,7 +157,7 @@ function archive-grid-kmod() {
     return
   fi
 
-  echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
+  echo "Archiving NVIDIA GRID kernel modules"
   NVIDIA_GRID_RUNFILE_KEY=$(aws s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
     | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
     | sort -k1,2 \
@@ -209,7 +209,7 @@ function archive-proprietary-kmod() {
   echo "Archiving proprietary kmods"
   # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
   # enabled by default, so only the latest open driver package can be installed by default. Enabling module
-  # hotfixes disables module filtering, allowing us to find any package regardless of stream, more similar
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
   # to how the amazonlinux-nvidia repository functions
   sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
 
