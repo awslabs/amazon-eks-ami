@@ -1,0 +1,13 @@
+[Unit]
+Description=Loading Neuron kernel modules
+# the script needs to use IMDS, so wait for the network to be up to avoid any flakiness
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/neuron-kmod-load.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
