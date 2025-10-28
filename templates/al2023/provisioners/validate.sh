@@ -62,6 +62,20 @@ if sudo ip link | grep nerdctl0; then
   exit 1
 fi
 
+################################
+### modules ####################
+################################
+
+# Ensure that no module that we expect to manage through a systemd-modules-load file
+if grep --recursive --silent --word-regexp 'neuron' {/etc,/run,/usr/local/lib,/usr/lib}/modules-load.d/; then
+  # Note: this checks /run even though /run would not be present on the final instance, based on the assumption
+  # that whatever wrote it to /run might re-write it on instance boot
+  echo "Neuron module would be autoloaded by systemd-modules-load!"
+  exit 1
+  # TODO: make this check more rigorous if needed. This could more robustly check priorities to see if a configuration
+  # in /usr/lib is actually overridden by an equivalently named file in /etc, for example
+fi
+
 #############################
 ### dkms ####################
 #############################
