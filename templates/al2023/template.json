@@ -250,7 +250,8 @@
       "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
-        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "WORKING_DIR={{user `working_dir`}}"
       ]
     },
     {
