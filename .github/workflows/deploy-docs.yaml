@@ -12,6 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
     - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # 6.0.0
+      with:
+        go-version: 'stable'
     - run: |
         pushd nodeadm && make wasm && popd
         mkdir -p ./site/assets/wasm && cp ./nodeadm/_bin/nodeadm.wasm ./site/assets/wasm/
