@@ -69,11 +69,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
 	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources), zap.String("configCache", c.configCache))
-	nodeConfig, isChanged, err := c.resolveConfig(log, opts)
-	if err != nil {
-		return err
-	}
-	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	initAspects := []system.SystemAspect{
 		// This aspect enables nodeadm to respect environment variables that
@@ -82,10 +77,12 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		// an HTTP(s) proxy.
 		system.NewNodeadmEnvironmentAspect(),
 	}
-	log.Info("Setting up system init aspects...")
-	if err := c.setupAspects(log, nodeConfig, initAspects); err != nil {
+
+	nodeConfig, isChanged, err := c.resolveConfig(log, opts, initAspects)
+	if err != nil {
 		return err
 	}
+	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Validating configuration..")
 	if err := api.ValidateNodeConfig(nodeConfig); err != nil {
@@ -155,7 +152,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 }
 
 // resolveConfig returns either the cached config or the provided config chain.
-func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, isChanged bool, err error) {
+func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions, initAspects []system.SystemAspect) (cfg *api.NodeConfig, isChanged bool, err error) {
 	var cachedConfig *api.NodeConfig
 	if len(c.configCache) > 0 {
 		config, err := loadCachedConfig(c.configCache)
@@ -177,6 +174,11 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *
 		log.Warn("Falling back to cached config...")
 		return cachedConfig, false, nil
 	} else if err != nil {
+		return nil, false, err
+	}
+
+	log.Info("Setting up system init aspects...")
+	if err := c.setupAspects(log, nodeConfig, initAspects); err != nil {
 		return nil, false, err
 	}
 

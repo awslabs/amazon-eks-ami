@@ -26,7 +26,7 @@ func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
 	// Link-local addresses for IMDS do not need to be going through a proxy
 	// The IMDS has two endpoints on an instance: IPv4 (169.254.169.254) and IPv6 ([fd00:ec2::254])
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
-	if req.URL.Host == "169.254.169.254" || req.URL.Host == "[fd00:ec2::254]" {
+	if req.URL.Hostname() == "169.254.169.254" || req.URL.Hostname() == "[fd00:ec2::254]" || req.URL.Host == "localhost:1338" {
 		return nil, nil
 	}
 
