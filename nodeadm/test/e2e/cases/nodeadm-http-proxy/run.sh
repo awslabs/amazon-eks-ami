@@ -44,8 +44,8 @@ sleep 5
 
 nodeadm init --skip run
 
-assert::files-equal /tmp/nodeadm-config-trafic.log expected-nodeadm-config-traffic.log
 kill $PROXY_SERVER_PID
+assert::files-equal /tmp/nodeadm-config-trafic.log expected-nodeadm-config-traffic.log
 
 # Test 2 - Spin up a proxy-server and testing the traffic for nodeadm run phase
 echo "Starting HTTP Proxy Server"
@@ -57,5 +57,5 @@ sleep 5
 
 nodeadm init --skip config
 
-assert::files-equal /tmp/nodeadm-run-trafic.log expected-nodeadm-run-traffic.log
 kill $PROXY_SERVER_PID
+assert::files-equal /tmp/nodeadm-run-trafic.log expected-nodeadm-run-traffic.log
