@@ -565,6 +565,19 @@ get_nodeadm_info() {
 
       timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
 
+      timeout 75 journalctl --unit=nodeadm-boot-hook --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-boot-hook.log
+      
+      # Collect udev-net-manager logs using cached interface names for this instance.
+      # https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/cmd/nodeadm-internal/udev/broker.go#L16
+      NETWORK_MANAGER_CACHE_DIR="/etc/eks/nodeadm/udev-net-manager/${INSTANCE_ID}"
+      if [ -d "$NETWORK_MANAGER_CACHE_DIR" ]; then
+          for interface_file in "$NETWORK_MANAGER_CACHE_DIR"/*; do
+            if [ -f "$interface_file" ]; then
+                interface=$(basename "$interface_file")
+                timeout 75 journalctl --unit=udev-net-manager@${interface} --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/udev-net-manager_${interface}.log
+            fi
+        done
+      fi
       ;;
     *)
       warning "The current operating system is not supported."
