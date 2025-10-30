@@ -17,10 +17,8 @@ import (
 )
 
 const (
-	instanceEnvironmentAspectName = "instance-environment"
-	nodeadmEnvironmentAspectName  = "nodeadm-environment"
-	systemdEnvironmentConfPath    = "/etc/systemd/system.conf.d/environment.conf"
-	serviceDropinPathBase         = "/etc/systemd/system"
+	systemdEnvironmentConfPath = "/etc/systemd/system.conf.d/environment.conf"
+	serviceDropinPathBase      = "/etc/systemd/system"
 )
 
 const systemdConfigTemplate = `[Manager]
@@ -48,7 +46,7 @@ type nodeadmEnvironmentAspect struct{}
 type instanceEnvironmentAspect struct{}
 
 func (a *nodeadmEnvironmentAspect) Name() string {
-	return nodeadmEnvironmentAspectName
+	return "nodeadm-environment"
 }
 
 func (a *nodeadmEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
@@ -66,7 +64,7 @@ func (a *nodeadmEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
 }
 
 func (a *instanceEnvironmentAspect) Name() string {
-	return instanceEnvironmentAspectName
+	return "instance-environment"
 }
 
 func (a *instanceEnvironmentAspect) Setup(cfg *api.NodeConfig) error {
