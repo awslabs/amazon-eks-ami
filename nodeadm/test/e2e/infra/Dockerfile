@@ -47,6 +47,7 @@ COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/container
 COPY test/e2e/infra/mock/ /sys_devices_system_mock/
 COPY test/e2e/helpers.sh /helpers.sh
 COPY test/e2e/infra/mock/system/ /
+# A testing utility which implements a minimal HTTP proxy server for logging traffic.
 COPY test/e2e/infra/proxy.py /proxy.py
 
 RUN mkdir -p /etc/eks/image-credential-provider/
