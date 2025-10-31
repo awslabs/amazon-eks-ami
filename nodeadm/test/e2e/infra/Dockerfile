@@ -22,7 +22,8 @@ RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py
-RUN pip install --user 'moto[server]'
+COPY test/e2e/infra/requirements.txt /
+RUN pip install --user -r requirements.txt
 # I know how this looks, but it lets us use moto with our mocked IMDS and for now the simplicity is worth the hack
 RUN sed -i 's/= random_instance_id()/= "i-1234567890abcdef0"/g' $HOME/.local/lib/python*/site-packages/moto/ec2/models/instances.py
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
@@ -46,6 +47,8 @@ COPY test/e2e/infra/systemd/containerd.service /usr/lib/systemd/system/container
 COPY test/e2e/infra/mock/ /sys_devices_system_mock/
 COPY test/e2e/helpers.sh /helpers.sh
 COPY test/e2e/infra/mock/system/ /
+# A testing utility which implements a minimal HTTP proxy server for logging traffic.
+COPY test/e2e/infra/proxy.py /proxy.py
 
 RUN mkdir -p /etc/eks/image-credential-provider/
 RUN touch /etc/eks/image-credential-provider/ecr-credential-provider
