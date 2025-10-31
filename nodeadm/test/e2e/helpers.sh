@@ -209,7 +209,7 @@ export AWS_REGION=us-east-1
 
 # this is set regardless of whether the mock AWS API is started
 # because we don't want to inadvertently send requests to the real AWS API
-export AWS_ENDPOINT_URL=http://0.0.0.0:5000
+export AWS_ENDPOINT_URL=http://localhost:5000
 
 # do the same for IMDS, for good measure
 export AWS_EC2_METADATA_SERVICE_ENDPOINT=http://localhost:1338

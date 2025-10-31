@@ -34,6 +34,11 @@ mock::aws http-proxy-imds-mock.json
 mock::kubelet 1.27.0
 wait::dbus-ready
 
+# When running an e2e test image, the mock API servers use link-local address.
+# By default, link-local addresses cannot be routed by a proxy server.
+# We set the host to 0.0.0.0 so that ec2 api calls go through the proxy.
+export AWS_ENDPOINT_URL=http://0.0.0.0:5000
+
 # Test 1 - Spin up a proxy-server and testing the traffic for nodeadm config phase
 echo "Starting HTTP Proxy Server"
 python3 /proxy.py --output nodeadm-config-trafic.log > /tmp/plogs.log &
