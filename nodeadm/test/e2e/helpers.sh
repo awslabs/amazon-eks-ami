@@ -79,7 +79,17 @@ function mock::kubelet() {
     echo "Usage: mock::kubelet VERSION"
     exit 1
   fi
-  printf "#!/usr/bin/env bash\necho Kubernetes v%s\n" "$1" > /usr/bin/kubelet
+  local VERSION="$1"
+  cat > /usr/bin/kubelet << 'SCRIPT'
+#!/usr/bin/env bash
+if [ "$1" = "--version" ]; then
+  echo "Kubernetes vVERSION_PLACEHOLDER"
+else
+  echo "Kubelet is running..."
+  sleep infinity
+fi
+SCRIPT
+  sed -i "s/VERSION_PLACEHOLDER/$VERSION/" /usr/bin/kubelet
   chmod +x /usr/bin/kubelet
 }
 
