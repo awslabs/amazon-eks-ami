@@ -30,6 +30,7 @@
     "nodeadm_build_image": null,
     "nvidia_driver_major_version": null,
     "nvidia_repository_url": null,
+    "nvidia_grid_runfile_bucket_name": null,
     "pause_container_image": null,
     "remote_folder": null,
     "runc_version": null,
@@ -267,6 +268,7 @@
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
         "NVIDIA_REPOSITORY={{user `nvidia_repository_url`}}",
+        "EC2_GRID_DRIVER_S3_BUCKET={{user `nvidia_grid_runfile_bucket_name`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },
