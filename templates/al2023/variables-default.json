@@ -23,6 +23,7 @@
     "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.25",
     "nvidia_driver_major_version": "580",
     "nvidia_repository_url": null,
+    "nvidia_grid_runfile_bucket_name": "ec2-linux-nvidia-drivers",
     "pause_container_image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.10",
     "remote_folder": "/tmp",
     "runc_version": "*",

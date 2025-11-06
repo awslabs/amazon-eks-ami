@@ -29,15 +29,7 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 # of the AMI, we want to ensure that all three kernel modules (and also the userspace modules)
 # are on the same NVIDIA driver version. Currently, the script installs the NVIDIA GRID drivers
 # first and decides the full NVIDIA driver version that the AMI will adhere to
-if [[ "$AWS_REGION" == "us-isof-south-1" || "$AWS_REGION" == "eusc-de-east-1" || "$AWS_REGION" == "eu-isoe-west-1" ]]; then
-  EC2_GRID_DRIVER_S3_BUCKET="${BINARY_BUCKET_NAME}"
-  GRID_DRIVER_S3_SCAN_PATH="s3://${EC2_GRID_DRIVER_S3_BUCKET}/bin/nvidia-grid-drivers/"
-else
-  EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
-  GRID_DRIVER_S3_SCAN_PATH="s3://${EC2_GRID_DRIVER_S3_BUCKET}/"
-fi
-
-NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive ${GRID_DRIVER_S3_SCAN_PATH} \
+NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
   | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
   | cut -d'-' -f4 \
   | sort -V \
@@ -174,7 +166,7 @@ function archive-open-kmods() {
 
 function archive-grid-kmod() {
   local MACHINE
-  local NVIDIA_GRID_RUNFILE_NAME
+  local NVIDIA_GRID_RUNFILE_KEY
   local GRID_INSTALLATION_TEMP_DIR
   local EXTRACT_DIR
 
@@ -187,26 +179,28 @@ function archive-grid-kmod() {
   fi
 
   echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive ${GRID_DRIVER_S3_SCAN_PATH} \
+  NVIDIA_GRID_RUNFILE_KEY=$(aws s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
     | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
     | sort -k1,2 \
     | tail -1 \
     | awk '{print $4}')
 
-  if [[ -z "$NVIDIA_GRID_RUNFILE_NAME" ]]; then
+  if [[ -z "$NVIDIA_GRID_RUNFILE_KEY" ]]; then
     echo "ERROR: No GRID driver found for driver version ${NVIDIA_DRIVER_FULL_VERSION} in EC2 S3 bucket"
     exit 1
   fi
 
-  echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_NAME}"
-  local GRID_RUNFILE_LOCAL_NAME
-  GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
+  echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_KEY}"
+  local GRID_RUNFILE_NAME
+  GRID_RUNFILE_NAME=$(basename "${NVIDIA_GRID_RUNFILE_KEY}")
 
   echo "Downloading GRID driver runfile..."
-  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET}/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
-  chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  # This is the only command that requires the bucket name to actually just be the bucket (no prefix) b/c of how the
+  # s3 ls recursive output dumps the full object key regardless of the supplied prefix
+  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${NVIDIA_GRID_RUNFILE_KEY}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
+  chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
   echo "Extracting NVIDIA GRID driver runfile..."
-  sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
+  sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}" --extract-only --target "${EXTRACT_DIR}"
 
   pushd "${EXTRACT_DIR}"
 
