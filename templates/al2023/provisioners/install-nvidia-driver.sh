@@ -29,8 +29,15 @@ echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 # of the AMI, we want to ensure that all three kernel modules (and also the userspace modules)
 # are on the same NVIDIA driver version. Currently, the script installs the NVIDIA GRID drivers
 # first and decides the full NVIDIA driver version that the AMI will adhere to
-EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
-NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+if [[ "$AWS_REGION" == "us-isof-south-1" || "$AWS_REGION" == "eusc-de-east-1" || "$AWS_REGION" == "eu-isoe-west-1" ]]; then
+  EC2_GRID_DRIVER_S3_BUCKET="${BINARY_BUCKET_NAME}"
+  GRID_DRIVER_S3_SCAN_PATH="s3://${EC2_GRID_DRIVER_S3_BUCKET}/bin/nvidia-grid-drivers/"
+else
+  EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
+  GRID_DRIVER_S3_SCAN_PATH="s3://${EC2_GRID_DRIVER_S3_BUCKET}/"
+fi
+
+NVIDIA_DRIVER_FULL_VERSION=$(aws s3 ls --recursive ${GRID_DRIVER_S3_SCAN_PATH} \
   | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
   | cut -d'-' -f4 \
   | sort -V \
@@ -180,7 +187,7 @@ function archive-grid-kmod() {
   fi
 
   echo "Archiving NVIDIA GRID kernel modules for major version ${NVIDIA_DRIVER_MAJOR_VERSION}"
-  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+  NVIDIA_GRID_RUNFILE_NAME=$(aws s3 ls --recursive ${GRID_DRIVER_S3_SCAN_PATH} \
     | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
     | sort -k1,2 \
     | tail -1 \
@@ -196,7 +203,7 @@ function archive-grid-kmod() {
   GRID_RUNFILE_LOCAL_NAME=$(basename "${NVIDIA_GRID_RUNFILE_NAME}")
 
   echo "Downloading GRID driver runfile..."
-  aws s3 cp "s3://ec2-linux-nvidia-drivers/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
+  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET}/${NVIDIA_GRID_RUNFILE_NAME}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}"
   echo "Extracting NVIDIA GRID driver runfile..."
   sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_LOCAL_NAME}" --extract-only --target "${EXTRACT_DIR}"
