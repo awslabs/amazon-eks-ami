@@ -41,7 +41,7 @@ export AWS_ENDPOINT_URL=http://0.0.0.0:5000
 
 # Test 1 - Spin up a proxy-server and testing the traffic for nodeadm config phase
 echo "Starting HTTP Proxy Server"
-python3 /proxy.py --output nodeadm-config-trafic.log > /tmp/plogs.log &
+python3 /proxy.py --output-path /tmp/nodeadm-config-trafic.log > /tmp/plogs.log &
 PROXY_SERVER_PID=$!
 echo "PROXY SERVER PID: ${PROXY_SERVER_PID}"
 echo "Sleeping for a few seconds to warm the proxy server"
@@ -54,7 +54,7 @@ assert::files-equal /tmp/nodeadm-config-trafic.log expected-nodeadm-config-traff
 
 # Test 2 - Spin up a proxy-server and testing the traffic for nodeadm run phase
 echo "Starting HTTP Proxy Server"
-python3 /proxy.py --output nodeadm-run-trafic.log > /tmp/plogs.log &
+python3 /proxy.py --output-path /tmp/nodeadm-run-trafic.log > /tmp/plogs.log &
 PROXY_SERVER_PID=$!
 echo "PROXY SERVER PID: ${PROXY_SERVER_PID}"
 echo "Sleeping for a few seconds to warm the proxy server"
@@ -64,3 +64,16 @@ nodeadm init --skip config
 
 kill $PROXY_SERVER_PID
 assert::files-equal /tmp/nodeadm-run-trafic.log expected-nodeadm-run-traffic.log
+
+# Test 3 - Spin up a proxy-server and testing the traffic for both init and run
+echo "Starting HTTP Proxy Server"
+python3 /proxy.py --output-path /tmp/nodeadm-trafic.log > /tmp/plogs.log &
+PROXY_SERVER_PID=$!
+echo "PROXY SERVER PID: ${PROXY_SERVER_PID}"
+echo "Sleeping for a few seconds to warm the proxy server"
+sleep 5
+
+nodeadm init
+
+kill $PROXY_SERVER_PID
+assert::files-equal /tmp/nodeadm-trafic.log expected-nodeadm-traffic.log

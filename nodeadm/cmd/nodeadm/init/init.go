@@ -167,14 +167,6 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions, fnOpts
 		return nil, false, err
 	}
 	nodeConfig, err := provider.Provide()
-	// if the error is just that no config is provided, then attempt to use the
-	// cached config as a fallback. otherwise, treat this as a fatal error.
-	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
-		log.Warn("Falling back to cached config...")
-		return cachedConfig, false, nil
-	} else if err != nil {
-		return nil, false, err
-	}
 
 	if len(fnOpts) > 0 {
 		log.Info("Applying config options...")
@@ -183,6 +175,15 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions, fnOpts
 				return nil, false, err
 			}
 		}
+	}
+
+	// if the error is just that no config is provided, then attempt to use the
+	// cached config as a fallback. otherwise, treat this as a fatal error.
+	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
+		log.Warn("Falling back to cached config...")
+		return cachedConfig, false, nil
+	} else if err != nil {
+		return nil, false, err
 	}
 
 	// if the cached and the provider config specs are the same, we'll just

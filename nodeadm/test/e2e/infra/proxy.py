@@ -3,12 +3,12 @@
 Minimal HTTP proxy server for logging traffic.
 
 Usage:
-    proxy.py --output <logfile> [--port <port>]
+    proxy.py --output-path <path> [--port <port>]
 
 Examples:
-    proxy.py --output traffic.log
-    proxy.py --output traffic.log --port 9000
-    proxy.py -o traffic.log -p 9000
+    proxy.py --output-path /tmp/traffic.log
+    proxy.py --output-path /var/log/proxy.log --port 9000
+    proxy.py -o /tmp/traffic.log -p 9000
 """
 
 import argparse
@@ -46,16 +46,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s --output traffic.log
-  %(prog)s --output traffic.log --port 9000
-  %(prog)s -o traffic.log -p 9000
+  %(prog)s --output-path /tmp/traffic.log
+  %(prog)s --output-path /var/log/proxy.log --port 9000
+  %(prog)s -o /tmp/traffic.log -p 9000
         """
     )
-    parser.add_argument('-o', '--output', required=True, help='Log file name (stored in /tmp)')
+    parser.add_argument('-o', '--output-path', required=True, help='Full path to the log file')
     parser.add_argument('-p', '--port', type=int, default=8080, help='Port to listen on (default: 8080)')
     args = parser.parse_args()
 
-    log_path = f"/tmp/{args.output}"
+    log_path = args.output_path
     print(f"Starting proxy server on 127.0.0.1:{args.port}")
     print(f"Logging traffic to: {log_path}")
     print(f"Usage: curl -x http://127.0.0.1:{args.port} http://example.com\n")
