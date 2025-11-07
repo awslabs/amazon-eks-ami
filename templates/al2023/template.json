@@ -294,7 +294,10 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/validate.sh"
+      "script": "{{template_dir}}/provisioners/validate.sh",
+      "environment_vars": [
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+      ]
     },
     {
       "type": "shell",
