@@ -31,7 +31,7 @@ class TrafficLogger:
 
         log_entry = {
             "method": flow.request.method,
-            "path": flow.request.url,
+            "url": flow.request.url,
             "response": flow.response.status_code,
             "content_type": content_type
         }

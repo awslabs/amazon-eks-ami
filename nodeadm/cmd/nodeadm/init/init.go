@@ -70,14 +70,10 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources), zap.String("configCache", c.configCache))
 
-	// This aspect enables nodeadm to respect environment variables that
-	// could be vital for bootstrapping. For example, to enrich node config
-	// we might need to make EC2 API calls, which may need to pass through
-	// an HTTP(s) proxy.
-	nodeConfig, isChanged, err := c.resolveConfig(log, opts, func(cfg *api.NodeConfig) error {
-		aspect := system.NewNodeadmEnvironmentAspect()
-		return aspect.Setup(cfg)
-	})
+	// resolveConfig also setups nodeadm envrionment that could be vital for bootstrapping.
+	// For example, to enrich node config we might need to make EC2 API calls, which may
+	// need to pass through an HTTP(s) proxy.
+	nodeConfig, isChanged, err := c.resolveConfig(log, opts)
 	if err != nil {
 		return err
 	}
@@ -151,7 +147,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 }
 
 // resolveConfig returns either the cached config or the provided config chain.
-func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions, fnOpts ...func(*api.NodeConfig) error) (cfg *api.NodeConfig, isChanged bool, err error) {
+func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, isChanged bool, err error) {
 	var cachedConfig *api.NodeConfig
 	if len(c.configCache) > 0 {
 		config, err := loadCachedConfig(c.configCache)
@@ -177,13 +173,10 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions, fnOpts
 		return nil, false, err
 	}
 
-	if len(fnOpts) > 0 {
-		log.Info("Applying config options...")
-		for _, fn := range fnOpts {
-			if err := fn(nodeConfig); err != nil {
-				return nil, false, err
-			}
-		}
+	log.Info("Setting up nodeadm environment aspect...")
+	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
+	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
+		return nil, false, err
 	}
 
 	// if the cached and the provider config specs are the same, we'll just
