@@ -10,7 +10,6 @@ fi
 
 MACHINE=$(uname -m)
 readonly MACHINE
-readonly EC2_GRID_DRIVER_S3_BUCKET="ec2-linux-nvidia-drivers"
 
 function rpm_install() {
   local RPMS
