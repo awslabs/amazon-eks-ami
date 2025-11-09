@@ -105,7 +105,7 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
 
   # Verify that all nvidia* packages have the same version as the nvidia driver, ensures user-space compatibility.
   # Skips nvidia-container-toolkit because it's independently versioned and released
-  if rpmquery --all --queryformat '%{NAME} %{VERSION}\n' nvidia* | grep -v "$NVIDIA_DRIVER_FULL_VERSION" | grep -v "nvidia-container-toolkit"; then
+  if rpmquery --all --queryformat '%{NAME} %{VERSION}\n' nvidia* | grep -v "$NVIDIA_DRIVER_FULL_VERSION" | grep -v "nvidia-container-toolkit" | grep -v "nvidia-release"; then
     echo "Installed version mismatch for one or more nvidia package(s)!"
     exit 1
   fi
