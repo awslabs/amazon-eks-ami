@@ -31,7 +31,7 @@ source /helpers.sh
 #
 # The above userdata is also base64 encoded into `http-proxy-imds-mock.json`
 mock::aws http-proxy-imds-mock.json
-mock::kubelet 1.27.0
+mock::kubelet 1.34.0
 wait::dbus-ready
 
 # When running an e2e test image, the mock API servers use link-local address.

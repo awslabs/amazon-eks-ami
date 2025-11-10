@@ -163,18 +163,19 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *
 		return nil, false, err
 	}
 	nodeConfig, err := provider.Provide()
+
+	log.Info("Setting up nodeadm environment aspect...")
+	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
+	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
+		return nil, false, err
+	}
+
 	// if the error is just that no config is provided, then attempt to use the
 	// cached config as a fallback. otherwise, treat this as a fatal error.
 	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
 		log.Warn("Falling back to cached config...")
 		return cachedConfig, false, nil
 	} else if err != nil {
-		return nil, false, err
-	}
-
-	log.Info("Setting up nodeadm environment aspect...")
-	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
-	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
 		return nil, false, err
 	}
 
