@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
@@ -28,10 +29,8 @@ func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
 	hostname := req.URL.Hostname()
 	bypassHosts := []string{"169.254.169.254", "[fd00:ec2::254]", "localhost"}
-	for _, host := range bypassHosts {
-		if hostname == host {
-			return nil, nil
-		}
+	if slices.Contains(bypassHosts, hostname) {
+		return nil, nil
 	}
 
 	return http.ProxyFromEnvironment(req)
