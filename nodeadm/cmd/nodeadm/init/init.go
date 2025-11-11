@@ -92,7 +92,6 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 			return err
 		}
 	}
-
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Validating configuration..")
@@ -180,7 +179,6 @@ func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged
 		return nil, false, shouldEnrichConfig, err
 	}
 	nodeConfig, err := provider.Provide()
-
 	// if the error is just that no config is provided, then attempt to use the
 	// cached config as a fallback. otherwise, treat this as a fatal error.
 	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
