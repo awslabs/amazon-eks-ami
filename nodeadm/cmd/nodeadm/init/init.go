@@ -73,10 +73,26 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	// resolveConfig also setups nodeadm envrionment that could be vital for bootstrapping.
 	// For example, to enrich node config we might need to make EC2 API calls, which may
 	// need to pass through an HTTP(s) proxy.
-	nodeConfig, isChanged, err := c.resolveConfig(log, opts)
+	nodeConfig, isChanged, err := c.resolveConfig(log)
 	if err != nil {
 		return err
 	}
+
+	log.Info("Setting up nodeadm environment aspect...")
+	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
+	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
+		return err
+	}
+
+	if len(c.configCache) == 0 {
+		// we don't need to enrich config when defaulting to a cache, since that is
+		// the only time we already have the NodeConfig .status details populated.
+		log.Info("Enriching configuration..")
+		if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
+			return err
+		}
+	}
+
 	log.Info("Loaded configuration", zap.Reflect("config", nodeConfig))
 
 	log.Info("Validating configuration..")
@@ -147,7 +163,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 }
 
 // resolveConfig returns either the cached config or the provided config chain.
-func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *api.NodeConfig, isChanged bool, err error) {
+func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged bool, err error) {
 	var cachedConfig *api.NodeConfig
 	if len(c.configCache) > 0 {
 		config, err := loadCachedConfig(c.configCache)
@@ -163,12 +179,6 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *
 		return nil, false, err
 	}
 	nodeConfig, err := provider.Provide()
-
-	log.Info("Setting up nodeadm environment aspect...")
-	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
-	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
-		return nil, false, err
-	}
 
 	// if the error is just that no config is provided, then attempt to use the
 	// cached config as a fallback. otherwise, treat this as a fatal error.
@@ -188,12 +198,6 @@ func (c *initCmd) resolveConfig(log *zap.Logger, opts *cli.GlobalOptions) (cfg *
 		return cachedConfig, false, nil
 	}
 
-	// we don't need to enrich config when defaulting to a cache, since that is
-	// the only time we already have the NodeConfig .status details populated.
-	log.Info("Enriching configuration..")
-	if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
-		return nil, false, err
-	}
 	// we return the presence of a cache as the `isChanged` value, because if we
 	// had a cache hit and didnt use it, it's because we have a modified config.
 	return nodeConfig, cachedConfig != nil, nil
