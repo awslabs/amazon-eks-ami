@@ -70,21 +70,21 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 	log.Info("Loading configuration..", zap.Strings("configSource", c.configSources), zap.String("configCache", c.configCache))
 
-	// resolveConfig also setups nodeadm envrionment that could be vital for bootstrapping.
-	// For example, to enrich node config we might need to make EC2 API calls, which may
-	// need to pass through an HTTP(s) proxy.
-	nodeConfig, isChanged, err := c.resolveConfig(log)
+	nodeConfig, isChanged, shouldEnrichConfig, err := c.resolveConfig(log)
 	if err != nil {
 		return err
 	}
 
+	// nodeadmEnvAspect setups nodeadm envrionment that could be vital for bootstrapping.
+	// For example, to enrich node config we might need to make EC2 API calls, which may
+	// need to pass through an HTTP(s) proxy.
 	log.Info("Setting up nodeadm environment aspect...")
 	nodeadmEnvAspect := system.NewNodeadmEnvironmentAspect()
 	if err := nodeadmEnvAspect.Setup(nodeConfig); err != nil {
 		return err
 	}
 
-	if len(c.configCache) == 0 {
+	if shouldEnrichConfig {
 		// we don't need to enrich config when defaulting to a cache, since that is
 		// the only time we already have the NodeConfig .status details populated.
 		log.Info("Enriching configuration..")
@@ -163,8 +163,9 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 }
 
 // resolveConfig returns either the cached config or the provided config chain.
-func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged bool, err error) {
+func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged bool, shouldEnrichConfig bool, err error) {
 	var cachedConfig *api.NodeConfig
+	shouldEnrichConfig = false
 	if len(c.configCache) > 0 {
 		config, err := loadCachedConfig(c.configCache)
 		if err != nil {
@@ -176,7 +177,7 @@ func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged
 
 	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
 	if err != nil {
-		return nil, false, err
+		return nil, false, shouldEnrichConfig, err
 	}
 	nodeConfig, err := provider.Provide()
 
@@ -184,9 +185,9 @@ func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged
 	// cached config as a fallback. otherwise, treat this as a fatal error.
 	if errors.Is(err, configprovider.ErrNoConfigInChain) && cachedConfig != nil {
 		log.Warn("Falling back to cached config...")
-		return cachedConfig, false, nil
+		return cachedConfig, false, shouldEnrichConfig, nil
 	} else if err != nil {
-		return nil, false, err
+		return nil, false, shouldEnrichConfig, err
 	}
 
 	// if the cached and the provider config specs are the same, we'll just
@@ -195,12 +196,17 @@ func (c *initCmd) resolveConfig(log *zap.Logger) (cfg *api.NodeConfig, isChanged
 	//
 	// if perf of reflect.DeepEqual becomes an issue, look into something like: https://github.com/Wind-River/deepequal-gen
 	if cachedConfig != nil && reflect.DeepEqual(nodeConfig.Spec, cachedConfig.Spec) {
-		return cachedConfig, false, nil
+		return cachedConfig, false, shouldEnrichConfig, nil
 	}
+
+	// If the code reaches here it means that either no-config is cached (isChanged = false)
+	// Or the cache exists and the cached spec does not match the node spec (isChanged = true)
+	// In both cases, the config should be enriched
+	shouldEnrichConfig = true
 
 	// we return the presence of a cache as the `isChanged` value, because if we
 	// had a cache hit and didnt use it, it's because we have a modified config.
-	return nodeConfig, cachedConfig != nil, nil
+	return nodeConfig, cachedConfig != nil, shouldEnrichConfig, nil
 }
 
 // enrichConfig populates the internal .status portion of the NodeConfig, used
