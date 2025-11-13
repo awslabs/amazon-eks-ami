@@ -1,5 +1,9 @@
 # Changelog
 
+### 2025-11-13
+
+* Upgrade repository with upstream repo: `awslabs/amazon-eks-ami`, with tag `v20251103`
+
 ### 2024-08-02
 
 * Upgrade repository with upstream repo: `awslabs/amazon-eks-ami`, with tag `v20240729`
