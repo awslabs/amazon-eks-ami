@@ -38,7 +38,7 @@ function mount() {
 }
 export -f mount
 SYSTEMD_UNIT=/etc/systemd/system/sys-fs-bpf.mount
-mkdir -p $(dirname $SYSTEMD_UNIT)
+mkdir -p "$(dirname $SYSTEMD_UNIT)"
 echo "foo" > $SYSTEMD_UNIT
 EXIT_CODE=0
 mount-bpf-fs || EXIT_CODE=$?
@@ -61,7 +61,7 @@ EXIT_CODE=0
 /etc/eks/bootstrap.sh \
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
-  test || EXIT_CODE=$?
+  ipv4-cluster || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
   exit 1
@@ -85,7 +85,7 @@ EXIT_CODE=0
   --b64-cluster-ca dGVzdA== \
   --apiserver-endpoint http://my-api-endpoint \
   --mount-bpf-fs false \
-  test || EXIT_CODE=$?
+  ipv4-cluster || EXIT_CODE=$?
 if [[ ${EXIT_CODE} -ne 0 ]]; then
   echo "❌ Test Failed: expected a zero exit code but got '${EXIT_CODE}'"
   exit 1

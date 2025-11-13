@@ -23,7 +23,7 @@ func ParseMaybeMultipart(data []byte) (*internalapi.NodeConfig, error) {
 		}
 		return config, nil
 	} else {
-		config, err := apibridge.DecodeNodeConfig(data)
+		config, err := apibridge.DecodeNodeConfig(data, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func ParseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 				if err != nil {
 					return nil, err
 				}
-				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart)
+				decodedConfig, err := apibridge.DecodeNodeConfig(nodeConfigPart, nil)
 				if err != nil {
 					return nil, err
 				}
@@ -67,17 +67,10 @@ func ParseMultipart(userDataReader *multipart.Reader) (*internalapi.NodeConfig, 
 			}
 		}
 	}
-	if len(nodeConfigs) > 0 {
-		var config = nodeConfigs[0]
-		for _, nodeConfig := range nodeConfigs[1:] {
-			if err := config.Merge(nodeConfig); err != nil {
-				return nil, err
-			}
-		}
-		return config, nil
-	} else {
-		return nil, fmt.Errorf("could not find NodeConfig within UserData")
+	if len(nodeConfigs) == 0 {
+		return nil, ErrNoConfigInUserData
 	}
+	return internalapi.MergeNodeConfigs(nodeConfigs)
 }
 
 func getMultipartReader(data []byte) (*multipart.Reader, error) {

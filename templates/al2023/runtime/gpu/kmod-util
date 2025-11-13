@@ -4,8 +4,15 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# /usr/sbin may not be on the PATH
-DKMS=/usr/sbin/dkms
+# dkms may not be on the PATH. Discover the path from known paths
+DKMS=""
+for path in /usr/bin/dkms /usr/sbin/dkms; do
+  if [ -x "$path" ]; then
+    DKMS=$path
+    break
+  fi
+done
+
 DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
 
 function log() {
@@ -14,7 +21,7 @@ function log() {
 
 # get the version of a registered kernel module
 function module-version() {
-  ${DKMS} status -m "${1}" | tr -s ',' '/' | tr -d ' ' | awk -F '/' '{print $2}'
+  ls /var/lib/dkms/${1}/ | head -n 1
 }
 
 # load a kernel module from the archives
@@ -25,7 +32,8 @@ function load() {
   ${DKMS} ldtarball ${MODULE_ARCHIVE}
   log "unpacked: ${MODULE_NAME}"
   log "installing: ${MODULE_NAME}"
-  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  local MODULE_VERSION
+  MODULE_VERSION=$(module-version "${MODULE_NAME}")
   ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
   log "installed: ${MODULE_NAME}"
 }
@@ -34,7 +42,8 @@ function load() {
 function remove() {
   local MODULE_NAME="${1}"
   log "removing: ${MODULE_NAME}"
-  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  local MODULE_VERSION
+  MODULE_VERSION=$(module-version "${MODULE_NAME}")
   ${DKMS} remove -m "${MODULE_NAME}" -v "${MODULE_VERSION}" --all
   log "removed: ${MODULE_NAME}"
 }
@@ -44,7 +53,8 @@ function archive() {
   local MODULE_NAME="${1}"
   log "archiving: ${MODULE_NAME}"
   mkdir -p "${DKMS_ARCHIVE_DIR}/${MODULE_NAME}"
-  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  local MODULE_VERSION
+  MODULE_VERSION=$(module-version "${MODULE_NAME}")
   ${DKMS} mktarball -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
   cp /var/lib/dkms/${MODULE_NAME}/${MODULE_VERSION}/tarball/*.tar.gz "${DKMS_ARCHIVE_DIR}/${MODULE_NAME}/"
   log "archived: ${MODULE_NAME}"
@@ -53,7 +63,8 @@ function archive() {
 # build a kernel module
 function build() {
   local MODULE_NAME="${1}"
-  local MODULE_VERSION=$(module-version "${MODULE_NAME}")
+  local MODULE_VERSION
+  MODULE_VERSION=$(module-version "${MODULE_NAME}")
   ${DKMS} build -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
 }
 
@@ -61,7 +72,7 @@ function usage() {
   echo >&2 "usage: $0 COMMAND MODULE_NAME"
   echo >&2
   echo >&2 "Valid values for COMMAND:"
-  declare -F | awk '{print "\t" $3}' | echo >&2
+  declare -F | awk '{print "\t" $3}' >&2
 }
 
 if [ "$#" -ne 2 ]; then
@@ -69,4 +80,4 @@ if [ "$#" -ne 2 ]; then
   exit 1
 fi
 
-eval "${@}"
+"${@}"

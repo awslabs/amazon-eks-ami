@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo >&2 "mocking 'mount $@'"
+echo >&2 "mocking 'mount $*'"
 
 echo 'sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
 proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)

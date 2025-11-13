@@ -9,6 +9,12 @@ import (
 	imds "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
+var (
+	// represents when there is no NodeConfig present within an IMDS user-data
+	// document. this does NOT capture when there are errors parsing configs.
+	ErrNoConfigInUserData = fmt.Errorf("could not find NodeConfig within UserData")
+)
+
 const (
 	contentTypeHeader          = "Content-Type"
 	mimeBoundaryParam          = "boundary"
@@ -17,13 +23,7 @@ const (
 )
 
 type userDataProvider interface {
-	GetUserData() ([]byte, error)
-}
-
-type imdsUserDataProvider struct{}
-
-func (p *imdsUserDataProvider) GetUserData() ([]byte, error) {
-	return imds.GetUserData(context.TODO())
+	GetUserData(context.Context) ([]byte, error)
 }
 
 type userDataConfigProvider struct {
@@ -32,12 +32,12 @@ type userDataConfigProvider struct {
 
 func NewUserDataConfigProvider() ConfigProvider {
 	return &userDataConfigProvider{
-		userDataProvider: &imdsUserDataProvider{},
+		userDataProvider: imds.DefaultClient(),
 	}
 }
 
 func (p *userDataConfigProvider) Provide() (*internalapi.NodeConfig, error) {
-	userData, err := p.userDataProvider.GetUserData()
+	userData, err := p.userDataProvider.GetUserData(context.TODO())
 	if err != nil {
 		return nil, err
 	}

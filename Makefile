@@ -60,9 +60,13 @@ endif
 SHELL_FILES := $(shell find $(MAKEFILE_DIR) -type f -name '*.sh')
 
 .PHONY: lint
-lint: lint-docs ## Check the source files for syntax and format issues
+lint: lint-docs lint-code
+  # Convenience target to run all lints. This is not run during presubmits, add new checks in lint-docs or lint-code.
+
+.PHONY: lint-code
+lint-code: ## Check the source files for syntax and format issues
 	hack/shfmt --diff
-	hack/shellcheck --format gcc --severity error $(shell find $(MAKEFILE_DIR) -type f -name '*.sh' -not -path '*/nodeadm/vendor/*')
+	hack/shellcheck --format gcc --severity warning
 	hack/lint-space-errors.sh
 
 .PHONY: test

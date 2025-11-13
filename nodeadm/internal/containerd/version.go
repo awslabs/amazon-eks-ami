@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 
 	"go.uber.org/zap"
 )
@@ -31,4 +32,12 @@ func GetContainerdVersionRaw() ([]byte, error) {
 	}
 	zap.L().Info("Reading containerd version from file", zap.String("path", containerdVersionFile))
 	return os.ReadFile(containerdVersionFile)
+}
+
+func isContainerdV2() (bool, error) {
+	version, err := GetContainerdVersion()
+	if err != nil {
+		return false, err
+	}
+	return strings.HasPrefix(version, "2."), nil
 }

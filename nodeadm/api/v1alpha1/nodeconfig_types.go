@@ -68,6 +68,12 @@ type KubeletOptions struct {
 	// Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
 	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
+
+	// MaxPodsExpression is a CEL expression used to compute a max pods value for
+	// the kubelet configuration. Any MaxPods value set in Config takes precedence
+	// over the result of this expression. If the expression is successfully evaluated,
+	// kubeReserved will always be calculated on its result.
+	MaxPodsExpression string `json:"maxPodsExpression,omitempty"`
 }
 
 // ContainerdOptions are additional parameters passed to `containerd`.
@@ -85,12 +91,26 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
 }
+
+// EnvironmentOptions configures environment variables for the system and systemd services.
+// The key `default` is reserved for configuring the environment across all services on the instance
+// The key can be set to a systemd service name to configure environment only for a particular service.
+type EnvironmentOptions map[string]map[string]string
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
 // are used when available.
 type LocalStorageOptions struct {
 	Strategy LocalStorageStrategy `json:"strategy,omitempty"`
+
+	// MountPath is the path where the filesystem will be mounted.
+	// Defaults to `/mnt/k8s-disks/`.
+	MountPath string `json:"mountPath,omitempty"`
+
+	// List of directories that will not be mounted to LocalStorage. By default,
+	// all mounts are enabled.
+	DisabledMounts []DisabledMount `json:"disabledMounts,omitempty"`
 }
 
 // LocalStorageStrategy specifies how to handle an instance's local storage devices.
@@ -108,11 +128,29 @@ const (
 	LocalStorageMount LocalStorageStrategy = "Mount"
 )
 
+// DisabledMount specifies a directory that should not be mounted onto local storage
+//
+// * `Containerd` refers to `/var/lib/containerd`
+// * `PodLogs` refers to `/var/log/pods`
+// +kubebuilder:validation:Enum={Containerd, PodLogs}
+type DisabledMount string
+
+const (
+	DisabledMountContainerd DisabledMount = "Containerd"
+	DisabledMountPodLogs    DisabledMount = "PodLogs"
+)
+
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull}
 type Feature string
 
 const (
 	// InstanceIdNodeName will use EC2 instance ID as node name
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
+
+	// FastImagePull enables a parallel image pull for container images. This
+	// will use more instance CPU, Memory, and EBS I/O during image pull, but
+	// may result in faster image pull times. This flag will be ignored on
+	// instances with memory and vCPU below a certain threshold.
+	FastImagePull Feature = "FastImagePull"
 )

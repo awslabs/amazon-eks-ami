@@ -12,6 +12,10 @@ while getopts 'i:t:e:' OPTION; do
     i) PAUSE_CONTAINER_IMAGE="$OPTARG" ;;
     t) TAG="$OPTARG" ;;
     e) EXPORT_PATH="$OPTARG" ;;
+    *)
+      echo "usage: $0 [-i] [-t] [-e]" >&2
+      exit 1
+      ;;
   esac
 done
 

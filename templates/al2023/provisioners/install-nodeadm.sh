@@ -4,10 +4,23 @@ set -o pipefail
 set -o nounset
 set -o errexit
 
-sudo systemctl start containerd
+# Check required variables
+if [ -z "$BUILD_IMAGE" ]; then
+  echo "Error: BUILD_IMAGE is required"
+  exit 1
+fi
 
-# generate and store containerd version in file /etc/eks/containerd-version.txt
-containerd --version | sudo tee /etc/eks/containerd-version.txt
+if [ -z "$AWS_REGION" ]; then
+  echo "Error: AWS_REGION is required"
+  exit 1
+fi
+
+if [ -z "$PROJECT_DIR" ]; then
+  echo "Error: PROJECT_DIR is required"
+  exit 1
+fi
+
+sudo systemctl start containerd
 
 # if the image is from an ecr repository then try authenticate first
 if [[ "$BUILD_IMAGE" == *"dkr.ecr"* ]]; then
@@ -28,12 +41,23 @@ sudo nerdctl run \
 # cleanup build image and snapshots
 sudo nerdctl rmi \
   --force \
-  $BUILD_IMAGE \
-  $(sudo nerdctl images -a | grep none | awk '{ print $3 }')
+  $BUILD_IMAGE
 
-# move the nodeadm binary into bin folder
-sudo chmod a+x $PROJECT_DIR/_bin/nodeadm
-sudo mv $PROJECT_DIR/_bin/nodeadm /usr/bin/
+# cleanup dangling images
+sudo nerdctl image prune --force
+
+# move the nodeadm binaries into bin folder
+sudo chmod a+x $PROJECT_DIR/_bin/*
+sudo mv --context \
+  $PROJECT_DIR/_bin/nodeadm \
+  $PROJECT_DIR/_bin/nodeadm-internal \
+  /usr/bin/
 
 # enable nodeadm bootstrap systemd units
-sudo systemctl enable nodeadm-config nodeadm-run
+sudo systemctl enable \
+  nodeadm-boot-hook \
+  nodeadm-config \
+  nodeadm-run
+
+# create the drop-in config directory
+sudo mkdir -p /etc/eks/nodeadm.d/

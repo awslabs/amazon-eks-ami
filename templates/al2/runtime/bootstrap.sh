@@ -36,6 +36,7 @@ function print_help {
   echo "--mount-bpf-fs Mount a bpffs at /sys/fs/bpf (default: true)"
   echo "--pause-container-account The AWS account (number) to pull the pause container from"
   echo "--pause-container-version The tag of the pause container"
+  echo "--service-ipv4-cidr ipv4 cidr range of the cluster"
   echo "--service-ipv6-cidr ipv6 cidr range of the cluster"
   echo "--use-max-pods Sets --max-pods for the kubelet when true. (default: true)"
 }
@@ -138,6 +139,12 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --service-ipv4-cidr)
+      SERVICE_IPV4_CIDR=$2
+      log "INFO: --service-ipv4-cidr='${SERVICE_IPV4_CIDR}'"
+      shift
+      shift
+      ;;
     --service-ipv6-cidr)
       SERVICE_IPV6_CIDR=$2
       log "INFO: --service-ipv6-cidr='${SERVICE_IPV6_CIDR}'"
@@ -180,18 +187,11 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 CLUSTER_NAME="$1"
 set -u
 
-export IMDS_TOKEN=$(imds token)
+IMDS_TOKEN=$(imds token)
+export IMDS_TOKEN
 
 KUBELET_VERSION=$(kubelet --version | grep -Eo '[0-9]\.[0-9]+\.[0-9]+')
 log "INFO: Using kubelet version $KUBELET_VERSION"
-
-# ecr-credential-provider only implements credentialprovider.kubelet.k8s.io/v1alpha1 prior to 1.27.1: https://github.com/kubernetes/cloud-provider-aws/pull/597
-# TODO: remove this when 1.26 is EOL
-if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
-  IMAGE_CREDENTIAL_PROVIDER_CONFIG=/etc/eks/image-credential-provider/config.json
-  echo "$(jq '.apiVersion = "kubelet.config.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
-  echo "$(jq '.providers[].apiVersion = "credentialprovider.kubelet.k8s.io/v1alpha1"' $IMAGE_CREDENTIAL_PROVIDER_CONFIG)" > $IMAGE_CREDENTIAL_PROVIDER_CONFIG
-fi
 
 # Set container runtime related variables
 DOCKER_CONFIG_JSON="${DOCKER_CONFIG_JSON:-}"
@@ -289,7 +289,7 @@ get_memory_mebibytes_to_reserve() {
 #   CPU resources to reserve in millicores (m)
 get_cpu_millicores_to_reserve() {
   local total_cpu_on_instance=$(($(nproc) * 1000))
-  local cpu_ranges=(0 1000 2000 4000 $total_cpu_on_instance)
+  local cpu_ranges=(0 1000 2000 4000 "$total_cpu_on_instance")
   local cpu_percentage_reserved_for_ranges=(600 100 50 25)
   cpu_to_reserve="0"
   for i in "${!cpu_percentage_reserved_for_ranges[@]}"; do
@@ -307,7 +307,7 @@ if [ -z "$CLUSTER_NAME" ]; then
 fi
 
 if [[ ! -z "${IP_FAMILY}" ]]; then
-  IP_FAMILY="$(tr [A-Z] [a-z] <<< "$IP_FAMILY")"
+  IP_FAMILY="$(tr '[A-Z]' '[a-z]' <<< "$IP_FAMILY")"
   if [[ "${IP_FAMILY}" != "ipv4" ]] && [[ "${IP_FAMILY}" != "ipv6" ]]; then
     log "ERROR: Invalid --ip-family. Only ipv4 or ipv6 are allowed"
     exit 1
@@ -465,13 +465,18 @@ if [[ -z "${DNS_CLUSTER_IP}" ]]; then
 
   if [[ "${IP_FAMILY}" == "ipv4" ]]; then
     if [[ ! -z "${SERVICE_IPV4_CIDR}" ]] && [[ "${SERVICE_IPV4_CIDR}" != "None" ]]; then
-      #Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      # Sets the DNS Cluster IP address that would be chosen from the serviceIpv4Cidr. (x.y.z.10)
+      log "INFO: Detected SERVICE_IPV4_CIDR='$SERVICE_IPV4_CIDR'. Will set DNS_CLUSTER_IP as '${SERVICE_IPV4_CIDR%.*}.10'."
       DNS_CLUSTER_IP=${SERVICE_IPV4_CIDR%.*}.10
     else
+      log "INFO: No --service-ipv4-cidr set, will try to determine DNS_CLUSTER_IP by VPC IPV4 CIDR Blocks from IMDS."
       TEN_RANGE=$(imds "latest/meta-data/network/interfaces/macs/$MAC/vpc-ipv4-cidr-blocks" | grep -c '^10\..*' || true)
       DNS_CLUSTER_IP=10.100.0.10
       if [[ "$TEN_RANGE" != "0" ]]; then
+        log "INFO: Detected VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '172.20.0.10'."
         DNS_CLUSTER_IP=172.20.0.10
+      else
+        log "INFO: Detected no VPC CIDR (IPv4) in 10.0.0.0/8 range. Will set DNS_CLUSTER_IP as '10.100.0.10'."
       fi
     fi
   fi
@@ -480,7 +485,7 @@ else
 fi
 
 KUBELET_CONFIG=/etc/kubernetes/kubelet/kubelet-config.json
-echo $(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG) > $KUBELET_CONFIG
+echo "$(jq --arg DNS_CLUSTER_IP "$DNS_CLUSTER_IP" '.clusterDNS=($DNS_CLUSTER_IP|split(","))' $KUBELET_CONFIG)" > $KUBELET_CONFIG
 
 if [[ "${IP_FAMILY}" == "ipv4" ]]; then
   INTERNAL_IP=$(imds 'latest/meta-data/local-ipv4')
@@ -493,7 +498,7 @@ INSTANCE_TYPE=$(imds 'latest/meta-data/instance-type')
 if vercmp "$KUBELET_VERSION" gteq "1.22.0" && vercmp "$KUBELET_VERSION" lt "1.27.0"; then
   # for K8s versions that suport API Priority & Fairness, increase our API server QPS
   # in 1.27, the default is already increased to 50/100, so use the higher defaults
-  echo $(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG) > $KUBELET_CONFIG
+  echo "$(jq ".kubeAPIQPS=( .kubeAPIQPS // 10)|.kubeAPIBurst=( .kubeAPIBurst // 20)" $KUBELET_CONFIG)" > $KUBELET_CONFIG
 fi
 
 # Sets kubeReserved and evictionHard in /etc/kubernetes/kubelet/kubelet-config.json for worker nodes. The following two function
@@ -528,20 +533,13 @@ fi
 
 KUBELET_ARGS="--node-ip=$INTERNAL_IP --pod-infra-container-image=$PAUSE_CONTAINER --v=2"
 
-if vercmp "$KUBELET_VERSION" lt "1.26.0"; then
-  # TODO: remove this when 1.25 is EOL
-  KUBELET_CLOUD_PROVIDER="aws"
-else
-  KUBELET_CLOUD_PROVIDER="external"
-  echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
-  # When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
-  # If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
-  # then /etc/hostname is not the same as EC2's PrivateDnsName.
-  # The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
-  KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$(private-dns-name)"
-fi
-
-KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=$KUBELET_CLOUD_PROVIDER"
+echo "$(jq ".providerID=\"$(provider-id)\"" $KUBELET_CONFIG)" > $KUBELET_CONFIG
+# When the external cloud provider is used, kubelet will use /etc/hostname as the name of the Node object.
+# If the VPC has a custom `domain-name` in its DHCP options set, and the VPC has `enableDnsHostnames` set to `true`,
+# then /etc/hostname is not the same as EC2's PrivateDnsName.
+# The name of the Node object must be equal to EC2's PrivateDnsName for the aws-iam-authenticator to allow this kubelet to manage it.
+KUBELET_ARGS="$KUBELET_ARGS --hostname-override=$(private-dns-name)"
+KUBELET_ARGS="$KUBELET_ARGS --cloud-provider=external"
 
 mkdir -p /etc/systemd/system
 
@@ -585,12 +583,6 @@ if [[ "$CONTAINER_RUNTIME" = "containerd" ]]; then
   chown root:root /etc/systemd/system/kubelet.service
   # Validate containerd config
   containerd config dump > /dev/null
-
-  # --container-runtime flag is gone in 1.27+
-  # TODO: remove this when 1.26 is EOL
-  if vercmp "$KUBELET_VERSION" lt "1.27.0"; then
-    KUBELET_ARGS="$KUBELET_ARGS --container-runtime=remote"
-  fi
 elif [[ "$CONTAINER_RUNTIME" = "dockerd" ]]; then
   mkdir -p /etc/docker
   bash -c "/sbin/iptables-save > /etc/sysconfig/iptables"

@@ -14,13 +14,19 @@ PCI_CLASS_CODES=(
   "0300" # VGA controller; instance types like g3, g4
   "0302" # 3D controller; instance types like p4, p5
 )
+NVIDIA_GRID_SUBDEVICES=(
+  "27b8:1733" # L4:L4-3Q
+  "27b8:1735" # L4:L4-6Q
+  "27b8:1737" # L4:L4-12Q
+)
 
 INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
 
 # return the path of the file containing devices supported by the nvidia-open kmod
 # fail if the expected file doesn't exist
 function nvidia-open-supported-devices-file() {
-  local KMOD_MAJOR_VERSION=$(rpmquery kmod-nvidia-latest-dkms --queryformat '%{VERSION}' | cut -d. -f1)
+  local KMOD_MAJOR_VERSION
+  KMOD_MAJOR_VERSION=$(rpmquery kmod-nvidia-latest-dkms --queryformat '%{VERSION}' | cut -d. -f1)
   local SUPPORTED_DEVICE_FILE="/etc/eks/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   if ! test -f "${SUPPORTED_DEVICE_FILE}"; then
     echo >&2 "Supported device file not found for ${KMOD_MAJOR_VERSION}: ${SUPPORTED_DEVICE_FILE}"
@@ -31,7 +37,8 @@ function nvidia-open-supported-devices-file() {
 
 # determine if the attached nvidia devices are supported by the open-source kernel module
 function devices-support-open() {
-  local SUPPORTED_DEVICE_FILE=$(nvidia-open-supported-devices-file)
+  local SUPPORTED_DEVICE_FILE
+  SUPPORTED_DEVICE_FILE=$(nvidia-open-supported-devices-file)
   for PCI_CLASS_CODE in "${PCI_CLASS_CODES[@]}"; do
     for NVIDIA_DEVICE_ID in $(lspci -n -mm -d "${NVIDIA_VENDOR_ID}::${PCI_CLASS_CODE}" | awk '{print $4}' | tr -d '"' | tr '[:lower:]' '[:upper:]'); do
       if ! grep "^0x${NVIDIA_DEVICE_ID}\s" "${SUPPORTED_DEVICE_FILE}"; then
@@ -42,9 +49,23 @@ function devices-support-open() {
   return 0
 }
 
+function device-supports-grid() {
+  for NVIDIA_GRID_SUBDEVICE in "${NVIDIA_GRID_SUBDEVICES[@]}"; do
+    for NVIDIA_SUBDEVICE in $(lspci -n -mm -d "${NVIDIA_VENDOR_ID}:" | awk '{print $4":"$7}' | tr -d '"'); do
+      if [ "$NVIDIA_GRID_SUBDEVICE" = "$NVIDIA_SUBDEVICE" ]; then
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
 # load the nvidia kernel module appropriate for the attached devices
 MODULE_NAME=""
-if devices-support-open; then
+if device-supports-grid; then
+  # load the grid kmod
+  MODULE_NAME="nvidia-open-grid"
+elif devices-support-open; then
   # load the open source kmod
   MODULE_NAME="nvidia-open"
 else
@@ -52,6 +73,10 @@ else
   MODULE_NAME="nvidia"
 fi
 
+# TODO: disable dkms autoinstall and write these configurations to /run to ensure even lower
+# priority (more room for user overrides) and expected behavior between reboots
+# dkms install is enabled by default for nvidia modules through the AUTOINSTALL="yes" line
+# in the dkms.conf, which is picked up and ran by dkms.service at boot
 function disable-gsp() {
   echo "options nvidia NVreg_EnableGpuFirmware=0" > /etc/modprobe.d/nvidia-disable-gsp.conf
 }
@@ -63,7 +88,7 @@ case "${INSTANCE_TYPE}" in
   g4dn.* | g5.* | g5g.*)
     echo "Disabling GSP for instance type: ${INSTANCE_TYPE}"
     disable-gsp
-    echo "Using propreitary module for instance type: ${INSTANCE_TYPE}"
+    echo "Using proprietary module for instance type: ${INSTANCE_TYPE}"
     MODULE_NAME="nvidia"
     ;;
 
@@ -71,5 +96,9 @@ case "${INSTANCE_TYPE}" in
     echo "No special handling for instance type: ${INSTANCE_TYPE}"
     ;;
 esac
+
+# Enable CDMM, only applies for driver versions 580 or later and machines with coherent memory (e.g. GB200)
+# https://nvdam.widen.net/s/gpqp6wmz7s/cuda-whitepaper--cdmm-pdf
+echo "options nvidia NVreg_CoherentGPUMemoryMode=driver" > /etc/modprobe.d/40-eks-nvidia-openrm.conf
 
 kmod-util load "${MODULE_NAME}"

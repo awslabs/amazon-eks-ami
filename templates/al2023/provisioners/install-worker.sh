@@ -63,7 +63,21 @@ sudo dnf install -y \
   unzip \
   wget \
   mdadm \
-  pigz
+  pigz \
+  python3-dnf-plugin-versionlock
+
+# we need to handle different kernel packages depending on the namespace
+# associated with the minor version.
+KERNEL_PACKAGE="kernel"
+if [[ "$(uname -r)" == 6.12.* ]]; then
+  KERNEL_PACKAGE="kernel6.12"
+fi
+sudo dnf -y install \
+  "${KERNEL_PACKAGE}-devel" \
+  "${KERNEL_PACKAGE}-headers"
+
+# versionlock kernel packages so they remain consistent.
+sudo dnf versionlock 'kernel*'
 
 ################################################################################
 ### Networking #################################################################
@@ -72,27 +86,11 @@ sudo dnf install -y \
 # needed by kubelet
 sudo dnf install -y iptables-nft
 
+# updating this package may trigger post-install hooks or config changes that undo what happens below
+sudo dnf versionlock amazon-ec2-net-utils
+
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
-
-# Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
-sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
-cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
-# Do not clobber any routes or rules added by CNI.
-[Network]
-ManageForeignRoutes=no
-ManageForeignRoutingPolicyRules=no
-EOF
-
-# Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-sudo mkdir -p /etc/systemd/network/99-default.link.d/
-cat << EOF | sudo tee /etc/systemd/network/99-default.link.d/99-no-policy.conf
-# Ensure MACAddressPolicy=none, reinstalling systemd-udev writes /usr/lib/systemd/network/99-default.link
-# with value set to persistent
-# https://github.com/aws/amazon-vpc-cni-k8s/issues/2103#issuecomment-1321698870
-[Link]
-MACAddressPolicy=none
-EOF
 
 ################################################################################
 ### SSH ########################################################################
@@ -107,8 +105,12 @@ sudo systemctl restart sshd.service
 ################################################################################
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
-ISOLATED_REGIONS="${ISOLATED_REGIONS:-us-iso-east-1 us-iso-west-1 us-isob-east-1 eu-isoe-west-1 us-isof-south-1}"
-if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
+
+PARTITION=$(imds /latest/meta-data/services/partition)
+if [[ "${PARTITION}" =~ ^aws-iso ]]; then
+  echo "Installing awscli package"
+  sudo dnf install -y awscli
+else
   # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
   echo "Installing awscli v2 bundle"
   AWSCLI_DIR="${WORKING_DIR}/awscli-install"
@@ -121,35 +123,22 @@ if ! [[ ${ISOLATED_REGIONS} =~ $BINARY_BUCKET_REGION ]]; then
     -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
   unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
   sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/ --update
-else
-  echo "Installing awscli package"
-  sudo dnf install -y awscli
 fi
 
 ###############################################################################
 ### Containerd setup ##########################################################
 ###############################################################################
-
 sudo dnf install -y runc-${RUNC_VERSION}
-
-# utility function for pulling rpms from an S3 bucket
-function rpm_install() {
-  local RPMS=($@)
-  echo "Pulling and installing local rpms from s3 bucket"
-  for RPM in "${RPMS[@]}"; do
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
-    sudo yum localinstall -y ${WORKING_DIR}/${RPM}
-  done
-}
-
-# TO-DO: Currently using scratch build of containerd 2.0.4 for AL2023 in s3, change to use dnf install once it support
-if [[ "$CONTAINERD_VERSION" == 2.0* ]]; then
-  if ! sudo dnf install -y "containerd-2.0.*"; then
-    rpm_install "containerd-2.0.4-1.amzn2023.0.1.$(uname -m).rpm"
-  fi
+if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  sudo dnf install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
+sudo dnf versionlock containerd-*
+
+# generate and store containerd version in file /etc/eks/containerd-version.txt
+containerd --version | sudo tee /etc/eks/containerd-version.txt
 
 sudo systemctl enable ebs-initialize-bin@containerd
 
@@ -172,25 +161,14 @@ sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-S3_DOMAIN="amazonaws.com"
-if [ "$BINARY_BUCKET_REGION" = "cn-north-1" ] || [ "$BINARY_BUCKET_REGION" = "cn-northwest-1" ]; then
-  S3_DOMAIN="amazonaws.com.cn"
-elif [ "$BINARY_BUCKET_REGION" = "us-iso-east-1" ] || [ "$BINARY_BUCKET_REGION" = "us-iso-west-1" ]; then
-  S3_DOMAIN="c2s.ic.gov"
-elif [ "$BINARY_BUCKET_REGION" = "us-isob-east-1" ]; then
-  S3_DOMAIN="sc2s.sgov.gov"
-elif [ "$BINARY_BUCKET_REGION" = "eu-isoe-west-1" ]; then
-  S3_DOMAIN="cloud.adc-e.uk"
-elif [ "$BINARY_BUCKET_REGION" = "us-isof-south-1" ]; then
-  S3_DOMAIN="csp.hci.ic.gov"
-fi
-S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$S3_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
+AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$AWS_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
 BINARIES=(
   kubelet
 )
-for binary in ${BINARIES[*]}; do
+for binary in "${BINARIES[@]}"; do
   if [[ -n "$AWS_ACCESS_KEY_ID" ]]; then
     echo "AWS cli present - using it to copy binaries from s3."
     aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$binary .
@@ -203,7 +181,7 @@ for binary in ${BINARIES[*]}; do
   sudo sha256sum -c $binary.sha256
   sudo chmod +x $binary
   sudo chown root:root $binary
-  sudo mv $binary /usr/bin/
+  sudo mv --context $binary /usr/bin/
 done
 
 sudo rm ./*.sha256
@@ -231,6 +209,13 @@ sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 
+###############################################################################
+### SOCI Snapshotter ##########################################################
+###############################################################################
+
+sudo dnf install -y soci-snapshotter
+sudo systemctl enable soci-snapshotter.socket
+
 ################################################################################
 ### SSM Agent ##################################################################
 ################################################################################
@@ -240,7 +225,7 @@ if dnf list installed | grep amazon-ssm-agent; then
 else
   if ! [[ -z "${SSM_AGENT_VERSION}" ]]; then
     echo "Installing amazon-ssm-agent@${SSM_AGENT_VERSION} from S3"
-    sudo dnf install -y https://s3.${BINARY_BUCKET_REGION}.${S3_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
+    sudo dnf install -y https://s3.${BINARY_BUCKET_REGION}.${AWS_DOMAIN}/amazon-ssm-${BINARY_BUCKET_REGION}/${SSM_AGENT_VERSION}/linux_${ARCH}/amazon-ssm-agent.rpm
   else
     echo "Installing amazon-ssm-agent from AL core repository"
     sudo dnf install -y amazon-ssm-agent

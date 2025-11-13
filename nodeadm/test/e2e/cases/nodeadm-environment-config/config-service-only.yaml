@@ -1,0 +1,16 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  instance:
+    environment:
+      # Only service-specific
+      kubelet:
+        KUBELET_ONLY_VAR: "kubelet-only-value"
+      containerd:
+        CONTAINERD_ONLY_VAR: "containerd-only-value"
+  cluster:
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+    name: my-cluster

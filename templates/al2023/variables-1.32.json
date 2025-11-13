@@ -1,3 +1,4 @@
 {
-    "containerd_version": "1.7.*"
+    "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.1-*",
+    "nvidia_driver_major_version": "570"
 }

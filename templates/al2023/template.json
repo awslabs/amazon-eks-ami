@@ -15,6 +15,7 @@
     "binary_bucket_name": null,
     "binary_bucket_region": null,
     "containerd_version": null,
+    "install_containerd_from_s3": null,
     "creator": null,
     "enable_accelerator": null,
     "enable_efa": null,
@@ -45,7 +46,8 @@
     "temporary_security_group_source_cidrs": null,
     "user_data_file": null,
     "volume_type": null,
-    "working_dir": null
+    "working_dir": null,
+    "custom_endpoint_ec2": null
   },
   "builders": [
     {
@@ -54,6 +56,7 @@
       "source_ami": "{{user `source_ami_id`}}",
       "ami_users": "{{user `ami_users`}}",
       "snapshot_users": "{{user `ami_users`}}",
+      "custom_endpoint_ec2": "{{user `custom_endpoint_ec2`}}",
       "source_ami_filter": {
         "filters": {
           "name": "{{user `source_ami_filter_name`}}",
@@ -214,6 +217,7 @@
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
+        "INSTALL_CONTAINERD_FROM_S3={{user `install_containerd_from_s3`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
         "RUNC_VERSION={{user `runc_version`}}",
@@ -328,6 +332,11 @@
       "inline": [
         "sudo rm -rf {{user `working_dir`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/configure-selinux.sh"
     }
   ],
   "post-processors": [

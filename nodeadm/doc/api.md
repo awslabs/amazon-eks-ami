@@ -37,6 +37,32 @@ _Appears in:_
 | `config` _string_ | Config is an inline [`containerd` configuration TOML](https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md)<br />that will be merged with the defaults. |
 | `baseRuntimeSpec` _object (keys:string, values:[RawExtension](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg))_ | BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based.<br />The provided spec will be merged with the default spec; so that a partial spec may be provided.<br />For more information, see: https://github.com/opencontainers/runtime-spec |
 
+#### DisabledMount
+
+_Underlying type:_ _string_
+
+DisabledMount specifies a directory that should not be mounted onto local storage
+
+* `Containerd` refers to `/var/lib/containerd`
+* `PodLogs` refers to `/var/log/pods`
+
+_Appears in:_
+- [LocalStorageOptions](#localstorageoptions)
+
+.Validation:
+- Enum: [Containerd PodLogs]
+
+#### EnvironmentOptions
+
+_Underlying type:_ _object_
+
+EnvironmentOptions configures environment variables for the system and systemd services.
+The key `default` is reserved for configuring the environment across all services on the instance
+The key can be set to a systemd service name to configure environment only for a particular service.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
 #### Feature
 
 _Underlying type:_ _string_
@@ -47,7 +73,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName]
+- Enum: [InstanceIdNodeName FastImagePull]
 
 #### InstanceOptions
 
@@ -59,6 +85,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+| `environment` _[EnvironmentOptions](#environmentoptions)_ |  |
 
 #### KubeletOptions
 
@@ -71,6 +98,7 @@ _Appears in:_
 | --- | --- |
 | `config` _object (keys:string, values:[RawExtension](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg))_ | Config is a [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/)<br />that will be merged with the defaults. |
 | `flags` _string array_ | Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).<br />that will be appended to the defaults. |
+| `maxPodsExpression` _string_ | MaxPodsExpression is a CEL expression used to compute a max pods value for<br />the kubelet configuration. Any MaxPods value set in Config takes precedence<br />over the result of this expression. If the expression is successfully evaluated,<br />kubeReserved will always be calculated on its result. |
 
 #### LocalStorageOptions
 
@@ -83,6 +111,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `strategy` _[LocalStorageStrategy](#localstoragestrategy)_ |  |
+| `mountPath` _string_ | MountPath is the path where the filesystem will be mounted.<br />Defaults to `/mnt/k8s-disks/`. |
+| `disabledMounts` _[DisabledMount](#disabledmount) array_ | List of directories that will not be mounted to LocalStorage. By default,<br />all mounts are enabled. |
 
 #### LocalStorageStrategy
 

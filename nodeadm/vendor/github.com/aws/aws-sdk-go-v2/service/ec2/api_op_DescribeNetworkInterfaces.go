@@ -99,6 +99,9 @@ type DescribeNetworkInterfacesInput struct {
 	//
 	//   - availability-zone - The Availability Zone of the network interface.
 	//
+	//   - availability-zone-id - The ID of the Availability Zone of the network
+	//   interface.
+	//
 	//   - description - The description of the network interface.
 	//
 	//   - group-id - The ID of a security group associated with the network interface.
@@ -108,10 +111,10 @@ type DescribeNetworkInterfacesInput struct {
 	//
 	//   - interface-type - The type of network interface ( api_gateway_managed |
 	//   aws_codestar_connections_managed | branch | ec2_instance_connect_endpoint |
-	//   efa | efa-only | efs | gateway_load_balancer | gateway_load_balancer_endpoint
-	//   | global_accelerator_managed | interface | iot_rules_managed | lambda |
-	//   load_balancer | nat_gateway | network_load_balancer | quicksight |
-	//   transit_gateway | trunk | vpc_endpoint ).
+	//   efa | efa-only | efs | evs | gateway_load_balancer |
+	//   gateway_load_balancer_endpoint | global_accelerator_managed | interface |
+	//   iot_rules_managed | lambda | load_balancer | nat_gateway |
+	//   network_load_balancer | quicksight | transit_gateway | trunk | vpc_endpoint ).
 	//
 	//   - mac-address - The MAC address of the network interface.
 	//
@@ -277,6 +280,36 @@ func (c *Client) addOperationDescribeNetworkInterfacesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
 		return err
 	}
 	if err = addSpanInitializeStart(stack); err != nil {

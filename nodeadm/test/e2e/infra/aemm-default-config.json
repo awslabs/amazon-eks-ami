@@ -1,6 +1,9 @@
 {
   "imdsv2": true,
   "metadata": {
+    "paths": {
+      "mac-network-interface-card-index": "/latest/meta-data/network/interfaces/macs/0e:49:61:0f:c3:11/network-card"
+    },
     "values": {
       "hostname": "ip-172-16-34-43.ec2.internal",
       "instance-id": "i-1234567890abcdef0",

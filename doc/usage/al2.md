@@ -22,6 +22,7 @@
 | `cache_container_images` |  |
 | `cni_plugin_version` |  |
 | `containerd_version` |  |
+| `install_containerd_from_s3` |  |
 | `creator` |  |
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
@@ -50,6 +51,7 @@
 | `user_data_file` | Path to a file that will be used for the user data when launching the instance. |
 | `volume_type` |  |
 | `working_dir` | Directory path for ephemeral resources on the builder instance |
+| `custom_endpoint_ec2` |  |
 <!-- template-variable-table-boundary -->
 
 ---

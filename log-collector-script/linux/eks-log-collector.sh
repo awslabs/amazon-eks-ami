@@ -22,12 +22,19 @@ export LC_ALL="C"
 # Global options
 readonly PROGRAM_VERSION="0.7.8"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
-readonly PROGRAM_NAME="$(basename "$0" .sh)"
 readonly PROGRAM_DIR="/opt/log-collector"
 readonly LOG_DIR="/var/log"
 readonly COLLECT_DIR="/tmp/eks-log-collector"
-readonly CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
-readonly DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
+
+PROGRAM_NAME="$(basename "$0" .sh)"
+readonly PROGRAM_NAME
+
+CURRENT_TIME=$(date --utc +%Y-%m-%d_%H%M-%Z)
+readonly CURRENT_TIME
+
+DAYS_10=$(date -d "-10 days" '+%Y-%m-%d %H:%M')
+readonly DAYS_10
+
 INSTANCE_ID=""
 INIT_TYPE=""
 PACKAGE_TYPE=""
@@ -71,6 +78,7 @@ COMMON_DIRECTORIES=(
 COMMON_LOGS=(
   syslog
   messages
+  unattended-upgrades
   aws-routed-eni # eks
   containers     # eks
   pods           # eks
@@ -111,6 +119,8 @@ parse_options() {
 
   for i in $(seq "${count}"); do
     eval arg="\$$i"
+    # Fail if arg is ever unset.
+    ${arg:?}
     param="$(echo "${arg}" | awk -F '=' '{print $1}' | sed -e 's|--||')"
     val="$(echo "${arg}" | awk -F '=' '{print $2}')"
 
@@ -161,7 +171,7 @@ is_root() {
 }
 
 check_required_utils() {
-  for utils in ${REQUIRED_UTILS[*]}; do
+  for utils in "${REQUIRED_UTILS[@]}"; do
     # If exit code of "command -v" not equal to 0, fail
     if ! command -v "${utils}" > /dev/null 2>&1; then
       echo -e "\nApplication \"${utils}\" is missing, please install \"${utils}\" as this script requires it."
@@ -204,7 +214,7 @@ create_directories() {
   mkdir -p "${PROGRAM_DIR}"
 
   # Common directories creation
-  for directory in ${COMMON_DIRECTORIES[*]}; do
+  for directory in "${COMMON_DIRECTORIES[@]}"; do
     mkdir -p "${COLLECT_DIR}"/"${directory}"
   done
 }
@@ -218,9 +228,11 @@ get_instance_id() {
 
   if grep -q '^i-' "$INSTANCE_ID_FILE"; then
     cp ${INSTANCE_ID_FILE} "${COLLECT_DIR}"/system/instance-id.txt
-    readonly INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
+    INSTANCE_ID=$(cat "${COLLECT_DIR}"/system/instance-id.txt)
+    readonly INSTANCE_ID
   else
-    readonly INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" -f -s --max-time 10 --retry 5 http://169.254.169.254/latest/meta-data/instance-id)
+    readonly INSTANCE_ID
     if [ 0 -eq $? ]; then # Check if previous command was successful.
       echo "${INSTANCE_ID}" > "${COLLECT_DIR}"/system/instance-id.txt
     else
@@ -407,7 +419,7 @@ get_iptables_info() {
 get_common_logs() {
   try "collect common operating system logs"
 
-  for entry in ${COMMON_LOGS[*]}; do
+  for entry in "${COMMON_LOGS[@]}"; do
     if [[ -e "/var/log/${entry}" ]]; then
       if [[ "${entry}" == "messages" ]]; then
         tail -c 100M /var/log/messages > "${COLLECT_DIR}"/var_log/messages
@@ -497,7 +509,7 @@ get_k8s_info() {
     elif [[ -f /etc/eksctl/kubeconfig.yaml ]]; then
       echo "/etc/eksctl/kubeconfig.yaml"
     elif [[ -f /etc/systemd/system/kubelet.service ]]; then
-      echo $(grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}')
+      grep kubeconfig /etc/systemd/system/kubelet.service | awk '{print $2}'
     elif [[ -f /var/lib/kubelet/kubeconfig ]]; then
       echo "/var/lib/kubelet/kubeconfig"
     else
@@ -553,6 +565,20 @@ get_nodeadm_info() {
 
       timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
 
+      timeout 75 journalctl --unit=nodeadm-boot-hook --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-boot-hook.log
+
+      # Collect udev-net-manager logs using cached interface names for this instance.
+      # https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/cmd/nodeadm-internal/udev/broker.go#L16
+      NETWORK_MANAGER_CACHE_DIR="/etc/eks/nodeadm/udev-net-manager/${INSTANCE_ID}"
+      if [ -d "$NETWORK_MANAGER_CACHE_DIR" ]; then
+        for interface_file in "$NETWORK_MANAGER_CACHE_DIR"/*; do
+          if [ -f "$interface_file" ]; then
+            interface=$(basename "$interface_file")
+            timeout 75 journalctl --unit=udev-net-manager@${interface} --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/udev-net-manager_${interface}.log
+          fi
+        done
+      fi
+
       ;;
     *)
       warning "The current operating system is not supported."
@@ -565,7 +591,7 @@ get_nodeadm_info() {
 get_ipamd_info() {
   if [[ "${ignore_introspection}" == "false" ]]; then
     try "collect L-IPAMD introspection information"
-    for entry in ${IPAMD_DATA[*]}; do
+    for entry in "${IPAMD_DATA[@]}"; do
       curl --max-time 3 --silent http://localhost:61679/v1/"${entry}" >> "${COLLECT_DIR}"/ipamd/"${entry}".json
     done
   else
@@ -580,8 +606,12 @@ get_ipamd_info() {
   fi
 
   try "collect L-IPAMD checkpoint"
-  if [[ -f /var/run/aws-node/ipam.json ]]; then
-    cp /var/run/aws-node/ipam.json "${COLLECT_DIR}"/ipamd/ipam.json
+  if [[ -d /var/run/aws-node/ ]]; then
+    for file in /var/run/aws-node/*; do
+      if [[ -f "$file" ]]; then
+        cp "$file" "${COLLECT_DIR}/ipamd/$(basename "$file")"
+      fi
+    done
   fi
 
   ok
@@ -668,7 +698,32 @@ get_networking_info() {
     ethtool -S ${ifc} >> "${COLLECT_DIR}"/networking/ethtool.txt 2>&1
     echo -e "\n" >> "${COLLECT_DIR}"/networking/ethtool.txt
   done
+
+  get_systemd_network_config
   ok
+}
+
+get_systemd_network_config() {
+  # The possible locations of systemd-networkd configuration files
+  # https://www.freedesktop.org/software/systemd/man/latest/systemd.network.html
+  folders=(
+    "/usr/lib/systemd/network"
+    "/etc/systemd/network"
+    "/run/systemd/network"
+    "/usr/local/lib/systemd/network"
+  )
+
+  mkdir -p "${COLLECT_DIR}"/networking/systemd-network
+
+  # Process each folder
+  for folder in "${folders[@]}"; do
+    [ ! -d "$folder" ] && continue
+    [ -z "$(ls -A "$folder")" ] && continue
+    for unit in "$folder"/*.*; do
+      [ ! -f "$unit" ] && continue
+      systemd-analyze cat-config "${unit}" > "${COLLECT_DIR}/networking/systemd-network/$(basename "$unit")" 2> /dev/null
+    done
+  done
 }
 
 get_cni_config() {
@@ -807,6 +862,26 @@ get_containerd_info() {
   fi
 
   ok
+
+  try "collect containerd snapshotter information"
+  get_soci_snapshotter_info
+
+  ok
+}
+
+get_soci_snapshotter_info() {
+  if ! systemctl is-active --quiet soci-snapshotter 2> /dev/null; then
+    return
+  fi
+
+  try "Collect soci snapshotter information"
+
+  mkdir -p "${COLLECT_DIR}"/containerd/soci-snapshotter
+  systemctl status soci-snapshotter > "${COLLECT_DIR}"/containerd/soci-snapshotter/soci-snapshotter-status.txt 2>&1
+  timeout 75 journalctl -u soci-snapshotter --since "${DAYS_10}" > "${COLLECT_DIR}"/containerd/soci-snapshotter/soci-snapshotter-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"soci-snapshotter log output \" "
+  cp --force /etc/soci-snapshotter-grpc/config.toml "${COLLECT_DIR}"/containerd/soci-snapshotter/config.toml 2> /dev/null
+
+  ok
 }
 
 get_sandboxImage_info() {
@@ -864,7 +939,7 @@ get_io_throttled_processes() {
   command echo -e "PID Name Block IO Delay (centisconds)" > ${IO_THROTTLE_LOG}
   # column 42 is Aggregated block I/O delays, measured in centiseconds so we capture the non-zero block
   # I/O delays.
-  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v 0$ >> ${IO_THROTTLE_LOG}
+  command cut -d" " -f 1,2,42 /proc/[0-9]*/stat | sort -n -k+3 -r | grep -v " 0$" >> ${IO_THROTTLE_LOG}
   ok
 }
 
