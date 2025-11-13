@@ -79,7 +79,17 @@ function mock::kubelet() {
     echo "Usage: mock::kubelet VERSION"
     exit 1
   fi
-  printf "#!/usr/bin/env bash\necho Kubernetes v%s\n" "$1" > /usr/bin/kubelet
+  local VERSION
+  VERSION="$1"
+  cat > /usr/bin/kubelet << SCRIPT
+#!/usr/bin/env bash
+if [ "\$1" = "--version" ]; then
+  echo "Kubernetes v$VERSION"
+else
+  echo "Kubelet is running..."
+  sleep infinity
+fi
+SCRIPT
   chmod +x /usr/bin/kubelet
 }
 
@@ -145,8 +155,8 @@ function mock::aws() {
     mock::imds ${1:-}
   fi
   if [ "${ENABLE_AWS_MOCK:-true}" = "true" ]; then
-    $HOME/.local/bin/moto_server -p5000 &
-    wait::server-responding localhost 5000 10
+    $HOME/.local/bin/moto_server -H 0.0.0.0 -p5000 &
+    wait::server-responding 0.0.0.0 5000 10
     # ensure that our instance exists in the API
     aws ec2 run-instances
   fi

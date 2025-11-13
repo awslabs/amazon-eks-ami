@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
@@ -26,7 +27,9 @@ func dynamicProxyFunc(req *http.Request) (*url.URL, error) {
 	// Link-local addresses for IMDS do not need to be going through a proxy
 	// The IMDS has two endpoints on an instance: IPv4 (169.254.169.254) and IPv6 ([fd00:ec2::254])
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
-	if req.URL.Host == "169.254.169.254" || req.URL.Host == "[fd00:ec2::254]" {
+	hostname := req.URL.Hostname()
+	bypassHosts := []string{"169.254.169.254", "[fd00:ec2::254]", "localhost"}
+	if slices.Contains(bypassHosts, hostname) {
 		return nil, nil
 	}
 
