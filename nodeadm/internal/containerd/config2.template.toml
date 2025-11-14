@@ -33,7 +33,7 @@ BinaryName = "{{.RuntimeBinaryName}}"
 SystemdCgroup = true
 
 [plugins.'io.containerd.cri.v1.runtime'.cni]
-bin_dir = "/opt/cni/bin"
+bin_dirs = ['/opt/cni/bin']
 conf_dir = "/etc/cni/net.d"
 
 {{if .UseSOCISnapshotter}}
