@@ -494,7 +494,9 @@ get_nftables() {
   nft list tables | grep -E '^(table|flush)' | while read -r _ family name; do
     FILENAME="${family}_${name}.txt"
     nft list table "$family" "$name" | tee "${COLLECT_DIR}"/networking/$FILENAME
-    done
+  done
+
+  ok
 }
 
 get_docker_logs() {
