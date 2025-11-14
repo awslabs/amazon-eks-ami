@@ -376,7 +376,7 @@ get_selinux_info() {
   ok
 }
 
-get_iptables_info() {
+get_network_tables_infoo() {
   if ! command -v iptables > /dev/null 2>&1; then
     echo "IPtables not installed" | tee -a iptables.txt
   else
