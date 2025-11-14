@@ -73,7 +73,7 @@ kind: ClusterConfig
 
 metadata:
   name: basic-cluster
-  region: us-east-1
+  region: us-west-2
   version: '1.22'
 
 nodeGroups:
