@@ -307,7 +307,7 @@ collect() {
   get_modinfo
   get_mounts_info
   get_selinux_info
-  get_iptables_info
+  get_network_tables_info
   get_pkglist
   get_system_services
   get_containerd_info
@@ -413,6 +413,16 @@ get_iptables_info() {
     ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
   fi
 
+  if ! command -v nft --version > /dev/null 2>&1; then
+    if lsmod | grep nf_tables > /dev/null 2>&1; then
+      try "installing nftables"
+      yum install nftables
+      get_nftables
+    fi
+  else
+    get_nftables
+  fi
+
   ok
 }
 
@@ -476,6 +486,15 @@ get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre" 2> /dev/null
   lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
+}
+
+get_nftables() {
+  try "collect nftables information"
+
+  nft list tables | grep -E '^(table|flush)' | while read -r _ family name; do
+    FILENAME="${family}_${name}.txt"
+    nft list table "$family" "$name" | tee "${COLLECT_DIR}"/networking/$FILENAME
+    done
 }
 
 get_docker_logs() {
