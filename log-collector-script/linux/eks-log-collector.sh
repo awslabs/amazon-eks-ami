@@ -376,7 +376,7 @@ get_selinux_info() {
   ok
 }
 
-get_network_tables_infoo() {
+get_network_tables_info() {
   if ! command -v iptables > /dev/null 2>&1; then
     echo "IPtables not installed" | tee -a iptables.txt
   else
@@ -413,10 +413,10 @@ get_network_tables_infoo() {
     ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
   fi
 
-  if ! command -v nft --version > /dev/null 2>&1; then
-    if lsmod | grep nf_tables > /dev/null 2>&1; then
+  if lsmod | grep nf_tables > /dev/null 2>&1; then
+    if ! command -v nft --version > /dev/null 2>&1; then    
       try "installing nftables"
-      yum install nftables
+      yum install nftables > /dev/nulll 2>&1
       get_nftables
     fi
   else
