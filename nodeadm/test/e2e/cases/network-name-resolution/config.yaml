@@ -1,0 +1,17 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  instance:
+    network:
+      nameservers:
+        - "8.8.8.8"
+        - "8.8.4.4"
+      domains:
+        - "search.me.please"
+        - "search.me.next.please"
