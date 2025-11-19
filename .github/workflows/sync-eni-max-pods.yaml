@@ -23,7 +23,7 @@ jobs:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
           path: amazon-eks-ami/
-        run: |
+      - run: |
           #!/usr/bin/env bash
           set -o errexit
           cd amazon-eks-ami/nodeadm
