@@ -24,16 +24,10 @@ class TrafficLogger:
 
     def response(self, flow: http.HTTPFlow) -> None:
         """Log each completed request as a single JSON line."""
-        content_type = flow.response.headers.get('Content-Type', 'unknown')
-        # Extract just the main content type without parameters
-        if ';' in content_type:
-            content_type = content_type.split(';')[0].strip()
-
         log_entry = {
             "method": flow.request.method,
             "url": flow.request.url,
-            "response": flow.response.status_code,
-            "content_type": content_type
+            "response": flow.response.status_code
         }
 
         self.log_file.write(json.dumps(log_entry) + ',\n')
