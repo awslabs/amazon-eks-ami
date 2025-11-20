@@ -21,6 +21,7 @@
     "install_containerd_from_s3": null,
     "creator": null,
     "enable_accelerator": null,
+    "enable_efa": null,
     "docker_version": null,
     "enable_fips": null,
     "encrypted": null,
@@ -218,6 +219,19 @@
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provisioners/install-efa.sh",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "AWS_REGION={{user `binary_bucket_region`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
