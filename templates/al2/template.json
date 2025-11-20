@@ -231,7 +231,6 @@
     },
     {
       "type": "shell",
-<<<<<<< HEAD
       "script": "{{template_dir}}/provisioners/install-worker-accelerator-support.sh",
       "environment_vars": [
         "WORKING_DIR={{user `working_dir`}}",
@@ -241,8 +240,6 @@
     },
     {
       "type": "shell",
-=======
->>>>>>> 6141cee0 (feat(al2): added a provisioner to setup EFA support for AL2 AMI)
       "script": "{{template_dir}}/provisioners/install-efa.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
