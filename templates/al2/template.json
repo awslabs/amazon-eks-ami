@@ -243,6 +243,14 @@
     },
     {
       "type": "shell",
+      "script": "./scripts/install-worker-accelerator-support.sh",
+      "environment_vars": [
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "script": "{{template_dir}}/scripts/install-neuron-driver.sh",
       "environment_vars": [
         "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
