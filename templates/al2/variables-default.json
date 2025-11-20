@@ -17,7 +17,10 @@
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
+<<<<<<< HEAD
     "nvidia_driver_version": "570.195.03",
+=======
+>>>>>>> 6141cee0 (feat(al2): added a provisioner to setup EFA support for AL2 AMI)
     "enable_efa": "false",
     "docker_version": "none",
     "enable_fips": "false",
