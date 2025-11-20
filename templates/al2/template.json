@@ -177,6 +177,14 @@
     },
     {
       "type": "shell",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
+      "environment_vars": [
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/set-clocksource.sh"
     },
