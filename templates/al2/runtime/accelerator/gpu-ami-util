@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+function is-isolated-partition() {
+  PARTITION=$(imds /latest/meta-data/services/partition)
+  NON_ISOLATED_PARTITIONS=("aws" "aws-cn" "aws-us-gov")
+  for NON_ISOLATED_PARTITION in "${NON_ISOLATED_PARTITIONS[@]}"; do
+    if [ "${NON_ISOLATED_PARTITION}" = "${PARTITION}" ]; then
+      return 1
+    fi
+  done
+  return 0
+}
+
+function has-nvidia-devices() {
+  NVIDIA_VENDOR_ID="10de"
+  NVIDIA_DEVICES=$(lspci -d "${NVIDIA_VENDOR_ID}::" | wc -l)
+  if [ ${NVIDIA_DEVICES} -gt 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+function has-neuron-devices() {
+  # inf1 : 0x1d0f7064
+  # inf2 : 0x1d0f7264
+  # inf2e : 0x1d0f7164
+  NEURON_DEVICES=$(cat /proc/bus/pci/devices | awk '{print $2}' | grep -e 1d0f7064 -e 1d0f7264 -e 1d0f7164 | wc -l)
+  if [ ${NEURON_DEVICES} -gt 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 COMMAND"
+  echo
+  echo "Valid values for COMMAND:"
+  declare -F | awk '{print "\t" $3}'
+  exit 1
+fi
+
+if eval $1; then
+  echo >&2 "true"
+  exit 0
+else
+  echo >&2 "false"
+  exit 1
+fi

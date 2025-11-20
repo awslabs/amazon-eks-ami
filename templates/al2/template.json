@@ -1,6 +1,7 @@
 {
   "_comment": "All template variables are enumerated here; and most variables have a default value defined in a variables.json for each kubernetes minor version",
   "variables": {
+    "additional_yum_repos": null,
     "ami_component_description": null,
     "ami_description": null,
     "ami_name": null,
@@ -14,24 +15,25 @@
     "aws_session_token": null,
     "binary_bucket_name": null,
     "binary_bucket_region": null,
+    "cache_container_images": null,
+    "cni_plugin_version": null,
     "containerd_version": null,
     "install_containerd_from_s3": null,
     "creator": null,
     "enable_accelerator": null,
     "enable_efa": null,
+    "docker_version": null,
     "enable_fips": null,
     "encrypted": null,
     "iam_instance_profile": null,
     "instance_type": null,
+    "kernel_version": null,
     "kms_key_id": null,
     "kubernetes_build_date": null,
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
-    "nodeadm_build_image": null,
-    "nvidia_driver_major_version": null,
-    "nvidia_repository_url": null,
-    "nvidia_grid_runfile_bucket_name": null,
-    "pause_container_image": null,
+    "pause_container_version": null,
+    "pull_cni_from_github": null,
     "remote_folder": null,
     "runc_version": null,
     "security_group_id": null,
@@ -42,7 +44,6 @@
     "ssh_username": null,
     "ssm_agent_version": null,
     "subnet_id": null,
-    "temporary_key_pair_type": "ed25519",
     "temporary_security_group_source_cidrs": null,
     "user_data_file": null,
     "volume_type": null,
@@ -111,8 +112,10 @@
         "build_region": "{{ .BuildRegion }}",
         "source_ami_id": "{{ .SourceAMI }}",
         "source_ami_name": "{{ .SourceAMIName }}",
+        "docker_version": "{{ user `docker_version`}}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
+        "cni_plugin_version": "{{ user `cni_plugin_version`}}",
         "ssm_agent_version": "{{ user `ssm_agent_version`}}"
       },
       "ami_name": "{{user `ami_name`}}",
@@ -126,28 +129,29 @@
   "provisioners": [
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "mkdir -p {{user `working_dir`}}/rootfs",
-        "mkdir -p {{user `working_dir`}}/shared",
-        "mkdir -p {{user `working_dir`}}/log-collector-script",
-        "mkdir -p {{user `working_dir`}}/nodeadm",
-        "mkdir -p {{user `working_dir`}}/gpu"
+        "mkdir -p {{user `working_dir`}}",
+        "mkdir -p {{user `working_dir`}}/log-collector-script"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/install-additional-repos.sh",
+      "environment_vars": [
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
       ]
     },
     {
       "type": "file",
       "source": "{{template_dir}}/../shared/runtime/",
-      "destination": "{{user `working_dir`}}/shared"
+      "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/runtime/gpu/",
-      "destination": "{{user `working_dir`}}/gpu"
-    },
-    {
-      "type": "file",
-      "source": "{{template_dir}}/runtime/rootfs/",
-      "destination": "{{user `working_dir`}}/rootfs"
+      "source": "{{template_dir}}/runtime/",
+      "destination": "{{user `working_dir`}}"
     },
     {
       "type": "file",
@@ -156,28 +160,27 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "inline": [
-        "sudo mkdir -p /etc/eks/log-collector-script/",
-        "sudo cp -v {{user `working_dir`}}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"
-      ]
-    },
-    {
-      "type": "file",
-      "source": "{{template_dir}}/../../nodeadm/",
-      "destination": "{{user `working_dir`}}/nodeadm"
-    },
-    {
-      "type": "shell",
-      "inline": [
-        "sudo cp -rv {{user `working_dir`}}/rootfs/* /"
+        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
+        "sudo mv {{user `working_dir`}}/bin/* /usr/bin/"
       ]
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
-        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/",
-        "sudo chmod -R a+x {{user `working_dir`}}/gpu/*"
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/upgrade-kernel.sh",
+      "environment_vars": [
+        "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "KERNEL_VERSION={{user `kernel_version`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
+      "environment_vars": [
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
@@ -195,11 +198,12 @@
     },
     {
       "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "inline": [
+        "sudo reboot"
+      ],
       "expect_disconnect": true,
-      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
-      "environment_vars": [
-        "ENABLE_EFA={{user `enable_efa`}}"
-      ]
+      "pause_after": "90s"
     },
     {
       "type": "shell",
@@ -211,10 +215,15 @@
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}",
+        "CNI_PLUGIN_VERSION={{user `cni_plugin_version`}}",
         "CONTAINERD_VERSION={{user `containerd_version`}}",
         "INSTALL_CONTAINERD_FROM_S3={{user `install_containerd_from_s3`}}",
+        "DOCKER_VERSION={{user `docker_version`}}",
         "KUBERNETES_BUILD_DATE={{user `kubernetes_build_date`}}",
         "KUBERNETES_VERSION={{user `kubernetes_version`}}",
+        "PAUSE_CONTAINER_VERSION={{user `pause_container_version`}}",
+        "PULL_CNI_FROM_GITHUB={{user `pull_cni_from_github`}}",
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
@@ -222,68 +231,46 @@
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/install-nodeadm.sh",
+      "script": "{{template_dir}}/provisioners/install-worker-accelerator-support.sh",
       "environment_vars": [
-        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
-        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
-        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "AWS_REGION={{user `aws_region`}}",
-        "BUILD_IMAGE={{user `nodeadm_build_image`}}",
-        "PROJECT_DIR={{user `working_dir`}}/nodeadm"
+        "WORKING_DIR={{user `working_dir`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/cache-pause-container.sh",
+      "script": "{{template_dir}}/provisioners/install-efa.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "AWS_REGION={{user `aws_region`}}",
-        "PAUSE_CONTAINER_IMAGE={{user `pause_container_image`}}"
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "AWS_REGION={{user `binary_bucket_region`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
       "environment_vars": [
-        "AWS_REGION={{user `aws_region`}}",
         "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
       ]
     },
     {
       "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
       "environment_vars": [
-        "AWS_REGION={{user `aws_region`}}",
-        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "AWS_REGION={{user `binary_bucket_region`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
         "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
-        "NVIDIA_REPOSITORY={{user `nvidia_repository_url`}}",
-        "EC2_GRID_DRIVER_S3_BUCKET={{user `nvidia_grid_runfile_bucket_name`}}",
-        "WORKING_DIR={{user `working_dir`}}"
-      ]
-    },
-    {
-      "type": "shell",
-      "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/install-efa.sh",
-      "environment_vars": [
-        "AWS_REGION={{user `aws_region`}}",
-        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
-        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
-        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "ENABLE_EFA={{user `enable_efa`}}"
+        "WORKING_DIR={{user `working_dir`}}",
+        "NVIDIA_DRIVER_VERSION={{user `nvidia_driver_version`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
       ]
     },
     {
@@ -294,16 +281,27 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/provisioners/cleanup-additional-repos.sh",
+      "environment_vars": [
+        "ADDITIONAL_YUM_REPOS={{user `additional_yum_repos`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/validate.sh",
       "environment_vars": [
-        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+        "KERNEL_VERSION={{user `kernel_version`}}"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
-      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json"
+      "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json",
+      "environment_vars": [
+        "CACHE_CONTAINER_IMAGES={{user `cache_container_images`}}"
+      ]
     },
     {
       "type": "file",
@@ -313,14 +311,10 @@
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo rm -rf {{user `working_dir`}}"
-      ]
-    },
-    {
-      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/configure-selinux.sh"
+      "inline": [
+        "rm -rf {{user `working_dir`}}"
+      ]
     }
   ],
   "post-processors": [
