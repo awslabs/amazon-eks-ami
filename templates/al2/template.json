@@ -20,6 +20,7 @@
     "containerd_version": null,
     "install_containerd_from_s3": null,
     "creator": null,
+    "enable_accelerator": null,
     "docker_version": null,
     "enable_fips": null,
     "encrypted": null,
@@ -217,6 +218,13 @@
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provisioners/install-neuron-driver.sh",
+      "environment_vars": [
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
       ]
     },
     {
