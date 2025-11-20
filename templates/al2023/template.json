@@ -196,7 +196,7 @@
     {
       "type": "shell",
       "expect_disconnect": true,
-      "script": "{{template_dir}}/provisioners/limit-c-states.sh",
+      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
       "environment_vars": [
         "ENABLE_EFA={{user `enable_efa`}}"
       ]
