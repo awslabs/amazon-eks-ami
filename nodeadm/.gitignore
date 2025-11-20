@@ -2,3 +2,8 @@ _dist
 _bin
 
 cover.out
+
+# Ref: https://github.com/github/gitignore/blob/main/Python.gitignore
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
