@@ -258,6 +258,15 @@
     },
     {
       "type": "shell",
+      "script": "./scripts/install-worker-accelerator-support-post.sh",
+      "environment_vars": [
+        "WORKING_DIR={{user `working_dir`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
