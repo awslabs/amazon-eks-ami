@@ -231,6 +231,15 @@
     },
     {
       "type": "shell",
+      "script": "{{template_dir}}/provisioners/install-worker-accelerator-support.sh",
+      "environment_vars": [
+        "WORKING_DIR={{user `working_dir`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "script": "{{template_dir}}/provisioners/install-efa.sh",
       "environment_vars": [
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
