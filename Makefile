@@ -30,9 +30,12 @@ ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
 endif
 
-ifeq ($(os_distro), al2023)
-	ifdef enable_accelerator
-		AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
+ifdef enable_accelerator
+	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
+
+	ifeq ($(os_distro), al2)
+		enable_efa ?= true
+		launch_block_device_mappings_volume_size ?= 10
 	endif
 endif
 
