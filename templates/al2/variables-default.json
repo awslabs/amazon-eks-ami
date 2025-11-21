@@ -17,6 +17,7 @@
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
+    "nvidia_driver_version": "570.195.03",
     "enable_efa": "false",
     "docker_version": "none",
     "enable_fips": "false",
