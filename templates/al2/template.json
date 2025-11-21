@@ -260,6 +260,21 @@
     },
     {
       "type": "shell",
+      "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `binary_bucket_region`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "WORKING_DIR={{user `working_dir`}}",
+        "NVIDIA_DRIVER_VERSION={{user `nvidia_driver_version`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
     },
