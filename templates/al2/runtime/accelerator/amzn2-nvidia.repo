@@ -1,0 +1,9 @@
+[amzn2-nvidia]
+name=Amazon Linux 2 Nvidia repository
+mirrorlist=$awsproto://$amazonlinux.$awsregion.$awsdomain/$releasever/amzn2-nvidia/$target/$basearch/mirror.list
+priority=20
+gpgcheck=0
+enabled=1
+metadata_expire=300
+mirrorlist_expire=300
+report_instanceid=yes
