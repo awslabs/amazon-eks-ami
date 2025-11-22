@@ -307,7 +307,7 @@ collect() {
   get_modinfo
   get_mounts_info
   get_selinux_info
-  get_iptables_info
+  get_network_tables_info
   get_pkglist
   get_system_services
   get_containerd_info
@@ -376,7 +376,7 @@ get_selinux_info() {
   ok
 }
 
-get_iptables_info() {
+get_network_tables_info() {
   if ! command -v iptables > /dev/null 2>&1; then
     echo "IPtables not installed" | tee -a iptables.txt
   else
@@ -398,19 +398,29 @@ get_iptables_info() {
   else
     # check that ip_vs module is loaded in get_modinfo()
     try "collect ipvs information"
-    ipvsadm --save | tee "${COLLECT_DIR}"/networking/ipvsadm.txt
-    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
-    ipvsadm --list --numeric --rate | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
-    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
-    ipvsadm --list --numeric --stats --exact | tee -a "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --save >> "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" >> "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --rate >> "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ok -e "\n" >> "${COLLECT_DIR}"/networking/ipvsadm.txt
+    ipvsadm --list --numeric --stats --exact >> "${COLLECT_DIR}"/networking/ipvsadm.txt
   fi
 
   if ! command -v ipset > /dev/null 2>&1; then
     echo "ipset not installed" | tee "${COLLECT_DIR}"/networking/ipset.txt
   else
-    ipset --list | tee "${COLLECT_DIR}"/networking/ipset.txt
-    ok -e "\n" | tee -a "${COLLECT_DIR}"/networking/ipset.txt
-    ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
+    ipset --list >> "${COLLECT_DIR}"/networking/ipset.txt
+    ok -e "\n" >> "${COLLECT_DIR}"/networking/ipset.txt
+    ipset --save >> "${COLLECT_DIR}"/networking/ipset.txt
+  fi
+
+  if lsmod | grep nf_tables > /dev/null 2>&1; then
+    if ! command -v nft --version > /dev/null 2>&1; then
+      try "install nftables"
+      yum install nftables -y > /dev/nulll 2>&1
+      get_nftables
+    fi
+  else
+    get_nftables
   fi
 
   ok
@@ -476,6 +486,17 @@ get_modinfo() {
   try "collect modinfo"
   modinfo lustre > "${COLLECT_DIR}/modinfo/lustre" 2> /dev/null
   lsmod | grep -e ip_vs -e nf_conntrack > "${COLLECT_DIR}/modinfo/ip_vs"
+}
+
+get_nftables() {
+  try "collect nftables information"
+
+  nft list tables | grep -E '^(table|flush)' | while read -r _ family name; do
+    FILENAME="${family}_${name}.txt"
+    nft list table "$family" "$name" > "${COLLECT_DIR}"/networking/$FILENAME
+  done
+
+  ok
 }
 
 get_docker_logs() {
