@@ -615,6 +615,13 @@ Environment='KUBELET_ARGS=$KUBELET_ARGS'
 EOF
 
 if [[ -n "$KUBELET_EXTRA_ARGS" ]]; then
+  # Extract the last --max-pods value if present, then remove all --max-pods arguments
+  LAST_MAX_PODS=$(echo "$KUBELET_EXTRA_ARGS" | grep -oE -- '--max-pods=[0-9]+' | tail -1 || true)
+  KUBELET_EXTRA_ARGS=$(echo "$KUBELET_EXTRA_ARGS" | sed 's/--max-pods=[0-9]\+//g' | sed 's/  */ /g' | sed 's/^ *//' | sed 's/ *$//')
+  # Add back the last --max-pods value if it existed
+  if [[ ! -z "$LAST_MAX_PODS" ]]; then
+    KUBELET_EXTRA_ARGS="$LAST_MAX_PODS $KUBELET_EXTRA_ARGS"
+  fi
   cat << EOF > /etc/systemd/system/kubelet.service.d/30-kubelet-extra-args.conf
 [Service]
 Environment='KUBELET_EXTRA_ARGS=$KUBELET_EXTRA_ARGS'
