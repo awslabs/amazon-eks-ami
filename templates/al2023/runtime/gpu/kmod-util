@@ -29,12 +29,16 @@ function load() {
   local MODULE_NAME="${1}"
   log "unpacking: ${MODULE_NAME}"
   local MODULE_ARCHIVE="${DKMS_ARCHIVE_DIR}/${MODULE_NAME}/*.tar.gz"
-  ${DKMS} ldtarball ${MODULE_ARCHIVE}
+  if ! ${DKMS} ldtarball ${MODULE_ARCHIVE}; then
+    # It may be meaningful to call load even when the module is already in-tree,
+    # since a module cannot be added twice but the modprobe only occurs on install
+    echo "WARNING: failed to load ${MODULE_NAME}"
+  fi
   log "unpacked: ${MODULE_NAME}"
   log "installing: ${MODULE_NAME}"
   local MODULE_VERSION
   MODULE_VERSION=$(module-version "${MODULE_NAME}")
-  ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
+  ${DKMS} install --force -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
   log "installed: ${MODULE_NAME}"
 }
 
