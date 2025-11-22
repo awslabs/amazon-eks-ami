@@ -993,6 +993,7 @@
 {"instanceType":"trn1.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"trn1.32xlarge","defaultMaxENIs":5,"ipv4AddressesPerInterface":50}
 {"instanceType":"trn1n.32xlarge","defaultMaxENIs":5,"ipv4AddressesPerInterface":50}
+{"instanceType":"trn2.3xlarge","defaultMaxENIs":2,"ipv4AddressesPerInterface":15}
 {"instanceType":"trn2.48xlarge","defaultMaxENIs":2,"ipv4AddressesPerInterface":50}
 {"instanceType":"u-12tb1.metal","defaultMaxENIs":5,"ipv4AddressesPerInterface":30}
 {"instanceType":"u-18tb1.metal","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
