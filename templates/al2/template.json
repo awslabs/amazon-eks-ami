@@ -20,6 +20,8 @@
     "containerd_version": null,
     "install_containerd_from_s3": null,
     "creator": null,
+    "enable_accelerator": null,
+    "enable_efa": null,
     "docker_version": null,
     "enable_fips": null,
     "encrypted": null,
@@ -175,6 +177,14 @@
     },
     {
       "type": "shell",
+      "expect_disconnect": true,
+      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
+      "environment_vars": [
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/../shared/provisioners/set-clocksource.sh"
     },
@@ -217,6 +227,58 @@
         "RUNC_VERSION={{user `runc_version`}}",
         "SSM_AGENT_VERSION={{user `ssm_agent_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/install-efa.sh",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "AWS_REGION={{user `binary_bucket_region`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/install-worker-accelerator-support.sh",
+      "environment_vars": [
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/scripts/install-neuron-driver.sh",
+      "environment_vars": [
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/install-nvidia-driver-runfile.sh",
+      "environment_vars": [
+        "AWS_REGION={{user `binary_bucket_region`}}",
+        "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
+        "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
+        "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
+        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
+        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
+        "WORKING_DIR={{user `working_dir`}}",
+        "NVIDIA_DRIVER_VERSION={{user `nvidia_driver_version`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "NVIDIA_FABRIC_MANAGER_REPO={{user `nvidia_fabric_manager_repo`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "./scripts/install-worker-accelerator-support-post.sh",
+      "environment_vars": [
+        "WORKING_DIR={{user `working_dir`}}",
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "ENABLE_EFA={{user `enable_efa`}}"
       ]
     },
     {
