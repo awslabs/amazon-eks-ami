@@ -1,5 +1,8 @@
 # Amazon Linux 2
 
+> [!IMPORTANT]
+> Amazon EKS stopped publishing EKS-optimized Amazon Linux 2 (AL2) AMIs on November 26, 2025. AL2023 and Bottlerocket based AMIs for Amazon EKS are available for all supported Kubernetes versions including 1.33 and higher.
+
 ## Template variables
 
 <!-- template-variable-table-boundary -->
