@@ -102,6 +102,12 @@ const (
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
 	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+	Network      NetworkOptions      `json:"network,omitempty"`
+}
+
+type NetworkOptions struct {
+	Nameservers []string `json:"nameservers,omitempty"`
+	Domains     []string `json:"domains,omitempty"`
 }
 
 type EnvironmentOptions map[string]map[string]string
