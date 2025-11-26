@@ -24,6 +24,8 @@
 | `containerd_version` |  |
 | `install_containerd_from_s3` |  |
 | `creator` |  |
+| `enable_accelerator` | Either nvidia or neuron. Disabled by default. If enabled, launch_block_device_mappings_volume_size bust be 10 GiB or more |
+| `enable_efa` | false by default. If enable_accelerator is set to neuron or nvidia, efa support is added even if enable_efa is false |
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
 | `encrypted` |  |
