@@ -18,7 +18,7 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_ENI_MAX_PODS }}
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # 6.0.0
         with:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
@@ -28,7 +28,7 @@ jobs:
           set -o errexit
           cd amazon-eks-ami/nodeadm
           make generate-instance-info
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # 6.0.0
         with:
           repository: aws/amazon-vpc-cni-k8s
           ref: refs/heads/master
