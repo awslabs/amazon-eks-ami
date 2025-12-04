@@ -54,6 +54,7 @@ sudo dnf install -y \
   aws-cfn-bootstrap \
   chrony \
   conntrack \
+  nftables \
   ec2-instance-connect \
   ethtool \
   ipvsadm \
