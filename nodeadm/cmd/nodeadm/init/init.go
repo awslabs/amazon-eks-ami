@@ -267,7 +267,7 @@ func loadCachedConfig(path string) (*api.NodeConfig, error) {
 }
 
 func saveCachedConfig(cfg *api.NodeConfig, path string) error {
-	data, err := bridge.EncodeNodeConfig(cfg)
+	data, err := bridge.EncodeNodeConfigToInternal(cfg)
 	if err != nil {
 		return err
 	}
