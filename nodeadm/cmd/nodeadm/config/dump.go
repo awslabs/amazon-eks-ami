@@ -1,10 +1,11 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/integrii/flaggy"
@@ -34,7 +35,10 @@ func (c *dumpCmd) Flaggy() *flaggy.Subcommand {
 func (c *dumpCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
-	log.Info("Dumping configuration", zap.Strings("source", c.configSources))
+	if c.configOutput != "" {
+		log.Info("Dumping configuration", zap.Strings("source", c.configSources), zap.String("output", c.configOutput))
+	}
+
 	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
 	if err != nil {
 		return err
@@ -44,20 +48,21 @@ func (c *dumpCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		return err
 	}
 
-	output := os.Stdout
-	if c.configOutput != "" {
-		output, err = os.Create(c.configOutput)
-		if err != nil {
-			return err
-		}
-		defer output.Close()
-	}
-
-	encoder := json.NewEncoder(output)
-	encoder.SetIndent("", "  ")
-	if err = encoder.Encode(nodeConfig); err != nil {
+	data, err := bridge.EncodeNodeConfig(nodeConfig, v1alpha1.GroupVersion)
+	if err != nil {
 		return fmt.Errorf("failed to encode config: %w", err)
 	}
-	log.Info("Configuration dumped")
+
+	if c.configOutput != "" {
+		if err := os.WriteFile(c.configOutput, data, 0644); err != nil {
+			return fmt.Errorf("failed to write config to file: %w", err)
+		}
+		log.Info("Configuration dumped")
+		return nil
+	}
+
+	if _, err := os.Stdout.Write(data); err != nil {
+		return fmt.Errorf("failed to write config to stdout: %w", err)
+	}
 	return nil
 }

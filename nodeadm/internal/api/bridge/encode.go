@@ -10,7 +10,7 @@ import (
 
 // EncodeNodeConfig marshals the given internal NodeConfig object to JSON.
 // JSON is used because it's simply easier than YAML to work with in scripting contexts.
-func EncodeNodeConfig(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
+func EncodeNodeConfig(nodeConfig *internalapi.NodeConfig, groupVersioner runtime.GroupVersioner) ([]byte, error) {
 	scheme := runtime.NewScheme()
 	err := localSchemeBuilder.AddToScheme(scheme)
 	if err != nil {
@@ -21,7 +21,12 @@ func EncodeNodeConfig(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
 	if !matched {
 		return nil, fmt.Errorf("JSON did not match any supported media type")
 	}
-	// always encode to the internal version so we don't lose any internal state
-	codec := codecs.EncoderForVersion(info.Serializer, InternalGroupVersion)
+	codec := codecs.EncoderForVersion(info.Serializer, groupVersioner)
 	return runtime.Encode(codec, nodeConfig)
+}
+
+// EncodeNodeConfigToInternal marshals the given internal NodeConfig object to JSON using the internal group version.
+// JSON is used because it's simply easier than YAML to work with in scripting contexts.
+func EncodeNodeConfigToInternal(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
+	return EncodeNodeConfig(nodeConfig, InternalGroupVersion)
 }
