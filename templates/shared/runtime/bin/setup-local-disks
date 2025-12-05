@@ -115,6 +115,16 @@ EOF
     fi
   done
 
+  ## Do this separately as path doesn't match systemd unit name.
+  if [[ "${BIND_SOCI}" == "true" ]]; then
+    if [[ "$(systemctl is-active 'var-lib-soci\x2dsnapshotter\x2dgrpc.mount')" != "active" ]]; then
+      if systemctl is-active soci-snapshotter > /dev/null 2>&1; then
+        prev_running+=" soci-snapshotter"
+      fi
+      needs_linked+=" /var/lib/soci-snapshotter-grpc"
+    fi
+  fi
+
   ## Check if /var/log/pods has been bind mounted and make sure kubelet is stopped
   if [[ "${BIND_VAR_LOG_PODS}" == "true" ]]; then
     if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
@@ -196,6 +206,7 @@ EOF
 MNT_DIR="/mnt/k8s-disks"
 BIND_KUBELET="true"
 BIND_CONTAINERD="true"
+BIND_SOCI="true"
 BIND_VAR_LOG_PODS="true"
 
 while [[ $# -gt 0 ]]; do
@@ -225,6 +236,7 @@ while [[ $# -gt 0 ]]; do
     --no-bind-mounts)
       BIND_KUBELET="false"
       BIND_CONTAINERD="false"
+      BIND_SOCI="false"
       BIND_VAR_LOG_PODS="false"
       shift
       ;;
