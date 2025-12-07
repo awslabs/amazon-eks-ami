@@ -393,6 +393,8 @@ get_network_tables_info() {
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
+  ok
+
   if ! command -v ipvsadm > /dev/null 2>&1; then
     echo "ipvsadm not installed" | tee "${COLLECT_DIR}"/networking/ipvsadm.txt
   else
@@ -405,6 +407,8 @@ get_network_tables_info() {
     ipvsadm --list --numeric --stats --exact >> "${COLLECT_DIR}"/networking/ipvsadm.txt
   fi
 
+  ok
+
   if ! command -v ipset > /dev/null 2>&1; then
     echo "ipset not installed" | tee "${COLLECT_DIR}"/networking/ipset.txt
   else
@@ -413,10 +417,12 @@ get_network_tables_info() {
     ipset --save >> "${COLLECT_DIR}"/networking/ipset.txt
   fi
 
+  ok
+
   if lsmod | grep nf_tables > /dev/null 2>&1; then
     try "collect nftables information"
     if ! command -v nft --version > /dev/null 2>&1; then
-      echo -en "skipping nftable info: nft utility not installed. install 'nft' and try again"
+      echo -en "skipping nftable info: nft utility not installed. if using nftables install 'nft' and try again"
     fi
   else
     get_nftables
