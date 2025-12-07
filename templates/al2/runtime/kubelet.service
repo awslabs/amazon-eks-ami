@@ -1,0 +1,24 @@
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=docker.service iptables-restore.service
+Requires=docker.service
+
+[Service]
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
+ExecStart=/usr/bin/kubelet \
+    --config /etc/kubernetes/kubelet/kubelet-config.json \
+    --kubeconfig /var/lib/kubelet/kubeconfig \
+    --container-runtime docker \
+    --network-plugin cni \
+    --image-credential-provider-config /etc/eks/image-credential-provider/config.json \
+    --image-credential-provider-bin-dir /etc/eks/image-credential-provider \
+    $KUBELET_ARGS \
+    $KUBELET_EXTRA_ARGS
+
+Restart=always
+RestartSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
