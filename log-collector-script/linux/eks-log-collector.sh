@@ -414,10 +414,9 @@ get_network_tables_info() {
   fi
 
   if lsmod | grep nf_tables > /dev/null 2>&1; then
+    try "collect nftables information"
     if ! command -v nft --version > /dev/null 2>&1; then
-      try "install nftables"
-      yum install nftables -y > /dev/nulll 2>&1
-      get_nftables
+      echo -en "skipping nftable info: nft utility not installed. install 'nft' and try again"
     fi
   else
     get_nftables
