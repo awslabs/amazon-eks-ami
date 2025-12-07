@@ -422,7 +422,7 @@ get_network_tables_info() {
   if lsmod | grep nf_tables > /dev/null 2>&1; then
     try "collect nftables information"
     if ! command -v nft --version > /dev/null 2>&1; then
-      echo -en "skipping nftable info: nft utility not installed. if using nftables install 'nft' and try again"
+      echo -en "skipping nftable info: if using nftables install 'nft' utility and try again"
     fi
   else
     get_nftables
