@@ -75,7 +75,7 @@ jobs:
         k8s_version: ${{ fromJson(needs.setup.outputs.kubernetes_versions) }}
         os_distro: ${{ fromJson(needs.setup.outputs.os_distros) }}
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # 6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # 6.0.1
         with:
           ref: 'main'
       - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # 5.1.1
