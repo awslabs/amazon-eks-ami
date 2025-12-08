@@ -25,8 +25,8 @@ func EncodeNodeConfig(nodeConfig *internalapi.NodeConfig, groupVersioner runtime
 	return runtime.Encode(codec, nodeConfig)
 }
 
-// EncodeNodeConfigToInternal marshals the given internal NodeConfig object to JSON using the internal group version.
+// EncodeInternalNodeConfig marshals the given internal NodeConfig object to JSON using the internal group version.
 // JSON is used because it's simply easier than YAML to work with in scripting contexts.
-func EncodeNodeConfigToInternal(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
+func EncodeInternalNodeConfig(nodeConfig *internalapi.NodeConfig) ([]byte, error) {
 	return EncodeNodeConfig(nodeConfig, InternalGroupVersion)
 }

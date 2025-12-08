@@ -45,3 +45,7 @@ func ResolveConfigSources(configSources []string) []string {
 	zap.L().Info("Using default config sources...")
 	return DefaultConfigSources
 }
+
+func RegisterFlagConfigCache(c *flaggy.Subcommand, configCache *string) {
+	c.String(configCache, "", "config-cache", "File path at which to cache the resolved/enriched config. This can make repeated init calls more efficient. JSON encoding will be used.")
+}
