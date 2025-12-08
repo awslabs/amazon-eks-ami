@@ -2,6 +2,7 @@ package cli
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func NewLogger(opts *GlobalOptions) *zap.Logger {
@@ -10,7 +11,13 @@ func NewLogger(opts *GlobalOptions) *zap.Logger {
 	if opts.DevelopmentMode {
 		logger, err = zap.NewDevelopment()
 	} else {
-		logger, err = zap.NewProduction()
+		config := zap.NewProductionConfig()
+		config.DisableStacktrace = true
+		config.Encoding = "console"
+		config.EncoderConfig.TimeKey = ""
+		config.EncoderConfig.ConsoleSeparator = " "
+		config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		logger, err = config.Build()
 	}
 	if err != nil {
 		panic(err)
