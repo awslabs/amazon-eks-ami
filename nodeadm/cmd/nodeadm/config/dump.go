@@ -7,7 +7,6 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 )
@@ -16,6 +15,7 @@ type dumpCmd struct {
 	cmd *flaggy.Subcommand
 
 	configSources []string
+	configCache   string
 	configOutput  string
 }
 
@@ -24,6 +24,7 @@ func NewDumpCommand() cli.Command {
 	c.cmd = flaggy.NewSubcommand("dump")
 	c.cmd.Description = "Dump configuration"
 	cli.RegisterFlagConfigSources(c.cmd, &c.configSources)
+	cli.RegisterFlagConfigCache(c.cmd, &c.configCache)
 	cli.RegisterFlagConfigOutput(c.cmd, &c.configOutput)
 	return &c
 }
@@ -39,11 +40,7 @@ func (c *dumpCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		log.Info("Dumping configuration", zap.Strings("source", c.configSources), zap.String("output", c.configOutput))
 	}
 
-	provider, err := configprovider.BuildConfigProviderChain(c.configSources)
-	if err != nil {
-		return err
-	}
-	nodeConfig, err := provider.Provide()
+	nodeConfig, _, _, err := cli.ResolveConfig(log, c.configSources, c.configCache)
 	if err != nil {
 		return err
 	}
