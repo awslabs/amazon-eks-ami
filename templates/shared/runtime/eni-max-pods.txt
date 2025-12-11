@@ -250,6 +250,16 @@ c8g.medium 8
 c8g.metal-24xl 737
 c8g.metal-48xl 737
 c8g.xlarge 58
+c8gb.12xlarge 350
+c8gb.16xlarge 786
+c8gb.24xlarge 1178
+c8gb.2xlarge 58
+c8gb.4xlarge 234
+c8gb.8xlarge 292
+c8gb.large 29
+c8gb.medium 8
+c8gb.metal-24xl 1178
+c8gb.xlarge 58
 c8gd.12xlarge 234
 c8gd.16xlarge 737
 c8gd.24xlarge 737
