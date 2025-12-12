@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"go.uber.org/zap"
@@ -21,7 +22,7 @@ var (
 	// see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html
 	//go:embed resolve.conf.tpl
 	systemdResolvedConfigTemplateString string
-	systemdResolvedConfigTemplate       = template.Must(template.New("resolve").Parse(systemdResolvedConfigTemplateString))
+	systemdResolvedConfigTemplate       = template.Must(template.New("resolve").Funcs(template.FuncMap{"join": strings.Join}).Parse(systemdResolvedConfigTemplateString))
 )
 
 // NewResolveAspect returns an aspect that configures network name resolution on

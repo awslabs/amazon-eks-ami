@@ -142,17 +142,21 @@ spec:
                         type: string
                     type: object
                   network:
-                    description: NetworkOptions are options to configure host networking.
+                    description: NetworkOptions are parameters used to configure networking
+                      on the host OS.
                     properties:
                       domains:
-                        description: Domains are search entries for the instance's
-                          network name resolution.
+                        description: |-
+                          Domains are search entries for the instance's network name resolution.
+                          see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#Domains=
                         items:
                           type: string
                         type: array
                       nameservers:
-                        description: Nameservers are servers for the instance's network
-                          name resolution.
+                        description: |-
+                          Nameservers are servers for the instance's network name resolution. The
+                          list may include both IPv4 and IPv6 addresses.
+                          see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#DNS=
                         items:
                           type: string
                         type: array
