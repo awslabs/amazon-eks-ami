@@ -63,6 +63,9 @@ jobs:
   kubernetes-versions:
     runs-on: ubuntu-latest
     name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - setup
     permissions:
