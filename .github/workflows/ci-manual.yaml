@@ -48,6 +48,9 @@ permissions:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       git_sha_short: ${{ steps.variables.outputs.git_sha_short }}
       workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}
