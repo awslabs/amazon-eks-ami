@@ -9,7 +9,8 @@
     "config": "version = 2\n\n[grpc]\naddress = \"/run/foo/foo.sock\"\n\n[plugins.\"io.containerd.grpc.v1.cri\".containerd]\ndiscard_unpacked_layers = false\n"
   },
   "instance": {
-    "localStorage": {}
+    "localStorage": {},
+    "network": {}
   },
   "kubelet": {}
 }
