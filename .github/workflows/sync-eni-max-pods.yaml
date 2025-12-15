@@ -39,7 +39,7 @@ jobs:
           cd amazon-vpc-cni-k8s/
           make generate-limits
           cp misc/eni-max-pods.txt ../amazon-eks-ami/templates/shared/runtime/eni-max-pods.txt
-      - uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # 7.0.11
+      - uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # 8.0.0
         with:
           branch: update-eni-max-pods
           path: amazon-eks-ami/
