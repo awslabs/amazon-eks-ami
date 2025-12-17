@@ -7,6 +7,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api/bridge"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 )
@@ -51,7 +52,7 @@ func (c *dumpCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 
 	if c.configOutput != "" {
-		if err := os.WriteFile(c.configOutput, data, 0644); err != nil {
+		if err := util.WriteFileWithDir(c.configOutput, data, 0644); err != nil {
 			return fmt.Errorf("failed to write config to file: %w", err)
 		}
 		log.Info("Configuration dumped")
