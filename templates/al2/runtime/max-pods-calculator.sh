@@ -20,6 +20,7 @@ function print_help {
   echo "--cni-prefix-delegation-enabled Use this flag to indicate if CNI prefix delegation has been enabled."
   echo "--cni-max-eni specify how many ENIs should be used for prefix delegation. Defaults to using all ENIs per instance."
   echo "--show-max-allowed Use this flag to show max number of Pods allowed to run in Worker Node. Otherwise the script will show the recommended value"
+  echo "--profile AWS Profile to use" # when not specified, the default profile will be used
 }
 
 POSITIONAL=()
@@ -62,6 +63,11 @@ while [[ $# -gt 0 ]]; do
       SHOW_MAX_ALLOWED=true
       shift
       ;;
+    --profile)
+      AWS_PROFILE=$2
+      shift
+      shift
+      ;;
     *)                   # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift              # past argument
@@ -76,6 +82,7 @@ CNI_MAX_ENI="${CNI_MAX_ENI:-}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-}"
 INSTANCE_TYPE_FROM_IMDS="${INSTANCE_TYPE_FROM_IMDS:-false}"
 SHOW_MAX_ALLOWED="${SHOW_MAX_ALLOWED:-false}"
+AWS_PROFILE="${AWS_PROFILE:-}"
 
 PREFIX_DELEGATION_SUPPORTED=false
 IPS_PER_PREFIX=16
@@ -84,6 +91,8 @@ if [ "$INSTANCE_TYPE_FROM_IMDS" = true ]; then
   AWS_DEFAULT_REGION=$(imds /latest/dynamic/instance-identity/document | jq .region -r)
   export AWS_DEFAULT_REGION
   INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
+elif [ ! -z "$AWS_PROFILE" ]; then
+  export AWS_PROFILE
 elif [ -z "$INSTANCE_TYPE" ]; then # There's no reasonable default for an instanceType so force one to be provided to the script.
   echo "You must specify an instance type to calculate max pods value."
   exit 1
