@@ -62,7 +62,7 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 # github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/internal/ini
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.278.0
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.0
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
@@ -426,7 +426,7 @@ k8s.io/kube-openapi/pkg/util
 ## explicit; go 1.25.0
 k8s.io/kubelet/config/v1
 k8s.io/kubelet/config/v1beta1
-# k8s.io/utils v0.0.0-20251220205832-9d40a56c1308
+# k8s.io/utils v0.0.0-20251222233032-718f0e51e6d2
 ## explicit; go 1.23
 k8s.io/utils/internal/third_party/forked/golang/net
 k8s.io/utils/net
