@@ -146,16 +146,21 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		ruleBase = 10000
 	)
 
+	// TODO: this is a temporary fix needed because of a bug in upstream systemd
+	// only enable DNS for the primary interface to avoid duplicate entries
+	// see: https://github.com/systemd/systemd/pull/40069
+	useDNSValue := "no"
+	if c.selfMac == c.primaryMac {
+		useDNSValue = "yes"
+	}
+
 	templateVars := networkTemplateVars{
 		MAC: c.selfMac,
 		// setup route metics. this provides priority on good interfaces over
 		// ones that could potentially delay startup.
 		// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L348-L366
 		Metric: metricBase + 100*networkCard + deviceIndex,
-		// TODO: this is a temporary fix needed because of a bug in upstream systemd
-		// only enable DNS for the primary interface to avoid duplicate entries
-		// see: https://github.com/systemd/systemd/pull/40069
-		UseDNS: c.selfMac == c.primaryMac,
+		UseDNS: useDNSValue,
 	}
 
 	// we only need to add routes/rules to interfaces beyond the primary.

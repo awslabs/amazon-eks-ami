@@ -22,7 +22,7 @@ UseDomains=yes
 
 [DHCPv6]
 UseHostname=no
-UseDNS=yes
+UseDNS={{.UseDNS}}
 UseNTP=yes
 WithoutRA=solicit
 
