@@ -16,7 +16,7 @@ DNSDefaultRoute=yes
 
 [DHCPv4]
 UseHostname=no
-UseDNS=yes
+UseDNS={{.UseDNS}}
 UseNTP=yes
 UseDomains=yes
 
