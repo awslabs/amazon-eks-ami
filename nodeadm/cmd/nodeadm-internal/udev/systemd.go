@@ -21,6 +21,7 @@ type networkTemplateVars struct {
 	Metric      int
 	TableID     int
 	InterfaceIP string
+	UseDNS      string
 }
 
 func renderNetworkTemplate(templateVars networkTemplateVars) ([]byte, error) {

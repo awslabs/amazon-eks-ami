@@ -15,6 +15,7 @@ func Test_renderNetworkTemplate(t *testing.T) {
 			Metric:      42,
 			TableID:     99,
 			InterfaceIP: "127.0.0.1",
+			UseDNS:      "yes",
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, strings.TrimSpace(`
@@ -84,6 +85,7 @@ Priority=32765
 			MAC:     "foo",
 			Metric:  42,
 			TableID: 99,
+			UseDNS:  "yes",
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, strings.TrimSpace(`
@@ -146,6 +148,7 @@ Gateway=_dhcp4
 		networkConfig, err := renderNetworkTemplate(networkTemplateVars{
 			MAC:    "foo",
 			Metric: 42,
+			UseDNS: "yes",
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, strings.TrimSpace(`
