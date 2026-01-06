@@ -1,0 +1,12 @@
+[Unit]
+Description=Loading Neuron kernel modules
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/neuron-kmod-load.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
