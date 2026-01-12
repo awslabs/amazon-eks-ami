@@ -9,7 +9,7 @@ dario.cat/mergo
 # github.com/antlr4-go/antlr/v4 v4.13.0
 ## explicit; go 1.20
 github.com/antlr4-go/antlr/v4
-# github.com/aws/aws-sdk-go-v2 v1.41.0
+# github.com/aws/aws-sdk-go-v2 v1.41.1
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/aws
 github.com/aws/aws-sdk-go-v2/aws/defaults
@@ -36,10 +36,10 @@ github.com/aws/aws-sdk-go-v2/internal/shareddefaults
 github.com/aws/aws-sdk-go-v2/internal/strings
 github.com/aws/aws-sdk-go-v2/internal/sync/singleflight
 github.com/aws/aws-sdk-go-v2/internal/timeconv
-# github.com/aws/aws-sdk-go-v2/config v1.32.6
+# github.com/aws/aws-sdk-go-v2/config v1.32.7
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/config
-# github.com/aws/aws-sdk-go-v2/credentials v1.19.6
+# github.com/aws/aws-sdk-go-v2/credentials v1.19.7
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/credentials
 github.com/aws/aws-sdk-go-v2/credentials/ec2rolecreds
@@ -49,20 +49,20 @@ github.com/aws/aws-sdk-go-v2/credentials/logincreds
 github.com/aws/aws-sdk-go-v2/credentials/processcreds
 github.com/aws/aws-sdk-go-v2/credentials/ssocreds
 github.com/aws/aws-sdk-go-v2/credentials/stscreds
-# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.16
+# github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.17
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds/internal/config
-# github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.16
+# github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.17
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/internal/configsources
-# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.16
+# github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.17
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2
 # github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/internal/ini
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.278.0
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.1
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
@@ -70,25 +70,25 @@ github.com/aws/aws-sdk-go-v2/service/ec2/types
 # github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.4
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding
-# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.16
+# github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.17
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url
-# github.com/aws/aws-sdk-go-v2/service/signin v1.0.4
+# github.com/aws/aws-sdk-go-v2/service/signin v1.0.5
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/signin
 github.com/aws/aws-sdk-go-v2/service/signin/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/signin/types
-# github.com/aws/aws-sdk-go-v2/service/sso v1.30.8
+# github.com/aws/aws-sdk-go-v2/service/sso v1.30.9
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/sso
 github.com/aws/aws-sdk-go-v2/service/sso/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sso/types
-# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.12
+# github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.13
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/ssooidc
 github.com/aws/aws-sdk-go-v2/service/ssooidc/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/ssooidc/types
-# github.com/aws/aws-sdk-go-v2/service/sts v1.41.5
+# github.com/aws/aws-sdk-go-v2/service/sts v1.41.6
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
@@ -276,7 +276,7 @@ go.yaml.in/yaml/v2
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
-# golang.org/x/mod v0.31.0
+# golang.org/x/mod v0.32.0
 ## explicit; go 1.24.0
 golang.org/x/mod/semver
 # golang.org/x/net v0.47.0
@@ -426,7 +426,7 @@ k8s.io/kube-openapi/pkg/util
 ## explicit; go 1.25.0
 k8s.io/kubelet/config/v1
 k8s.io/kubelet/config/v1beta1
-# k8s.io/utils v0.0.0-20251220205832-9d40a56c1308
+# k8s.io/utils v0.0.0-20260108192941-914a6e750570
 ## explicit; go 1.23
 k8s.io/utils/internal/third_party/forked/golang/net
 k8s.io/utils/net

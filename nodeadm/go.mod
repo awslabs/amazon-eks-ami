@@ -4,10 +4,10 @@ go 1.25.1
 
 require (
 	dario.cat/mergo v1.0.2
-	github.com/aws/aws-sdk-go-v2 v1.41.0
-	github.com/aws/aws-sdk-go-v2/config v1.32.6
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.16
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.278.0
+	github.com/aws/aws-sdk-go-v2 v1.41.1
+	github.com/aws/aws-sdk-go-v2/config v1.32.7
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.17
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.1
 	github.com/aws/smithy-go v1.24.0
 	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/google/cel-go v0.26.1
@@ -15,11 +15,11 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.1
-	golang.org/x/mod v0.31.0
+	golang.org/x/mod v0.32.0
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
 	k8s.io/kubelet v0.35.0
-	k8s.io/utils v0.0.0-20251220205832-9d40a56c1308
+	k8s.io/utils v0.0.0-20260108192941-914a6e750570
 	sigs.k8s.io/controller-runtime v0.22.4
 )
 
@@ -27,16 +27,16 @@ require (
 	cel.dev/expr v0.24.0 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.6 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.16 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.16 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.7 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.17 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.17 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.0.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.30.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.41.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.0.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.30.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.41.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
