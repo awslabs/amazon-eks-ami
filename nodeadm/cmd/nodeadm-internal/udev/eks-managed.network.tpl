@@ -16,13 +16,13 @@ DNSDefaultRoute=yes
 
 [DHCPv4]
 UseHostname=no
-UseDNS={{.UseDNS}}
+UseDNS=yes
 UseNTP=yes
 UseDomains=yes
 
 [DHCPv6]
 UseHostname=no
-UseDNS={{.UseDNS}}
+UseDNS=yes
 UseNTP=yes
 WithoutRA=solicit
 
