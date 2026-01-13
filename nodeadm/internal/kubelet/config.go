@@ -21,6 +21,7 @@ import (
 
 	"github.com/aws/smithy-go/ptr"
 
+	"github.com/avast/retry-go"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -178,7 +179,18 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		}
 
 		// TODO: cleanup
-		ipAddresses, err := net.LookupHost(apiUrl.Host)
+		var ipAddresses []string
+		err = retry.Do(func() error {
+			var err error
+			ipAddresses, err = net.LookupHost(apiUrl.Host)
+			return err
+		},
+			retry.Attempts(6),
+			retry.Delay(200*time.Millisecond),
+			retry.OnRetry(func(n uint, err error) {
+				zap.L().Info("Retrying DNS lookup after error", zap.Error(err))
+			}),
+		)
 		if err != nil {
 			return err
 		}
