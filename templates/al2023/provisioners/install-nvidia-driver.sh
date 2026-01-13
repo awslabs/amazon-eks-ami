@@ -8,9 +8,8 @@ if [ "$ENABLE_ACCELERATOR" != "nvidia" ]; then
   exit 0
 fi
 
-function is-isolated-partition() {
-  [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]
-}
+MACHINE=$(uname -m)
+readonly MACHINE
 
 function rpm_install() {
   local RPMS
@@ -22,37 +21,70 @@ function rpm_install() {
   done
 }
 
-echo "Installing NVIDIA ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
-
 ################################################################################
 ### Add repository #############################################################
 ################################################################################
-function get_cuda_al2023_x86_repo() {
-  if [[ $AWS_REGION == cn-* ]]; then
+
+## TODO: consider switching to the AL nvidia repository for all partitions
+if [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]; then
+  sudo dnf install -y nvidia-release
+  sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
+else
+  # Determine the domain based on the region
+  if [[ "$AWS_REGION" =~ ^cn- ]]; then
     DOMAIN="nvidia.cn"
   else
     DOMAIN="nvidia.com"
   fi
 
-  echo "https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo"
-}
-
-# Determine the domain based on the region
-if is-isolated-partition; then
-  sudo dnf install -y nvidia-release
-  sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
-
-  rpm_install "opencl-filesystem-1.0-5.el7.noarch.rpm" "ocl-icd-2.2.12-1.el7.x86_64.rpm"
-else
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
     sudo dnf config-manager --add-repo ${NVIDIA_REPOSITORY}
   else
-    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
+    sudo dnf config-manager --add-repo https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/${MACHINE}/cuda-amzn2023.repo
   fi
 
   # update all current .repo sources to enable gpgcheck
   sudo dnf config-manager --save --setopt=*.gpgcheck=1
+  # enable the open module stream so that package installs can later be performed against it
+  sudo dnf -y module enable nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
 fi
+
+################################################################################
+### Select install version #####################################################
+################################################################################
+
+echo "Resolving full driver version for ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
+
+LATEST_GRID_DRIVER_VERSION=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+  | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
+  | cut -d'-' -f4 \
+  | sort -V \
+  | tail -1)
+
+echo "Latest available Nvidia GRID driver runfile version: ${LATEST_GRID_DRIVER_VERSION}"
+
+LATEST_OPEN_MODULE_VERSION=$(dnf repoquery --setopt=*.module_hotfixes=true --latest=1 --queryformat "%{version}" "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}*")
+
+echo "Latest available Nvidia open module version: ${LATEST_OPEN_MODULE_VERSION}"
+
+# The this script eventually builds and archives the nvidia proprietary, nvidia open, and nvidia grid
+# kernel modules in /var/lib/dkms-archive. To ensure proper functionality, we need to enforce that
+# all three kernel modules are on the same NVIDIA driver version so they are compatible with the same
+# userspace components. If one of the open module or the grid driver runfile version are older, we
+# use that version for all installations. Assumes that the open and proprietary module will always be
+# available at the same version, and that each source will always eventually have the same versions.
+if vercmp "$LATEST_OPEN_MODULE_VERSION" lteq "$LATEST_GRID_DRIVER_VERSION"; then
+  readonly NVIDIA_DRIVER_FULL_VERSION="$LATEST_OPEN_MODULE_VERSION"
+else
+  readonly NVIDIA_DRIVER_FULL_VERSION="$LATEST_GRID_DRIVER_VERSION"
+fi
+
+if [[ -z "$NVIDIA_DRIVER_FULL_VERSION" ]]; then
+  echo "ERROR: Could not determine the full nvidia driver version to install for major version $NVIDIA_DRIVER_MAJOR_VERSION"
+  exit 1
+fi
+
+echo "Installing NVIDIA ${NVIDIA_DRIVER_FULL_VERSION} drivers..."
 
 ################################################################################
 ### Install drivers ############################################################
@@ -75,39 +107,24 @@ sudo dnf -y install \
 
 sudo dnf versionlock 'kernel*'
 
-# Install dkms dependency from amazonlinux repo
-sudo dnf -y install patch
-
-if is-isolated-partition; then
-  sudo dnf -y install dkms
-else
-  # Install dkms from the cuda repo
-  if [[ "$(uname -m)" == "x86_64" ]]; then
-    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
-  else
-    sudo dnf -y remove dkms
-    sudo dnf config-manager --add-repo "$(get_cuda_al2023_x86_repo)"
-    sudo dnf -y --disablerepo="*" --enablerepo="cuda*" install dkms
-    sudo dnf config-manager --set-disabled cuda-amzn2023-x86_64
-    sudo rm /etc/yum.repos.d/cuda-amzn2023.repo
-  fi
-fi
+sudo dnf -y install dkms
 
 function archive-open-kmods() {
   echo "Archiving open kmods"
-  if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-open
-  fi
+  # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
+  # enabled by default, so only the latest open driver package can be installed by default. Enabling module
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
+  # to how the amazonlinux-nvidia repository functions
+  sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-open-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
   dkms status
   ls -la /var/lib/dkms/
-  # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
-  # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
-
   # The open kernel module name changed from nvidia-open to nvidia in 570.148.08
   # Remove and re-add dkms module with the correct name. This maintains the current install and archive behavior
+  local NVIDIA_OPEN_VERSION
   NVIDIA_OPEN_VERSION=$(kmod-util module-version nvidia)
+
+  # The DKMS package name differs between the RPM and the dkms.conf in the OSS kmod sources
+  # TODO: can be removed if this is merged: https://github.com/NVIDIA/open-gpu-kernel-modules/pull/567
   sudo dkms remove "nvidia/$NVIDIA_OPEN_VERSION" --all
   sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open"/' /usr/src/nvidia-$NVIDIA_OPEN_VERSION/dkms.conf
   sudo mv /usr/src/nvidia-$NVIDIA_OPEN_VERSION /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION
@@ -117,57 +134,91 @@ function archive-open-kmods() {
 
   sudo kmod-util archive nvidia-open
 
-  # Copy the source files to a new directory for GRID driver installation
-  sudo mkdir /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
-  sudo cp -R /usr/src/nvidia-open-$NVIDIA_OPEN_VERSION/* /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION
-
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
 
   sudo kmod-util remove nvidia-open
 
-  if is-isolated-partition; then
-    sudo dnf -y remove --all nvidia-driver
-    sudo dnf -y remove --all "kmod-nvidia-open*"
-  else
-    sudo dnf -y module remove --all nvidia-driver
-    sudo dnf -y module reset nvidia-driver
-  fi
+  sudo dnf -y remove --all nvidia-driver
+  sudo dnf -y remove --all "kmod-nvidia-open*"
 }
 
 function archive-grid-kmod() {
-  local MACHINE
-  MACHINE=$(uname -m)
+  local NVIDIA_GRID_RUNFILE_KEY
+  local GRID_INSTALLATION_TEMP_DIR
+  local EXTRACT_DIR
+
+  GRID_INSTALLATION_TEMP_DIR=$(mktemp -d)
+  EXTRACT_DIR="${GRID_INSTALLATION_TEMP_DIR}/NVIDIA-GRID-extract"
+
   if [ "$MACHINE" != "x86_64" ]; then
     return
   fi
-  echo "Archiving GRID kmods"
-  NVIDIA_OPEN_VERSION=$(ls -d /usr/src/nvidia-open-grid-* | sed 's/.*nvidia-open-grid-//')
-  sudo sed -i 's/PACKAGE_NAME="nvidia-open"/PACKAGE_NAME="nvidia-open-grid"/g' /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo sed -i "s/MAKE\[0\]=\"'make'/MAKE\[0\]=\"'make' GRID_BUILD=1 GRID_BUILD_CSP=1 /g" /usr/src/nvidia-open-grid-$NVIDIA_OPEN_VERSION/dkms.conf
-  sudo dkms build -m nvidia-open-grid -v $NVIDIA_OPEN_VERSION
-  sudo dkms install nvidia-open-grid/$NVIDIA_OPEN_VERSION
+
+  echo "Archiving NVIDIA GRID kernel modules"
+  NVIDIA_GRID_RUNFILE_KEY=$(aws s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
+    | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
+    | sort -k1,2 \
+    | tail -1 \
+    | awk '{print $4}')
+
+  if [[ -z "$NVIDIA_GRID_RUNFILE_KEY" ]]; then
+    echo "ERROR: No GRID driver found for driver version ${NVIDIA_DRIVER_FULL_VERSION} in EC2 S3 bucket"
+    exit 1
+  fi
+
+  echo "Found GRID runfile: ${NVIDIA_GRID_RUNFILE_KEY}"
+  local GRID_RUNFILE_NAME
+  GRID_RUNFILE_NAME=$(basename "${NVIDIA_GRID_RUNFILE_KEY}")
+
+  echo "Downloading GRID driver runfile..."
+  # This is the only command that requires the bucket name to actually just be the bucket (no prefix) b/c of how the
+  # s3 ls recursive output dumps the full object key regardless of the supplied prefix
+  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${NVIDIA_GRID_RUNFILE_KEY}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
+  chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
+  echo "Extracting NVIDIA GRID driver runfile..."
+  sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}" --extract-only --target "${EXTRACT_DIR}"
+
+  pushd "${EXTRACT_DIR}"
+
+  echo "Installing NVIDIA GRID kernel modules..."
+  sudo ./nvidia-installer \
+    --dkms \
+    --kernel-module-type open \
+    --silent || sudo cat /var/log/nvidia-installer.log
+
+  # Manual DKMS registration with package name changed to `nvidia-open-grid`
+  sudo dkms remove "nvidia/$NVIDIA_DRIVER_FULL_VERSION" --all
+  sudo sed -i 's/PACKAGE_NAME="nvidia"/PACKAGE_NAME="nvidia-open-grid"/' /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION/dkms.conf
+  sudo mv /usr/src/nvidia-$NVIDIA_DRIVER_FULL_VERSION /usr/src/nvidia-open-grid-$NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms add -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms build -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
+  sudo dkms install -m nvidia-open-grid -v $NVIDIA_DRIVER_FULL_VERSION
 
   sudo kmod-util archive nvidia-open-grid
   sudo kmod-util remove nvidia-open-grid
   sudo rm -rf /usr/src/nvidia-open-grid*
+
+  popd
+  sudo rm -rf "${GRID_INSTALLATION_TEMP_DIR}"
 }
 
 function archive-proprietary-kmod() {
   echo "Archiving proprietary kmods"
-  if is-isolated-partition; then
-    sudo dnf -y install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  else
-    sudo dnf -y module install nvidia-driver:${NVIDIA_DRIVER_MAJOR_VERSION}-dkms
-  fi
+  # The Nvidia CUDA repo uses module streams for providing kmod-nvidia* packages. The open-dkms stream is
+  # enabled by default, so only the latest open driver package can be installed by default. Enabling module
+  # hotfixes disables modular filtering, allowing us to find any package regardless of stream, more similar
+  # to how the amazonlinux-nvidia repository functions
+  sudo dnf -y --setopt=*.module_hotfixes=true install "kmod-nvidia-latest-dkms-${NVIDIA_DRIVER_FULL_VERSION}"
+
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
 }
 
-archive-open-kmods
 archive-grid-kmod
+archive-open-kmods
 archive-proprietary-kmod
 
 ################################################################################
@@ -175,14 +226,11 @@ archive-proprietary-kmod
 ################################################################################
 # https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
 
-# TODO: install unconditionally once availability is guaranteed
-if ! is-isolated-partition; then
-  echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
-  sudo dnf -y install \
-    libibumad \
-    infiniband-diags \
-    nvlsm
-fi
+echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
+sudo dnf -y install \
+  libibumad \
+  infiniband-diags \
+  nvlsm
 
 ################################################################################
 ### Prepare for nvidia init ####################################################
@@ -198,16 +246,27 @@ sudo systemctl enable set-nvidia-clocks.service
 ################################################################################
 ### Install other dependencies #################################################
 ################################################################################
-sudo dnf -y install nvidia-fabric-manager
-sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-
-# NVIDIA Container toolkit needs to be locally installed for isolated partitions, also install NVIDIA-Persistenced
-if is-isolated-partition; then
-  sudo dnf -y install nvidia-container-toolkit
-  sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_MAJOR_VERSION}.*"
-  sudo dnf -y install "nvidia-driver"
+if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -lt "580" ]]; then
+  # versions before 580 used to have a dash between fabric and manager
+  sudo dnf -y install "nvidia-fabric-manager-${NVIDIA_DRIVER_FULL_VERSION}"
+  # versions of nvidia-imex < 580 use nvidia-imex-<major-version>-<full-version>
+  sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_MAJOR_VERSION}-${NVIDIA_DRIVER_FULL_VERSION}"
 else
-  sudo dnf -y install nvidia-container-toolkit
+  sudo dnf -y install "nvidia-fabricmanager-${NVIDIA_DRIVER_FULL_VERSION}"
+  sudo dnf -y install "nvidia-imex-${NVIDIA_DRIVER_FULL_VERSION}"
+fi
+
+sudo dnf -y install nvidia-container-toolkit
+sudo dnf -y install "nvidia-persistenced-${NVIDIA_DRIVER_FULL_VERSION}"
+sudo dnf -y install "nvidia-driver-cuda-${NVIDIA_DRIVER_FULL_VERSION}"
+if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -ge "580" ]]; then
+  sudo dnf -y install \
+    "libnvidia-fbc-${NVIDIA_DRIVER_FULL_VERSION}" \
+    "nvidia-driver-${NVIDIA_DRIVER_FULL_VERSION}" \
+    "nvidia-libXNVCtrl-devel-${NVIDIA_DRIVER_FULL_VERSION}" \
+    "nvidia-settings-${NVIDIA_DRIVER_FULL_VERSION}" \
+    "nvidia-xconfig-${NVIDIA_DRIVER_FULL_VERSION}" \
+    "xorg-x11-nvidia-${NVIDIA_DRIVER_FULL_VERSION}"
 fi
 
 sudo systemctl enable nvidia-fabricmanager

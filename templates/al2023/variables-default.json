@@ -10,7 +10,7 @@
     "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
     "binary_bucket_name": "amazon-eks",
     "binary_bucket_region": "us-west-2",
-    "containerd_version": "2.*",
+    "containerd_version": "2.1.*",
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
     "enable_accelerator": "",
@@ -20,9 +20,10 @@
     "iam_instance_profile": "",
     "kms_key_id": "",
     "launch_block_device_mappings_volume_size": "20",
-    "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.24",
-    "nvidia_driver_major_version": "570",
+    "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.25",
+    "nvidia_driver_major_version": "580",
     "nvidia_repository_url": null,
+    "nvidia_grid_runfile_bucket_name": "ec2-linux-nvidia-drivers",
     "pause_container_image": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/pause:3.10",
     "remote_folder": "/tmp",
     "runc_version": "*",
@@ -38,6 +39,5 @@
     "user_data_file": null,
     "volume_type": "gp3",
     "working_dir": "{{user `remote_folder`}}/worker",
-    "aws_domain": "amazonaws.com",
-    "custom_endpoint_ec2": "https://ec2.{{user `aws_region`}}.{{user `aws_domain`}}"
+    "custom_endpoint_ec2": ""
 }

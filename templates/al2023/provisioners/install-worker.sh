@@ -54,6 +54,7 @@ sudo dnf install -y \
   aws-cfn-bootstrap \
   chrony \
   conntrack \
+  nftables \
   ec2-instance-connect \
   ethtool \
   ipvsadm \
@@ -91,25 +92,6 @@ sudo dnf versionlock amazon-ec2-net-utils
 
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
-
-# Make networkd ignore foreign settings, else it may unexpectedly delete IP rules and routes added by CNI
-sudo mkdir -p /usr/lib/systemd/networkd.conf.d/
-cat << EOF | sudo tee /usr/lib/systemd/networkd.conf.d/80-release.conf
-# Do not clobber any routes or rules added by CNI.
-[Network]
-ManageForeignRoutes=no
-ManageForeignRoutingPolicyRules=no
-EOF
-
-# Temporary fix for https://github.com/aws/amazon-vpc-cni-k8s/pull/2118
-sudo mkdir -p /etc/systemd/network/99-default.link.d/
-cat << EOF | sudo tee /etc/systemd/network/99-default.link.d/99-no-policy.conf
-# Ensure MACAddressPolicy=none, reinstalling systemd-udev writes /usr/lib/systemd/network/99-default.link
-# with value set to persistent
-# https://github.com/aws/amazon-vpc-cni-k8s/issues/2103#issuecomment-1321698870
-[Link]
-MACAddressPolicy=none
-EOF
 
 ################################################################################
 ### SSH ########################################################################
@@ -200,7 +182,7 @@ for binary in "${BINARIES[@]}"; do
   sudo sha256sum -c $binary.sha256
   sudo chmod +x $binary
   sudo chown root:root $binary
-  sudo mv $binary /usr/bin/
+  sudo mv --context $binary /usr/bin/
 done
 
 sudo rm ./*.sha256

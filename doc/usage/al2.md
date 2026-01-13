@@ -1,5 +1,8 @@
 # Amazon Linux 2
 
+> [!IMPORTANT]
+> Amazon EKS stopped publishing EKS-optimized Amazon Linux 2 (AL2) AMIs on November 26, 2025. AL2023 and Bottlerocket based AMIs for Amazon EKS are available for all supported Kubernetes versions including 1.33 and higher.
+
 ## Template variables
 
 <!-- template-variable-table-boundary -->
@@ -24,6 +27,8 @@
 | `containerd_version` |  |
 | `install_containerd_from_s3` |  |
 | `creator` |  |
+| `enable_accelerator` | Either nvidia or neuron. Disabled by default. If enabled, launch_block_device_mappings_volume_size bust be 10 GiB or more |
+| `enable_efa` | false by default. If enable_accelerator is set to neuron or nvidia, efa support is added even if enable_efa is false |
 | `docker_version` | Docker is not installed on Kubernetes v1.25+ |
 | `enable_fips` | Install openssl and enable fips related kernel parameters |
 | `encrypted` |  |
@@ -51,7 +56,6 @@
 | `volume_type` |  |
 | `working_dir` | Directory path for ephemeral resources on the builder instance |
 | `custom_endpoint_ec2` |  |
-| `aws_domain` |  |
 <!-- template-variable-table-boundary -->
 
 ---

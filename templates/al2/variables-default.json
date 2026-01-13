@@ -16,6 +16,9 @@
     "containerd_version": "1.7.*",
     "install_containerd_from_s3": "false",
     "creator": "{{env `USER`}}",
+    "enable_accelerator": "",
+    "nvidia_driver_version": "570.195.03",
+    "enable_efa": "false",
     "docker_version": "none",
     "enable_fips": "false",
     "encrypted": "false",
@@ -28,7 +31,7 @@
     "remote_folder": "/tmp",
     "runc_version": "1.*",
     "security_group_id": "",
-    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*",
+    "source_ami_filter_name": "amzn2-ami-minimal-hvm-*-gp2",
     "source_ami_id": "",
     "source_ami_owners": "137112412989",
     "ssh_interface": "",
@@ -39,6 +42,5 @@
     "user_data_file": null,
     "volume_type": "gp2",
     "working_dir": "{{user `remote_folder`}}/worker",
-    "aws_domain": "amazonaws.com",
-    "custom_endpoint_ec2": "https://ec2.{{user `aws_region`}}.{{user `aws_domain`}}"
+    "custom_endpoint_ec2": ""
 }

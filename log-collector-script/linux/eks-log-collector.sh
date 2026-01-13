@@ -20,7 +20,7 @@ export LANG="C"
 export LC_ALL="C"
 
 # Global options
-readonly PROGRAM_VERSION="0.7.8"
+readonly PROGRAM_VERSION="0.7.9"
 readonly PROGRAM_SOURCE="https://github.com/awslabs/amazon-eks-ami/blob/main/log-collector-script/"
 readonly PROGRAM_DIR="/opt/log-collector"
 readonly LOG_DIR="/var/log"
@@ -435,6 +435,8 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/containers/fsx-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/fsx-openzfs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/file-cache-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/containers/s3-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/containers/mp_*_mount_s3* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
@@ -448,6 +450,9 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/pods/kube-system_fsx-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_fsx-openzfs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_file-cache-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_s3-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/mount-s3_mp-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/mount-s3_hr-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
@@ -564,6 +569,20 @@ get_nodeadm_info() {
       timeout 75 journalctl --unit=nodeadm-config --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-config.log
 
       timeout 75 journalctl --unit=nodeadm-run --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-run.log
+
+      timeout 75 journalctl --unit=nodeadm-boot-hook --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/nodeadm-boot-hook.log
+
+      # Collect udev-net-manager logs using cached interface names for this instance.
+      # https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/cmd/nodeadm-internal/udev/broker.go#L16
+      NETWORK_MANAGER_CACHE_DIR="/etc/eks/nodeadm/udev-net-manager/${INSTANCE_ID}"
+      if [ -d "$NETWORK_MANAGER_CACHE_DIR" ]; then
+        for interface_file in "$NETWORK_MANAGER_CACHE_DIR"/*; do
+          if [ -f "$interface_file" ]; then
+            interface=$(basename "$interface_file")
+            timeout 75 journalctl --unit=udev-net-manager@${interface} --since "${DAYS_10}" > "${COLLECT_DIR}"/nodeadm/udev-net-manager_${interface}.log
+          fi
+        done
+      fi
 
       ;;
     *)

@@ -1,0 +1,32 @@
+{
+  "imdsv2": true,
+  "metadata": {
+    "paths": {
+      "mac-network-interface-card-index": "/latest/meta-data/network/interfaces/macs/0e:49:61:0f:c3:11/network-card"
+    },
+    "values": {
+      "hostname": "ip-172-16-34-43.ec2.internal",
+      "instance-id": "i-1234567890abcdef0",
+      "instance-type": "m4.xlarge",
+      "local-hostname": "ip-172-16-34-43.ec2.internal",
+      "local-ipv4": "172.16.34.43",
+      "mac": "0e:49:61:0f:c3:11"
+    }
+  },
+  "dynamic": {
+    "values": {
+      "instance-identity-document": {
+        "availabilityZone": "us-west-2f",
+        "instanceId": "i-1234567890abcdef0",
+        "architecture": "x86_64",
+        "instanceType": "m4.xlarge",
+        "region": "us-west-2"
+      }
+    }
+  },
+  "userdata": {
+    "values": {
+      "userdata": "LS0tCmFwaVZlcnNpb246IG5vZGUuZWtzLmF3cy92MWFscGhhMQpraW5kOiBOb2RlQ29uZmlnCnNwZWM6CiAgaW5zdGFuY2U6CiAgICBlbnZpcm9ubWVudDoKICAgICAgZGVmYXVsdDoKICAgICAgICBIVFRQX1BST1hZOiAiaHR0cDovL2xvY2FsaG9zdDo4MDgwIgogICAgICAgIEhUVFBTX1BST1hZOiAiaHR0cHM6Ly9sb2NhbGhvc3Q6ODA4MCIKICBjbHVzdGVyOgogICAgYXBpU2VydmVyRW5kcG9pbnQ6IGh0dHBzOi8vZXhhbXBsZS5jb20KICAgIGNlcnRpZmljYXRlQXV0aG9yaXR5OiBZMlZ5ZEdsbWFXTmhkR1ZCZFhSb2IzSnBkSGs9CiAgICBjaWRyOiAxMC4xMDAuMC4wLzE2CiAgICBuYW1lOiBteS1jbHVzdGVy"
+    }
+  }
+}

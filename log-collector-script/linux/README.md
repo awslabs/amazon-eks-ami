@@ -10,6 +10,14 @@ At a high level, you run this script on your Kubernetes node, and it will collec
 
 * Run this project as the root user
 
+If you are using EKS AMIs, then this script is already present on the node at `/etc/eks/log-collector-script/`, you can run following command to collect the node logs
+
+```
+sudo bash /etc/eks/log-collector-script/eks-log-collector.sh
+```
+
+If using custom AMI and somehow that script is not present, you can use the following to collect node logs
+
 ```
 curl -O https://amazon-eks.s3.amazonaws.com/support/log-collector-script/linux/eks-log-collector.sh
 sudo bash eks-log-collector.sh

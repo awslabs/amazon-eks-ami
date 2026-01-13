@@ -22,6 +22,7 @@ print_help() {
   echo "--no-bind-kubelet disable bind mounting kubelet dir onto MD raid device"
   echo "--no-bind-containerd disable bind mounting containerd dir onto MD raid device"
   echo "--no-bind-pods-logs disable bind mounting /var/log/pods onto MD raid device"
+  echo "--no-bind-soci disable bind mounting SOCI container image dir onto MD raid device"
   echo "--no-bind-mounts disable all bind mounting onto MD raid device, only create and mount MD device"
   echo "-h, --help print this help"
 }
@@ -79,7 +80,7 @@ maybe_raid() {
   mount_unit_name="$(systemd-escape --path --suffix=mount "${array_mount_point}")"
   cat > "/etc/systemd/system/${mount_unit_name}" << EOF
   [Unit]
-  Description=Mount EC2 Instance Store NVMe disk RAID0
+  Description=Mount EC2 Instance Store NVMe disk RAID${raid_level}
   [Mount]
   What=UUID=${dev_uuid}
   Where=${array_mount_point}
@@ -91,39 +92,39 @@ EOF
   systemd-analyze verify "${mount_unit_name}"
   systemctl enable "${mount_unit_name}" --now
 
-  prev_running=""
-  needs_linked=""
-
   BIND_MOUNTS=()
-
   if [[ "${BIND_KUBELET}" == "true" ]]; then
-    BIND_MOUNTS+=("kubelet")
+    BIND_MOUNTS+=("/var/lib/kubelet")
   fi
 
   if [[ "${BIND_CONTAINERD}" == "true" ]]; then
-    BIND_MOUNTS+=("containerd")
+    BIND_MOUNTS+=("/var/lib/containerd")
   fi
 
-  for unit in "${BIND_MOUNTS[@]}"; do
+  if [[ "${BIND_SOCI}" == "true" ]]; then
+    BIND_MOUNTS+=("/var/lib/soci-snapshotter-grpc")
+  fi
+
+  if [[ "${BIND_PODS}" == "true" ]]; then
+    BIND_MOUNTS+=("/var/log/pods")
+  fi
+
+  prev_running=""
+  needs_linked=""
+  for mount_point in "${BIND_MOUNTS[@]}"; do
+    local mount_unit_name
+    mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
     ## Check if the bind mount from the RAID already exists
-    if [[ "$(systemctl is-active var-lib-${unit}.mount)" != "active" ]]; then
-      # Check if components that depend on the RAID are running and, if so, stop them
+    if [[ "$(systemctl is-active "${mount_unit_name}")" != "active" ]]; then
+      # Check if components that depend on this mount path are running and, if so, stop them
+      local unit
+      unit="$(dependent_unit ${mount_point})"
       if systemctl is-active "${unit}" > /dev/null 2>&1; then
         prev_running+=" ${unit}"
       fi
-      needs_linked+=" /var/lib/${unit}"
+      needs_linked+=" ${mount_point}"
     fi
   done
-
-  ## Check if /var/log/pods has been bind mounted and make sure kubelet is stopped
-  if [[ "${BIND_VAR_LOG_PODS}" == "true" ]]; then
-    if [[ "$(systemctl is-active var-log-pods.mount)" != "active" ]]; then
-      if systemctl is-active "kubelet" > /dev/null 2>&1; then
-        prev_running+=" kubelet"
-      fi
-      needs_linked+=" /var/log/pods"
-    fi
-  fi
 
   if [[ ! -z "${prev_running}" ]]; then
     systemctl stop ${prev_running}
@@ -141,7 +142,7 @@ EOF
     mount_unit_name="$(systemd-escape --path --suffix=mount "${mount_point}")"
     cat > "/etc/systemd/system/${mount_unit_name}" << EOF
       [Unit]
-      Description=Mount ${unit} on EC2 Instance Store NVMe RAID0
+      Description=Mount ${mount_point} on EC2 Instance Store NVMe RAID${raid_level}
       [Mount]
       What=${array_mount_point_unit}
       Where=${mount_point}
@@ -157,6 +158,29 @@ EOF
   if [[ ! -z "${prev_running}" ]]; then
     systemctl start ${prev_running}
   fi
+}
+
+# Returns systemd unit that depends on a given bind mount.
+dependent_unit() {
+  local path="$1"
+
+  case "${path}" in
+    "/var/lib/kubelet")
+      echo "kubelet.service"
+      ;;
+    "/var/lib/containerd")
+      echo "containerd.service"
+      ;;
+    "/var/lib/soci-snapshotter-grpc")
+      echo "soci-snapshotter.service"
+      ;;
+    "/var/log/pods")
+      echo "kubelet.service"
+      ;;
+    *)
+      echo ""
+      ;;
+  esac
 }
 
 # Mounts and creates xfs file systems on all EC2 instance store NVMe disks
@@ -196,7 +220,8 @@ EOF
 MNT_DIR="/mnt/k8s-disks"
 BIND_KUBELET="true"
 BIND_CONTAINERD="true"
-BIND_VAR_LOG_PODS="true"
+BIND_SOCI="true"
+BIND_PODS="true"
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -219,13 +244,18 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --no-bind-pods-logs)
-      BIND_VAR_LOG_PODS="false"
+      BIND_PODS="false"
+      shift
+      ;;
+    --no-bind-soci)
+      BIND_SOCI="false"
       shift
       ;;
     --no-bind-mounts)
       BIND_KUBELET="false"
       BIND_CONTAINERD="false"
-      BIND_VAR_LOG_PODS="false"
+      BIND_SOCI="false"
+      BIND_PODS="false"
       shift
       ;;
     *)                   # unknown option

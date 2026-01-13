@@ -68,6 +68,12 @@ type KubeletOptions struct {
 	// Flags are [command-line `kubelet` arguments](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/).
 	// that will be appended to the defaults.
 	Flags []string `json:"flags,omitempty"`
+
+	// MaxPodsExpression is a CEL expression used to compute a max pods value for
+	// the kubelet configuration. Any MaxPods value set in Config takes precedence
+	// over the result of this expression. If the expression is successfully evaluated,
+	// kubeReserved will always be calculated on its result.
+	MaxPodsExpression string `json:"maxPodsExpression,omitempty"`
 }
 
 // ContainerdOptions are additional parameters passed to `containerd`.
@@ -85,7 +91,26 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+	Network      NetworkOptions      `json:"network,omitempty"`
 }
+
+// NetworkOptions are parameters used to configure networking on the host OS.
+type NetworkOptions struct {
+	// Nameservers are servers for the instance's network name resolution. The
+	// list may include both IPv4 and IPv6 addresses.
+	// see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#DNS=
+	Nameservers []string `json:"nameservers,omitempty"`
+
+	// Domains are search entries for the instance's network name resolution.
+	// see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#Domains=
+	Domains []string `json:"domains,omitempty"`
+}
+
+// EnvironmentOptions configures environment variables for the system and systemd services.
+// The key `default` is reserved for configuring the environment across all services on the instance
+// The key can be set to a systemd service name to configure environment only for a particular service.
+type EnvironmentOptions map[string]map[string]string
 
 // LocalStorageOptions control how [EC2 instance stores](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html)
 // are used when available.

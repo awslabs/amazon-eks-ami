@@ -41,6 +41,12 @@ on:
         required: false
         type: string
 
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+  id-token: write
+
 jobs:
   setup:
     runs-on: ubuntu-latest

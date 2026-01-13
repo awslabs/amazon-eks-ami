@@ -1,0 +1,16 @@
+{
+  "cluster": {
+    "apiServerEndpoint": "https://example.com",
+    "certificateAuthority": "Y2VydGlmaWNhdGVBdXRob3JpdHk=",
+    "cidr": "10.100.0.0/16",
+    "name": "my-cluster"
+  },
+  "containerd": {
+    "config": "version = 2\n\n[grpc]\naddress = \"/run/foo/foo.sock\"\n\n[plugins.\"io.containerd.grpc.v1.cri\".containerd]\ndiscard_unpacked_layers = false\n"
+  },
+  "instance": {
+    "localStorage": {},
+    "network": {}
+  },
+  "kubelet": {}
+}

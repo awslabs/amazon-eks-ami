@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+const KindNodeConfig = "NodeConfig"
+
 // +kubebuilder:skipversion
 // +kubebuilder:object:root=true
 
@@ -73,6 +75,11 @@ type KubeletOptions struct {
 	// amended to the generated defaults, and therefore will act as overrides
 	// https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
 	Flags KubeletFlags `json:"flags,omitempty"`
+	// MaxPodsExpression is a CEL expression used to compute a max pods value for
+	// the kubelet configuration. Any MaxPods value set in Config takes precedence
+	// over the result of this expression. If the expression is successfully evaluated,
+	// kubeReserved will always be calculated on its result.
+	MaxPodsExpression string `json:"maxPodsExpression,omitempty"`
 }
 
 // InlineDocument is an alias to a dynamically typed map. This allows using
@@ -94,7 +101,16 @@ const (
 
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Environment  EnvironmentOptions  `json:"environment,omitempty"`
+	Network      NetworkOptions      `json:"network,omitempty"`
 }
+
+type NetworkOptions struct {
+	Nameservers []string `json:"nameservers,omitempty"`
+	Domains     []string `json:"domains,omitempty"`
+}
+
+type EnvironmentOptions map[string]map[string]string
 
 type LocalStorageOptions struct {
 	Strategy       LocalStorageStrategy `json:"strategy,omitempty"`

@@ -1,0 +1,9 @@
+[Unit]
+Description=Display Nvidia driver EULA
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/nvidia-eula.sh
+
+[Install]
+WantedBy=basic.target

@@ -62,12 +62,34 @@ function assert::file-not-contains() {
   fi
 }
 
+function assert::file-not-exists() {
+  if [ "$#" -ne 1 ]; then
+    echo "Usage: assert::file-not-exists FILE"
+    exit 1
+  fi
+  local FILE=$1
+  if [ -f "$FILE" ]; then
+    echo "File $FILE should not exist."
+    exit 1
+  fi
+}
+
 function mock::kubelet() {
   if [ "$#" -ne 1 ]; then
     echo "Usage: mock::kubelet VERSION"
     exit 1
   fi
-  printf "#!/usr/bin/env bash\necho Kubernetes v%s\n" "$1" > /usr/bin/kubelet
+  local VERSION
+  VERSION="$1"
+  cat > /usr/bin/kubelet << SCRIPT
+#!/usr/bin/env bash
+if [ "\$1" = "--version" ]; then
+  echo "Kubernetes v$VERSION"
+else
+  echo "Kubelet is running..."
+  sleep infinity
+fi
+SCRIPT
   chmod +x /usr/bin/kubelet
 }
 
@@ -133,8 +155,8 @@ function mock::aws() {
     mock::imds ${1:-}
   fi
   if [ "${ENABLE_AWS_MOCK:-true}" = "true" ]; then
-    $HOME/.local/bin/moto_server -p5000 &
-    wait::server-responding localhost 5000 10
+    $HOME/.local/bin/moto_server -H 0.0.0.0 -p5000 &
+    wait::server-responding 0.0.0.0 5000 10
     # ensure that our instance exists in the API
     aws ec2 run-instances
   fi
@@ -158,13 +180,23 @@ function mock::set-link-state() {
   local LINK_STATE=$2
 
   CONFIG_FILE=${NETWORKCTL_MOCK_LIST_FILE:-"/mock/config/networkctl-list.json"}
-  mkdir -p "$(dirname $CONFIG_FILE)"
+
+  if [ ! -f "$CONFIG_FILE" ]; then
+    mkdir -p "$(dirname $CONFIG_FILE)"
+    echo '{"Interfaces": []}' > "$CONFIG_FILE"
+  fi
+
   TEMP_CONFIG=$(mktemp)
-  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces[] |= if .Name == $name then .AdministrativeState = $state else . end' "$CONFIG_FILE" > "$TEMP_CONFIG"
+  jq --arg name $LINK_NAME --arg state $LINK_STATE '.Interfaces = (
+    [ {"Name": $name, "AdministrativeState": $state} ] + .Interfaces | unique_by(.Name)
+  )' "$CONFIG_FILE" > "$TEMP_CONFIG"
 
   LOCKFILE=${NETWORKCTL_MOCK_LOCK_FILE:-"/mock/config/networkctl-list.lock"}
   flock "$LOCKFILE" -c "mv $TEMP_CONFIG $CONFIG_FILE"
+
+  echo "updating networkctl mock link status:"
   cat $CONFIG_FILE
+
   rm -f $TEMP_CONFIG
 }
 

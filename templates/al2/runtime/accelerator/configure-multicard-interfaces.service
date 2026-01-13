@@ -1,0 +1,13 @@
+[Unit]
+Description=Configure multicard interfaces
+Requires=network-online.target
+After=network-online.target
+Before=kubelet.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/etc/eks/configure-multicard-interfaces.sh
+
+[Install]
+WantedBy=containerd.service
