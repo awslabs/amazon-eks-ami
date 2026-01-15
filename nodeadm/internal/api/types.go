@@ -131,6 +131,7 @@ type DisabledMount string
 const (
 	DisabledMountContainerd DisabledMount = "Containerd"
 	DisabledMountPodLogs    DisabledMount = "PodLogs"
+	DisabledMountSOCI       DisabledMount = "SOCI"
 )
 
 type Feature string
