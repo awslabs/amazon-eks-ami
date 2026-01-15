@@ -107,7 +107,7 @@ sudo systemctl restart sshd.service
 
 ### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
 
-PARTITION=$(imds /latest/meta-data/services/partition)
+PARTITION=$(sudo imds /latest/meta-data/services/partition)
 if [[ "${PARTITION}" =~ ^aws-iso ]]; then
   echo "Installing awscli package"
   sudo dnf install -y awscli
@@ -162,7 +162,7 @@ sudo mkdir -p /var/lib/kubelet
 sudo mkdir -p /opt/cni/bin
 
 echo "Downloading binaries from: s3://$BINARY_BUCKET_NAME"
-AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+AWS_DOMAIN=$(sudo imds "/latest/meta-data/services/domain")
 S3_URL_BASE="https://$BINARY_BUCKET_NAME.s3.$BINARY_BUCKET_REGION.$AWS_DOMAIN/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
@@ -187,7 +187,7 @@ done
 
 sudo rm ./*.sha256
 
-kubelet --version > "${WORKING_DIR}/kubelet-version.txt"
+sudo kubelet --version > "${WORKING_DIR}/kubelet-version.txt"
 sudo mv "${WORKING_DIR}/kubelet-version.txt" /etc/eks/kubelet-version.txt
 
 sudo systemctl enable ebs-initialize-bin@kubelet
@@ -237,7 +237,7 @@ fi
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$($WORKING_DIR/shared/bin/imds /latest/meta-data/ami-id)
+BASE_AMI_ID=$(sudo $WORKING_DIR/shared/bin/imds /latest/meta-data/ami-id)
 cat << EOF | sudo tee /etc/eks/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
