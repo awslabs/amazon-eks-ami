@@ -145,12 +145,14 @@ const (
 //
 // * `Containerd` refers to `/var/lib/containerd`
 // * `PodLogs` refers to `/var/log/pods`
-// +kubebuilder:validation:Enum={Containerd, PodLogs}
+// * `SOCI` refers to `/var/lib/soci-snapshotter-grpc`
+// +kubebuilder:validation:Enum={Containerd, PodLogs, SOCI}
 type DisabledMount string
 
 const (
 	DisabledMountContainerd DisabledMount = "Containerd"
 	DisabledMountPodLogs    DisabledMount = "PodLogs"
+	DisabledMountSOCI       DisabledMount = "SOCI"
 )
 
 // Feature specifies which feature gate should be toggled

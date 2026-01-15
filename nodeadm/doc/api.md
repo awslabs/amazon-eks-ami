@@ -45,12 +45,13 @@ DisabledMount specifies a directory that should not be mounted onto local storag
 
 * `Containerd` refers to `/var/lib/containerd`
 * `PodLogs` refers to `/var/log/pods`
+* `SOCI` refers to `/var/lib/soci-snapshotter-grpc`
 
 _Appears in:_
 - [LocalStorageOptions](#localstorageoptions)
 
 .Validation:
-- Enum: [Containerd PodLogs]
+- Enum: [Containerd PodLogs SOCI]
 
 #### EnvironmentOptions
 

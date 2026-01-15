@@ -122,9 +122,11 @@ spec:
 
                             * `Containerd` refers to `/var/lib/containerd`
                             * `PodLogs` refers to `/var/log/pods`
+                            * `SOCI` refers to `/var/lib/soci-snapshotter-grpc`
                           enum:
                           - Containerd
                           - PodLogs
+                          - SOCI
                           type: string
                         type: array
                       mountPath:
