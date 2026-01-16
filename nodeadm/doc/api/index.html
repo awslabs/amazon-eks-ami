@@ -1,0 +1,1602 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Build template and runtime resources for the Amazon EKS AMI">
+      
+      
+      
+      
+        <link rel="prev" href="../api-concepts/">
+      
+      
+        <link rel="next" href="../examples/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Reference - Amazon EKS AMI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Amazon EKS AMI" class="md-header__button md-logo" aria-label="Amazon EKS AMI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Amazon EKS AMI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/awslabs/amazon-eks-ami" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awslabs/amazon-eks-ami
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Amazon EKS AMI" class="md-nav__button md-logo" aria-label="Amazon EKS AMI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Amazon EKS AMI
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/awslabs/amazon-eks-ami" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    awslabs/amazon-eks-ami
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Community
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribution guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CODE_OF_CONDUCT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code of Conduct
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/al2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Amazon Linux 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/al2023/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Amazon Linux 2023
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    nodeadm
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    nodeadm
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packages
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nodeeksawsv1alpha1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node.eks.aws/v1alpha1
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="node.eks.aws/v1alpha1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clusterdetails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ClusterDetails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containerdoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ContainerdOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disabledmount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DisabledMount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environmentoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EnvironmentOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instanceoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstanceOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubeletoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KubeletOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#localstorageoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocalStorageOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#localstoragestrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocalStorageStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networkoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NetworkOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodeconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodeconfigspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeConfigSpec
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../playground/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Playground
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packages
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nodeeksawsv1alpha1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        node.eks.aws/v1alpha1
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="node.eks.aws/v1alpha1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resource Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clusterdetails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ClusterDetails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#containerdoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ContainerdOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disabledmount" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DisabledMount
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environmentoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EnvironmentOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instanceoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        InstanceOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kubeletoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        KubeletOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#localstorageoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocalStorageOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#localstoragestrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocalStorageStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#networkoptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NetworkOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodeconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nodeconfigspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NodeConfigSpec
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference</h1>
+<h2 id="packages">Packages</h2>
+<ul>
+<li><a href="#nodeeksawsv1alpha1">node.eks.aws/v1alpha1</a></li>
+</ul>
+<h2 id="nodeeksawsv1alpha1">node.eks.aws/v1alpha1</h2>
+<h3 id="resource-types">Resource Types</h3>
+<ul>
+<li><a href="#nodeconfig">NodeConfig</a></li>
+</ul>
+<h4 id="clusterdetails">ClusterDetails</h4>
+<p>ClusterDetails contains the coordinates of your EKS cluster.
+These details can be found using the <a href="https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeCluster.html">DescribeCluster API</a>.</p>
+<p><em>Appears in:</em>
+- <a href="#nodeconfigspec">NodeConfigSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code> <em>string</em></td>
+<td>Name is the name of your EKS cluster</td>
+</tr>
+<tr>
+<td><code>apiServerEndpoint</code> <em>string</em></td>
+<td>APIServerEndpoint is the URL of your EKS cluster's kube-apiserver.</td>
+</tr>
+<tr>
+<td><code>certificateAuthority</code> <em>integer array</em></td>
+<td>CertificateAuthority is a base64-encoded string of your cluster's certificate authority chain.</td>
+</tr>
+<tr>
+<td><code>cidr</code> <em>string</em></td>
+<td>CIDR is your cluster's service CIDR block. This value is used to infer your cluster's DNS address.</td>
+</tr>
+<tr>
+<td><code>enableOutpost</code> <em>boolean</em></td>
+<td>EnableOutpost determines how your node is configured when running on an AWS Outpost.</td>
+</tr>
+<tr>
+<td><code>id</code> <em>string</em></td>
+<td>ID is an identifier for your cluster; this is only used when your node is running on an AWS Outpost.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="containerdoptions">ContainerdOptions</h4>
+<p>ContainerdOptions are additional parameters passed to <code>containerd</code>.</p>
+<p><em>Appears in:</em>
+- <a href="#nodeconfigspec">NodeConfigSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code> <em>string</em></td>
+<td>Config is an inline <a href="https://github.com/containerd/containerd/blob/main/docs/man/containerd-config.toml.5.md"><code>containerd</code> configuration TOML</a><br />that will be merged with the defaults.</td>
+</tr>
+<tr>
+<td><code>baseRuntimeSpec</code> <em>object (keys:string, values:<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg">RawExtension</a>)</em></td>
+<td>BaseRuntimeSpec is the OCI runtime specification upon which all containers will be based.<br />The provided spec will be merged with the default spec; so that a partial spec may be provided.<br />For more information, see: https://github.com/opencontainers/runtime-spec</td>
+</tr>
+</tbody>
+</table>
+<h4 id="disabledmount">DisabledMount</h4>
+<p><em>Underlying type:</em> <em>string</em></p>
+<p>DisabledMount specifies a directory that should not be mounted onto local storage</p>
+<ul>
+<li><code>Containerd</code> refers to <code>/var/lib/containerd</code></li>
+<li><code>PodLogs</code> refers to <code>/var/log/pods</code></li>
+<li><code>SOCI</code> refers to <code>/var/lib/soci-snapshotter-grpc</code></li>
+</ul>
+<p><em>Appears in:</em>
+- <a href="#localstorageoptions">LocalStorageOptions</a></p>
+<p>.Validation:
+- Enum: [Containerd PodLogs SOCI]</p>
+<h4 id="environmentoptions">EnvironmentOptions</h4>
+<p><em>Underlying type:</em> <em>object</em></p>
+<p>EnvironmentOptions configures environment variables for the system and systemd services.
+The key <code>default</code> is reserved for configuring the environment across all services on the instance
+The key can be set to a systemd service name to configure environment only for a particular service.</p>
+<p><em>Appears in:</em>
+- <a href="#instanceoptions">InstanceOptions</a></p>
+<h4 id="feature">Feature</h4>
+<p><em>Underlying type:</em> <em>string</em></p>
+<p>Feature specifies which feature gate should be toggled</p>
+<p><em>Appears in:</em>
+- <a href="#nodeconfigspec">NodeConfigSpec</a></p>
+<p>.Validation:
+- Enum: [InstanceIdNodeName FastImagePull]</p>
+<h4 id="instanceoptions">InstanceOptions</h4>
+<p>InstanceOptions determines how the node's operating system and devices are configured.</p>
+<p><em>Appears in:</em>
+- <a href="#nodeconfigspec">NodeConfigSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>localStorage</code> <em><a href="#localstorageoptions">LocalStorageOptions</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>environment</code> <em><a href="#environmentoptions">EnvironmentOptions</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>network</code> <em><a href="#networkoptions">NetworkOptions</a></em></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="kubeletoptions">KubeletOptions</h4>
+<p>KubeletOptions are additional parameters passed to <code>kubelet</code>.</p>
+<p><em>Appears in:</em>
+- <a href="#nodeconfigspec">NodeConfigSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config</code> <em>object (keys:string, values:<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#rawextension-runtime-pkg">RawExtension</a>)</em></td>
+<td>Config is a <a href="https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/"><code>KubeletConfiguration</code></a><br />that will be merged with the defaults.</td>
+</tr>
+<tr>
+<td><code>flags</code> <em>string array</em></td>
+<td>Flags are <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/">command-line <code>kubelet</code> arguments</a>.<br />that will be appended to the defaults.</td>
+</tr>
+<tr>
+<td><code>maxPodsExpression</code> <em>string</em></td>
+<td>MaxPodsExpression is a CEL expression used to compute a max pods value for<br />the kubelet configuration. Any MaxPods value set in Config takes precedence<br />over the result of this expression. If the expression is successfully evaluated,<br />kubeReserved will always be calculated on its result.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="localstorageoptions">LocalStorageOptions</h4>
+<p>LocalStorageOptions control how <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html">EC2 instance stores</a>
+are used when available.</p>
+<p><em>Appears in:</em>
+- <a href="#instanceoptions">InstanceOptions</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>strategy</code> <em><a href="#localstoragestrategy">LocalStorageStrategy</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>mountPath</code> <em>string</em></td>
+<td>MountPath is the path where the filesystem will be mounted.<br />Defaults to <code>/mnt/k8s-disks/</code>.</td>
+</tr>
+<tr>
+<td><code>disabledMounts</code> <em><a href="#disabledmount">DisabledMount</a> array</em></td>
+<td>List of directories that will not be mounted to LocalStorage. By default,<br />all mounts are enabled.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="localstoragestrategy">LocalStorageStrategy</h4>
+<p><em>Underlying type:</em> <em>string</em></p>
+<p>LocalStorageStrategy specifies how to handle an instance's local storage devices.</p>
+<p><em>Appears in:</em>
+- <a href="#localstorageoptions">LocalStorageOptions</a></p>
+<p>.Validation:
+- Enum: [RAID0 RAID10 Mount]</p>
+<h4 id="networkoptions">NetworkOptions</h4>
+<p>NetworkOptions are parameters used to configure networking on the host OS.</p>
+<p><em>Appears in:</em>
+- <a href="#instanceoptions">InstanceOptions</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nameservers</code> <em>string array</em></td>
+<td>Nameservers are servers for the instance's network name resolution. The<br />list may include both IPv4 and IPv6 addresses.<br />see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#DNS=</td>
+</tr>
+<tr>
+<td><code>domains</code> <em>string array</em></td>
+<td>Domains are search entries for the instance's network name resolution.<br />see: https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html#Domains=</td>
+</tr>
+</tbody>
+</table>
+<h4 id="nodeconfig">NodeConfig</h4>
+<p>NodeConfig is the primary configuration object for <code>nodeadm</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td><code>node.eks.aws/v1alpha1</code></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td><code>NodeConfig</code></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td>Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds</td>
+</tr>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td>APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources</td>
+</tr>
+<tr>
+<td><code>metadata</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.29/#objectmeta-v1-meta">ObjectMeta</a></em></td>
+<td>Refer to Kubernetes API documentation for fields of <code>metadata</code>.</td>
+</tr>
+<tr>
+<td><code>spec</code> <em><a href="#nodeconfigspec">NodeConfigSpec</a></em></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="nodeconfigspec">NodeConfigSpec</h4>
+<p><em>Appears in:</em>
+- <a href="#nodeconfig">NodeConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cluster</code> <em><a href="#clusterdetails">ClusterDetails</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>containerd</code> <em><a href="#containerdoptions">ContainerdOptions</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>instance</code> <em><a href="#instanceoptions">InstanceOptions</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>kubelet</code> <em><a href="#kubeletoptions">KubeletOptions</a></em></td>
+<td></td>
+</tr>
+<tr>
+<td><code>featureGates</code> <em>object (keys:<a href="#feature">Feature</a>, values:boolean)</em></td>
+<td>FeatureGates holds key-value pairs to enable or disable application features.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
