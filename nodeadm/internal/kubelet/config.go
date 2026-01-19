@@ -19,9 +19,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8skubelet "k8s.io/kubelet/config/v1beta1"
 
+	"github.com/avast/retry-go/v5"
 	"github.com/aws/smithy-go/ptr"
-
-	"github.com/avast/retry-go"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -180,16 +179,18 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 
 		// TODO: cleanup
 		var ipAddresses []string
-		err = retry.Do(func() error {
-			var err error
-			ipAddresses, err = net.LookupHost(apiUrl.Host)
-			return err
-		},
+		err = retry.New(
 			retry.Attempts(6),
 			retry.Delay(200*time.Millisecond),
 			retry.OnRetry(func(n uint, err error) {
 				zap.L().Info("Retrying DNS lookup after error", zap.Error(err))
 			}),
+		).Do(
+			func() error {
+				var err error
+				ipAddresses, err = net.LookupHost(apiUrl.Host)
+				return err
+			},
 		)
 		if err != nil {
 			return err
