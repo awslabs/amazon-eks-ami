@@ -37,6 +37,8 @@ func (a *localDiskAspect) Setup(cfg *api.NodeConfig) error {
 			args = append(args, "--no-bind-pods-logs")
 		case api.DisabledMountContainerd:
 			args = append(args, "--no-bind-containerd")
+		case api.DisabledMountSOCI:
+			args = append(args, "--no-bind-soci")
 		}
 	}
 
