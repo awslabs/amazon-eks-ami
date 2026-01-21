@@ -373,6 +373,12 @@ g6f.2xlarge 58
 g6f.4xlarge 234
 g6f.large 20
 g6f.xlarge 58
+g7e.12xlarge 632
+g7e.24xlarge 632
+g7e.2xlarge 254
+g7e.48xlarge 632
+g7e.4xlarge 506
+g7e.8xlarge 506
 gr6.4xlarge 234
 gr6.8xlarge 234
 gr6f.4xlarge 234
