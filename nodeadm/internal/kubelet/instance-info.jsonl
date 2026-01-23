@@ -212,11 +212,13 @@
 {"instanceType":"c8gb.16xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":50}
 {"instanceType":"c8gb.24xlarge","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
 {"instanceType":"c8gb.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
+{"instanceType":"c8gb.48xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"c8gb.4xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"c8gb.8xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30}
 {"instanceType":"c8gb.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
 {"instanceType":"c8gb.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":4}
 {"instanceType":"c8gb.metal-24xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
+{"instanceType":"c8gb.metal-48xl","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"c8gb.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"c8gd.12xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"c8gd.16xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
@@ -672,6 +674,7 @@
 {"instanceType":"m8gb.16xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8gb.24xlarge","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8gb.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
+{"instanceType":"m8gb.48xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8gb.4xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"m8gb.8xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30}
 {"instanceType":"m8gb.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
@@ -720,6 +723,7 @@
 {"instanceType":"m8i.metal-96xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":64}
 {"instanceType":"m8i.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac-m4.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
+{"instanceType":"mac-m4max.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac-m4pro.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac1.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac2-m1ultra.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
@@ -958,11 +962,13 @@
 {"instanceType":"r8gb.16xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":50}
 {"instanceType":"r8gb.24xlarge","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
 {"instanceType":"r8gb.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
+{"instanceType":"r8gb.48xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"r8gb.4xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"r8gb.8xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30}
 {"instanceType":"r8gb.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
 {"instanceType":"r8gb.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":4}
 {"instanceType":"r8gb.metal-24xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
+{"instanceType":"r8gb.metal-48xl","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"r8gb.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"r8gd.12xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"r8gd.16xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}

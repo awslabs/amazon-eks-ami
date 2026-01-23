@@ -254,11 +254,13 @@ c8gb.12xlarge 350
 c8gb.16xlarge 786
 c8gb.24xlarge 1178
 c8gb.2xlarge 58
+c8gb.48xlarge 590
 c8gb.4xlarge 234
 c8gb.8xlarge 292
 c8gb.large 29
 c8gb.medium 8
 c8gb.metal-24xl 1178
+c8gb.metal-48xl 590
 c8gb.xlarge 58
 c8gd.12xlarge 234
 c8gd.16xlarge 737
@@ -714,6 +716,7 @@ m8gb.12xlarge 350
 m8gb.16xlarge 786
 m8gb.24xlarge 1178
 m8gb.2xlarge 58
+m8gb.48xlarge 590
 m8gb.4xlarge 234
 m8gb.8xlarge 292
 m8gb.large 29
@@ -762,6 +765,7 @@ m8i.metal-48xl 1514
 m8i.metal-96xl 1514
 m8i.xlarge 118
 mac-m4.metal 234
+mac-m4max.metal 234
 mac-m4pro.metal 234
 mac1.metal 234
 mac2-m1ultra.metal 234
@@ -1000,11 +1004,13 @@ r8gb.12xlarge 350
 r8gb.16xlarge 786
 r8gb.24xlarge 1178
 r8gb.2xlarge 58
+r8gb.48xlarge 590
 r8gb.4xlarge 234
 r8gb.8xlarge 292
 r8gb.large 29
 r8gb.medium 8
 r8gb.metal-24xl 1178
+r8gb.metal-48xl 590
 r8gb.xlarge 58
 r8gd.12xlarge 234
 r8gd.16xlarge 737
