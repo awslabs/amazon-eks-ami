@@ -2,6 +2,7 @@ package init
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
@@ -139,6 +139,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	if !slices.Contains(c.skipPhases, runPhase) {
 		log.Info("Setting up system run aspects...")
 		runAspects := []system.SystemAspect{
+			system.NewMarkerAspect(),
 			system.NewLocalDiskAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, runAspects); err != nil {

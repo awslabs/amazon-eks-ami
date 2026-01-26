@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 )
@@ -26,11 +27,11 @@ func NewFSBroker(instanceID string) *fsBroker {
 }
 
 func (b *fsBroker) determineManager(_ string) (string, error) {
-	// this code checks whether cloud-init has finished booting the node, which
-	// is indicative of most user-controlled actions being completed. it's not
-	// perfect but it works under the basic assumptions.
-	const cloudInitBootResultPath = "/run/cloud-init/result.json"
-	if _, err := os.Stat(cloudInitBootResultPath); err != nil {
+	// This path is created when the second phase of nodeadm runs.
+	// For users who incorrectly call nodeadm init in user data, this ensures
+	// that systemd won't accidentally try to manage interfaces added by the
+	// VPC CNI.
+	if _, err := os.Stat(system.MarkerPath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return ManagerSystemd, nil
 		}
