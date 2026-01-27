@@ -21,8 +21,8 @@ assert::files-equal /run/systemd/network/70-eks-$interface.network 70-eks.networ
 assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "io.systemd.Network"
 nodeadm-internal udev-net-manager --action remove --interface $interface
 
-# faking cloud-init boot completion.
-mkdir -p /run/cloud-init/ && touch /run/cloud-init/result.json
+# Faking that nodeadm run phase has started
+mkdir -p /run/nodeadm/ && touch /run/nodeadm/init
 
 # the cache should make it such that still works as expected.
 nodeadm-internal udev-net-manager --action add --interface $interface
