@@ -18,12 +18,14 @@ func IsPCIVendorAttached(vendorId string) (bool, error) {
 		return false, err
 	}
 	for _, vendorPath := range vendorPaths {
+		zap.L().Info("found file", zap.String("path", vendorPath))
 		// #nosec G304 // read only operation on sysfs path
 		vendorIdBytes, err := os.ReadFile(vendorPath)
 		if err != nil {
 			zap.L().Warn("failed to read vendor id", zap.Error(err))
 			continue
 		}
+		zap.L().Info("bytes", zap.ByteString("vendorId", vendorIdBytes))
 		if strings.TrimSpace(string(vendorIdBytes)) == vendorId {
 			return true, nil
 		}

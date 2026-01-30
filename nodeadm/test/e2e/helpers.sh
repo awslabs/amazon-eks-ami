@@ -109,6 +109,7 @@ function mock::pci-device() {
   pci_mock_dst=/sys/bus/pci/devices/$(ls /sys/bus/pci/devices/ | head -n 1)
   pci_mock_src=$(mktemp -d)
   echo "$pcie_vendor" > $pci_mock_src/vendor
+  echo "mounted ${pci_mock_src} on ${pci_mock_dst}"
   mount --bind $pci_mock_src $pci_mock_dst
 }
 
