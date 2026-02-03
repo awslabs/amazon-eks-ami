@@ -100,9 +100,10 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 	}
 	defer daemonManager.Close()
 
+	resources := system.NewResources(system.RealFileSystem{})
 	daemons := []daemon.Daemon{
-		containerd.NewContainerdDaemon(daemonManager, system.SysfsResources{}),
-		kubelet.NewKubeletDaemon(daemonManager, system.SysfsResources{}),
+		containerd.NewContainerdDaemon(daemonManager, resources),
+		kubelet.NewKubeletDaemon(daemonManager, resources),
 	}
 
 	// to handle edge cases where the cached config is stale (because the user

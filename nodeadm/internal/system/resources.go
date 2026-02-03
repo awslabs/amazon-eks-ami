@@ -12,38 +12,24 @@ import (
 )
 
 var (
-	cpuDirRegExp = regexp.MustCompile(`/cpu(\d+)`)
-	nodeDir      = "/sys/devices/system/node"
-	cpusPath     = "/sys/devices/system/cpu"
+	nodeDir  = "/sys/devices/system/node"
+	cpusPath = "/sys/devices/system/cpu"
 )
 
-type Resources interface {
-	GetMilliNumCores() (int, error)
-	GetOnlineMemory() (int64, error)
+type Resources struct {
+	fs FileSystem
 }
 
-// Real implementation of Resources interface that reads values from sysfs.
-type SysfsResources struct{}
+func NewResources(fs FileSystem) Resources {
+	return Resources{fs: fs}
+}
 
 const (
-	sysFsCPUTopology = "/topology"
-	cpuDirPattern    = "cpu*[0-9]"
-	nodeDirPattern   = "node*[0-9]"
-
-	coreIDFilePath    = sysFsCPUTopology + "/core_id"
-	packageIDFilePath = sysFsCPUTopology + "/physical_package_id"
-
 	memoryPath = "/sys/devices/system/memory"
 )
 
-type core struct {
-	Id       int      `json:"core_id"`
-	Threads  []uint64 `json:"thread_ids"`
-	SocketID int      `json:"socket_id"`
-}
-
 func init() {
-	//cannot copy file to /sys for doc build, use this as a hack for testing
+	// Cannot copy file to /sys for docker build, use this as a hack for e2e testing.
 	cpuDirEnv := os.Getenv("CPU_DIR")
 	if cpuDirEnv != "" {
 		cpusPath = cpuDirEnv
@@ -54,45 +40,44 @@ func init() {
 	}
 }
 
-// GetMilliNumCores this is a stripped version of GetNodesInfo that only get information for NumCores
+// GetMilliNumCores this is a very stripped version of GetNodesInfo that only get information for NumCores
 // https://github.com/google/cadvisor/blob/master/utils/sysinfo/sysinfo.go#L203
-func (pr SysfsResources) GetMilliNumCores() (int, error) {
-	allLogicalCoresCount := 0
-
-	nodesDirs, err := getNodesPaths()
+func (r Resources) GetMilliNumCores() (int, error) {
+	nodesPattern := filepath.Join(nodeDir, "node*[0-9]")
+	nodesDirs, err := r.fs.Glob(nodesPattern)
 	if err != nil {
 		return 0, err
 	}
 	if len(nodesDirs) == 0 {
 		zap.L().Error("Nodes topology is not available, providing CPU topology")
-		cpuCount, err := getCPUCount()
+		cpuCount, err := r.getCPUCount()
 		if err != nil {
 			return 0, err
 		}
 		return cpuCount * 1000, nil
 	}
 
+	allLogicalCoresCount := 0
 	for _, dir := range nodesDirs {
-		cpuDirs, err := getCPUsPaths(dir)
+		cpuDirs, err := r.getCPUsPaths(dir)
+		if err != nil {
+			return 0, err
+		}
 		if len(cpuDirs) == 0 {
 			zap.L().Error("Found node without any CPU", zap.String("dir", dir), zap.Error(err))
-		} else {
-			cores, err := getCoresInfo(cpuDirs)
-			if err != nil {
-				return 0, err
-			}
-			for _, core := range cores {
-				allLogicalCoresCount += len(core.Threads)
-			}
+			continue
 		}
-
+		cores, err := r.getCoreCount(cpuDirs)
+		if err != nil {
+			return 0, err
+		}
+		allLogicalCoresCount += cores
 	}
 	return allLogicalCoresCount * 1000, err
-
 }
 
-func getCPUCount() (int, error) {
-	cpusPaths, err := getCPUsPaths(cpusPath)
+func (r Resources) getCPUCount() (int, error) {
+	cpusPaths, err := r.getCPUsPaths(cpusPath)
 	if err != nil {
 		return 0, err
 	}
@@ -104,188 +89,104 @@ func getCPUCount() (int, error) {
 	return cpusCount, nil
 }
 
-func getNodesPaths() ([]string, error) {
-	pathPattern := fmt.Sprintf("%s/%s", nodeDir, nodeDirPattern)
-	return filepath.Glob(pathPattern)
+func (r Resources) getCPUsPaths(cpusPath string) ([]string, error) {
+	pathPattern := filepath.Join(cpusPath, "cpu*[0-9]")
+	return r.fs.Glob(pathPattern)
 }
 
-func getCPUsPaths(cpusPath string) ([]string, error) {
-	pathPattern := fmt.Sprintf("%s/%s", cpusPath, cpuDirPattern)
-	return filepath.Glob(pathPattern)
-}
-
-func getCPUPhysicalPackageID(cpuPath string) (string, error) {
-	packageIDFilePath := fmt.Sprintf("%s%s", cpuPath, packageIDFilePath)
-	// #nosec G304 // This cpuPath essentially come from getCPUsPaths and it should be a system path
-	packageID, err := os.ReadFile(packageIDFilePath)
+func (r Resources) getCoreCount(cpuDirs []string) (int, error) {
+	onlineCPUs, err := r.parseOnlineCPUs()
 	if err != nil {
-		return "", err
+		return 0, fmt.Errorf("parsing online cpus: %w", err)
 	}
-	return strings.TrimSpace(string(packageID)), err
-}
+	if len(onlineCPUs) == 0 {
+		// This means all CPUs are online.
+		return len(cpuDirs), nil
+	}
 
-func getCoresInfo(cpuDirs []string) ([]core, error) {
-	cores := make([]core, 0, len(cpuDirs))
+	cores := 0
 	for _, cpuDir := range cpuDirs {
 		cpuID, err := getCPUID(cpuDir)
 		if err != nil {
-			return nil, fmt.Errorf("unexpected format of CPU directory, cpuDirRegExp %s, cpuDir: %s", cpuDirRegExp, cpuDir)
+			return 0, fmt.Errorf("unexpected format of CPU directory: %w", err)
 		}
-		if !isCPUOnline(cpuID) {
-			continue
-		}
-
-		rawPhysicalID, err := getCoreID(cpuDir)
-		if os.IsNotExist(err) {
-			zap.L().Warn("Cannot read core id for input cpuDir, core_id file does not exist",
-				zap.String("cpuDir", cpuDir), zap.Error(err))
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-		physicalID, err := strconv.Atoi(rawPhysicalID)
-		if err != nil {
-			return nil, err
-		}
-
-		rawPhysicalPackageID, err := getCPUPhysicalPackageID(cpuDir)
-		if os.IsNotExist(err) {
-			zap.L().Warn("Cannot read physical package id for input cpuDir, physical_package_id file does not exist",
-				zap.String("cpuDir", cpuDir), zap.Error(err))
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-
-		physicalPackageID, err := strconv.Atoi(rawPhysicalPackageID)
-		if err != nil {
-			return nil, err
-		}
-
-		coreIDx := -1
-		for id, core := range cores {
-			if core.Id == physicalID && core.SocketID == physicalPackageID {
-				coreIDx = id
+		for _, cpuRange := range onlineCPUs {
+			if cpuRange.start <= cpuID && cpuID <= cpuRange.end {
+				cores++
+				break
 			}
 		}
-		if coreIDx == -1 {
-			cores = append(cores, core{})
-			coreIDx = len(cores) - 1
-		}
-		desiredCore := &cores[coreIDx]
-
-		desiredCore.Id = physicalID
-		desiredCore.SocketID = physicalPackageID
-
-		if len(desiredCore.Threads) == 0 {
-			desiredCore.Threads = []uint64{cpuID}
-		} else {
-			desiredCore.Threads = append(desiredCore.Threads, cpuID)
-		}
-
 	}
 	return cores, nil
 }
 
-func getCPUID(str string) (uint64, error) {
-	matches := cpuDirRegExp.FindStringSubmatch(str)
-	if len(matches) != 2 {
-		return 0, fmt.Errorf("failed to match regexp, str: %s", str)
+func getCPUID(str string) (uint16, error) {
+	base := filepath.Base(str)
+	id, found := strings.CutPrefix(base, "cpu")
+	if !found {
+		return 0, fmt.Errorf("invalid CPUID string, base: %s, str: %s", base, str)
 	}
-	valInt, err := strconv.ParseUint(matches[1], 10, 16)
-	if err != nil {
-		return 0, err
-	}
-	return valInt, nil
+
+	val, err := strconv.ParseUint(id, 10, 16)
+	return uint16(val), err
 }
 
-func getCoreID(cpuPath string) (string, error) {
-	coreIDFilePath := fmt.Sprintf("%s%s", cpuPath, coreIDFilePath)
-	// #nosec G304 // This cpuPath essentially come from getCPUsPaths and it should be a system path
-	coreID, err := os.ReadFile(coreIDFilePath)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(coreID)), err
+type cpuRange struct {
+	start uint16
+	end   uint16
 }
 
-func isCPUOnline(cpuID uint64) bool {
-	cpuOnlinePath, err := filepath.Abs(cpusPath + "/online")
-	if err != nil {
-		zap.L().Info("Unable to get absolute path", zap.String("absolutPath", cpusPath+"/online"))
-		return false
-	}
-
-	// Quick check to determine if file exists: if it does not then kernel CPU hotplug is disabled and all CPUs are online.
-	_, err = os.Stat(cpuOnlinePath)
-	if err != nil && os.IsNotExist(err) {
-		return true
+func (r Resources) parseOnlineCPUs() ([]cpuRange, error) {
+	cpuOnlinePath := filepath.Join(cpusPath, "online")
+	fileContent, err := r.fs.ReadFile(cpuOnlinePath)
+	if os.IsNotExist(err) {
+		// If file does not exist then kernel CPU hotplug is disabled and all CPUs are online.
+		return nil, nil
 	}
 	if err != nil {
-		zap.L().Warn("Unable to stat cpuOnlinePath",
-			zap.String("cpuOnlinePath", cpuOnlinePath),
-			zap.Error(err))
-	}
-
-	isOnline, err := isCpuOnlineAtPath(cpuOnlinePath, cpuID)
-	if err != nil {
-		zap.L().Error("Unable to get online CPUs list", zap.Error(err))
-		return false
-	}
-	return isOnline
-}
-
-func isCpuOnlineAtPath(path string, cpuID uint64) (bool, error) {
-	// #nosec G304 // This path is cpuOnlinePath from isCPUOnline
-	fileContent, err := os.ReadFile(path)
-	if err != nil {
-		return false, err
+		return nil, err
 	}
 	if len(fileContent) == 0 {
-		return false, fmt.Errorf("%s found to be empty", path)
+		// This shouldn't happen as cpu0 is always online.
+		return nil, fmt.Errorf("%s found to be empty", cpuOnlinePath)
 	}
 
+	var ranges []cpuRange
 	cpuList := strings.TrimSpace(string(fileContent))
-	for _, s := range strings.Split(cpuList, ",") {
+	for s := range strings.SplitSeq(cpuList, ",") {
 		splitted := strings.SplitN(s, "-", 3)
 		switch len(splitted) {
 		case 3:
-			return false, fmt.Errorf("invalid values in %s", path)
+			return nil, fmt.Errorf("invalid values in %s", cpuOnlinePath)
 		case 2:
 			min, err := strconv.ParseUint(splitted[0], 10, 16)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
 			max, err := strconv.ParseUint(splitted[1], 10, 16)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
 			if min > max {
-				return false, fmt.Errorf("invalid values in %s", path)
+				return nil, fmt.Errorf("invalid values in %s", cpuOnlinePath)
 			}
-			// Return true, if the CPU under consideration is in the range of online CPUs.
-			if cpuID >= min && cpuID <= max {
-				return true, nil
-			}
+			ranges = append(ranges, cpuRange{start: uint16(min), end: uint16(max)})
 		case 1:
 			value, err := strconv.ParseUint(s, 10, 16)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			if value == cpuID {
-				return true, nil
-			}
+			ranges = append(ranges, cpuRange{start: uint16(value), end: uint16(value)})
 		}
 	}
-
-	return false, nil
+	return ranges, nil
 }
 
 // Gets the total amount of online memory on the node in bytes.
-func (pr SysfsResources) GetOnlineMemory() (int64, error) {
+func (r Resources) GetOnlineMemory() (int64, error) {
 	blockSizePath := filepath.Join(memoryPath, "block_size_bytes")
 	// #nosec G304 // This path is a constant sysfs path.
-	blockSizeContents, err := os.ReadFile(blockSizePath)
+	blockSizeContents, err := r.fs.ReadFile(blockSizePath)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read block size path '%s': %w", blockSizePath, err)
 	}
@@ -295,7 +196,7 @@ func (pr SysfsResources) GetOnlineMemory() (int64, error) {
 		return 0, fmt.Errorf("failed to parse block size '%s': %w", blockSizeContents, err)
 	}
 
-	files, err := os.ReadDir(memoryPath)
+	files, err := r.fs.ReadDir(memoryPath)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read memory dir '%s': %w", memoryPath, err)
 	}
@@ -309,7 +210,7 @@ func (pr SysfsResources) GetOnlineMemory() (int64, error) {
 
 		onlinePath := filepath.Join(memoryPath, file.Name(), "online")
 		// #nosec G304 // This path will be a sysfs subpath.
-		onlineContents, err := os.ReadFile(onlinePath)
+		onlineContents, err := r.fs.ReadFile(onlinePath)
 		if err != nil {
 			return 0, fmt.Errorf("failed to read online path for memory '%s': %w", onlinePath, err)
 		}
@@ -320,17 +221,4 @@ func (pr SysfsResources) GetOnlineMemory() (int64, error) {
 	}
 
 	return blockSize * onlineMemory, nil
-}
-
-type FakeResources struct {
-	Cpu    int
-	Memory int64
-}
-
-func (fr FakeResources) GetMilliNumCores() (int, error) {
-	return fr.Cpu * 1000, nil
-}
-
-func (fr FakeResources) GetOnlineMemory() (int64, error) {
-	return fr.Memory, nil
 }

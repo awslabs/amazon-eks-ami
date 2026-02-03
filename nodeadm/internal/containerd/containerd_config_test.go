@@ -2,6 +2,7 @@ package containerd
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const blockSize int64 = 0x8000000 // 128MB
 func TestContainerdConfigWithUserConfigAndFastImagePullFeature(t *testing.T) {
 	cfg := &api.NodeConfig{
 		Spec: api.NodeConfigSpec{
@@ -24,7 +26,7 @@ func TestContainerdConfigWithUserConfigAndFastImagePullFeature(t *testing.T) {
 			},
 		},
 	}
-	resources := system.FakeResources{Cpu: 8, Memory: 16 * 1024 * 1024 * 1024}
+	resources := fakeResources(8, 16*1024*1024*1024)
 	template, err := getConfigTemplateVersion(cfg, false)
 	assert.NoError(t, err)
 	containerdConfig, err := generateContainerdConfig(cfg, resources, template)
@@ -68,7 +70,7 @@ func TestContainerdConfig(t *testing.T) {
 	}{
 		{
 			cfg:            &api.NodeConfig{},
-			resources:      system.FakeResources{Cpu: 4, Memory: 7 * 1024 * 1024 * 1024},
+			resources:      fakeResources(4, 7*1024*1024*1024),
 			isContainerdV2: false,
 			// Flag not enabled
 			expectSOCIEnabled: false,
@@ -81,7 +83,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 2, Memory: 4 * 1024 * 1024 * 1024},
+			resources:      fakeResources(2, 4*1024*1024*1024),
 			isContainerdV2: false,
 			// Cpu too low
 			expectSOCIEnabled: false,
@@ -94,7 +96,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 4, Memory: 6 * 1024 * 1024 * 1024},
+			resources:      fakeResources(4, 6*1024*1024*1024),
 			isContainerdV2: false,
 			// Memory too low
 			expectSOCIEnabled: false,
@@ -107,13 +109,13 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:         system.FakeResources{Cpu: 4, Memory: 7.5 * 1024 * 1024 * 1024},
+			resources:         fakeResources(4, 8*1024*1024*1024),
 			isContainerdV2:    false,
 			expectSOCIEnabled: true,
 		},
 		{
 			cfg:            &api.NodeConfig{},
-			resources:      system.FakeResources{Cpu: 4, Memory: 7 * 1024 * 1024 * 1024},
+			resources:      fakeResources(4, 7*1024*1024*1024),
 			isContainerdV2: true,
 			// Flag not enabled
 			expectSOCIEnabled: false,
@@ -126,7 +128,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 2, Memory: 4 * 1024 * 1024 * 1024},
+			resources:      fakeResources(2, 4*1024*1024*1024),
 			isContainerdV2: true,
 			// Cpu too low
 			expectSOCIEnabled: false,
@@ -139,7 +141,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:      system.FakeResources{Cpu: 4, Memory: 6 * 1024 * 1024 * 1024},
+			resources:      fakeResources(4, 6*1024*1024*1024),
 			isContainerdV2: true,
 			// Memory too low
 			expectSOCIEnabled: false,
@@ -152,7 +154,7 @@ func TestContainerdConfig(t *testing.T) {
 					},
 				},
 			},
-			resources:         system.FakeResources{Cpu: 4, Memory: 7.5 * 1024 * 1024 * 1024},
+			resources:         fakeResources(4, 8*1024*1024*1024),
 			isContainerdV2:    true,
 			expectSOCIEnabled: true,
 		},
@@ -201,4 +203,19 @@ func TestContainerdConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func fakeResources(cpuCount int, memoryBytes int64) system.Resources {
+	files := map[string]string{
+		"/sys/devices/system/memory/block_size_bytes": fmt.Sprintf("%x", blockSize),
+	}
+	memoryBlocks := memoryBytes / blockSize
+	for i := range memoryBlocks {
+		files[fmt.Sprintf("/sys/devices/system/memory/memory%d/online", i)] = "1"
+	}
+	for i := range cpuCount {
+		files[fmt.Sprintf("/sys/devices/system/cpu/cpu%d/topology/core_id", i)] = strconv.Itoa(i)
+		files[fmt.Sprintf("/sys/devices/system/cpu/cpu%d/topology/physical_package_id", i)] = "0"
+	}
+	return system.NewResources(system.FakeFileSystem{Files: files})
 }
