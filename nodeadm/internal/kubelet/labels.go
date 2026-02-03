@@ -4,10 +4,16 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
 
-type LabelValueFunc func() (string, bool, error)
+type LabelProvider interface {
+	Get() (string, bool, error)
+}
 
-func getNvidiaGPULabel() (string, bool, error) {
-	ok, err := system.IsPCIVendorAttached(system.NVIDIA_VENDOR_ID)
+type NvidiaGPULabel struct {
+	fs system.FileSystem
+}
+
+func (n NvidiaGPULabel) Get() (string, bool, error) {
+	ok, err := system.IsPCIVendorAttached(n.fs, system.NVIDIA_VENDOR_ID)
 	if err != nil {
 		return "", false, err
 	}
