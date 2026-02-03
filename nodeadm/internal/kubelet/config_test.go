@@ -13,7 +13,7 @@ func TestKubeletCredentialProvidersFeatureFlag(t *testing.T) {
 		kubeletVersion string
 		expectedValue  *bool
 	}{
-		{kubeletVersion: "v1.28.0"},
+		{kubeletVersion: "v1.35.0"},
 	}
 
 	for _, test := range tests {

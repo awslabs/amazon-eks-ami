@@ -8,7 +8,7 @@ source /helpers.sh
 
 mock::aws
 wait::dbus-ready
-mock::kubelet 1.29.0
+mock::kubelet 1.35.0
 
 mock::setup-local-disks
 

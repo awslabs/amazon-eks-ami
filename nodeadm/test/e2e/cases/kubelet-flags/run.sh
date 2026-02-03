@@ -7,7 +7,7 @@ set -o pipefail
 source /helpers.sh
 
 mock::aws
-mock::kubelet 1.27.0
+mock::kubelet 1.35.0
 wait::dbus-ready
 
 nodeadm init --skip run --config-source file://config.yaml

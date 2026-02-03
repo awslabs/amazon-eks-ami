@@ -35,16 +35,6 @@ const (
 	kubeletConfigPerm = 0644
 )
 
-func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
-	// tracking: https://github.com/kubernetes/enhancements/issues/3983
-	// for enabling drop-in configuration
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
-		return k.writeKubeletConfigToFile(cfg)
-	} else {
-		return k.writeKubeletConfigToDir(cfg)
-	}
-}
-
 // kubeletConfig is an internal-only representation of the kubelet configuration
 // that is generated using sane defaults for EKS. It is a subset of the upstream
 // KubeletConfiguration types:
@@ -280,8 +270,7 @@ func (ksc *kubeletConfig) withCloudProvider(cfg *api.NodeConfig, flags map[strin
 	flags["hostname-override"] = nodeName
 }
 
-// When the DefaultReservedResources flag is enabled, override the kubelet
-// config with reserved cgroup values on behalf of the user
+// Override the kubelet config with reserved cgroup values on behalf of the user
 func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, resources system.Resources) {
 	ksc.SystemReservedCgroup = ptr.String("/system")
 	ksc.KubeReservedCgroup = ptr.String("/runtime")
@@ -298,29 +287,13 @@ func (ksc *kubeletConfig) withDefaultReservedResources(cfg *api.NodeConfig, reso
 	}
 }
 
-// withPodInfraContainerImage determines whether to add the
-// '--pod-infra-container-image' flag, which is used to ensure the sandbox image
-// is not garbage collected.
-//
-// TODO: revisit once the minimum supportted version catches up or the container
-// runtime is moved to containerd 2.0
-func (ksc *kubeletConfig) withPodInfraContainerImage(cfg *api.NodeConfig, flags map[string]string) error {
-	// the flag is a noop on 1.29+, since the behavior was changed to use the
-	// CRI image pinning behavior and no longer considers the flag value.
-	// see: https://github.com/kubernetes/kubernetes/pull/118544
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.29.0") < 0 {
-		flags["pod-infra-container-image"] = cfg.Status.Defaults.SandboxImage
-	}
-	return nil
-}
-
 func (ksc *kubeletConfig) withImageServiceEndpoint(cfg *api.NodeConfig, resources system.Resources) {
 	if containerd.UseSOCISnapshotter(cfg, resources) {
 		ksc.ImageServiceEndpoint = "unix:///run/soci-snapshotter-grpc/soci-snapshotter-grpc.sock"
 	}
 }
 
-func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
+func (k *kubelet) generateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	kubeletConfig := defaultKubeletSubConfig()
 
 	if err := kubeletConfig.withFallbackClusterDns(&cfg.Spec.Cluster); err != nil {
@@ -330,9 +303,6 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 		return nil, err
 	}
 	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
-		return nil, err
-	}
-	if err := kubeletConfig.withPodInfraContainerImage(cfg, k.flags); err != nil {
 		return nil, err
 	}
 
@@ -351,43 +321,11 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	return &kubeletConfig, nil
 }
 
-// WriteConfig writes the kubelet config to a file.
-// This should only be used for kubelet versions < 1.28.
-func (k *kubelet) writeKubeletConfigToFile(cfg *api.NodeConfig) error {
-	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	var kubeletConfigBytes []byte
-	if len(cfg.Spec.Kubelet.Config) > 0 {
-		mergedMap, err := util.Merge(kubeletConfig, cfg.Spec.Kubelet.Config, json.Marshal, json.Unmarshal)
-		if err != nil {
-			return err
-		}
-		if kubeletConfigBytes, err = json.MarshalIndent(mergedMap, "", strings.Repeat(" ", 4)); err != nil {
-			return err
-		}
-	} else {
-		var err error
-		if kubeletConfigBytes, err = json.MarshalIndent(kubeletConfig, "", strings.Repeat(" ", 4)); err != nil {
-			return err
-		}
-	}
-
-	configPath := path.Join(kubeletConfigRoot, kubeletConfigFile)
-	k.flags["config"] = configPath
-
-	zap.L().Info("Writing kubelet config to file..", zap.String("path", configPath))
-	return util.WriteFileWithDir(configPath, kubeletConfigBytes, kubeletConfigPerm)
-}
-
-// WriteKubeletConfigToDir writes nodeadm's generated kubelet config to the
+// writeKubeletConfig writes nodeadm's generated kubelet config to the
 // standard config file and writes the user's provided config to a directory for
-// drop-in support. This is only supported on kubelet versions >= 1.28. see:
-// https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/#kubelet-conf-d
-func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
-	kubeletConfig, err := k.GenerateKubeletConfig(cfg)
+// drop-in support.
+func (k *kubelet) writeKubeletConfig(cfg *api.NodeConfig) error {
+	kubeletConfig, err := k.generateKubeletConfig(cfg)
 	if err != nil {
 		return err
 	}
@@ -407,10 +345,10 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 	if len(cfg.Spec.Kubelet.Config) > 0 {
 		dirPath := path.Join(kubeletConfigRoot, kubeletConfigDir)
 		k.flags["config-dir"] = dirPath
-
-		zap.L().Info("Enabling kubelet config drop-in dir..")
-		k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
-		filePath := path.Join(dirPath, "40-nodeadm.conf")
+		if semver.Compare(cfg.Status.KubeletVersion, "v1.30.0") < 0 {
+			zap.L().Info("Enabling kubelet config drop-in dir..")
+			k.environment["KUBELET_CONFIG_DROPIN_DIR_ALPHA"] = "on"
+		}
 
 		// merge in default type metadata like kind and apiVersion in case the
 		// user has not specified this, as it is required to qualify a drop-in
@@ -423,6 +361,7 @@ func (k *kubelet) writeKubeletConfigToDir(cfg *api.NodeConfig) error {
 		if err != nil {
 			return err
 		}
+		filePath := path.Join(dirPath, "40-nodeadm.conf")
 		zap.L().Info("Writing user kubelet config to drop-in file..", zap.String("path", filePath))
 		if err := util.WriteFileWithDir(filePath, userKubeletConfigBytes, kubeletConfigPerm); err != nil {
 			return err

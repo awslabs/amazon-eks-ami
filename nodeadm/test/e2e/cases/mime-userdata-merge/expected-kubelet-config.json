@@ -26,7 +26,9 @@
     "clusterDomain": "cluster.local",
     "containerRuntimeEndpoint": "unix:///run/containerd/containerd.sock",
     "featureGates": {
-        "RotateKubeletServerCertificate": true
+        "RotateKubeletServerCertificate": true,
+        "DynamicResourceAllocation": true,
+        "MutableCSINodeAllocatableCount": true
     },
     "hairpinMode": "hairpin-veth",
     "protectKernelDefaults": true,
@@ -60,9 +62,8 @@
         "ephemeral-storage": "1Gi",
         "memory": "893Mi"
     },
-    "systemReserved": {
-        "cpu": "150m"
-    },
+    "shutdownGracePeriod": "2m30s",
+    "shutdownGracePeriodCriticalPods": "30s",
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",
     "providerID": "aws:///us-west-2f/i-1234567890abcdef0"
