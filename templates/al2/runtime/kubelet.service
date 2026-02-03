@@ -5,7 +5,6 @@ After=docker.service iptables-restore.service
 Requires=docker.service
 
 [Service]
-ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet \
     --config /etc/kubernetes/kubelet/kubelet-config.json \
     --kubeconfig /var/lib/kubelet/kubeconfig \
