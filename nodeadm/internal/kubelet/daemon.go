@@ -2,6 +2,7 @@ package kubelet
 
 import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
@@ -13,16 +14,18 @@ var _ daemon.Daemon = &kubelet{}
 type kubelet struct {
 	daemonManager daemon.DaemonManager
 	resources     system.Resources
+	imdsClient    imds.IMDSClient
 	// environment variables to write for kubelet
 	environment map[string]string
 	// kubelet config flags without leading dashes
 	flags map[string]string
 }
 
-func NewKubeletDaemon(daemonManager daemon.DaemonManager, resources system.Resources) daemon.Daemon {
+func NewKubeletDaemon(daemonManager daemon.DaemonManager, resources system.Resources, imdsClient imds.IMDSClient) daemon.Daemon {
 	return &kubelet{
 		daemonManager: daemonManager,
 		resources:     resources,
+		imdsClient:    imdsClient,
 		environment:   make(map[string]string),
 		flags:         make(map[string]string),
 	}

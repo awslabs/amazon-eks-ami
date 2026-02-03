@@ -1,10 +1,13 @@
 package kubelet
 
 import (
+	"context"
 	"testing"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,4 +105,43 @@ func TestMutableCSINodeAllocatableCountFeatureGate(t *testing.T) {
 			assert.NotContains(t, kubeletConfig.FeatureGates, "MutableCSINodeAllocatableCount")
 		}
 	}
+}
+
+func TestGenerateKubeletConfig(t *testing.T) {
+	mockIMDS := &imds.FakeIMDSClient{
+		GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
+			if prop == imds.LocalIPv4 {
+				return "10.0.0.1", nil
+			}
+			return "", nil
+		},
+	}
+	k := &kubelet{
+		imdsClient:  mockIMDS,
+		resources:   system.NewResources(system.FakeFileSystem{}),
+		flags:       make(map[string]string),
+		environment: make(map[string]string),
+	}
+	nodeConfig := &api.NodeConfig{
+		Spec: api.NodeConfigSpec{
+			Cluster: api.ClusterDetails{
+				CIDR: "10.100.0.0/16",
+			},
+		},
+		Status: api.NodeConfigStatus{
+			KubeletVersion: "v1.33.0",
+			Instance: api.InstanceDetails{
+				AvailabilityZone: "us-west-2a",
+				ID:               "i-1234567890abcdef0",
+				PrivateDNSName:   "ip-10-0-0-1.us-west-2.compute.internal",
+			},
+		},
+	}
+
+	cfg, err := k.generateKubeletConfig(nodeConfig)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "10.0.0.1", k.flags["node-ip"])
+	assert.Equal(t, "external", k.flags["cloud-provider"])
+	assert.Equal(t, "aws:///us-west-2a/i-1234567890abcdef0", *cfg.ProviderID)
 }

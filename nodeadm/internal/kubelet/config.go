@@ -223,8 +223,8 @@ func (ksc *kubeletConfig) withNodeLabels(flags map[string]string, nodeLabelFuncs
 	}
 }
 
-func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
-	nodeIp, err := getNodeIp(context.TODO(), cfg, imds.DefaultClient())
+func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string, imdsClient imds.IMDSClient) error {
+	nodeIp, err := getNodeIp(context.TODO(), cfg, imdsClient)
 	if err != nil {
 		return err
 	}
@@ -302,7 +302,7 @@ func (k *kubelet) generateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	if err := kubeletConfig.withOutpostSetup(cfg); err != nil {
 		return nil, err
 	}
-	if err := kubeletConfig.withNodeIp(cfg, k.flags); err != nil {
+	if err := kubeletConfig.withNodeIp(cfg, k.flags, k.imdsClient); err != nil {
 		return nil, err
 	}
 
