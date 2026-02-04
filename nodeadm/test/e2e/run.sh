@@ -61,10 +61,16 @@ function runTest() {
   local logfile
   logfile=$(mktemp)
 
+  local start_time
+  start_time=$(date +%s)
   if docker exec "$containerd_id" ./run.sh > "$logfile" 2>&1; then
-    echo "passed! ✅"
+    local elapsed
+    elapsed=$(($(date +%s) - start_time))
+    echo "passed! ✅ (${elapsed}s)"
   else
-    echo "failed! ❌"
+    local elapsed
+    elapsed=$(($(date +%s) - start_time))
+    echo "failed! ❌ (${elapsed}s)"
     cat "$logfile"
     FAILED="true"
   fi
