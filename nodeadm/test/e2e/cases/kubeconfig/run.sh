@@ -9,10 +9,10 @@ source /helpers.sh
 mock::aws
 wait::dbus-ready
 
-mock::kubelet 1.23.0
+mock::kubelet 1.29.0
 nodeadm init --skip run --config-source file://config.yaml
 assert::files-equal /var/lib/kubelet/kubeconfig expected-kubeconfig.yaml
 
-mock::kubelet 1.28.0
+mock::kubelet 1.35.0
 nodeadm init --skip run --config-source file://config.yaml
 assert::files-equal /var/lib/kubelet/kubeconfig expected-kubeconfig.yaml

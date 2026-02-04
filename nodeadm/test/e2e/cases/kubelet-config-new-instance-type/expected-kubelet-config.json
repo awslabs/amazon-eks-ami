@@ -26,13 +26,15 @@
     "clusterDomain": "cluster.local",
     "containerRuntimeEndpoint": "unix:///run/containerd/containerd.sock",
     "featureGates": {
-        "RotateKubeletServerCertificate": true
+        "RotateKubeletServerCertificate": true,
+        "DynamicResourceAllocation": true,
+        "MutableCSINodeAllocatableCount": true
     },
     "hairpinMode": "hairpin-veth",
     "protectKernelDefaults": true,
     "readOnlyPort": 0,
     "logging": {
-        "verbosity": 5
+        "verbosity": 2
     },
     "serializeImagePulls": false,
     "serverTLSBootstrap": true,
@@ -47,8 +49,7 @@
         "TLS_RSA_WITH_AES_256_GCM_SHA384"
     ],
     "clusterDNS": [
-        "0.0.0.0",
-        "1.1.1.1"
+        "10.100.0.10"
     ],
     "maxPods": 110,
     "evictionHard": {
@@ -61,6 +62,8 @@
         "ephemeral-storage": "1Gi",
         "memory": "1465Mi"
     },
+    "shutdownGracePeriod": "2m30s",
+    "shutdownGracePeriodCriticalPods": "30s",
     "systemReservedCgroup": "/system",
     "kubeReservedCgroup": "/runtime",
     "providerID": "aws:///us-west-2f/i-1234567890abcdef0"

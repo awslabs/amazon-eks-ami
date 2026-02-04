@@ -9,7 +9,7 @@ source /helpers.sh
 mock::aws
 wait::dbus-ready
 
-mock::kubelet 1.28.0
+mock::kubelet 1.35.0
 nodeadm init --skip run --config-source file://config.yaml
 assert::file-contains /etc/hosts $'127.0.0.1\tlocalhost'
 assert::file-contains /etc/hosts $'::1\tlocalhost'
