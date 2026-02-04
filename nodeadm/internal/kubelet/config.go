@@ -213,6 +213,26 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 	return nil
 }
 
+func (ksc *kubeletConfig) withNodeLabels(flags map[string]string, nodeLabelFuncs map[string]LabelProvider) {
+	var nodeLabels []string
+	for nodeLabelKey, provider := range nodeLabelFuncs {
+		nodeLabelValue, ok, err := provider.Get()
+		if err != nil {
+			zap.L().Error("Failed to get node label value", zap.String("key", nodeLabelKey), zap.Error(err))
+			continue
+		}
+		if !ok {
+			continue
+		}
+		nodeLabel := fmt.Sprintf("%s=%s", nodeLabelKey, nodeLabelValue)
+		zap.L().Info("Adding node label", zap.String("label", nodeLabel))
+		nodeLabels = append(nodeLabels, nodeLabel)
+	}
+	if len(nodeLabels) > 0 {
+		flags["node-labels"] = strings.Join(nodeLabels, ",")
+	}
+}
+
 func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]string) error {
 	nodeIp, err := getNodeIp(context.TODO(), cfg, imds.DefaultClient())
 	if err != nil {
@@ -320,6 +340,13 @@ func (k *kubelet) GenerateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
 	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
+
+	nodeLabelFuncs := map[string]LabelProvider{}
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.35.0") >= 0 {
+		// see: https://github.com/NVIDIA/gpu-operator/commit/e25291b86cf4542ac62d8635cda4bd653c4face3
+		nodeLabelFuncs["nvidia.com/gpu.present"] = NvidiaGPULabel{fs: system.RealFileSystem{}}
+	}
+	kubeletConfig.withNodeLabels(k.flags, nodeLabelFuncs)
 
 	return &kubeletConfig, nil
 }
