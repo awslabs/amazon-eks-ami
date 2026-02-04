@@ -20,3 +20,9 @@ validate_directory_selinux_contexts() {
 
 sudo restorecon -R -v /usr/bin
 validate_directory_selinux_contexts /usr/bin
+
+sudo restorecon -R -v /etc/systemd/system
+validate_directory_selinux_contexts /etc/systemd/system
+
+sudo restorecon -R -v /etc/eks
+validate_directory_selinux_contexts /etc/eks
