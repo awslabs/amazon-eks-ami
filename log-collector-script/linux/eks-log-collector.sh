@@ -438,6 +438,7 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/containers/s3-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/mp_*_mount_s3* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/containers/eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/containers/eks-node-monitoring-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
       if [[ "${entry}" == "pods" ]]; then
@@ -454,6 +455,7 @@ get_common_logs() {
         cp --force --dereference --recursive /var/log/pods/mount-s3_mp-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/mount-s3_hr-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         cp --force --dereference --recursive /var/log/pods/kube-system_eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive /var/log/pods/kube-system_eks-node-monitoring-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
         continue
       fi
       cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/ 2> /dev/null
