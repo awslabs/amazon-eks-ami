@@ -293,6 +293,12 @@ func (ksc *kubeletConfig) withImageServiceEndpoint(cfg *api.NodeConfig, resource
 	}
 }
 
+func (ksc *kubeletConfig) withRuntimeCgroups(flags map[string]string) {
+	// Set runtime cgroups so that cadvisor metrics include container usage.
+	// Reference https://github.com/awslabs/amazon-eks-ami/issues/1667
+	flags["runtime-cgroups"] = "/runtime.slice/containerd.service"
+}
+
 func (k *kubelet) generateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, error) {
 	kubeletConfig := defaultKubeletSubConfig()
 
@@ -310,6 +316,7 @@ func (k *kubelet) generateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withCloudProvider(cfg, k.flags)
 	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
 	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
+	kubeletConfig.withRuntimeCgroups(k.flags)
 
 	nodeLabelFuncs := map[string]LabelProvider{}
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.35.0") >= 0 {
