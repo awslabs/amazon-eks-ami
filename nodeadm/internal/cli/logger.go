@@ -17,6 +17,10 @@ func NewLogger(opts *GlobalOptions) *zap.Logger {
 		config.EncoderConfig.TimeKey = ""
 		config.EncoderConfig.ConsoleSeparator = " "
 		config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		if opts.Console {
+			config.OutputPaths = []string{"stderr", "/dev/console"}
+			config.ErrorOutputPaths = []string{"stderr", "/dev/console"}
+		}
 		logger, err = config.Build()
 	}
 	if err != nil {
