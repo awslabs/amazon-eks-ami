@@ -23,6 +23,12 @@ done
 PULL_ARGS=""
 if [[ "${PAUSE_CONTAINER_IMAGE}" == *"dkr.ecr"* ]]; then
   PULL_ARGS="${PULL_ARGS} --user AWS:$(aws ecr get-login-password)"
+elif [[ "${PAUSE_CONTAINER_IMAGE}" == *"public.ecr.aws"* ]]; then
+  if ECR_PUBLIC_PASSWORD=$(aws ecr-public get-login-password); then
+    PULL_ARGS="${PULL_ARGS} --user AWS:${ECR_PUBLIC_PASSWORD}"
+  else
+    echo "Failed to authenticate to public ECR, retrying with unauthenticated pull" >&2
+  fi
 fi
 sudo ctr --namespace k8s.io image pull ${PULL_ARGS} ${PAUSE_CONTAINER_IMAGE}
 sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER_IMAGE} ${TAG}

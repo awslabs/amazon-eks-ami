@@ -24,11 +24,11 @@ When building the AMI, binaries such as `kubelet`, `aws-iam-authenticator`, and 
 It is recommended that the latest available binaries are used, as they may contain important fixes for bugs or security issues.
 The latest binaries can be discovered with the following script:
 ```bash
-hack/latest-binaries.sh $KUBERNETES_MINOR_VERSION
+hack/latest-binaries.sh $KUBERNETES_MINOR_VERSION $AWS_REGION
 ```
 This script will return the values for the binary-related AMI template variables, for example:
 ```bash
-> hack/latest-binaries.sh 1.28
+> hack/latest-binaries.sh 1.28 us-west-2
 
 kubernetes_version=1.28.1 kubernetes_build_date=2023-10-01
 ```
