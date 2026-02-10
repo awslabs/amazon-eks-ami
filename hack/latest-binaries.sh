@@ -4,16 +4,24 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-if [ "$#" -ne 1 ]; then
-  echo "usage: $0 KUBERNETES_MINOR_VERSION"
+if [ "$#" -ne 2 ]; then
+  echo "usage: $0 KUBERNETES_MINOR_VERSION REGION"
   exit 1
 fi
 
 MINOR_VERSION="${1}"
+REGION="${2}"
+
+S3_EXTRA_ARGS=""
+if [[ "${REGION}" == us-gov* || "${REGION}" == eusc* ]]; then
+  # Pull cross-partition from aws since there's no bucket in this partition.
+  S3_EXTRA_ARGS="--no-sign-request --region us-west-2"
+fi
 
 # retrieve the available "VERSION/BUILD_DATE" prefixes (e.g. "1.28.1/2023-09-14")
 # from the binary object keys, sorted in descending semver order, and pick the first one
-LATEST_BINARIES=$(aws s3api list-objects-v2 --bucket amazon-eks --prefix "${MINOR_VERSION}" --query 'Contents[*].[Key]' --output text | grep linux | cut -d'/' -f-2 | sort -Vru | head -n1)
+LATEST_BINARIES=$(aws s3api list-objects-v2 ${S3_EXTRA_ARGS} --bucket amazon-eks --prefix "${MINOR_VERSION}" --query 'Contents[*].[Key]' --output text \
+  | grep linux | cut -d'/' -f-2 | sort -Vru | head -n1)
 
 if [ "${LATEST_BINARIES}" == "None" ]; then
   echo >&2 "No binaries available for minor version: ${MINOR_VERSION}"
