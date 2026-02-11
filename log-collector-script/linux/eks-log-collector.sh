@@ -645,7 +645,12 @@ get_network_policy_ebpf_info() {
     echo "*** EBPF loaded data ***" >> "${COLLECT_DIR}"/networking/ebpf-data.txt
     LOADED_EBPF=$(/opt/cni/bin/aws-eks-na-cli ebpf loaded-ebpfdata | tee -a "${COLLECT_DIR}"/networking/ebpf-data.txt)
 
-    for mapid in $(echo "$LOADED_EBPF" | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+    for mapid in $(echo "$LOADED_EBPF" | grep -E 'Map Name:[[:space:]]*(cp_ingress_map|cp_egress_map)' -A1 | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
+      echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-cp-maps-data.txt
+      /opt/cni/bin/aws-eks-na-cli ebpf dump-cp-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-cp-maps-data.txt
+    done
+
+    for mapid in $(echo "$LOADED_EBPF" | grep -E 'Map Name:[[:space:]]*(ingress_map|egress_map)' -A1 | grep "Map ID:" | sed 's/Map ID: \+//' | sort | uniq); do
       echo "*** EBPF Maps Data for Map ID $mapid ***" >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
       /opt/cni/bin/aws-eks-na-cli ebpf dump-maps $mapid >> "${COLLECT_DIR}"/networking/ebpf-maps-data.txt
     done
