@@ -181,7 +181,12 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		return fmt.Errorf("failed to render network template: %w", err)
 	}
 
-	return util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644)
+	if err := util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644); err != nil {
+		return err
+	}
+	// Ensure compatibility with amazon-ec2-net-utils drop-ins (e.g. secondary
+	// IP aliases) by symlinking the drop-in directory.
+	return ensureDropinCompat(c.iface)
 }
 
 func getInterfaceMAC(iface string) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -33,6 +34,24 @@ func renderNetworkTemplate(templateVars networkTemplateVars) ([]byte, error) {
 
 func eksNetworkPath(iface string) string {
 	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
+}
+
+// ensureDropinCompat creates a symlink so that drop-in files written by
+// amazon-ec2-net-utils (into 70-{iface}.network.d/) are found by
+// systemd-networkd when it reads the EKS-managed network file
+// (70-eks-{iface}.network). Without this, secondary IP aliases created by
+// ec2-net-utils are silently ignored.
+// see: https://github.com/awslabs/amazon-eks-ami/issues/2623
+func ensureDropinCompat(iface string) error {
+	unitdir := "/run/systemd/network"
+	ec2netDir := filepath.Join(unitdir, fmt.Sprintf("70-%s.network.d", iface))
+	eksDir := filepath.Join(unitdir, fmt.Sprintf("70-eks-%s.network.d", iface))
+	if err := os.MkdirAll(ec2netDir, 0755); err != nil {
+		return fmt.Errorf("failed to create ec2-net-utils drop-in dir: %w", err)
+	}
+	// Remove existing symlink or directory if present to ensure idempotency
+	os.Remove(eksDir)
+	return os.Symlink(ec2netDir, eksDir)
 }
 
 func disableDefaultEc2Networking() error {
