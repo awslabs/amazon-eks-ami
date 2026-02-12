@@ -50,7 +50,7 @@ func ensureDropinCompat(iface string) error {
 		return fmt.Errorf("failed to create ec2-net-utils drop-in dir: %w", err)
 	}
 	// Remove existing symlink or directory if present to ensure idempotency
-	os.Remove(eksDir)
+	os.RemoveAll(eksDir)
 	return os.Symlink(ec2netDir, eksDir)
 }
 
