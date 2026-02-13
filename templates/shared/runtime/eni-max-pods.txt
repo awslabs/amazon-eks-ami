@@ -713,6 +713,15 @@ m8a.medium 8
 m8a.metal-24xl 1010
 m8a.metal-48xl 1514
 m8a.xlarge 78
+m8azn.12xlarge 1010
+m8azn.24xlarge 1010
+m8azn.3xlarge 314
+m8azn.6xlarge 314
+m8azn.large 78
+m8azn.medium 11
+m8azn.metal-12xl 1010
+m8azn.metal-24xl 1010
+m8azn.xlarge 78
 m8g.12xlarge 234
 m8g.16xlarge 737
 m8g.24xlarge 737
