@@ -14,7 +14,7 @@ Before=systemd-networkd-wait-online.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nodeadm-internal boot-hook
+ExecStart=/usr/bin/nodeadm-internal --console boot-hook
 
 [Install]
 WantedBy=multi-user.target

@@ -8,7 +8,7 @@ Requires=nodeadm-config.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nodeadm init --skip config --config-source imds://user-data --config-source file:///etc/eks/nodeadm.d/ --config-cache /run/eks/nodeadm/config.json
+ExecStart=/usr/bin/nodeadm --console init --skip config --config-source imds://user-data --config-source file:///etc/eks/nodeadm.d/ --config-cache /run/eks/nodeadm/config.json
 
 [Install]
 WantedBy=multi-user.target

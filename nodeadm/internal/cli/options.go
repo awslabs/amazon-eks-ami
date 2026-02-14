@@ -13,6 +13,8 @@ var DefaultConfigSources = []string{
 
 type GlobalOptions struct {
 	DevelopmentMode bool
+
+	Console bool
 }
 
 func NewGlobalOptions() *GlobalOptions {
@@ -20,8 +22,11 @@ func NewGlobalOptions() *GlobalOptions {
 		// we do not set a default ConfigSources here, to work around the additive nature of StringSlice flags
 		// callers should fall back to DefaultConfigSources when the user has provided no input
 		DevelopmentMode: false,
+
+		Console: false,
 	}
 	flaggy.Bool(&opts.DevelopmentMode, "d", "development", "Enable development mode for logging.")
+	flaggy.Bool(&opts.Console, "", "console", "Send a copy of logs to /dev/console when development mode is not enabled.")
 	return &opts
 }
 
