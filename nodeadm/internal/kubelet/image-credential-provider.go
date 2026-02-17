@@ -69,6 +69,7 @@ func generateImageCredentialProviderConfig(ecrCredentialProviderBinPath string) 
 					"*.dkr.ecr.*.cloud.adc-e.uk",
 					"*.dkr.ecr.*.csp.hci.ic.gov",
 					"*.dkr.ecr.*.amazonaws.eu",
+					"ecr-public.aws.com",
 					"public.ecr.aws",
 				},
 				APIVersion:           "credentialprovider.kubelet.k8s.io/v1",
