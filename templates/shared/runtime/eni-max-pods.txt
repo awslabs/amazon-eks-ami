@@ -410,6 +410,7 @@ hpc7a.96xlarge 100
 hpc7g.16xlarge 198
 hpc7g.4xlarge 198
 hpc7g.8xlarge 198
+hpc8a.96xlarge 100
 hs1.8xlarge 234
 i2.2xlarge 58
 i2.4xlarge 234

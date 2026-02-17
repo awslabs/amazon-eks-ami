@@ -368,6 +368,7 @@
 {"instanceType":"hpc7g.16xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":50}
 {"instanceType":"hpc7g.4xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":50}
 {"instanceType":"hpc7g.8xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":50}
+{"instanceType":"hpc8a.96xlarge","defaultMaxENIs":2,"ipv4AddressesPerInterface":50}
 {"instanceType":"hs1.8xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"i2.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"i2.4xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
