@@ -14,7 +14,6 @@ type Main struct {
 
 func (m *Main) Run() {
 	opts := NewGlobalOptions()
-	log := NewLogger(opts)
 
 	flaggy.SetName(m.Name)
 	flaggy.SetDescription(m.Description)
@@ -27,6 +26,7 @@ func (m *Main) Run() {
 		flaggy.AttachSubcommand(cmd.Flaggy(), 1)
 	}
 	flaggy.Parse()
+	log := NewLogger(opts)
 
 	for _, cmd := range m.Commands {
 		if cmd.Flaggy().Used {
