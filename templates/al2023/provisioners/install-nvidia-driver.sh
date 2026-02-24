@@ -28,6 +28,7 @@ function rpm_install() {
 ## TODO: consider switching to the AL nvidia repository for all partitions
 if [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]; then
   sudo dnf install -y nvidia-release
+  sudo dnf install -y nvidia-repo-s3
   sudo sed -i 's/$dualstack//g' /etc/yum.repos.d/amazonlinux-nvidia.repo
 else
   # Determine the domain based on the region
