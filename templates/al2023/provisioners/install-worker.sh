@@ -166,7 +166,7 @@ AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
 S3_PATH="s3://$BINARY_BUCKET_NAME/$KUBERNETES_VERSION/$KUBERNETES_BUILD_DATE/bin/linux/$ARCH"
 
 BINARIES=(
-  kubelet
+    kubelet
 )
 for binary in "${BINARIES[@]}"; do
   FILES=(
@@ -201,12 +201,21 @@ sudo systemctl enable ebs-initialize-bin@kubelet
 ################################################################################
 
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
+FILES=(
+    "$ECR_CREDENTIAL_PROVIDER_BINARY.sha256"
+    "$ECR_CREDENTIAL_PROVIDER_BINARY.gz"
+    "$ECR_CREDENTIAL_PROVIDER_BINARY.gz.sha256"   
+)
+for file in "${FILES[@]}"; do
+    if ! aws s3 cp --region $BINARY_BUCKET_REGION "$S3_PATH/$file" .; then
+	echo "Fetching ${file} from s3 failed, trying again with unauthenticated request."
+	aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION "$S3_PATH/$file" .
+    fi
+done
 
-if ! aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .; then
-  echo "Fetching ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3 failed, trying again with unauthenticated request."
-  aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
-fi
-
+sudo sha256sum -c "$ECR_CREDENTIAL_PROVIDER_BINARY.gz.sha256"
+sudo gunzip "$ECR_CREDENTIAL_PROVIDER_BINARY.gz"
+sudo sha256sum -c "$ECR_CREDENTIAL_PROVIDER_BINARY.sha256"
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
 sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
