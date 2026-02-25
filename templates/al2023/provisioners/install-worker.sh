@@ -170,7 +170,8 @@ BINARIES=(
 )
 for binary in "${BINARIES[@]}"; do
   FILES=(
-    "$binary"
+    "$binary.gz"
+    "$binary.gz.sha256"
     "$binary.sha256"
   )
   for file in "${FILES[@]}"; do
@@ -180,6 +181,8 @@ for binary in "${BINARIES[@]}"; do
     fi
   done
 
+  sudo sha256sum -c $binary.gz.sha256
+  sudo gunzip $binary.gz
   sudo sha256sum -c $binary.sha256
   sudo chmod +x $binary
   sudo chown root:root $binary
