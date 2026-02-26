@@ -744,6 +744,8 @@ m8gb.4xlarge 234
 m8gb.8xlarge 292
 m8gb.large 29
 m8gb.medium 8
+m8gb.metal-24xl 1178
+m8gb.metal-48xl 590
 m8gb.xlarge 58
 m8gd.12xlarge 234
 m8gd.16xlarge 737
@@ -766,6 +768,8 @@ m8gn.4xlarge 234
 m8gn.8xlarge 292
 m8gn.large 29
 m8gn.medium 8
+m8gn.metal-24xl 1178
+m8gn.metal-48xl 590
 m8gn.xlarge 58
 m8i-flex.12xlarge 590
 m8i-flex.16xlarge 1010

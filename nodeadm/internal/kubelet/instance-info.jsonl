@@ -702,6 +702,8 @@
 {"instanceType":"m8gb.8xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30}
 {"instanceType":"m8gb.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
 {"instanceType":"m8gb.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":4}
+{"instanceType":"m8gb.metal-24xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
+{"instanceType":"m8gb.metal-48xl","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8gb.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"m8gd.12xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"m8gd.16xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
@@ -724,6 +726,8 @@
 {"instanceType":"m8gn.8xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30}
 {"instanceType":"m8gn.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
 {"instanceType":"m8gn.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":4}
+{"instanceType":"m8gn.metal-24xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":50}
+{"instanceType":"m8gn.metal-48xl","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8gn.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"m8i-flex.12xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8i-flex.16xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":64}
