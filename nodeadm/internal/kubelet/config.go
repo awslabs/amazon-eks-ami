@@ -433,6 +433,7 @@ func getCPUMillicoresToReserve(resources system.Resources) int {
 
 	for i, percentageToReserveForRange := range cpuPercentageReservedForRanges {
 		startRange := cpuRanges[i]
+		// #nosec G602 // cpuRanges is one item longer than cpuPercentageReservedForRanges
 		endRange := cpuRanges[i+1]
 		cpuToReserve += getResourceToReserveInRange(totalCPUMillicores, startRange, endRange, percentageToReserveForRange)
 	}
