@@ -435,6 +435,7 @@
 {"instanceType":"i8g.8xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"i8g.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10}
 {"instanceType":"i8g.metal-24xl","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
+{"instanceType":"i8g.metal-48xl","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
 {"instanceType":"i8g.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"i8ge.12xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":30}
 {"instanceType":"i8ge.18xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":50}
