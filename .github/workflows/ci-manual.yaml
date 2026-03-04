@@ -26,8 +26,8 @@ on:
           - "build"
           - "test"
       os_distros:
-        description: 'Operating System Distributions (comma-separated, e.g., al2,al2023)'
-        default: "al2,al2023"
+        description: 'Operating System Distributions (comma-separated, e.g., al2023)'
+        default: "al2023"
         required: false
         type: string
       k8s_versions:
