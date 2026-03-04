@@ -15,8 +15,18 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
 aws_region ?= us-west-2
-os_distro ?= al2
 arch ?= x86_64
+
+BUILD_TARGETS := build k8s validate
+
+ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
+ifndef os_distro
+$(error os_distro is required (e.g., os_distro=al2023))
+endif
+ifndef k8s
+$(error k8s is required (e.g., k8s=1.35))
+endif
+endif
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
@@ -33,11 +43,6 @@ endif
 
 ifdef enable_accelerator
 	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
-
-	ifeq ($(os_distro), al2)
-		enable_efa ?= true
-		launch_block_device_mappings_volume_size ?= 10
-	endif
 endif
 
 ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
@@ -48,11 +53,8 @@ else ifneq ($(filter $(aws_region),us-gov-west-1 us-gov-east-1),)
 	source_ami_owners ?= 045324592363
 endif
 
-# default to the latest supported Kubernetes version
-k8s=1.28
-
 .PHONY: build
-build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
+build: ## Build EKS Optimized AMI (requires os_distro=al2023)
 	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s) $(aws_region))
 
 .PHONY: fmt
@@ -68,10 +70,6 @@ lint-code: ## Check the source files for syntax and format issues
 	hack/shfmt --diff
 	hack/shellcheck --format gcc --severity warning
 	hack/lint-space-errors.sh
-
-.PHONY: test
-test: ## run the test-harness
-	templates/test/test-harness.sh
 
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= templates/$(os_distro)
@@ -106,33 +104,6 @@ validate: ## Validate packer config
 k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(enable_accelerator),enable_accelerator=$(enable_accelerator))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
-
-# DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28
-# Use the `k8s` variable to specify a minor version instead
-
-.PHONY: 1.23
-1.23: ## Build EKS Optimized AMI - K8s 1.23 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.23 $(aws_region))
-
-.PHONY: 1.24
-1.24: ## Build EKS Optimized AMI - K8s 1.24 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.24 $(aws_region))
-
-.PHONY: 1.25
-1.25: ## Build EKS Optimized AMI - K8s 1.25 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.25 $(aws_region))
-
-.PHONY: 1.26
-1.26: ## Build EKS Optimized AMI - K8s 1.26 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.26 $(aws_region))
-
-.PHONY: 1.27
-1.27: ## Build EKS Optimized AMI - K8s 1.27 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.27 $(aws_region))
-
-.PHONY: 1.28
-1.28: ## Build EKS Optimized AMI - K8s 1.28 - DEPRECATED: use the `k8s` variable instead
-	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.28 $(aws_region))
 
 .PHONY: lint-docs
 lint-docs: ## Lint the docs
