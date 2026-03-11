@@ -24,7 +24,9 @@ PULL_ARGS=""
 if [[ "${PAUSE_CONTAINER_IMAGE}" == *"dkr.ecr"* ]]; then
   PULL_ARGS="${PULL_ARGS} --user AWS:$(aws ecr get-login-password)"
 elif [[ "${PAUSE_CONTAINER_IMAGE}" == *"public.ecr.aws"* ]]; then
-  if ECR_PUBLIC_PASSWORD=$(aws ecr-public get-login-password); then
+  # ECR public authentication must always be through us-east-1
+  # https://docs.aws.amazon.com/AmazonECR/latest/public/public-registry-auth.html
+  if ECR_PUBLIC_PASSWORD=$(aws ecr-public get-login-password --region=us-east-1); then
     PULL_ARGS="${PULL_ARGS} --user AWS:${ECR_PUBLIC_PASSWORD}"
   else
     echo "Failed to authenticate to public ECR, retrying with unauthenticated pull" >&2
