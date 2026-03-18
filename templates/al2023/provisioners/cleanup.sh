@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Clean up yum caches to reduce the image size
-sudo yum clean all
-sudo rm -rf /var/cache/yum
+# Clean up dnf caches to reduce the image size
+sudo dnf clean all
+sudo rm -rf /var/cache/dnf
 
 # Clean up files to reduce confusion during debug
 sudo rm -rf \

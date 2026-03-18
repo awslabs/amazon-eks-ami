@@ -235,7 +235,7 @@ fi
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$($WORKING_DIR/shared/bin/imds /latest/meta-data/ami-id)
+BASE_AMI_ID=$($WORKING_DIR/bin/imds /latest/meta-data/ami-id)
 cat << EOF | sudo tee /etc/eks/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"
