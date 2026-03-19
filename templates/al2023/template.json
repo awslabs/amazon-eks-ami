@@ -128,7 +128,7 @@
       "type": "shell",
       "inline": [
         "mkdir -p {{user `working_dir`}}/rootfs",
-        "mkdir -p {{user `working_dir`}}/shared",
+        "mkdir -p {{user `working_dir`}}/bin",
         "mkdir -p {{user `working_dir`}}/log-collector-script",
         "mkdir -p {{user `working_dir`}}/nodeadm",
         "mkdir -p {{user `working_dir`}}/gpu"
@@ -136,8 +136,8 @@
     },
     {
       "type": "file",
-      "source": "{{template_dir}}/../shared/runtime/",
-      "destination": "{{user `working_dir`}}/shared"
+      "source": "{{template_dir}}/runtime/bin/",
+      "destination": "{{user `working_dir`}}/bin"
     },
     {
       "type": "file",
@@ -175,15 +175,15 @@
     {
       "type": "shell",
       "inline": [
-        "sudo chmod -R a+x {{user `working_dir`}}/shared/bin/",
-        "sudo cp -rv {{user `working_dir`}}/shared/bin/* /usr/bin/",
+        "sudo chmod -R a+x {{user `working_dir`}}/bin/",
+        "sudo cp -rv {{user `working_dir`}}/bin/* /usr/bin/",
         "sudo chmod -R a+x {{user `working_dir`}}/gpu/*"
       ]
     },
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../shared/provisioners/set-clocksource.sh"
+      "script": "{{template_dir}}/provisioners/set-clocksource.sh"
     },
     {
       "type": "shell",
@@ -196,7 +196,7 @@
     {
       "type": "shell",
       "expect_disconnect": true,
-      "script": "{{template_dir}}/../shared/provisioners/limit-c-states.sh",
+      "script": "{{template_dir}}/provisioners/limit-c-states.sh",
       "environment_vars": [
         "ENABLE_EFA={{user `enable_efa`}}"
       ]
@@ -290,7 +290,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../shared/provisioners/cleanup.sh"
+      "script": "{{template_dir}}/provisioners/cleanup.sh"
     },
     {
       "type": "shell",
@@ -303,7 +303,7 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/../shared/provisioners/generate-version-info.sh",
+      "script": "{{template_dir}}/provisioners/generate-version-info.sh",
       "execute_command": "chmod +x {{ .Path }}; {{ .Path }} {{user `working_dir`}}/version-info.json"
     },
     {

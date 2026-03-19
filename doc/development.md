@@ -15,20 +15,18 @@ hack/mkdocs.sh serve
 
 By default, the maximum number of pods able to be scheduled on a node is based off of the number of ENIs
 available, which is determined by the instance type. Larger instances generally have more ENIs. The
-number of ENIs limits how many IPV4 addresses are available on an instance, and we need one IP address
-per pod. You can [see this file](https://github.com/aws/amazon-vpc-cni-k8s/blob/master/scripts/gen_vpc_ip_limits.go)
-for the code that calculates the max pods for more information.
+number of ENIs limits how many IPV4 addresses are available on an instance, and
+we need one IP address per pod. You can reference [this file](https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/internal/kubelet/eni_max_pods.go)
+for the code that generates these values.
 
-As an optimization, the default value for all known instance types are available in a resource file
-(`eni-max-pods.txt`) in the AMI. If an instance type is not found in this file, the
-`ec2:DescribeInstanceTypes` API is used to calculate the value at runtime.
+As an optimization, the default values for all known instance types are cached in the AMI. If an
+instance type is not found in this cached file, the `ec2:DescribeInstanceTypes` API is used to calculate
+the value at runtime.
 
 The resource file is generated once per day by a GitHub Action workflow.
 
 To generate the resource file:
 ```
-git clone git@github.com:aws/amazon-vpc-cni-k8s.git
-cd amazon-vpc-cni-k8s/
-make generate-limits
-cp misc/eni-max-pods.txt ../amazon-eks-ami/templates/shared/runtime/
+cd nodeadm
+make generate-instance-info
 ```
