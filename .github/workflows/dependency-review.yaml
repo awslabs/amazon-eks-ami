@@ -3,6 +3,8 @@ on:
   pull_request:
     branches:
       - "main"
+    paths:
+      - '**.go'
 permissions:
   contents: read
 jobs:
@@ -20,7 +22,6 @@ jobs:
           go-version-file: 'nodeadm/go.mod'
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - run: gosec -exclude-generated ./...
-        working-directory: nodeadm
   govulncheck:
     runs-on: ubuntu-latest
     steps:
