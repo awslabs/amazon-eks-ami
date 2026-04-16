@@ -73,6 +73,7 @@ COMMON_DIRECTORIES=(
   nodeadm       # eks
   cni           # eks
   gpu           # eks
+  hyperpod      # sagemaker hyperpod
 )
 
 COMMON_LOGS=(
@@ -327,6 +328,7 @@ collect() {
   get_io_throttled_processes
   get_reboot_history
   get_nvidia_bug_report
+  get_hyperpod_info
 }
 
 pack() {
@@ -968,6 +970,63 @@ get_nvidia_bug_report() {
   else
     timeout 75 nvidia-bug-report.sh --output-file "${COLLECT_DIR}"/gpu/nvidia-bug-report.log &> /dev/null
   fi
+  ok
+}
+
+get_hyperpod_info () {
+  try "Collect SageMaker HyperPod information"
+
+  # Check if this is a HyperPod EKS node by looking for HyperPod components
+  if [[ ! -d "/opt/ml/config/" ]] && [[ ! -d "/var/log/aws/clusters" ]] && [[ ! -d "/var/log/provision" ]] ; then
+      echo "No SageMaker HyperPod components found, skipping HyperPod log collection."
+      return
+  fi
+
+  # Collect complete /opt/ml/config directory
+  if [[ -d "/opt/ml/config/" ]] ; then
+      cp -R "/opt/ml/config/" "${COLLECT_DIR}/hyperpod/opt_ml_config" 2> /dev/null
+  fi
+
+  # Collect complete /etc/opt/ml directory if exists
+  if [[ -d "/etc/opt/ml/" ]] ; then
+      cp -R "/etc/opt/ml/" "${COLLECT_DIR}/hyperpod/etc_opt_ml" 2> /dev/null
+  fi
+
+  # Collect AWS clusters logs (HyperPod specific)
+  if [[ -d "/var/log/aws/clusters" ]] ; then
+      cp -R "/var/log/aws/clusters" "${COLLECT_DIR}/hyperpod/var_log_aws_clusters" 2> /dev/null
+  fi
+
+  # Collect complete HyperPod provisioning logs directory
+  if [[ -d "/var/log/provision" ]] ; then
+      cp -R "/var/log/provision" "${COLLECT_DIR}/hyperpod/var_log_provision" 2> /dev/null
+  fi
+
+  # Collect CloudWatch agent config, logs, and state (skip binaries/docs)
+  if [[ -d "/opt/aws/amazon-cloudwatch-agent/" ]] ; then
+      mkdir -p "${COLLECT_DIR}/hyperpod/cloudwatch_agent_config"
+      for subdir in etc logs var; do
+          if [[ -d "/opt/aws/amazon-cloudwatch-agent/${subdir}" ]] ; then
+              cp -R "/opt/aws/amazon-cloudwatch-agent/${subdir}" "${COLLECT_DIR}/hyperpod/cloudwatch_agent_config/" 2> /dev/null
+          fi
+      done
+  fi
+
+  # Collect GPU diagnostics if NVIDIA devices are present
+  if [[ -e /dev/nvidia0 ]] && command -v nvidia-smi > /dev/null 2>&1 ; then
+      timeout 75 nvidia-smi > "${COLLECT_DIR}/hyperpod/nvidia-smi.log" 2>&1
+      timeout 75 nvidia-smi -q > "${COLLECT_DIR}/hyperpod/nvidia-smi-q.log" 2>&1
+  fi
+
+  # Collect HyperPod observability add-on logs if present
+  if command -v kubectl > /dev/null 2>&1 ; then
+      timeout 75 kubectl get pods -n hyperpod-observability > "${COLLECT_DIR}/hyperpod/hyperpod-observability-pods.log" 2>&1
+      timeout 75 kubectl logs -n hyperpod-observability --all-containers --tail=-1000 > "${COLLECT_DIR}/hyperpod/hyperpod-observability-logs.log" 2>&1
+
+      timeout 75 kubectl get pods -n hyperpod-inference-system > "${COLLECT_DIR}/hyperpod/hyperpod-inference-system-pods.log" 2>&1
+      timeout 75 kubectl logs -n hyperpod-inference-system --all-containers --tail=-1000 > "${COLLECT_DIR}/hyperpod/hyperpod-inference-system-logs.log" 2>&1
+  fi
+
   ok
 }
 
