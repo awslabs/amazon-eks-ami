@@ -1,6 +1,6 @@
 module github.com/awslabs/amazon-eks-ami/nodeadm
 
-go 1.25.7
+go 1.25.9
 
 require (
 	dario.cat/mergo v1.0.2
