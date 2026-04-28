@@ -250,6 +250,7 @@ function install-nvidiafs-kmod() {
     sudo dkms install -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
 
     echo "options nvidia_fs peer_stats_enabled=1 rw_stats_enabled=1" | sudo tee /etc/modprobe.d/nvidia-fs.conf
+    echo "softdep nvidia_fs pre: nvidia" | sudo tee -a /etc/modprobe.d/nvidia-fs.conf
 }
 
 function install-gdrcopy-kmod() {
