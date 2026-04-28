@@ -60,6 +60,7 @@ sudo dnf install -y \
   ipvsadm \
   jq \
   nfs-utils \
+  lustre-client \
   socat \
   unzip \
   wget \

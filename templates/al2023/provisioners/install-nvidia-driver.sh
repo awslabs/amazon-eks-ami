@@ -138,6 +138,16 @@ function archive-open-kmods() {
   sudo dkms build -m nvidia-open -v $NVIDIA_OPEN_VERSION
   sudo dkms install -m nvidia-open -v $NVIDIA_OPEN_VERSION
 
+  # The nvidia-fs module depends on the nvidia-open module
+  # we must ensure the nvidia-open module is installed prior to archiving the nvidia-fs module
+  if [[ "$ENABLE_NVIDIA_FS_DRIVER" == "true" ]]; then
+    install-nvidiafs-kmod
+  fi
+
+  if [[ "$ENABLE_NVIDIA_GDRCOPY_DRIVER" == "true" ]]; then
+    install-gdrcopy-kmod
+  fi
+
   sudo kmod-util archive nvidia-open
 
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
@@ -220,7 +230,58 @@ function archive-proprietary-kmod() {
 
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
-  sudo rm -rf /usr/src/nvidia*
+  sudo find /usr/src -maxdepth 1 -name 'nvidia*' ! -name 'nvidia-fs*' -exec rm -rf {} +
+}
+
+function install-nvidiafs-kmod() {
+    local NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
+
+    NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR=$(mktemp -d)
+
+    echo "Installing NVIDIA FS driver"
+
+    curl -L https://github.com/NVIDIA/gds-nvidia-fs/archive/refs/tags/v${NVIDIA_FS_DRIVER_VERSION}.tar.gz | sudo tar -xz -C $NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
+    sudo cp -r ${NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR}/gds-nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/src /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}
+    sudo sed -i 's/BUILD_DEPENDS\[0\]="nvidia"/BUILD_DEPENDS\[0\]="nvidia-open"/' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+    sudo sed -i 's/\(NVFS_MAX_PEER_DEVS=\${NVFS_MAX_PEER_DEVS:-\)[0-9]\{1,5\}\(}\)/\1128\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+    sudo sed -i 's/\(NVFS_MAX_PCI_DEPTH=\${NVFS_MAX_PCI_DEPTH:-\)[0-9]\{1,5\}\(}\)/\116\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+    sudo dkms add -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+    sudo dkms build -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+    sudo dkms install -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+
+    echo "options nvidia_fs peer_stats_enabled=1 nvfs_peer_stats_enabled=1 rw_stats_enabled=1" | sudo tee /etc/modprobe.d/nvidia-fs.conf
+}
+
+function install-gdrcopy-kmod() {
+  local EXTRACT_DIR
+  local GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR
+  local GDRCOPY_SRC_DIR
+  local MODULE_SUBDIR
+
+  EXTRACT_DIR=$(mktemp -d)
+  GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR="${EXTRACT_DIR}/gdrcopy-${NVIDIA_GDRCOPY_DRIVER_VERSION}"
+  GDRCOPY_SRC_DIR="/usr/src/gdrdrv-${NVIDIA_GDRCOPY_DRIVER_VERSION}"
+  MODULE_SUBDIR="/kernel/drivers/misc/"
+
+  echo "Installing GDRCopy driver"
+
+  curl -L https://github.com/NVIDIA/gdrcopy/archive/refs/tags/v${NVIDIA_GDRCOPY_DRIVER_VERSION}.tar.gz | tar -xz -C $EXTRACT_DIR
+
+  sudo mkdir -p $GDRCOPY_SRC_DIR
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/src/gdrdrv/gdrdrv.c $GDRCOPY_SRC_DIR/
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/src/gdrdrv/gdrdrv.h $GDRCOPY_SRC_DIR/
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/src/gdrdrv/nv-p2p-dummy.c $GDRCOPY_SRC_DIR/
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/src/gdrdrv/Makefile $GDRCOPY_SRC_DIR/
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/packages/dkms.conf "${GDRCOPY_SRC_DIR}/dkms.conf"
+  sudo cp -r ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/scripts $GDRCOPY_SRC_DIR/
+
+  sudo sed -i "s/@FULL_VERSION@/${NVIDIA_GDRCOPY_DRIVER_VERSION}/g" "${GDRCOPY_SRC_DIR}/dkms.conf"
+  sudo sed -i "s/@VERSION@/${NVIDIA_GDRCOPY_DRIVER_VERSION}/g" "${GDRCOPY_SRC_DIR}/dkms.conf"
+  sudo sed -i "s|@MODULE_LOCATION@|${MODULE_SUBDIR}|g" "${GDRCOPY_SRC_DIR}/dkms.conf"
+
+  sudo dkms add -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
+  sudo dkms build -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
+  sudo dkms install -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
 }
 
 archive-grid-kmod
