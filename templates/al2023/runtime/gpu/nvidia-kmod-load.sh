@@ -83,7 +83,7 @@ function disable-gsp() {
 
 function load-nvidiafs-module() {
   echo "Checking for nvidia_fs kernel module"
-  if ! modinfo nvidia_fs &>/dev/null; then
+  if ! modinfo nvidia_fs &> /dev/null; then
     echo "nvidia_fs kernel module not found, skipping"
     return 0
   fi
@@ -97,7 +97,7 @@ function load-nvidiafs-module() {
 
 function load-gdrdrv-module() {
   echo "Checking for gdrdrv kernel module"
-  if ! modinfo gdrdrv &>/dev/null; then
+  if ! modinfo gdrdrv &> /dev/null; then
     echo "gdrdrv kernel module not found, skipping"
     return 0
   fi

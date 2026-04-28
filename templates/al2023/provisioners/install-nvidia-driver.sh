@@ -234,23 +234,23 @@ function archive-proprietary-kmod() {
 }
 
 function install-nvidiafs-kmod() {
-    local NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
+  local NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
 
-    NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR=$(mktemp -d)
+  NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR=$(mktemp -d)
 
-    echo "Installing NVIDIA FS driver"
+  echo "Installing NVIDIA FS driver"
 
-    curl -L https://github.com/NVIDIA/gds-nvidia-fs/archive/refs/tags/v${NVIDIA_FS_DRIVER_VERSION}.tar.gz | sudo tar -xz -C $NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
-    sudo cp -r ${NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR}/gds-nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/src /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}
-    sudo sed -i 's/BUILD_DEPENDS\[0\]="nvidia"/BUILD_DEPENDS\[0\]="nvidia-open"/' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
-    sudo sed -i 's/\(NVFS_MAX_PEER_DEVS=\${NVFS_MAX_PEER_DEVS:-\)[0-9]\{1,5\}\(}\)/\1128\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
-    sudo sed -i 's/\(NVFS_MAX_PCI_DEPTH=\${NVFS_MAX_PCI_DEPTH:-\)[0-9]\{1,5\}\(}\)/\116\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
-    sudo dkms add -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
-    sudo dkms build -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
-    sudo dkms install -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+  curl -L https://github.com/NVIDIA/gds-nvidia-fs/archive/refs/tags/v${NVIDIA_FS_DRIVER_VERSION}.tar.gz | sudo tar -xz -C $NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR
+  sudo cp -r ${NVIDIA_FS_DRIVER_INSTALLATION_TEMP_DIR}/gds-nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/src /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}
+  sudo sed -i 's/BUILD_DEPENDS\[0\]="nvidia"/BUILD_DEPENDS\[0\]="nvidia-open"/' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+  sudo sed -i 's/\(NVFS_MAX_PEER_DEVS=\${NVFS_MAX_PEER_DEVS:-\)[0-9]\{1,5\}\(}\)/\1128\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+  sudo sed -i 's/\(NVFS_MAX_PCI_DEPTH=\${NVFS_MAX_PCI_DEPTH:-\)[0-9]\{1,5\}\(}\)/\116\2/g' /usr/src/nvidia-fs-${NVIDIA_FS_DRIVER_VERSION}/dkms.conf
+  sudo dkms add -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+  sudo dkms build -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
+  sudo dkms install -m nvidia-fs -v $NVIDIA_FS_DRIVER_VERSION
 
-    echo "options nvidia_fs peer_stats_enabled=1 rw_stats_enabled=1" | sudo tee /etc/modprobe.d/nvidia-fs.conf
-    echo "softdep nvidia_fs pre: nvidia" | sudo tee -a /etc/modprobe.d/nvidia-fs.conf
+  echo "options nvidia_fs peer_stats_enabled=1 rw_stats_enabled=1" | sudo tee /etc/modprobe.d/nvidia-fs.conf
+  echo "softdep nvidia_fs pre: nvidia" | sudo tee -a /etc/modprobe.d/nvidia-fs.conf
 }
 
 function install-gdrcopy-kmod() {
