@@ -89,6 +89,7 @@ function load-nvidiafs-module() {
   fi
   echo "nvidia_fs kernel module found, attempting to load"
   if modprobe nvidia_fs; then
+    echo "nvidia_fs" > /etc/modules-load.d/nvidia_fs.conf
     echo "nvidia_fs kernel module loaded successfully"
   else
     echo "nvidia_fs kernel module failed to load, continuing without it"
@@ -103,6 +104,7 @@ function load-gdrdrv-module() {
   fi
   echo "gdrdrv kernel module found, attempting to load"
   if modprobe gdrdrv; then
+    echo "gdrdrv" > /etc/modules-load.d/gdrdrv.conf
     echo "gdrdrv kernel module loaded successfully"
     local major
     major=$(awk '/gdrdrv/{print $1}' /proc/devices)
