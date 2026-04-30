@@ -11,12 +11,23 @@ fi
 MACHINE=$(uname -m)
 readonly MACHINE
 
+# Wrapper for aws s3 commands that falls back to --no-sign-request on failure
+function aws_s3() {
+  local output
+  if output=$(aws s3 "$@" 2>&1); then
+    echo "$output"
+  else
+    echo "aws s3 $1 failed, trying again with unauthenticated request." >&2
+    aws s3 "$@" --no-sign-request
+  fi
+}
+
 function rpm_install() {
   local RPMS
   read -ra RPMS <<< "$@"
   echo "Pulling and installing local rpms from s3 bucket"
   for RPM in "${RPMS[@]}"; do
-    aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
+    aws_s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${RPM} ${WORKING_DIR}/${RPM}
     sudo dnf localinstall -y ${WORKING_DIR}/${RPM}
   done
 }
@@ -56,7 +67,7 @@ fi
 
 echo "Resolving full driver version for ${NVIDIA_DRIVER_MAJOR_VERSION} drivers..."
 
-LATEST_GRID_DRIVER_VERSION=$(aws s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
+LATEST_GRID_DRIVER_VERSION=$(aws_s3 ls --recursive s3://${EC2_GRID_DRIVER_S3_BUCKET}/ \
   | grep -Eo "(NVIDIA-Linux-x86_64-)${NVIDIA_DRIVER_MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
   | cut -d'-' -f4 \
   | sort -V \
@@ -173,7 +184,7 @@ function archive-grid-kmod() {
   fi
 
   echo "Archiving NVIDIA GRID kernel modules"
-  NVIDIA_GRID_RUNFILE_KEY=$(aws s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
+  NVIDIA_GRID_RUNFILE_KEY=$(aws_s3 ls --recursive ${EC2_GRID_DRIVER_S3_BUCKET} \
     | grep "NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_FULL_VERSION}" \
     | sort -k1,2 \
     | tail -1 \
@@ -191,7 +202,7 @@ function archive-grid-kmod() {
   echo "Downloading GRID driver runfile..."
   # This is the only command that requires the bucket name to actually just be the bucket (no prefix) b/c of how the
   # s3 ls recursive output dumps the full object key regardless of the supplied prefix
-  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${NVIDIA_GRID_RUNFILE_KEY}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
+  aws_s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${NVIDIA_GRID_RUNFILE_KEY}" "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
   chmod +x "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}"
   echo "Extracting NVIDIA GRID driver runfile..."
   sudo "${GRID_INSTALLATION_TEMP_DIR}/${GRID_RUNFILE_NAME}" --extract-only --target "${EXTRACT_DIR}"

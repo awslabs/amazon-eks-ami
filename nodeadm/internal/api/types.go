@@ -141,4 +141,11 @@ const (
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
 
 	FastImagePull Feature = "FastImagePull"
+
+	// FSxLustreEFAClient enables EFA-optimized FSx for Lustre client configuration
+	FSxLustreEFAClient Feature = "FSxLustreEFAClient"
+
+	// FSxLustreEFAClientGDS enables GDS optimization for EFA FSx Lustre client.
+	// Requires FSxLustreEFAClient to be enabled.
+	FSxLustreEFAClientGDS Feature = "FSxLustreEFAClientGDS"
 )
