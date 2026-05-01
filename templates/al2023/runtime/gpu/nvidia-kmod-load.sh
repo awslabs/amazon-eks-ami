@@ -81,6 +81,45 @@ function disable-gsp() {
   echo "options nvidia NVreg_EnableGpuFirmware=0" > /etc/modprobe.d/nvidia-disable-gsp.conf
 }
 
+function load-nvidiafs-module() {
+  echo "Checking for nvidia_fs kernel module"
+  if ! modinfo nvidia_fs &> /dev/null; then
+    echo "nvidia_fs kernel module not found, skipping"
+    return 0
+  fi
+  echo "nvidia_fs kernel module found, attempting to load"
+  if modprobe nvidia_fs; then
+    echo "nvidia_fs" > /etc/modules-load.d/nvidia_fs.conf
+    echo "nvidia_fs kernel module loaded successfully"
+  else
+    echo "nvidia_fs kernel module failed to load, continuing without it"
+  fi
+}
+
+function load-gdrdrv-module() {
+  echo "Checking for gdrdrv kernel module"
+  if ! modinfo gdrdrv &> /dev/null; then
+    echo "gdrdrv kernel module not found, skipping"
+    return 0
+  fi
+  echo "gdrdrv kernel module found, attempting to load"
+  if modprobe gdrdrv; then
+    echo "gdrdrv" > /etc/modules-load.d/gdrdrv.conf
+    echo "gdrdrv kernel module loaded successfully"
+    local major
+    major=$(awk '/gdrdrv/{print $1}' /proc/devices)
+    if [ -n "$major" ]; then
+      rm -f /dev/gdrdrv
+      mknod -m 666 /dev/gdrdrv c "$major" 0
+      echo "Created /dev/gdrdrv device node"
+    else
+      echo "Could not determine gdrdrv major number, skipping device node creation"
+    fi
+  else
+    echo "gdrdrv kernel module failed to load, continuing without it"
+  fi
+}
+
 # Some g-series instances have an issue with the NVIDIA GPU System Processor (GSP).
 # Disabling interactions with the GSP is a temporary workaround, and this is
 # only possible on the proprietary kmod.
@@ -102,3 +141,8 @@ esac
 echo "options nvidia NVreg_CoherentGPUMemoryMode=driver" > /etc/modprobe.d/40-eks-nvidia-openrm.conf
 
 kmod-util load "${MODULE_NAME}"
+
+if [ "${MODULE_NAME}" = "nvidia-open" ]; then
+  load-nvidiafs-module
+  load-gdrdrv-module
+fi

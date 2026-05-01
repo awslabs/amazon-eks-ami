@@ -31,6 +31,10 @@
     "nvidia_driver_major_version": null,
     "nvidia_repository_url": null,
     "nvidia_grid_runfile_bucket_name": null,
+    "enable_nvidia_fs_driver": null,
+    "nvidia_fs_driver_version": null,
+    "enable_nvidia_gdrcopy_driver": null,
+    "nvidia_gdrcopy_driver_version": null,
     "pause_container_image": null,
     "remote_folder": null,
     "runc_version": null,
@@ -270,6 +274,10 @@
         "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
         "NVIDIA_REPOSITORY={{user `nvidia_repository_url`}}",
         "EC2_GRID_DRIVER_S3_BUCKET={{user `nvidia_grid_runfile_bucket_name`}}",
+        "ENABLE_NVIDIA_FS_DRIVER={{user `enable_nvidia_fs_driver`}}",
+        "NVIDIA_FS_DRIVER_VERSION={{user `nvidia_fs_driver_version`}}",
+        "ENABLE_NVIDIA_GDRCOPY_DRIVER={{user `enable_nvidia_gdrcopy_driver`}}",
+        "NVIDIA_GDRCOPY_DRIVER_VERSION={{user `nvidia_gdrcopy_driver_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },

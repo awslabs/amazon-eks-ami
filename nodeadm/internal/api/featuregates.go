@@ -20,6 +20,12 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
+
+	// FSxLustreEFAClient enables EFA-optimized FSx for Lustre client configuration.
+	FSxLustreEFAClient: DefaultFalse,
+
+	// FSxLustreEFAClientGDS enables GDS optimization for EFA FSx Lustre client.
+	FSxLustreEFAClientGDS: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {

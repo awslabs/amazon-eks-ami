@@ -74,7 +74,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName FastImagePull]
+- Enum: [InstanceIdNodeName FastImagePull FSxLustreEFAClient FSxLustreEFAClientGDS]
 
 #### InstanceOptions
 
