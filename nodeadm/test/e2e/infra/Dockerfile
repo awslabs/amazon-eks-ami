@@ -19,7 +19,7 @@ RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
         cp /tmp/containerd/bin/* /usr/local/bin/ && \
         rm -rf /tmp/containerd /tmp/containerd.tar.gz; \
     fi
-RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
+RUN curl -O https://bootstrap.pypa.io/pip/3.9/get-pip.py && \
     python3 get-pip.py && \
     rm get-pip.py
 COPY test/e2e/infra/requirements.txt /
