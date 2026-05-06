@@ -1,3 +1,20 @@
+# v1.300.0 (2026-05-04)
+
+* **Feature**: This feature allows customers to change the tunnel bandwidth on existing VPN connections using the ModifyVpnConnectionOptions API
+
+# v1.299.1 (2026-04-29)
+
+* **Dependency Update**: Update to smithy-go v1.25.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.299.0 (2026-04-22)
+
+* **Feature**: Managed resource visibility settings control whether resources that AWS services provision on your behalf within your AWS account appear in your Amazon console views and API list operations.
+
+# v1.298.0 (2026-04-20)
+
+* **Feature**: Added Transit Gateway Integration into AWS Client VPN.
+
 # v1.297.1 (2026-04-17)
 
 * **Dependency Update**: Bump smithy-go to 1.25.0 to support endpointBdd trait
