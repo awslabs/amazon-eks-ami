@@ -31,7 +31,7 @@ validate_file_nonexists '/var/log/cloud-init.log'
 validate_file_nonexists '/var/log/secure'
 validate_file_nonexists '/var/log/wtmp'
 
-REQUIRED_COMMANDS=(unpigz)
+REQUIRED_COMMANDS=(unpigz igzip)
 
 for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
   if ! command -v "$ENTRY" > /dev/null; then

@@ -67,6 +67,10 @@ sudo dnf install -y \
   pigz \
   python3-dnf-plugin-versionlock
 
+# Install isa-l-tools from SPAL for faster gzip decompression (used by containerd and SOCI)
+sudo dnf install -y spal-release
+sudo dnf install -y isa-l-tools
+
 # we need to handle different kernel packages depending on the namespace
 # associated with the minor version.
 KERNEL_PACKAGE="kernel"

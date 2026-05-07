@@ -17,5 +17,5 @@ max_concurrent_unpacks = -1
 max_concurrent_unpacks_per_image = 12
 
 [pull_modes.parallel_pull_unpack.decompress_streams."gzip"]
-path = '/usr/bin/unpigz'
+path = '/usr/bin/igzip'
 args = ['-d', '-c']
