@@ -29,7 +29,13 @@ func (cd *containerd) Configure(c *api.NodeConfig) error {
 	if err := writeSnapshotterConfig(c, cd.resources); err != nil {
 		return err
 	}
-	return writeContainerdConfig(c, cd.resources)
+	if err := writeContainerdConfig(c, cd.resources); err != nil {
+		return err
+	}
+	if err := writeSOCIServiceDependency(c, cd.resources); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (cd *containerd) EnsureRunning() error {
@@ -37,6 +43,11 @@ func (cd *containerd) EnsureRunning() error {
 }
 
 func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
+	if UseSOCISnapshotter(c, cd.resources) {
+		if err := importSandboxImageForSOCI(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
