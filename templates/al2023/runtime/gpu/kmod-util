@@ -13,6 +13,15 @@ for path in /usr/bin/dkms /usr/sbin/dkms; do
   fi
 done
 
+DEPMOD=""
+for path in /usr/bin/depmod /usr/sbin/depmod; do
+  if [ -x "$path" ]; then
+    DEPMOD=$path
+    break
+  fi
+done
+
+
 DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
 
 function log() {
@@ -27,15 +36,40 @@ function module-version() {
 # load a kernel module from the archives
 function load() {
   local MODULE_NAME="${1}"
+  local DISABLE_POST_TRANSACTION="${2:-false}"
+
   log "unpacking: ${MODULE_NAME}"
   local MODULE_ARCHIVE="${DKMS_ARCHIVE_DIR}/${MODULE_NAME}/*.tar.gz"
-  ${DKMS} ldtarball ${MODULE_ARCHIVE}
-  log "unpacked: ${MODULE_NAME}"
+  if ${DKMS} ldtarball ${MODULE_ARCHIVE}; then
+    log "unpacked tarball: ${MODULE_NAME}"
+  else
+    log "tarball already loaded, skipping unpack: ${MODULE_NAME}"
+  fi
   log "installing: ${MODULE_NAME}"
   local MODULE_VERSION
   MODULE_VERSION=$(module-version "${MODULE_NAME}")
-  ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}"
-  log "installed: ${MODULE_NAME}"
+
+  if [[ "${DISABLE_POST_TRANSACTION}" == "true" ]]; then
+    log "disabling dkms post_transaction"
+    sudo mkdir -p /etc/dkms/framework.conf.d
+    echo "post_transaction=" | sudo tee /etc/dkms/framework.conf.d/kmod-util.conf > /dev/null
+  fi
+
+  # dkms install returns exit code 0 when the module is already installed
+  # handle this gracefully in case the behavior changes in a future version
+  if ${DKMS} install -m "${MODULE_NAME}" -v "${MODULE_VERSION}" --no-depmod; then
+    log "running depmod: ${MODULE_NAME}"
+    ${DEPMOD} --quick
+    log "finished depmod: ${MODULE_NAME}"
+    log "installed: ${MODULE_NAME}"
+  else
+    log "module already installed, skipping: ${MODULE_NAME}"
+  fi
+
+  if [[ "${DISABLE_POST_TRANSACTION}" == "true" ]]; then
+    log "re-enabling dkms post_transaction"
+    sudo rm -f /etc/dkms/framework.conf.d/kmod-util.conf
+  fi
 }
 
 # remove a kernel module
@@ -75,7 +109,7 @@ function usage() {
   declare -F | awk '{print "\t" $3}' >&2
 }
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 ]; then
   usage
   exit 1
 fi
