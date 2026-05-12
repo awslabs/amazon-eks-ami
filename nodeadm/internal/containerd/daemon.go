@@ -33,7 +33,7 @@ func (cd *containerd) Configure(c *api.NodeConfig) error {
 }
 
 func (cd *containerd) EnsureRunning() error {
-	return cd.daemonManager.StartDaemon(ContainerdDaemonName)
+	return cd.daemonManager.RestartDaemon(ContainerdDaemonName)
 }
 
 func (cd *containerd) PostLaunch(c *api.NodeConfig) error {
