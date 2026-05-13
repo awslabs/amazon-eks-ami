@@ -51,7 +51,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 }
 
 func (k *kubelet) EnsureRunning() error {
-	return k.daemonManager.StartDaemon(KubeletDaemonName)
+	return k.daemonManager.RestartDaemon(KubeletDaemonName)
 }
 
 func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {
