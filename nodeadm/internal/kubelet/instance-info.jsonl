@@ -842,6 +842,7 @@
 {"instanceType":"m8ine.8xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":50}
 {"instanceType":"m8ine.large","defaultMaxENIs":4,"ipv4AddressesPerInterface":20}
 {"instanceType":"m8ine.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":30}
+{"instanceType":"mac-m3ultra.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac-m4.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac-m4max.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"mac-m4pro.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
