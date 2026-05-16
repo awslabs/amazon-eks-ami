@@ -156,7 +156,7 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull,FSxLustreEFAClient,FSxLustreEFAClientGDS}
 type Feature string
 
 const (
@@ -168,4 +168,14 @@ const (
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull Feature = "FastImagePull"
+
+	// FSxLustreEFAClient enables EFA-optimized FSx for Lustre client configuration.
+	// When enabled, nodeadm will run the configure-efa-fsx-lustre-client script
+	// on each boot to configure EFA interfaces for the Lustre client.
+	FSxLustreEFAClient Feature = "FSxLustreEFAClient"
+
+	// FSxLustreEFAClientGDS enables GPU Direct Storage (GDS) optimization for
+	// the EFA FSx Lustre client configuration. Requires FSxLustreEFAClient to
+	// also be enabled.
+	FSxLustreEFAClientGDS Feature = "FSxLustreEFAClientGDS"
 )

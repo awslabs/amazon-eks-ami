@@ -237,6 +237,15 @@ else
 fi
 
 ################################################################################
+### Lustre #####################################################################
+################################################################################
+
+echo "Installing lustre-client from AL core repository"
+sudo dnf install -y lustre-client
+curl -L https://docs.aws.amazon.com/fsx/latest/LustreGuide/samples/configure-efa-fsx-lustre-client.zip -o /tmp/configure-efa-fsx-lustre-client.zip
+sudo unzip /tmp/configure-efa-fsx-lustre-client.zip -d /etc/eks
+
+################################################################################
 ### AMI Metadata ###############################################################
 ################################################################################
 

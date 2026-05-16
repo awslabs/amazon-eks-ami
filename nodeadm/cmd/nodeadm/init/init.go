@@ -142,6 +142,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		runAspects := []system.SystemAspect{
 			system.NewMarkerAspect(),
 			system.NewLocalDiskAspect(),
+			system.NewFSxLustreEFAAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, runAspects); err != nil {
 			return err

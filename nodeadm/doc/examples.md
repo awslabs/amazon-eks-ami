@@ -117,6 +117,40 @@ spec:
 
 ---
 
+## Enabling EFA for FSx Lustre client (experimental)
+
+When the `FSxLustreEFAClient` feature gate is enabled, `nodeadm` will configure EFA network interfaces for the FSx for Lustre client on each boot. This includes loading the required Lustre and EFA kernel modules, configuring Lustre TCP and EFA network interfaces, and setting up CPU partition table (CPT) optimization based on instance topology.
+
+The number of EFA interfaces configured for Lustre is automatically determined based on the EC2 instance type.
+
+### To enable this feature:
+1. Ensure your instance type supports EFA.
+2. Enable the feature gate in your user data:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    FSxLustreEFAClient: true
+```
+
+For workloads using NVIDIA GPUDirect Storage (GDS), enable the `FSxLustreEFAClientGDS` feature gate as well. This configures all available EFA interfaces for GDS I/O instead of the default filtered subset.
+
+⚠️ **Note**: GDS is only supported on specific instance types.
+
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    FSxLustreEFAClient: true
+    FSxLustreEFAClientGDS: true
+```
+
+---
+
 ## Configuring `containerd`
 
 Additional `containerd` configuration can be supplied in your `NodeConfig`. The values in your inline TOML document will overwrite any default value set by `nodeadm`.
