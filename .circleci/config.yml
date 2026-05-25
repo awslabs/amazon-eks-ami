@@ -1,0 +1,386 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@5.4.0
+
+parameters:
+  packer_version:
+    type: string
+    default: "1.11.2"
+  build_region:
+    type: string
+    default: "us-east-1"
+  copy_regions:
+    description: |
+      Comma-separated AWS regions to copy the source AMI into. Default is the
+      full set of regions discovered in iaac/env/{production,staging,
+      development,testbed} (12 regions; us-east-1 is the build_region and is
+      filtered out at publish time if accidentally included).
+    type: string
+    default: "af-south-1,ap-northeast-1,ap-northeast-2,ap-south-1,ap-southeast-1,ap-southeast-2,eu-central-1,eu-south-2,eu-west-1,sa-east-1,us-east-2,us-west-1"
+  cve_tag:
+    description: |
+      AMI name suffix used to identify the CVE this build addresses. Empty for
+      generic rebuilds.
+    type: string
+    default: "cve2026-31431"
+  assert_cves:
+    description: |
+      Comma-separated list of CVE IDs the kernel package MUST list in its
+      changelog. The Packer build fails if any are missing. Empty disables
+      the check.
+    type: string
+    default: "CVE-2026-31431"
+  trigger_branch:
+    description: Branch that gates the workflow.
+    type: string
+    default: "main"
+  cleanup_keep:
+    description: |
+      Number of AMIs to retain per (arch, k8s) type per region. Older AMIs
+      tagged Builder=eks-ami-packer are deregistered and their snapshots
+      deleted by the cleanup-old-amis job.
+    type: integer
+    default: 5
+  cleanup_dry_run:
+    description: |
+      When "true", the cleanup-old-amis job prints what it would delete
+      without calling deregister-image / delete-snapshot. Useful for the
+      first runs and for verifying the retention policy.
+    type: string
+    default: "false"
+  cleanup_name_prefix:
+    description: |
+      AMI name prefix used by the cleanup job to scope deletion candidates
+      and to extract the (arch, k8s) type from the name. Must match the
+      ami_name template used by build-al2023-ami.
+    type: string
+    default: "gather-eks-al2023-"
+  manifest_bucket:
+    description: |
+      S3 bucket the upload-manifest job writes the aggregated multi-region
+      manifest to. The OIDC role attached to the workflow needs
+      `s3:PutObject` (and ideally `s3:GetObject`) on
+      `${manifest_bucket}/${manifest_prefix}/*`.
+    type: string
+    default: "gather-infra-generic"
+  manifest_prefix:
+    description: |
+      Key prefix under `manifest_bucket`. The upload-manifest job writes
+      `<prefix>/manifests/<utc-date>-<short-sha>/manifest.json` and
+      `<prefix>/manifests/latest.json`.
+    type: string
+    default: "eks-custom-ami"
+
+commands:
+  install-packer:
+    steps:
+      - run:
+          name: Install Packer << pipeline.parameters.packer_version >>
+          command: |
+            set -euo pipefail
+            sudo apt-get update -qq
+            sudo apt-get install -y unzip jq
+            case "$(uname -m)" in
+              aarch64|arm64) PACKER_ARCH=arm64 ;;
+              x86_64)        PACKER_ARCH=amd64 ;;
+              *) echo "unsupported runner arch: $(uname -m)" >&2; exit 1 ;;
+            esac
+            cd /tmp
+            curl -sSLo packer.zip "https://releases.hashicorp.com/packer/<< pipeline.parameters.packer_version >>/packer_<< pipeline.parameters.packer_version >>_linux_${PACKER_ARCH}.zip"
+            unzip -o packer.zip
+            sudo install -m 0755 packer /usr/local/bin/packer
+            rm -f /tmp/packer /tmp/packer.zip
+            packer version
+            packer plugins install github.com/hashicorp/amazon
+
+jobs:
+  build-al2023-ami:
+    parameters:
+      kubernetes_version:
+        description: Kubernetes minor version (e.g. "1.33").
+        type: string
+      arch:
+        description: Target CPU architecture for the baked AMI.
+        type: enum
+        enum: ["x86_64", "arm64"]
+    docker:
+      - image: cimg/base:current-22.04
+    resource_class: arm.medium
+    environment:
+      PACKER_LOG: "1"
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role_arn: $AWS_OIDC_ROLE_ARN
+          region: << pipeline.parameters.build_region >>
+          role_session_name: "circleci-eks-ami-${CIRCLE_WORKFLOW_ID:0:8}"
+      - run:
+          name: Export AWS env credentials for Packer
+          command: |
+            aws configure export-credentials --format env >> "$BASH_ENV"
+      - install-packer
+      - run:
+          name: Compute AMI name
+          command: |
+            set -euo pipefail
+            CVE_SUFFIX=""
+            if [ -n "<< pipeline.parameters.cve_tag >>" ]; then
+              CVE_SUFFIX="-<< pipeline.parameters.cve_tag >>"
+            fi
+            AMI_NAME="gather-eks-al2023-<< parameters.arch >>-<< parameters.kubernetes_version >>${CVE_SUFFIX}-${CIRCLE_SHA1:0:9}"
+            echo "export AMI_NAME='${AMI_NAME}'" >> "$BASH_ENV"
+            echo "AMI_NAME=${AMI_NAME}"
+      - run:
+          name: Build patched AMI (k8s=<< parameters.kubernetes_version >>, arch=<< parameters.arch >>)
+          no_output_timeout: 120m
+          command: |
+            set -euo pipefail
+            export USER="circleci"
+            echo "Building AMI: ${AMI_NAME}"
+            echo "Source build region: << pipeline.parameters.build_region >>"
+            echo "Asserting CVEs: << pipeline.parameters.assert_cves >>"
+            make build \
+              os_distro=al2023 \
+              k8s=<< parameters.kubernetes_version >> \
+              arch=<< parameters.arch >> \
+              aws_region=<< pipeline.parameters.build_region >> \
+              assert_cves="<< pipeline.parameters.assert_cves >>" \
+              ami_name="${AMI_NAME}"
+      - run:
+          name: Generate final report
+          when: always
+          command: |
+            set -euo pipefail
+            mkdir -p /tmp/ami-artifacts
+            cp -v "${AMI_NAME}-manifest.json" /tmp/ami-artifacts/ 2> /dev/null || true
+            cp -v "${AMI_NAME}-version-info.json" /tmp/ami-artifacts/ 2> /dev/null || true
+            cp -v "${AMI_NAME}-build-report.json" /tmp/ami-artifacts/ 2> /dev/null || true
+            if [ -f "/tmp/ami-artifacts/${AMI_NAME}-build-report.json" ] \
+               && [ -f "/tmp/ami-artifacts/${AMI_NAME}-manifest.json" ] \
+               && [ -f "/tmp/ami-artifacts/${AMI_NAME}-version-info.json" ]; then
+              python3 hack/eks_ami.py render-report \
+                "${AMI_NAME}" \
+                /tmp/ami-artifacts \
+                --out "/tmp/ami-artifacts/${AMI_NAME}-report.md"
+              echo "=============================================================="
+              echo "===== BUILD REPORT: ${AMI_NAME}"
+              echo "=============================================================="
+              cat "/tmp/ami-artifacts/${AMI_NAME}-report.md"
+              echo "=============================================================="
+            else
+              echo "WARN: one or more input files missing; skipping report render"
+              ls -la /tmp/ami-artifacts || true
+            fi
+      - persist_to_workspace:
+          root: /tmp/ami-artifacts
+          paths:
+            - "*-manifest.json"
+            - "*-build-report.json"
+            - "*-report.md"
+      - store_artifacts:
+          path: /tmp/ami-artifacts
+          destination: ami-artifacts-<< parameters.kubernetes_version >>-<< parameters.arch >>
+
+  publish-al2023-amis:
+    docker:
+      - image: cimg/base:current-22.04
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role_arn: $AWS_OIDC_ROLE_ARN
+          region: << pipeline.parameters.build_region >>
+          role_session_name: "circleci-eks-ami-pub-${CIRCLE_WORKFLOW_ID:0:8}"
+      - run:
+          name: Install jq and column
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y jq bsdmainutils
+      - attach_workspace:
+          at: /tmp/ami-artifacts
+      - run:
+          name: Copy AMIs to target regions
+          command: |
+            set -euo pipefail
+
+            BUILD_REGION="<< pipeline.parameters.build_region >>"
+            RAW_TARGETS="<< pipeline.parameters.copy_regions >>"
+
+            if [ -z "${RAW_TARGETS}" ]; then
+              echo "No copy_regions configured; AMIs remain only in ${BUILD_REGION}."
+              ls -la /tmp/ami-artifacts || true
+              exit 0
+            fi
+
+            TARGETS=$(printf '%s' "${RAW_TARGETS}" \
+              | tr ',' '\n' \
+              | awk -v skip="${BUILD_REGION}" 'NF && $0 != skip' \
+              | sort -u | tr '\n' ' ')
+
+            if [ -z "${TARGETS}" ]; then
+              echo "All copy_regions equal build_region (${BUILD_REGION}); nothing to copy."
+              exit 0
+            fi
+
+            echo "Will copy each AMI to: ${TARGETS}"
+
+            mkdir -p /tmp/ami-artifacts/copies
+            : > /tmp/ami-artifacts/copies/summary.tsv
+            echo -e "source_ami\tami_name\tregion\tcopy_ami_id" >> /tmp/ami-artifacts/copies/summary.tsv
+
+            for manifest in /tmp/ami-artifacts/*-manifest.json; do
+              [ -f "${manifest}" ] || continue
+              ARTIFACT_ID=$(jq -r '.builds[-1].artifact_id' "${manifest}")
+              AMI_NAME=$(jq -r '.builds[-1].custom_data.ami_name? // (input_filename | sub(".*/(?<n>[^/]+)-manifest.json"; "\(.n)"))' "${manifest}" 2> /dev/null || basename "${manifest}" -manifest.json)
+              SRC_AMI=$(printf '%s' "${ARTIFACT_ID}" | tr ',' '\n' | grep "^${BUILD_REGION}:" | cut -d: -f2)
+              if [ -z "${SRC_AMI}" ]; then
+                echo "WARN: ${manifest} has no AMI in ${BUILD_REGION}; skipping" >&2
+                continue
+              fi
+              for region in ${TARGETS}; do
+                echo "Copying ${SRC_AMI} (${AMI_NAME}) -> ${region}"
+                COPY_AMI_ID=$(aws ec2 copy-image \
+                  --region "${region}" \
+                  --source-region "${BUILD_REGION}" \
+                  --source-image-id "${SRC_AMI}" \
+                  --name "${AMI_NAME}" \
+                  --description "Cross-region copy of ${SRC_AMI} from ${BUILD_REGION}" \
+                  --tag-specifications "ResourceType=image,Tags=[{Key=Name,Value=${AMI_NAME}},{Key=Builder,Value=eks-ami-packer},{Key=source_ami_id,Value=${SRC_AMI}},{Key=build_region,Value=${BUILD_REGION}}]" \
+                  --query 'ImageId' --output text)
+                echo "  -> ${COPY_AMI_ID}"
+                echo -e "${SRC_AMI}\t${AMI_NAME}\t${region}\t${COPY_AMI_ID}" >> /tmp/ami-artifacts/copies/summary.tsv
+              done
+            done
+
+            echo "===== Cross-region copy summary ====="
+            if command -v column > /dev/null 2>&1; then
+              column -t -s $'\t' /tmp/ami-artifacts/copies/summary.tsv
+            else
+              cat /tmp/ami-artifacts/copies/summary.tsv
+            fi
+      - persist_to_workspace:
+          root: /tmp/ami-artifacts
+          paths:
+            - "copies"
+      - store_artifacts:
+          path: /tmp/ami-artifacts
+          destination: ami-artifacts-published
+
+  upload-manifest:
+    docker:
+      - image: cimg/base:current-22.04
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role_arn: $AWS_OIDC_ROLE_ARN
+          region: << pipeline.parameters.build_region >>
+          role_session_name: "circleci-eks-ami-manif-${CIRCLE_WORKFLOW_ID:0:8}"
+      - attach_workspace:
+          at: /tmp/ami-artifacts
+      - run:
+          name: Build aggregated multi-region manifest
+          command: |
+            set -euo pipefail
+            mkdir -p /tmp/ami-manifest
+            python3 hack/eks_ami.py aggregate-manifest \
+              /tmp/ami-artifacts \
+              --commit "${CIRCLE_SHA1:0:9}" \
+              --branch "${CIRCLE_BRANCH}" \
+              --cves "<< pipeline.parameters.assert_cves >>" \
+              --out /tmp/ami-manifest/manifest.json
+            echo "===== Aggregated manifest ====="
+            cat /tmp/ami-manifest/manifest.json
+      - run:
+          name: Upload manifest to S3 (dated + latest)
+          command: |
+            set -euo pipefail
+            BUCKET="<< pipeline.parameters.manifest_bucket >>"
+            PREFIX="<< pipeline.parameters.manifest_prefix >>"
+            UTC_DATE=$(date -u +%Y-%m-%d)
+            SHA="${CIRCLE_SHA1:0:9}"
+
+            KEY_DATED="${PREFIX}/manifests/${UTC_DATE}-${SHA}/manifest.json"
+            KEY_LATEST="${PREFIX}/manifests/latest.json"
+
+            aws s3 cp /tmp/ami-manifest/manifest.json "s3://${BUCKET}/${KEY_DATED}" \
+              --content-type application/json
+            aws s3 cp /tmp/ami-manifest/manifest.json "s3://${BUCKET}/${KEY_LATEST}" \
+              --content-type application/json \
+              --cache-control "no-cache, max-age=0"
+
+            echo "Manifest published:"
+            echo "  dated  : s3://${BUCKET}/${KEY_DATED}"
+            echo "  latest : s3://${BUCKET}/${KEY_LATEST}"
+      - store_artifacts:
+          path: /tmp/ami-manifest
+          destination: ami-manifest
+
+  cleanup-old-amis:
+    docker:
+      - image: cimg/base:current-22.04
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - aws-cli/setup:
+          role_arn: $AWS_OIDC_ROLE_ARN
+          region: << pipeline.parameters.build_region >>
+          role_session_name: "circleci-eks-ami-clean-${CIRCLE_WORKFLOW_ID:0:8}"
+      - run:
+          name: Install jq and column
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y jq bsdmainutils
+      - run:
+          name: Cleanup older AMIs (keep last << pipeline.parameters.cleanup_keep >> per type per region)
+          command: |
+            set -euo pipefail
+
+            BUILD_REGION="<< pipeline.parameters.build_region >>"
+            RAW_COPIES="<< pipeline.parameters.copy_regions >>"
+
+            REGIONS=$(printf '%s\n%s' "${BUILD_REGION}" "${RAW_COPIES//,/$'\n'}" \
+              | awk 'NF { gsub(/[[:space:]]/, ""); if (!seen[$0]++) print }' \
+              | paste -sd, -)
+
+            echo "Cleanup scope:"
+            echo "  regions      : ${REGIONS}"
+            echo "  keep_per_type: << pipeline.parameters.cleanup_keep >>"
+            echo "  name_prefix  : << pipeline.parameters.cleanup_name_prefix >>"
+            echo "  dry_run      : << pipeline.parameters.cleanup_dry_run >>"
+
+            mkdir -p /tmp/ami-cleanup
+            python3 hack/eks_ami.py cleanup-amis \
+              --regions "${REGIONS}" \
+              --keep "<< pipeline.parameters.cleanup_keep >>" \
+              --name-prefix "<< pipeline.parameters.cleanup_name_prefix >>" \
+              --dry-run "<< pipeline.parameters.cleanup_dry_run >>" \
+              --out-dir /tmp/ami-cleanup
+      - store_artifacts:
+          path: /tmp/ami-cleanup
+          destination: ami-cleanup
+
+workflows:
+  build-patched-eks-amis:
+    when:
+      equal: [<< pipeline.parameters.trigger_branch >>, << pipeline.git.branch >>]
+    jobs:
+      - build-al2023-ami:
+          name: build-al2023-arm64-1.33
+          kubernetes_version: "1.33"
+          arch: arm64
+      - build-al2023-ami:
+          name: build-al2023-arm64-1.34
+          kubernetes_version: "1.34"
+          arch: arm64
+      - publish-al2023-amis:
+          requires:
+            - build-al2023-arm64-1.33
+            - build-al2023-arm64-1.34
+      - upload-manifest:
+          requires:
+            - publish-al2023-amis
+      - cleanup-old-amis:
+          requires:
+            - publish-al2023-amis

@@ -1,71 +1,144 @@
-# Amazon EKS AMI Build Specification
-> [!IMPORTANT]
-> Amazon EKS stopped publishing EKS-optimized Amazon Linux 2 (AL2) AMIs on November 26, 2025. AL2023 and Bottlerocket based AMIs for Amazon EKS are available for all supported Kubernetes versions including 1.33 and higher.
+# Custom Gather Inc. EKS AMIs
 
-This repository contains resources and configuration scripts for building a
-custom Amazon EKS AMI with [HashiCorp Packer](https://www.packer.io/). This is
-the same configuration that Amazon EKS uses to create the official Amazon
-EKS-optimized AMI.
+Toolset to bake patched EKS-Optimized Amazon Linux 2023 (AL2023) AMIs for Gather Inc.'s EKS clusters. Lets us ship a fix for a kernel CVE without waiting for AWS to reissue their AMI.
 
-**Check out the [📖 documentation](https://awslabs.github.io/amazon-eks-ami/) to learn more.**
+The legacy upstream README is preserved at [`README-ORIG.md`](README-ORIG.md).
 
----
+## Branches
 
-## 🚀 Getting started
+- `eks-ami` — Gather's customisations. Default branch.
+- `upstream-main` — mirror of [`awslabs/amazon-eks-ami`](https://github.com/awslabs/amazon-eks-ami). Periodically merged into `eks-ami`.
 
-If you are new to Amazon EKS, we recommend that you follow
-our [Getting Started](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html)
-chapter in the Amazon EKS User Guide. If you already have a cluster, and you
-want to launch a node group with your new AMI, see [Launching Amazon EKS Worker
-Nodes](https://docs.aws.amazon.com/eks/latest/userguide/launch-workers.html).
-
-## 🔢 Pre-requisites
-
-You must have [Packer](https://www.packer.io/) version 1.8.0 or later installed on your local system.
-For more information, see [Installing Packer](https://www.packer.io/docs/install/index.html)
-in the Packer documentation. You must also have AWS account credentials
-configured so that Packer can make calls to AWS API operations on your behalf.
-For more information, see [Authentication](https://www.packer.io/docs/builders/amazon.html#specifying-amazon-credentials)
-in the Packer documentation.
-
-## 👷 Building the AMI
-
-A Makefile is provided to build the Amazon EKS Worker AMI, but it is just a small wrapper around
-invoking Packer directly. You can initiate the build process by running the
-following command in the root of this repository:
-
-```bash
-# build an AMI with a specific Kubernetes version
-make k8s=1.29 os_distro=al2023
-
-# check default value and options in help doc
-make help
+```sh
+git remote -v
+# origin    https://github.com/gathertown/amazon-eks-ami.git
+# upstream  https://github.com/awslabs/amazon-eks-ami.git
 ```
 
-The Makefile chooses a particular kubelet binary to use per Kubernetes version which you can [view here](https://github.com/awslabs/amazon-eks-ami/blob/main/Makefile).
+## Source distro & CVE tracking
 
-> **Note**
-> The default instance type to build this AMI does not qualify for the AWS free tier.
-> You are charged for any instances created when building this AMI.
+- **Base:** AL2023 (AWS's downstream of Fedora), source AMIs owned by `137112412989`, filtered by `al2023-ami-minimal-2023.*-kernel-<line>-*`.
+- **Kernel:** `kernel6.12` (Linux 6.12 LTS) for k8s 1.33 / 1.34 (1.35 is available in `templates/al2023/variables-1.35.json` but not wired into the CI matrix yet).
+- **CVE → ALAS → fix mapping:** <https://alas.aws.amazon.com/alas2023.html>. On a running node use `dnf updateinfo info --cve CVE-XXXX-XXXXX`.
 
-## 🔒 Security
+## CircleCI pipeline
 
-For security issues or concerns, please do not open an issue or pull request on GitHub. Please report any suspected or confirmed security issues to [AWS Security](https://aws.amazon.com/security/vulnerability-reporting/).
+```text
+build-al2023-ami → publish-al2023-amis → ┬→ upload-manifest
+                                         └→ cleanup-old-amis
+```
 
-## ⚖️ License Summary
+Runs on arm64 (Graviton) runners. The runner architecture is independent of the AMI architecture (Packer launches the build instance via API), so one arm64 runner bakes both `arm64` and `x86_64` AMIs. The CVE-assertion oracle is `dnf updateinfo --installed info --cve` (AL2023 kernel changelogs don't embed CVE IDs).
 
-This sample code is made available under a MIT-0 license. See the LICENSE file.
+**Build matrix:** `{arm64} × {1.33, 1.34}` — 2 AMIs per run. Adding `x86_64` or `1.35` is a one-line addition to the `workflows.build-patched-eks-amis.jobs` block in `.circleci/config.yml` once we need them.
 
-Although this repository is released under the MIT license, when using NVIDIA accelerated AMIs you agree to the NVIDIA Cloud End User License Agreement: https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf.
+> **INFRA-2731 follow-up:** the `approve-publish` manual hold is still disabled while we shake the pipeline down. Restore it before treating any prod region as load-bearing on these AMIs.
 
-Although this repository is released under the MIT license, NVIDIA accelerated AMIs
-use the third party [open-gpu-kernel-modules](https://github.com/NVIDIA/open-gpu-kernel-modules). The open-gpu-kernel-modules project's licensing includes the dual MIT/GPLv2 license.
+### Pipeline parameters
 
-Although this repository is released under the MIT license, NVIDIA accelerated AMIs
-use the third party [nvidia-container-toolkit](https://github.com/NVIDIA/nvidia-container-toolkit). The nvidia-container-toolkit project's licensing includes the Apache-2.0 license.
+| Parameter | Default | Purpose |
+| --- | --- | --- |
+| `build_region` | `us-east-1` | Region the source AMI is baked in. |
+| `copy_regions` | _12 iaac regions_ | `af-south-1, ap-northeast-1, ap-northeast-2, ap-south-1, ap-southeast-1, ap-southeast-2, eu-central-1, eu-south-2, eu-west-1, sa-east-1, us-east-2, us-west-1`. Discovered from `iaac/env/{production,staging,development,testbed}`. `build_region` is auto-filtered. |
+| `cve_tag` | `cve2026-31431` | Suffix in the AMI name. Empty for generic rebuilds. |
+| `assert_cves` | `CVE-2026-31431` | CVE IDs that must be covered by an installed ALAS. Empty disables the check. |
+| `trigger_branch` | `panagiotis/infra-2697-patch-eks-for-cve-2026-31431` | Branch gating the workflow. |
+| `cleanup_keep` | `5` | AMIs retained per `(arch, k8s)` per region (tagged `Builder=eks-ami-packer`). |
+| `cleanup_dry_run` | `"false"` | `"true"` to preview deletes without calling AWS. |
+| `cleanup_name_prefix` | `gather-eks-al2023-` | Name prefix scoping cleanup candidates. |
+| `manifest_bucket` | `gather-infra-generic` | S3 bucket for the aggregated manifest. |
+| `manifest_prefix` | `eks-custom-ami` | Key prefix under `manifest_bucket`. |
 
-Although this repository is released under the MIT license, Neuron accelerated AMIs
-use the third party [Neuron Driver](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/release-notes/runtime/aws-neuronx-dkms/index.html). The Neuron Driver project's licensing includes the GPLv2 license.
+### Artifacts
 
-Although this repository is released under the MIT license, accelerated AMIs
-use the third party [Elastic Fabric Adapter Driver](https://github.com/amzn/amzn-drivers/tree/master/kernel/linux/efa). The Elastic Fabric Adapter Driver project's licensing includes the GPLv2 license.
+| Job | Path | Contents |
+| --- | --- | --- |
+| `build-al2023-ami` | `ami-artifacts-<k8s>-<arch>/` | `<ami>-manifest.json`, `<ami>-version-info.json` (RPM SBOM), `<ami>-build-report.json` (kernel + CVE + ALAS), `<ami>-report.md` |
+| `publish-al2023-amis` | `ami-artifacts-published/copies/summary.tsv` | `source_ami	ami_name	region	copy_ami_id` |
+| `upload-manifest` | `ami-manifest/manifest.json` | Same as the S3 upload (see below). |
+| `cleanup-old-amis` | `ami-cleanup/summary.tsv` | `region	type	action	ami_id	ami_name	creation_date	snapshot_id	result` |
+
+### Aggregate manifest in S3
+
+After publish, `upload-manifest` writes:
+
+- `s3://${manifest_bucket}/${manifest_prefix}/manifests/<utc-date>-<short-sha>/manifest.json` — dated, immutable.
+- `s3://${manifest_bucket}/${manifest_prefix}/manifests/latest.json` — pointer to the most recent run (Cache-Control: `no-cache`).
+
+```json
+{
+  "build_date": "2026-05-26T03:00:00Z",
+  "commit": "abc1234",
+  "branch": "eks-ami",
+  "amis": {
+    "us-east-1": {
+      "arm64":  {"1.33": "ami-..."},
+      "x86_64": {"1.33": "ami-..."}
+    }
+  },
+  "cves_addressed": ["CVE-2026-31431"]
+}
+```
+
+The CircleCI OIDC role needs `s3:PutObject` on `arn:aws:s3:::gather-infra-generic/eks-custom-ami/*`.
+
+## Triggering a new CVE patch build
+
+1. Branch off the latest `eks-ami`:
+   ```sh
+   git checkout -b panagiotis/infra-XXXX-patch-eks-for-cve-YYYY-ZZZZZ
+   ```
+2. Edit `.circleci/config.yml`: set `trigger_branch`, `cve_tag` (`cveYYYY-ZZZZZ`), `assert_cves` (`CVE-YYYY-ZZZZZ[,...]`), and start `copy_regions` empty for the first run.
+3. Push. The build fails fast if any requested CVE isn't covered by an installed ALAS on the freshly-baked instance.
+4. Review the markdown report inline in the "Generate final report" CircleCI step (JSON variants in the artifacts tab).
+5. Flip `copy_regions` to the full prod list and re-run. **Restore the `approve-publish` hold first** so AMI copies stay human-gated.
+6. Wire the AMI IDs from `s3://gather-infra-generic/eks-custom-ami/manifests/latest.json` into the iaac repo (`sfu_t1`, `sfuga_t1`, `workers_t1`, `generic_graviton_t1/t2`).
+
+## `hack/eks_ami.py` — single tool, four subcommands
+
+Stdlib-only Python (Python 3.9+). No third-party deps. AWS access goes through the system `aws` CLI via `subprocess`, so the OIDC creds the CircleCI orb already exports flow through unchanged.
+
+| Subcommand | Where it runs | What it does |
+| --- | --- | --- |
+| `build-report` | On the AL2023 builder during Packer | Probes kernel, `dnf updateinfo`, runtime versions; asserts requested CVE fixes are installed. |
+| `render-report` | `build-al2023-ami` CI job | Merges the three JSON artifacts into Markdown. |
+| `aggregate-manifest` | `upload-manifest` CI job | Combines per-build Packer manifests + cross-region copies into one JSON for S3. |
+| `cleanup-amis` | `cleanup-old-amis` CI job | Per-region retention of `Builder=eks-ami-packer` AMIs. |
+
+## Local testing
+
+```sh
+make test            # 23 stdlib unittest cases for hack/eks_ami.py, ~10 ms
+make lint-circleci   # circleci config validate + process (requires the circleci CLI)
+```
+
+Full Packer build (uses your AWS creds, defaults to `arch=arm64`):
+
+```sh
+aws sso login --profile gather-infra
+export AWS_PROFILE=gather-infra
+
+make build os_distro=al2023 k8s=1.33 \
+  aws_region=us-east-1 \
+  assert_cves=CVE-2026-31431 \
+  ami_name=gather-eks-al2023-arm64-1.33-localtest-$(git rev-parse --short HEAD)
+```
+
+Render the markdown summary:
+
+```sh
+python3 hack/eks_ami.py render-report "$AMI_NAME" "$PWD" --out "$AMI_NAME-report.md"
+```
+
+Preview cleanup decisions without mutating AWS:
+
+```sh
+python3 hack/eks_ami.py cleanup-amis \
+  --regions us-east-1,eu-central-1 --keep 5 --dry-run true
+```
+
+## CircleCI / AWS prerequisites
+
+- CircleCI env var `AWS_OIDC_ROLE_ARN` → `circleci-eks-ami-builder` IAM role (provisioned in iaac at `components/circleci/aws_iam_role_eks_ami_builder.tf`).
+- The IAM role policy must grant `ec2:CopyImage`, `ec2:DescribeImages`, `ec2:CreateTags`, the standard Packer/`amazon-ebs` permissions in every `copy_regions` region, and `s3:PutObject` on the manifest prefix.
+- All mutating actions are scoped to the `Builder=eks-ami-packer` resource tag; Packer applies it at build time and the publish job re-applies it on each cross-region copy.

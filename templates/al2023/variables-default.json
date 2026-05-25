@@ -3,6 +3,7 @@
     "ami_description": "EKS-optimized Kubernetes node based on Amazon Linux 2023",
     "ami_regions": "",
     "ami_users": "",
+    "assert_cves": "",
     "associate_public_ip_address": "",
     "aws_access_key_id": "{{env `AWS_ACCESS_KEY_ID`}}",
     "aws_region": "us-west-2",

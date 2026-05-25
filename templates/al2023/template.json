@@ -7,6 +7,7 @@
     "ami_regions": null,
     "ami_users": null,
     "arch": null,
+    "assert_cves": null,
     "associate_public_ip_address": null,
     "aws_access_key_id": null,
     "aws_region": null,
@@ -102,7 +103,8 @@
       "encrypt_boot": "{{user `encrypted`}}",
       "kms_key_id": "{{user `kms_key_id`}}",
       "run_tags": {
-        "creator": "{{user `creator`}}"
+        "creator": "{{user `creator`}}",
+        "Builder": "eks-ami-packer"
       },
       "subnet_id": "{{user `subnet_id`}}",
       "tags": {
@@ -113,7 +115,8 @@
         "source_ami_name": "{{ .SourceAMIName }}",
         "containerd_version": "{{ user `containerd_version`}}",
         "kubernetes": "{{ user `kubernetes_version`}}/{{ user `kubernetes_build_date` }}/bin/linux/{{ user `arch` }}",
-        "ssm_agent_version": "{{ user `ssm_agent_version`}}"
+        "ssm_agent_version": "{{ user `ssm_agent_version`}}",
+        "Builder": "eks-ami-packer"
       },
       "ami_name": "{{user `ami_name`}}",
       "ami_description": "{{ user `ami_description` }}, {{ user `ami_component_description` }}",
@@ -286,6 +289,18 @@
         "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
         "ENABLE_EFA={{user `enable_efa`}}"
       ]
+    },
+    {
+      "type": "shell",
+      "remote_folder": "{{ user `remote_folder`}}",
+      "script": "{{template_dir}}/../../hack/eks_ami.py",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} python3 {{ .Path }} build-report --out {{user `working_dir`}}/build-report.json --assert-cves '{{user `assert_cves`}}'"
+    },
+    {
+      "type": "file",
+      "direction": "download",
+      "source": "{{user `working_dir`}}/build-report.json",
+      "destination": "{{ user `ami_name` }}-build-report.json"
     },
     {
       "type": "shell",

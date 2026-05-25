@@ -3,6 +3,8 @@
 .idea
 *version-info.json
 .DS_Store
+__pycache__/
+*.pyc
 site/
 .git-commit
 *.wasm

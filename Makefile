@@ -1,8 +1,5 @@
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-# `kubernetes_version` is a build variable, but requires some introspection
-# to dynamically determine build templates & variable defaults.
-# initialize the kubernetes version from the provided packer file if missing.
 ifeq ($(kubernetes_version),)
 ifneq ($(PACKER_VARIABLE_FILE),)
 	kubernetes_version ?= $(shell jq -r .kubernetes_version $(PACKER_VARIABLE_FILE))
@@ -15,7 +12,7 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
 aws_region ?= us-west-2
-arch ?= x86_64
+arch ?= arm64
 
 BUILD_TARGETS := build k8s validate
 
@@ -63,7 +60,21 @@ fmt: ## Format the source files
 
 .PHONY: lint
 lint: lint-docs lint-code
-  # Convenience target to run all lints. This is not run during presubmits, add new checks in lint-docs or lint-code.
+
+.PHONY: test
+test: ## Run the eks_ami.py unit test suite (stdlib unittest, no extra deps)
+	python3 hack/test_eks_ami.py
+
+.PHONY: lint-circleci
+lint-circleci: ## Validate .circleci/config.yml (schema + orb resolution). Requires the `circleci` CLI.
+	@command -v circleci > /dev/null 2>&1 || { \
+		echo "circleci CLI not found. Install: brew install circleci  (macOS) or"; \
+		echo "                                 curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/main/install.sh | sudo bash"; \
+		exit 1; \
+	}
+	circleci config validate .circleci/config.yml
+	circleci config process .circleci/config.yml > /dev/null
+	@echo "OK: .circleci/config.yml is schema-valid and orbs resolve."
 
 .PHONY: lint-code
 lint-code: ## Check the source files for syntax and format issues
@@ -77,18 +88,11 @@ PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
 PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
 PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).json
 ifeq (,$(wildcard $(PACKER_OPTIONAL_K8S_VARIABLE_FILE)))
-	# unset the variable, no k8s-specific variable file exists
 	PACKER_OPTIONAL_K8S_VARIABLE_FILE=
 endif
 
-# extract Packer variables from the template file,
-# then store variables that are defined in the Makefile's execution context
 AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
 PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
-# read & construct Packer arguments in order from the following sources:
-# 1. default variable files
-# 2. (optional) user-specified variable file
-# 3. variables specified in the Make context
 PACKER_ARGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
 	$(if $(PACKER_OPTIONAL_K8S_VARIABLE_FILE),-var-file=$(PACKER_OPTIONAL_K8S_VARIABLE_FILE),) \
 	$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
