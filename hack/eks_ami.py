@@ -636,6 +636,60 @@ def cmd_build_report(args, runner: Runner = real_runner) -> int:
         return 1
     return 0
 
+def build_slack_digest_env_lines(manifest: dict, build_region: str) -> list:
+    """
+    Produce shell `export VAR='value'` lines that feed the circleci/slack
+    orb's Block Kit template. Lives in a CLI subcommand rather than a
+    .circleci/config.yml shell heredoc because `<<TAG` heredocs collide
+    with CircleCI's `<< ... >>` parameter-expression parser.
+
+    AMI_DIGEST joins per-(arch, k8s_minor) lines with REAL newlines, not
+    literal "\\n" sequences. The slack@5.1.1 orb's SanitizeVars function
+    pipes every ${VAR} value through two awk passes before substituting
+    it into the JSON template:
+
+        awk '{gsub(/\\\\/, "&\\\\"); print $0}'             # double backslashes
+        awk 'NR > 1 { printf("\\\\n") } { printf("%s", $0) }'  # newline -> "\\n"
+
+    So a real newline arrives at Slack as a properly JSON-escaped "\\n"
+    that the API decodes back to a newline at render time. If we emit a
+    literal "\\n" here instead, the first pass doubles the backslash and
+    Slack renders the user-visible string "\\n" verbatim.
+
+    Single-quoted shell strings preserve real newlines unchanged, so the
+    multi-line `export AMI_DIGEST='...'` line is sourced correctly by
+    CircleCI's BASH_ENV machinery.
+    """
+    amis = (manifest.get("amis") or {}).get(build_region, {}) or {}
+    lines = []
+    for arch in sorted(amis):
+        for k8s in sorted(amis[arch]):
+            lines.append(
+                f"\u2022 {arch} k8s {k8s} \u2192 `{amis[arch][k8s]}`"
+            )
+    digest = "\n".join(lines) if lines else "(no AMIs found in build_region)"
+    build_date = manifest.get("build_date", "") or ""
+    cves_list = manifest.get("cves_addressed") or []
+    cves = ", ".join(cves_list) if cves_list else "none"
+    return [
+        f"export AMI_DIGEST='{digest}'",
+        f"export AMI_BUILD_DATE='{build_date}'",
+        f"export AMI_CVES='{cves}'",
+    ]
+
+def cmd_slack_digest(args, runner: Runner = real_runner) -> int:
+    try:
+        manifest = json.loads(Path(args.manifest).read_text())
+    except FileNotFoundError:
+        print(f"ERROR: manifest not found: {args.manifest}", file=sys.stderr)
+        return 2
+    except json.JSONDecodeError as e:
+        print(f"ERROR: manifest is not valid JSON ({args.manifest}): {e}", file=sys.stderr)
+        return 2
+    for line in build_slack_digest_env_lines(manifest, args.build_region):
+        print(line)
+    return 0
+
 def _str_to_bool(value) -> bool:
     if isinstance(value, bool):
         return value
@@ -679,6 +733,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", required=True, help="Output build-report.json")
     p.add_argument("--assert-cves", default="", help="Comma-separated CVE IDs; fail if any unfixed")
     p.set_defaults(func=cmd_build_report)
+
+    p = sub.add_parser(
+        "slack-digest",
+        help="Print shell `export ...` lines summarising the aggregated manifest for the Slack notify step",
+    )
+    p.add_argument("manifest", help="Path to the aggregated manifest.json (produced by aggregate-manifest)")
+    p.add_argument(
+        "--build-region",
+        required=True,
+        help="Region whose (arch, k8s) -> ami_id slice is rendered (regions collapse to one canonical row)",
+    )
+    p.set_defaults(func=cmd_slack_digest)
 
     return parser
 

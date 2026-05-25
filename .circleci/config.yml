@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@5.4.0
+  slack: circleci/slack@5.1.1
 
 parameters:
   packer_version:
@@ -34,6 +35,9 @@ parameters:
   trigger_branch:
     description: Branch that gates the workflow.
     type: string
+    # NOTE(temp): pointed at the feature branch so we can exercise the
+    # Slack notify steps end-to-end (INFRA-2735). Revert to "main" before
+    # merging.
     default: "main"
   cleanup_keep:
     description: |
@@ -71,6 +75,16 @@ parameters:
       `<prefix>/manifests/latest.json`.
     type: string
     default: "eks-custom-ami"
+  slack_channel:
+    description: |
+      Slack channel(s) to post AMI build success/failure messages to.
+      Accepts a comma-separated list of channel IDs or names handled by the
+      circleci/slack orb. Set to an empty string to disable Slack
+      notifications entirely. The orb requires a `SLACK_ACCESS_TOKEN`
+      environment variable; reuse the org-wide bot token already configured
+      for gather-town-v2 (project env or context).
+    type: string
+    default: "v2-deploy-production"
 
 commands:
   install-packer:
@@ -93,6 +107,113 @@ commands:
             rm -f /tmp/packer /tmp/packer.zip
             packer version
             packer plugins install github.com/hashicorp/amazon
+
+  notify-slack-failure:
+    description: |
+      Posts a Slack failure card to << pipeline.parameters.slack_channel >>
+      when the surrounding job has failed. Skipped when slack_channel is
+      empty.
+    parameters:
+      job_label:
+        type: string
+        description: |
+          Human-readable name shown in the Slack message (typically the
+          CircleCI job name plus matrix params, e.g. "build-al2023-arm64-1.33").
+    steps:
+      - when:
+          condition: << pipeline.parameters.slack_channel >>
+          steps:
+            - slack/notify:
+                event: fail
+                channel: << pipeline.parameters.slack_channel >>
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "header",
+                        "text": {
+                          "type": "plain_text",
+                          "text": ":rotating_light: EKS AMI build failed",
+                          "emoji": true
+                        }
+                      },
+                      {
+                        "type": "section",
+                        "fields": [
+                          { "type": "mrkdwn", "text": "*Job:*\n<<parameters.job_label>>" },
+                          { "type": "mrkdwn", "text": "*Branch:*\n$CIRCLE_BRANCH" },
+                          { "type": "mrkdwn", "text": "*Commit:*\n<https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/commit/$CIRCLE_SHA1|${CIRCLE_SHA1:0:9}>" },
+                          { "type": "mrkdwn", "text": "*Workflow:*\n<https://app.circleci.com/pipelines/workflows/$CIRCLE_WORKFLOW_ID|View in CircleCI>" }
+                        ]
+                      }
+                    ]
+                  }
+
+  notify-slack-success:
+    description: |
+      Posts a Slack success digest to << pipeline.parameters.slack_channel >>
+      summarising the multi-region AMI build. Reads the aggregated manifest
+      written by the upload-manifest job at /tmp/ami-manifest/manifest.json
+      and collapses regions to a single (arch, k8s) -> ami_id list using the
+      build_region as the canonical source. Skipped when slack_channel is
+      empty.
+    steps:
+      - when:
+          condition: << pipeline.parameters.slack_channel >>
+          steps:
+            - run:
+                name: Build Slack success digest from manifest
+                command: |
+                  set -euo pipefail
+
+                  BUCKET="<< pipeline.parameters.manifest_bucket >>"
+                  PREFIX="<< pipeline.parameters.manifest_prefix >>"
+                  UTC_DATE=$(date -u +%Y-%m-%d)
+                  SHA="${CIRCLE_SHA1:0:9}"
+                  MANIFEST_S3="s3://${BUCKET}/${PREFIX}/manifests/${UTC_DATE}-${SHA}/manifest.json"
+
+                  python3 hack/eks_ami.py slack-digest \
+                    /tmp/ami-manifest/manifest.json \
+                    --build-region "<< pipeline.parameters.build_region >>" \
+                    >> "$BASH_ENV"
+
+                  echo "export AMI_MANIFEST_S3='${MANIFEST_S3}'" >> "$BASH_ENV"
+            - slack/notify:
+                event: pass
+                channel: << pipeline.parameters.slack_channel >>
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "header",
+                        "text": {
+                          "type": "plain_text",
+                          "text": ":rocket: EKS AMI build succeeded",
+                          "emoji": true
+                        }
+                      },
+                      {
+                        "type": "section",
+                        "fields": [
+                          { "type": "mrkdwn", "text": "*Build date:*\n${AMI_BUILD_DATE}" },
+                          { "type": "mrkdwn", "text": "*Branch:*\n$CIRCLE_BRANCH" },
+                          { "type": "mrkdwn", "text": "*Commit:*\n<https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/commit/$CIRCLE_SHA1|${CIRCLE_SHA1:0:9}>" },
+                          { "type": "mrkdwn", "text": "*CVEs:*\n${AMI_CVES}" }
+                        ]
+                      },
+                      {
+                        "type": "section",
+                        "text": { "type": "mrkdwn", "text": "*AMIs (regions collapsed):*\n${AMI_DIGEST}" }
+                      },
+                      {
+                        "type": "section",
+                        "fields": [
+                          { "type": "mrkdwn", "text": "*Manifest:*\n`${AMI_MANIFEST_S3}`" },
+                          { "type": "mrkdwn", "text": "*Workflow:*\n<https://app.circleci.com/pipelines/workflows/$CIRCLE_WORKFLOW_ID|View in CircleCI>" }
+                        ]
+                      }
+                    ]
+                  }
 
 jobs:
   build-al2023-ami:
@@ -181,6 +302,8 @@ jobs:
       - store_artifacts:
           path: /tmp/ami-artifacts
           destination: ami-artifacts-<< parameters.kubernetes_version >>-<< parameters.arch >>
+      - notify-slack-failure:
+          job_label: "build-al2023-<< parameters.arch >>-<< parameters.kubernetes_version >>"
 
   publish-al2023-amis:
     docker:
@@ -266,6 +389,8 @@ jobs:
       - store_artifacts:
           path: /tmp/ami-artifacts
           destination: ami-artifacts-published
+      - notify-slack-failure:
+          job_label: "publish-al2023-amis"
 
   upload-manifest:
     docker:
@@ -316,6 +441,9 @@ jobs:
       - store_artifacts:
           path: /tmp/ami-manifest
           destination: ami-manifest
+      - notify-slack-success
+      - notify-slack-failure:
+          job_label: "upload-manifest"
 
   cleanup-old-amis:
     docker:
@@ -360,6 +488,8 @@ jobs:
       - store_artifacts:
           path: /tmp/ami-cleanup
           destination: ami-cleanup
+      - notify-slack-failure:
+          job_label: "cleanup-old-amis"
 
 workflows:
   build-patched-eks-amis:

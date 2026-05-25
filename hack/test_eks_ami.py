@@ -485,6 +485,89 @@ class TestBuildReport(unittest.TestCase):
             self.assertEqual(data["security"]["assertions"]["status"], "failed")
             self.assertIn("ERROR: required CVE fixes are NOT covered", buf_err.getvalue())
 
+class TestSlackDigest(unittest.TestCase):
+    def _manifest(self) -> dict:
+        return {
+            "build_date": "2026-05-25T08:30:00Z",
+            "commit": "deadbeef0",
+            "branch": "main",
+            "amis": {
+                "us-east-1": {
+                    "arm64": {"1.33": "ami-00aa11", "1.34": "ami-00bb22"},
+                    "x86_64": {"1.33": "ami-00cc33"},
+                },
+                "ap-northeast-1": {
+                    "arm64": {"1.33": "ami-99cc33", "1.34": "ami-99dd44"},
+                },
+            },
+            "cves_addressed": ["CVE-2026-31431"],
+        }
+
+    def test_collapses_to_build_region_only(self):
+        lines = eks_ami.build_slack_digest_env_lines(self._manifest(), "us-east-1")
+        digest_line = next(l for l in lines if l.startswith("export AMI_DIGEST="))
+                                                                                  
+        digest = digest_line[len("export AMI_DIGEST='"):-len("'")]
+                                                                                  
+                                                          
+        self.assertIn("\n", digest, "digest must use real newlines (orb sanitizes them to JSON \\n)")
+        self.assertNotIn(r"\n", digest, "must not contain literal backslash-n; orb would double the backslash")
+                                                            
+        self.assertNotIn("ami-99cc33", digest, "other-region AMIs must not appear")
+                                          
+        chunks = digest.split("\n")
+        self.assertEqual(chunks, [
+            "\u2022 arm64 k8s 1.33 \u2192 `ami-00aa11`",
+            "\u2022 arm64 k8s 1.34 \u2192 `ami-00bb22`",
+            "\u2022 x86_64 k8s 1.33 \u2192 `ami-00cc33`",
+        ])
+
+    def test_other_exports(self):
+        lines = eks_ami.build_slack_digest_env_lines(self._manifest(), "us-east-1")
+        self.assertIn("export AMI_BUILD_DATE='2026-05-25T08:30:00Z'", lines)
+        self.assertIn("export AMI_CVES='CVE-2026-31431'", lines)
+
+    def test_empty_region_yields_placeholder(self):
+        lines = eks_ami.build_slack_digest_env_lines(self._manifest(), "eu-west-1")
+        self.assertIn("export AMI_DIGEST='(no AMIs found in build_region)'", lines)
+
+    def test_empty_cves_renders_none(self):
+        m = self._manifest()
+        m["cves_addressed"] = []
+        lines = eks_ami.build_slack_digest_env_lines(m, "us-east-1")
+        self.assertIn("export AMI_CVES='none'", lines)
+
+    def test_cli_round_trip(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "manifest.json"
+            write_json(path, self._manifest())
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = eks_ami.main([
+                    "slack-digest", str(path),
+                    "--build-region", "us-east-1",
+                ])
+            self.assertEqual(rc, 0)
+            out = buf.getvalue()
+            self.assertIn("export AMI_DIGEST='", out)
+            self.assertIn("export AMI_BUILD_DATE='2026-05-25T08:30:00Z'", out)
+                                                                                       
+                                                                                       
+                                                                                       
+            digest_block = out.split("export AMI_BUILD_DATE")[0]
+            self.assertGreaterEqual(
+                digest_block.count("\n"), 2,
+                "digest must span multiple real lines so the slack orb sanitises them to JSON \\n",
+            )
+            self.assertNotIn(r"\n", digest_block, "no literal backslash-n in CLI output")
+
+    def test_cli_missing_manifest_returns_2(self):
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            rc = eks_ami.main(["slack-digest", "/no/such/path", "--build-region", "us-east-1"])
+        self.assertEqual(rc, 2)
+        self.assertIn("manifest not found", buf.getvalue())
+
 class TestSmallHelpers(unittest.TestCase):
     def test_parse_csv(self):
         self.assertEqual(eks_ami.parse_csv(""), [])
