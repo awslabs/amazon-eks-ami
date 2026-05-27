@@ -201,7 +201,7 @@ func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.Glo
 	log.Info("Instance details populated", zap.Reflect("details", instanceDetails))
 	log.Info("Fetching default options...")
 	cfg.Status.Defaults = api.DefaultOptions{
-		SandboxImage: "localhost/kubernetes/pause",
+		SandboxImage: "localhost/kubernetes/pause:latest",
 	}
 	log.Info("Default options populated", zap.Reflect("defaults", cfg.Status.Defaults))
 	return nil

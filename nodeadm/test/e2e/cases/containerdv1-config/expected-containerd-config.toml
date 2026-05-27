@@ -8,7 +8,7 @@ address = '/run/foo/foo.sock'
 [plugins]
 [plugins.'io.containerd.grpc.v1.cri']
 enable_cdi = true
-sandbox_image = 'localhost/kubernetes/pause'
+sandbox_image = 'localhost/kubernetes/pause:latest'
 
 [plugins.'io.containerd.grpc.v1.cri'.cni]
 bin_dir = '/opt/cni/bin'
