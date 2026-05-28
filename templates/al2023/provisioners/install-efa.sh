@@ -21,8 +21,9 @@ if [[ "${PARTITION}" =~ ^aws-iso ]]; then
   EFA_URL="https://aws-efa-installer.s3.${AWS_REGION}.${AWS_DOMAIN}"
 fi
 
-mkdir -p /tmp/efa-installer
-cd /tmp/efa-installer
+EFA_INSTALL_DIR="${WORKING_DIR}/efa-installer"
+mkdir -p "${EFA_INSTALL_DIR}"
+cd "${EFA_INSTALL_DIR}"
 
 #https://github.com/amazonlinux/amazon-linux-2023/issues/243
 sudo dnf swap -y gnupg2-minimal gnupg2-full
@@ -52,5 +53,5 @@ tar -xf ${EFA_PACKAGE} && cd aws-efa-installer
 sudo ./efa_installer.sh --minimal -y
 
 cd -
-sudo rm -rf /tmp/efa-installer
+sudo rm -rf "${EFA_INSTALL_DIR}"
 sudo dnf swap -y gnupg2-full gnupg2-minimal
