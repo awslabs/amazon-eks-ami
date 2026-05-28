@@ -78,6 +78,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           ref: 'main'
+      # https://github.com/actions/checkout/issues/2437
+      - run: git config --global maintenance.auto false
       - uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # 6.1.1
         with:
           aws-region: ${{ secrets.AWS_REGION }}
