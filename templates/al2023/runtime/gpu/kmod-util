@@ -21,7 +21,6 @@ for path in /usr/bin/depmod /usr/sbin/depmod; do
   fi
 done
 
-
 DKMS_ARCHIVE_DIR=/var/lib/dkms-archive
 
 function log() {

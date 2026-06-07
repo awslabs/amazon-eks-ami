@@ -21,7 +21,7 @@ NVIDIA_GRID_SUBDEVICES=(
 )
 
 # Read instance type from DMI sysfs data (available without network)
-INSTANCE_TYPE=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || echo "unknown")
+INSTANCE_TYPE=$(cat /sys/devices/virtual/dmi/id/product_name 2> /dev/null || echo "unknown")
 
 # return the path of the file containing devices supported by the nvidia-open kmod
 # fail if the expected file doesn't exist

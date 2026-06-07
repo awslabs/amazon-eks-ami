@@ -287,7 +287,7 @@ if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -ge "580" ]]; then
 fi
 
 sudo sed -i -e 's/^After=network-online.target/After=nvidia-kmod-load.service/' \
-       -e 's/^Requires=network-online.target/Requires=nvidia-kmod-load.service/' \
+  -e 's/^Requires=network-online.target/Requires=nvidia-kmod-load.service/' \
   /usr/lib/systemd/system/nvidia-fabricmanager.service
 sudo systemctl daemon-reload
 
