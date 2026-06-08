@@ -286,10 +286,5 @@ if [[ "$NVIDIA_DRIVER_MAJOR_VERSION" -ge "580" ]]; then
     "xorg-x11-nvidia-${NVIDIA_DRIVER_FULL_VERSION}"
 fi
 
-sudo sed -i -e 's/^After=network-online.target/After=nvidia-kmod-load.service/' \
-  -e 's/^Requires=network-online.target/Requires=nvidia-kmod-load.service/' \
-  /usr/lib/systemd/system/nvidia-fabricmanager.service
-sudo systemctl daemon-reload
-
 sudo systemctl enable nvidia-fabricmanager
 sudo systemctl enable nvidia-persistenced
