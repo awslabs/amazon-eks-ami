@@ -22,6 +22,7 @@ func TestCalcMaxPods(t *testing.T) {
 		customExpression string
 		defaultENIs      int
 		ipsPerENI        int
+		isIPv6           bool
 		expectedValue    int32
 	}{
 		{
@@ -57,6 +58,21 @@ func TestCalcMaxPods(t *testing.T) {
 			ipsPerENI:        6,
 			expectedValue:    17,
 		},
+		{
+			// IPv6 should return default max pods (110) regardless of ENI/IP count
+			defaultENIs:   3,
+			ipsPerENI:     6,
+			isIPv6:        true,
+			expectedValue: 110,
+		},
+		{
+			// IPv6 with custom expression should use 110 as the standard base
+			customExpression: "max_pods",
+			defaultENIs:      3,
+			ipsPerENI:        6,
+			isIPv6:           true,
+			expectedValue:    110,
+		},
 	}
 	for _, test := range tests {
 		instanceInfo := util.InstanceInfo{
@@ -64,7 +80,7 @@ func TestCalcMaxPods(t *testing.T) {
 			DefaultMaxENIs:            int32(test.defaultENIs),
 			Ipv4AddressesPerInterface: int32(test.ipsPerENI),
 		}
-		val := CalcMaxPods(instanceInfo, test.customExpression)
+		val := CalcMaxPods(instanceInfo, test.customExpression, test.isIPv6)
 		assert.Equal(t, test.expectedValue, val)
 	}
 	cachedInstanceInfoBytes = initialCacheContents

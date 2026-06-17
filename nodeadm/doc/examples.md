@@ -168,7 +168,7 @@ as a [CEL](https://cel.dev/overview/cel-overview) expression with three variable
 
 * `default_enis` - the maximum number of network interfaces attachable on the default network card
 * `ips_per_eni` - the maximum number of IPv4 addresses attachable to a single interface
-* `max_pods` - the standard `maxPods` for the current instance type. This can be equivalently expressed in CEL as `(default_enis * (ips_per_eni - 1)) + 2`
+* `max_pods` - the standard `maxPods` for the current instance type. For IPv4 clusters, this can be equivalently expressed in CEL as `(default_enis * (ips_per_eni - 1)) + 2`. For IPv6 clusters, this is always 110 since the IP count per ENI is not a constraint.
 
 ⚠️ **Note**: These values will vary between instance types and may require `ec2:DescribeInstanceTypes` API calls. Expressions should be tested to confirm desired outputs before final use in the intended environment.
 
