@@ -17,7 +17,8 @@ By default, the maximum number of pods able to be scheduled on a node is based o
 available, which is determined by the instance type. Larger instances generally have more ENIs. The
 number of ENIs limits how many IPv4 addresses are available on an instance, and
 we need one IP address per pod. For IPv6 clusters, the IP count per ENI is not a constraint, so the
-default max pods value is 110 (the kubelet default). You can reference [this file](https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/internal/kubelet/eni_max_pods.go)
+max pods value is `max(110, ENI-formula)` — small instances get at least 110 pods while large
+instances keep their higher ENI-based value. You can reference [this file](https://github.com/awslabs/amazon-eks-ami/blob/main/nodeadm/internal/kubelet/eni_max_pods.go)
 for the code that generates these values.
 
 As an optimization, the default values for all known instance types are cached in the AMI. If an

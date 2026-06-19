@@ -59,19 +59,42 @@ func TestCalcMaxPods(t *testing.T) {
 			expectedValue:    17,
 		},
 		{
-			// IPv6 should return default max pods (110) regardless of ENI/IP count
+			// IPv6 small instance: ENI formula (17) < 110, so use 110
 			defaultENIs:   3,
 			ipsPerENI:     6,
 			isIPv6:        true,
 			expectedValue: 110,
 		},
 		{
-			// IPv6 with custom expression should use 110 as the standard base
+			// IPv6 large instance: ENI formula (737) > 110, so keep 737
+			defaultENIs:   15,
+			ipsPerENI:     50,
+			isIPv6:        true,
+			expectedValue: 737,
+		},
+		{
+			// IPv6 with custom expression should use max(110, ENI-formula) as the base
 			customExpression: "max_pods",
 			defaultENIs:      3,
 			ipsPerENI:        6,
 			isIPv6:           true,
 			expectedValue:    110,
+		},
+		{
+			// IPv6 custom expression can still reference ENI vars directly
+			customExpression: "(default_enis * (ips_per_eni - 1)) + 2",
+			defaultENIs:      3,
+			ipsPerENI:        6,
+			isIPv6:           true,
+			expectedValue:    17,
+		},
+		{
+			// IPv6 custom expression using ENI vars on a large instance
+			customExpression: "default_enis * ips_per_eni",
+			defaultENIs:      15,
+			ipsPerENI:        50,
+			isIPv6:           true,
+			expectedValue:    750,
 		},
 	}
 	for _, test := range tests {

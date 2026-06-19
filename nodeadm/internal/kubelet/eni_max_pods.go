@@ -57,16 +57,18 @@ func GetInstanceInfo(ctx context.Context, awsRegion string, instanceType string)
 //
 //	# of ENI on default network card * (# of IPv4 per ENI - 1) + 2
 //
-// For IPv6 clusters, the IP count per ENI is not a constraint, so the default
-// max pods value (110) is used instead of the ENI-based calculation.
+// For IPv6 clusters, the IP count per ENI is not a constraint, so the result
+// is max(110, ENI-formula) — small instances get at least 110 while large
+// instances keep their higher ENI-based value.
 //
 // TODO: isolate this into a public-facing package for external use by other projects
 func CalcMaxPods(instanceInfo util.InstanceInfo, customExpression string, isIPv6 bool) int32 {
 	var standardMaxPods int32
+	eniMaxPods := calculateStandardMaxPods(instanceInfo)
 	if isIPv6 {
-		standardMaxPods = defaultMaxPods
+		standardMaxPods = max(defaultMaxPods, eniMaxPods)
 	} else {
-		standardMaxPods = calculateStandardMaxPods(instanceInfo)
+		standardMaxPods = eniMaxPods
 	}
 	if len(customExpression) == 0 {
 		return standardMaxPods
