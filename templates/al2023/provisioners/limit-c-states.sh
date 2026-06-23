@@ -8,6 +8,4 @@ if [ "$ENABLE_EFA" != "true" ]; then
 fi
 
 echo "Limiting deeper C-states"
-sudo grubby \
-  --update-kernel=ALL \
-  --args="intel_idle.max_cstate=1 processor.max_cstate=1"
+set-kernel-arg "intel_idle.max_cstate=1 processor.max_cstate=1"

@@ -6,6 +6,4 @@ set -o errexit
 
 # use the tsc clocksource by default
 # https://repost.aws/knowledge-center/manage-ec2-linux-clock-source
-sudo grubby \
-  --update-kernel=ALL \
-  --args="clocksource=tsc tsc=reliable"
+set-kernel-arg "clocksource=tsc tsc=reliable"
