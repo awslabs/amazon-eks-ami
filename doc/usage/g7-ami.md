@@ -39,7 +39,7 @@ aws eks create-nodegroup \
 
 ### Using the custom AMI with Karpenter
 
-If you use Karpenter, create a dedicated EC2NodeClass and NodePool constrained to G7 instances. Do not add G7 to an existing NodePool that uses the default EKS GPU AMI.
+If you use Karpenter, create a dedicated EC2NodeClass and NodePool for instances using this AMI. Do not use this AMI with P3, P3dn, or G6f instances.
 
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
@@ -87,4 +87,3 @@ The output should show driver version 595.x and detect the RTX PRO 4500 GPU.
 
 - Driver 595 is not compatible with P3, P3dn, and G6f instances
 - Driver 595 has known issues with EFA on GB200 instances
-- Bottlerocket does not currently support G7 instances
