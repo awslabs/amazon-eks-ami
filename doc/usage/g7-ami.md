@@ -23,7 +23,7 @@ make k8s=1.32 os_distro=al2023 enable_accelerator=nvidia enable_efa=true nvidia_
 
 This produces an AMI with NVIDIA 595 drivers suitable for G7 instances. The build pulls the driver from the [NVIDIA CUDA repository for AL2023](https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/).
 
-The build takes approximately 15-25 minutes and outputs the AMI ID upon completion.
+The build takes approximately 45-60 minutes and outputs the AMI ID upon completion.
 
 ### Using the custom AMI with a managed node group
 
