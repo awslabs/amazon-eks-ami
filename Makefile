@@ -32,10 +32,10 @@ ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
 ifeq ($(arch), arm64)
-	instance_type ?= m6g.large
+	instance_type ?= m6g.xlarge
 	AMI_VARIANT := $(AMI_VARIANT)-arm64
 else
-	instance_type ?= m5.large
+	instance_type ?= m5.xlarge
 endif
 ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
