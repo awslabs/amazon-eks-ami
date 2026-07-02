@@ -1,3 +1,5 @@
 {
+    "enable_nvidia_gdrcopy_driver": "true",
+    "nvidia_gdrcopy_driver_version": "2.5.2",
     "source_ami_filter_name": "al2023-ami-minimal-2023.*-kernel-6.12-*"
 }

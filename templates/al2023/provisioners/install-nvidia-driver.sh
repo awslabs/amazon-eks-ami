@@ -144,6 +144,10 @@ function archive-open-kmods() {
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
 
+  if [[ "$ENABLE_NVIDIA_GDRCOPY_DRIVER" == "true" ]]; then
+    archive-gdrdrv-kmod
+  fi
+
   sudo kmod-util remove nvidia-open
 
   sudo dnf -y remove --all nvidia-driver
@@ -221,6 +225,40 @@ function archive-proprietary-kmod() {
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
+}
+
+function archive-gdrdrv-kmod() {
+  local EXTRACT_DIR
+  local GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR
+  local GDRDRV_SRC_DIR
+  local MODULE_SUBDIR
+
+  EXTRACT_DIR=$(mktemp -d)
+  GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR="${EXTRACT_DIR}/gdrcopy-${NVIDIA_GDRCOPY_DRIVER_VERSION}"
+  GDRDRV_SRC_DIR="/usr/src/gdrdrv-${NVIDIA_GDRCOPY_DRIVER_VERSION}"
+  MODULE_SUBDIR="/kernel/drivers/misc/"
+
+  echo "Archiving gdrdrv kmod"
+
+  curl -L https://github.com/NVIDIA/gdrcopy/archive/refs/tags/v${NVIDIA_GDRCOPY_DRIVER_VERSION}.tar.gz | tar -xz -C $EXTRACT_DIR
+
+  sudo mkdir -p $GDRDRV_SRC_DIR
+
+  sudo cp -r ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/src/gdrdrv/* $GDRDRV_SRC_DIR/
+  sudo cp ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/packages/dkms.conf "${GDRDRV_SRC_DIR}/dkms.conf"
+  sudo cp -r ${GDRCOPY_DRIVER_INSTALLATION_TEMP_DIR}/scripts $GDRDRV_SRC_DIR/
+
+  sudo sed -i "s/@FULL_VERSION@/${NVIDIA_GDRCOPY_DRIVER_VERSION}/g" "${GDRDRV_SRC_DIR}/dkms.conf"
+  sudo sed -i "s/@VERSION@/${NVIDIA_GDRCOPY_DRIVER_VERSION}/g" "${GDRDRV_SRC_DIR}/dkms.conf"
+  sudo sed -i "s|@MODULE_LOCATION@|${MODULE_SUBDIR}|g" "${GDRDRV_SRC_DIR}/dkms.conf"
+
+  sudo dkms add -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
+  sudo dkms build -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
+  sudo dkms install -m gdrdrv -v $NVIDIA_GDRCOPY_DRIVER_VERSION
+
+  sudo kmod-util archive gdrdrv
+  sudo kmod-util remove gdrdrv
+  sudo rm -rf /usr/src/gdrdrv-*
 }
 
 archive-grid-kmod
