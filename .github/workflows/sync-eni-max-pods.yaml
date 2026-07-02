@@ -18,7 +18,7 @@ jobs:
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_ENI_MAX_PODS }}
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # 7.0.0
         with:
           repository: awslabs/amazon-eks-ami
           ref: refs/heads/main
