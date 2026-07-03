@@ -219,6 +219,7 @@ sudo mv $ECR_CREDENTIAL_PROVIDER_BINARY /etc/eks/image-credential-provider/
 
 sudo dnf install -y soci-snapshotter
 sudo systemctl enable soci-snapshotter.socket
+sudo systemctl enable ebs-initialize-bin@soci-snapshotter-grpc
 
 ################################################################################
 ### SSM Agent ##################################################################
