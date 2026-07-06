@@ -45,7 +45,7 @@ maybe_raid() {
   local array_mount_point="${MNT_DIR}/0"
   mkdir -p "$(dirname "${md_config}")"
 
-  if [[ ! -s "${md_config}" ]]; then
+  if [[ ! -s "${md_config}" ]] || ! mdadm --detail --scan 2>/dev/null | grep -q "ARRAY"; then
     mdadm --create --force --verbose \
       "${md_device}" \
       --level="${raid_level}" \
