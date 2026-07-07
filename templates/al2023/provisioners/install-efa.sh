@@ -57,11 +57,9 @@ sudo rm -rf "${EFA_INSTALL_DIR}"
 sudo dnf swap -y gnupg2-full gnupg2-minimal
 
 ##########################################################################################
-### Remove NVIDIA peer memory modules-load drop-in on non-NVIDIA AMIs ####################
-### The EFA installer adds /etc/modules-load.d/efa_nv_peermem.conf, which tries to load ##
-### the nvidia kmod at boot. On non-NVIDIA AMIs there is no nvidia driver resulting in  ##
-### load failure                                                                        ##
+### Erase efa-nv-peermem on non-NVIDIA AMIs. It owns efa_nv_peermem.conf and loads the  ##
+### nvidia kmod at boot, which fails where there is no nvidia driver.                    ##
 ##########################################################################################
 if [ "${ENABLE_ACCELERATOR:-}" != "nvidia" ]; then
-  sudo rm -f /etc/modules-load.d/efa_nv_peermem.conf
+  sudo rpm -e --nodeps efa-nv-peermem 2>/dev/null || true
 fi
