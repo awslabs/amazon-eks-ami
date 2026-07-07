@@ -28,9 +28,9 @@ sudo rm -rf \
 
 # Stop auditd before purging: a blind rm against a running auditd leaves the held
 # inode in place, so build-time AVC denials ship in the AMI.
-sudo service auditd stop 2>/dev/null || true
-sudo truncate -s0 /var/log/audit/audit.log 2>/dev/null || true
-sudo rm -f /var/log/audit/audit.log.* 2>/dev/null || true
-sudo service auditd start 2>/dev/null || true
+sudo service auditd stop 2> /dev/null || true
+sudo truncate -s0 /var/log/audit/audit.log 2> /dev/null || true
+sudo rm -f /var/log/audit/audit.log.* 2> /dev/null || true
+sudo service auditd start 2> /dev/null || true
 
 sudo touch /etc/machine-id

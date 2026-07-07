@@ -61,5 +61,5 @@ sudo dnf swap -y gnupg2-full gnupg2-minimal
 ### nvidia kmod at boot, which fails where there is no nvidia driver.                    ##
 ##########################################################################################
 if [ "${ENABLE_ACCELERATOR:-}" != "nvidia" ]; then
-  sudo rpm -e --nodeps efa-nv-peermem 2>/dev/null || true
+  sudo rpm -e --nodeps efa-nv-peermem 2> /dev/null || true
 fi
