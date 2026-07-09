@@ -86,6 +86,7 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `localStorage` _[LocalStorageOptions](#localstorageoptions)_ |  |
+| `storage` _[StorageOptions](#storageoptions)_ |  |
 | `environment` _[EnvironmentOptions](#environmentoptions)_ |  |
 | `network` _[NetworkOptions](#networkoptions)_ |  |
 
@@ -165,3 +166,28 @@ _Appears in:_
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
 | `featureGates` _object (keys:[Feature](#feature), values:boolean)_ | FeatureGates holds key-value pairs to enable or disable application features. |
+
+#### StorageOptions
+
+StorageOptions configures additional EBS volumes to be mounted for
+container runtime directories such as /var/lib/containerd.
+
+_Appears in:_
+- [InstanceOptions](#instanceoptions)
+
+| Field | Description |
+| --- | --- |
+| `volumes` _[VolumeMount](#volumemount) array_ | Volumes is a list of EBS volumes to format and mount on the node. |
+
+#### VolumeMount
+
+VolumeMount specifies an EBS volume device and where it should be mounted.
+
+_Appears in:_
+- [StorageOptions](#storageoptions)
+
+| Field | Description |
+| --- | --- |
+| `device` _string_ | Device is the block device path (e.g., "/dev/xvdb"). |
+| `mountTargets` _string array_ | MountTargets is the list of directories to bind-mount onto this volume.<br />For v1, only /var/lib/containerd is supported. |
+| `fsType` _string_ | FsType is the filesystem type to format the volume with.<br />Defaults to "xfs" if unspecified. |

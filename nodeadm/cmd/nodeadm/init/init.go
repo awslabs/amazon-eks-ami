@@ -141,6 +141,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		log.Info("Setting up system run aspects...")
 		runAspects := []system.SystemAspect{
 			system.NewMarkerAspect(),
+			system.NewEBSStorageAspect(),
 			system.NewLocalDiskAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, runAspects); err != nil {
