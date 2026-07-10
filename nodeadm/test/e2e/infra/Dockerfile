@@ -7,7 +7,8 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG CONTAINERD_VERSION
 RUN yum install -y --allowerasing curl && yum clean all
 RUN dnf -y update && \
-    dnf -y install systemd jq python3 awscli nmap-ncat iptables tar procps && \
+    dnf -y install systemd jq awscli nmap-ncat iptables tar procps git && \
+    dnf -y install python3-3.9.24-1.amzn2023.0.4 python3-libs-3.9.24-1.amzn2023.0.4 --allowerasing && \
     dnf clean all
 # TO-DO: install containerd v2 from AL repo as well once it is available
 RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
