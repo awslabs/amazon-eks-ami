@@ -56691,6 +56691,23 @@ func awsEc2query_serializeDocumentFleetEbsBlockDeviceRequest(v *types.FleetEbsBl
 	return nil
 }
 
+func awsEc2query_serializeDocumentFleetIamInstanceProfileSpecificationRequest(v *types.FleetIamInstanceProfileSpecificationRequest, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.Arn != nil {
+		objectKey := object.Key("Arn")
+		objectKey.String(*v.Arn)
+	}
+
+	if v.Name != nil {
+		objectKey := object.Key("Name")
+		objectKey.String(*v.Name)
+	}
+
+	return nil
+}
+
 func awsEc2query_serializeDocumentFleetIdSet(v []string, value query.Value) error {
 	if len(v) == 0 {
 		return nil
@@ -56701,6 +56718,28 @@ func awsEc2query_serializeDocumentFleetIdSet(v []string, value query.Value) erro
 		av := array.Value()
 		av.String(v[i])
 	}
+	return nil
+}
+
+func awsEc2query_serializeDocumentFleetInstanceMetadataOptionsRequest(v *types.FleetInstanceMetadataOptionsRequest, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if len(v.HttpEndpoint) > 0 {
+		objectKey := object.Key("HttpEndpoint")
+		objectKey.String(string(v.HttpEndpoint))
+	}
+
+	if v.HttpPutResponseHopLimit != nil {
+		objectKey := object.Key("HttpPutResponseHopLimit")
+		objectKey.Integer(*v.HttpPutResponseHopLimit)
+	}
+
+	if len(v.HttpTokens) > 0 {
+		objectKey := object.Key("HttpTokens")
+		objectKey.String(string(v.HttpTokens))
+	}
+
 	return nil
 }
 
@@ -56776,6 +56815,13 @@ func awsEc2query_serializeDocumentFleetLaunchTemplateOverridesRequest(v *types.F
 		}
 	}
 
+	if v.IamInstanceProfile != nil {
+		objectKey := object.Key("IamInstanceProfile")
+		if err := awsEc2query_serializeDocumentFleetIamInstanceProfileSpecificationRequest(v.IamInstanceProfile, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.ImageId != nil {
 		objectKey := object.Key("ImageId")
 		objectKey.String(*v.ImageId)
@@ -56793,9 +56839,21 @@ func awsEc2query_serializeDocumentFleetLaunchTemplateOverridesRequest(v *types.F
 		objectKey.String(string(v.InstanceType))
 	}
 
+	if v.KeyName != nil {
+		objectKey := object.Key("KeyName")
+		objectKey.String(*v.KeyName)
+	}
+
 	if v.MaxPrice != nil {
 		objectKey := object.Key("MaxPrice")
 		objectKey.String(*v.MaxPrice)
+	}
+
+	if v.MetadataOptions != nil {
+		objectKey := object.Key("MetadataOptions")
+		if err := awsEc2query_serializeDocumentFleetInstanceMetadataOptionsRequest(v.MetadataOptions, objectKey); err != nil {
+			return err
+		}
 	}
 
 	if v.Placement != nil {
@@ -56883,6 +56941,11 @@ func awsEc2query_serializeDocumentFleetLaunchTemplateSpecificationRequest(v *typ
 	if v.LaunchTemplateName != nil {
 		objectKey := object.Key("LaunchTemplateName")
 		objectKey.String(*v.LaunchTemplateName)
+	}
+
+	if v.LaunchTemplateSpecificationUserData != nil {
+		objectKey := object.Key("LaunchTemplateSpecificationUserData")
+		objectKey.String(*v.LaunchTemplateSpecificationUserData)
 	}
 
 	if v.Version != nil {
@@ -70582,6 +70645,11 @@ func awsEc2query_serializeOpDocumentCreateReplaceRootVolumeTaskInput(v *CreateRe
 		if err := awsEc2query_serializeDocumentTagSpecificationList(v.TagSpecifications, objectKey); err != nil {
 			return err
 		}
+	}
+
+	if v.VolumeId != nil {
+		objectKey := object.Key("VolumeId")
+		objectKey.String(*v.VolumeId)
 	}
 
 	if v.VolumeInitializationRate != nil {

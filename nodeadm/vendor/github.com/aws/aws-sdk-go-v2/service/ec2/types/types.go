@@ -3568,6 +3568,18 @@ type CreateFleetError struct {
 // Describes the instances that were launched by the fleet.
 type CreateFleetInstance struct {
 
+	// The name of the Availability Zone in which the instance was launched. For
+	// example, us-east-2a .
+	//
+	// Supported only for fleets of type instant .
+	AvailabilityZone *string
+
+	// The ID of the Availability Zone in which the instance was launched. For
+	// example, use2-az1 .
+	//
+	// Supported only for fleets of type instant .
+	AvailabilityZoneId *string
+
 	// The IDs of the instances.
 	InstanceIds []string
 
@@ -3586,6 +3598,11 @@ type CreateFleetInstance struct {
 	// The value is windows for Windows instances in an EC2 Fleet. Otherwise, the
 	// value is blank.
 	Platform PlatformValues
+
+	// The ID of the subnet in which the instance was launched.
+	//
+	// Supported only for fleets of type instant .
+	SubnetId *string
 
 	noSmithyDocumentSerde
 }
@@ -6548,6 +6565,49 @@ type FleetEbsBlockDeviceRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Describes an IAM instance profile. Supported only for fleets of type instant .
+type FleetIamInstanceProfileSpecificationRequest struct {
+
+	// The Amazon Resource Name (ARN) of the instance profile.
+	Arn *string
+
+	// The name of the instance profile.
+	Name *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the metadata options for the instances. Supported only for fleets of
+// type instant .
+type FleetInstanceMetadataOptionsRequest struct {
+
+	// Enables or disables the HTTP metadata endpoint on your instances.
+	//
+	//   - enabled - The HTTP metadata endpoint is enabled.
+	//
+	//   - disabled - The HTTP metadata endpoint is disabled.
+	HttpEndpoint FleetInstanceMetadataEndpointState
+
+	// The desired HTTP PUT response hop limit for instance metadata requests. The
+	// larger the number, the further instance metadata requests can travel.
+	//
+	// Default: 1
+	//
+	// Possible values: Integers from 1 to 64
+	HttpPutResponseHopLimit *int32
+
+	// Indicates whether IMDSv2 is required.
+	//
+	//   - optional - IMDSv2 is optional, which means that you can use either IMDSv2 or
+	//   IMDSv1.
+	//
+	//   - required - IMDSv2 is required, which means that IMDSv1 is disabled, and you
+	//   must use IMDSv2.
+	HttpTokens FleetHttpTokensState
+
+	noSmithyDocumentSerde
+}
+
 // Describes a launch template and overrides.
 type FleetLaunchTemplateConfig struct {
 
@@ -6729,6 +6789,15 @@ type FleetLaunchTemplateOverridesRequest struct {
 	// [Block device mappings for volumes on Amazon EC2 instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 	BlockDeviceMappings []FleetBlockDeviceMappingRequest
 
+	// The IAM instance profile to associate with the instances.
+	//
+	// Supported only for fleets of type instant .
+	//
+	// For more information, see [IAM roles for Amazon EC2] in the Amazon EC2 User Guide.
+	//
+	// [IAM roles for Amazon EC2]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+	IamInstanceProfile *FleetIamInstanceProfileSpecificationRequest
+
 	// The ID of the AMI in the format ami-17characters00000 .
 	//
 	// Alternatively, you can specify a Systems Manager parameter, using one of the
@@ -6776,6 +6845,15 @@ type FleetLaunchTemplateOverridesRequest struct {
 	// If you specify InstanceType , you can't specify InstanceRequirements .
 	InstanceType InstanceType
 
+	// The name of the key pair to use for the instances.
+	//
+	// Supported only for fleets of type instant .
+	//
+	// For more information, see [Amazon EC2 key pairs] in the Amazon EC2 User Guide.
+	//
+	// [Amazon EC2 key pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
+	KeyName *string
+
 	// The maximum price per unit hour that you are willing to pay for a Spot
 	// Instance. We do not recommend using this parameter because it can lead to
 	// increased interruptions. If you do not specify this parameter, you will pay the
@@ -6787,6 +6865,15 @@ type FleetLaunchTemplateOverridesRequest struct {
 	// If you specify a maximum price, it must be more than USD $0.001. Specifying a
 	// value below USD $0.001 will result in an InvalidParameterValue error message.
 	MaxPrice *string
+
+	// The metadata options for the instances.
+	//
+	// Supported only for fleets of type instant .
+	//
+	// For more information, see [Configure the instance metadata service] in the Amazon EC2 User Guide.
+	//
+	// [Configure the instance metadata service]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+	MetadataOptions *FleetInstanceMetadataOptionsRequest
 
 	// The location where the instance launched, if applicable.
 	Placement *Placement
@@ -6881,6 +6968,12 @@ type FleetLaunchTemplateSpecificationRequest struct {
 	//
 	// You must specify the LaunchTemplateName or the LaunchTemplateId , but not both.
 	LaunchTemplateName *string
+
+	// The base64-encoded user data for instances launched by the fleet. User data is
+	// limited to 16 KB, in raw form, before it is base64-encoded.
+	//
+	// Supported only for fleets of type instant .
+	LaunchTemplateSpecificationUserData *string
 
 	// The launch template version number, $Latest , or $Default . You must specify a
 	// value, otherwise the request fails.
@@ -7763,6 +7856,10 @@ type Image struct {
 	// this image has public launch permissions or false if it has only implicit and
 	// explicit launch permissions.
 	Public *bool
+
+	// The name of the public Systems Manager parameter that resolves to this AMI,
+	// under the aws/service/ namespace.
+	PublicSsmParameterName *string
 
 	// The RAM disk associated with the image, if any. Only applicable for machine
 	// images.
