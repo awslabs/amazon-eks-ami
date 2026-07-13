@@ -82,7 +82,7 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
     for MODULE in "$ARCHIVE"/*; do
       CURRENT_MODULE_VERSION=$(basename "$MODULE" | sed -E 's/nvidia-(open-grid-|open-)?([0-9]+\.[0-9]+\.[0-9]+).*/\2/')
       if [[ -n "$NVIDIA_DRIVER_FULL_VERSION" ]] && [[ "$NVIDIA_DRIVER_FULL_VERSION" != "$CURRENT_MODULE_VERSION" ]]; then
-        echo "Mismatch in driver versions in dkms archive: saw $NVIDIA_DRIVER_FULL_VERSION and $CURRENT_VERSION"
+        echo "Mismatch in driver versions in dkms archive: saw $NVIDIA_DRIVER_FULL_VERSION and $CURRENT_MODULE_VERSION"
         ls --recursive /var/lib/dkms-archive/nvidia*
         exit 1
       else

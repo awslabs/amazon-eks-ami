@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+sudo rm -f /etc/update-motd.d/70-available-updates
+
 # Clean up dnf caches to reduce the image size
 sudo dnf clean all
 sudo rm -rf /var/cache/dnf
