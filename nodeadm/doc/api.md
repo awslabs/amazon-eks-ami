@@ -189,5 +189,5 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `device` _string_ | Device is the block device path (e.g., "/dev/xvdb"). |
-| `mountTargets` _string array_ | MountTargets is the list of directories to bind-mount onto this volume.<br />For v1, only /var/lib/containerd is supported. |
+| `mountTarget` _string_ | MountTarget is the directory to mount this volume on. |
 | `fsType` _string_ | FsType is the filesystem type to format the volume with.<br />Defaults to "xfs" if unspecified. |

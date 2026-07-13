@@ -18,6 +18,16 @@ LOOP_DEV=$(losetup -f --show /tmp/ebs-disk.img)
 # Update config to use the assigned loop device
 sed -i "s|/dev/loop0|${LOOP_DEV}|g" config.yaml
 
+# Mock lsblk to report EBS model for loopback devices
+cat > /mock/bin/lsblk << 'SCRIPT'
+#!/usr/bin/env bash
+if echo "$@" | grep -q "MODEL"; then
+  echo "Amazon Elastic Block Store"
+else
+  /usr/bin/lsblk "$@"
+fi
+SCRIPT
+chmod +x /mock/bin/lsblk
 nodeadm init --daemon="" --config-source file://config.yaml
 
 # Verify EBS mounted containerd via systemd

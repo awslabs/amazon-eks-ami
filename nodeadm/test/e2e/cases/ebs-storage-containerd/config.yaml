@@ -11,6 +11,5 @@ spec:
     storage:
       volumes:
         - device: "/dev/loop0"
-          mountTargets:
-            - /var/lib/containerd
+          mountTarget: /var/lib/containerd
           fsType: ext4

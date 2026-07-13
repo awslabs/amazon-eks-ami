@@ -108,9 +108,8 @@ type VolumeMount struct {
 	// Device is the block device path (e.g., "/dev/xvdb").
 	Device string `json:"device"`
 
-	// MountTargets is the list of directories to bind-mount onto this volume.
-	// For v1, only /var/lib/containerd is supported.
-	MountTargets []string `json:"mountTargets"`
+	// MountTarget is the directory to mount this volume on.
+	MountTarget string `json:"mountTarget"`
 
 	// FsType is the filesystem type to format the volume with.
 	// Defaults to "xfs" if unspecified.

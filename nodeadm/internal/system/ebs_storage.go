@@ -28,6 +28,15 @@ func (a *ebsStorageAspect) Setup(cfg *api.NodeConfig) error {
 		return nil
 	}
 
+	// Validate no duplicate mount targets across all volumes
+	seenTargets := make(map[string]string)
+	for _, vol := range cfg.Spec.Instance.Storage.Volumes {
+		if existingDevice, exists := seenTargets[vol.MountTarget]; exists {
+			return fmt.Errorf("duplicate mount target %s: configured for both %s and %s", vol.MountTarget, existingDevice, vol.Device)
+		}
+		seenTargets[vol.MountTarget] = vol.Device
+	}
+
 	for _, vol := range cfg.Spec.Instance.Storage.Volumes {
 		if err := a.setupVolume(vol); err != nil {
 			return fmt.Errorf("failed to setup EBS volume %s: %w", vol.Device, err)
@@ -42,6 +51,11 @@ func (a *ebsStorageAspect) setupVolume(vol api.VolumeMount) error {
 	// Validate device exists
 	if _, err := os.Stat(vol.Device); err != nil {
 		return fmt.Errorf("device %s does not exist: %w", vol.Device, err)
+	}
+
+	// Validate device is an EBS volume
+	if err := validateEBSDevice(vol.Device); err != nil {
+		return err
 	}
 
 	fsType := vol.FsType
@@ -69,10 +83,8 @@ func (a *ebsStorageAspect) setupVolume(vol api.VolumeMount) error {
 		return fmt.Errorf("failed to get UUID for %s: %w", vol.Device, err)
 	}
 
-	for _, target := range vol.MountTargets {
-		if err := a.setupMountTarget(log, devUUID, target, fsType); err != nil {
-			return fmt.Errorf("failed to setup mount target %s: %w", target, err)
-		}
+	if err := a.setupMountTarget(log, devUUID, vol.MountTarget, fsType); err != nil {
+		return fmt.Errorf("failed to setup mount target %s: %w", vol.MountTarget, err)
 	}
 	return nil
 }
@@ -234,4 +246,16 @@ func runCommand(name string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func validateEBSDevice(device string) error {
+	out, err := exec.Command("lsblk", device, "-o", "MODEL", "--noheadings").Output()
+	if err != nil {
+		return fmt.Errorf("failed to check device model for %s: %w", device, err)
+	}
+	model := strings.TrimSpace(string(out))
+	if model != "Amazon Elastic Block Store" {
+		return fmt.Errorf("device %s is not an EBS volume (model: %q)", device, model)
+	}
+	return nil
 }

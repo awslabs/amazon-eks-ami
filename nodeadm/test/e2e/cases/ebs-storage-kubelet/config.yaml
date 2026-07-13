@@ -11,6 +11,5 @@ spec:
     storage:
       volumes:
         - device: "/dev/loop0"
-          mountTargets:
-            - /var/lib/kubelet
+          mountTarget: /var/lib/kubelet
           fsType: ext4
