@@ -144,7 +144,7 @@ function archive-open-kmods() {
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
 
-  if [[ "$ENABLE_NVIDIA_GDRCOPY_DRIVER" == "true" ]]; then
+  if [[ "$ENABLE_NVIDIA_GDRCOPY_DRIVER" == "true" ]] && [[ -n "${NVIDIA_GDRCOPY_DRIVER_VERSION:-}" ]]; then
     archive-gdrdrv-kmod
   fi
 

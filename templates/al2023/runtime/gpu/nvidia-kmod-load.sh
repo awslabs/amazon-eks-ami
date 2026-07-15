@@ -127,6 +127,6 @@ echo "options nvidia NVreg_CoherentGPUMemoryMode=driver" > /etc/modprobe.d/40-ek
 kmod-util load "${MODULE_NAME}"
 
 if [ "${MODULE_NAME}" = "nvidia-open" ]; then
-  kmod-util load gdrdrv
+  kmod-util load gdrdrv || true
   load-gdrdrv-module
 fi
