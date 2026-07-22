@@ -1,0 +1,4 @@
+{
+    "enable_nvidia_gdrcopy_driver": "true",
+    "nvidia_gdrcopy_driver_version": "2.5.2"
+}
