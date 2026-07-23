@@ -8,7 +8,8 @@
   "containerd": {},
   "instance": {
     "localStorage": {},
-    "network": {}
+    "network": {},
+    "storage": {}
   },
   "kubelet": {}
 }
