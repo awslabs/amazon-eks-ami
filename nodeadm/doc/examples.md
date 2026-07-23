@@ -62,6 +62,63 @@ spec:
 The configuration objects will be merged in the order they appear in the MIME multi-part document, meaning the value in the lattermost configuration object will take precedence.
 
 ---
+
+## Overriding configuration with drop-in files
+
+On EKS AMIs, `nodeadm-run.service` is invoked with two configuration sources: user data and `/etc/eks/nodeadm.d/`.
+
+Any `NodeConfig` objects placed in `/etc/eks/nodeadm.d/` (as files with a `.yaml`, `.yml`, or `.json` extension) will be merged on top of the configuration provided via EC2 user data. Because drop-in files are evaluated *after* user data in the config source chain, **values set in `/etc/eks/nodeadm.d/` take precedence over values set in user data**.
+
+This is useful when you want to override a subset of the configuration for a specific instance or AMI (for example, from cloud-init or when building a custom AMI) without having to regenerate the full user data document. The directory is created for you during AMI build, so you can drop files into it directly.
+
+⚠️ **Note**: A drop-in file only needs to contain the fields you want to override — it does not need to be a complete `NodeConfig`. At least one source in **user data** must provide the required `cluster` fields, so drop-in files cannot be used on their own.
+
+For example, given the following user data:
+```
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: application/node.eks.aws
+
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  containerd:
+    baseRuntimeSpec:
+      process:
+        rlimits:
+          - type: RLIMIT_NOFILE
+            soft: 1024
+            hard: 1024
+
+--BOUNDARY--
+```
+
+And the following drop-in file at `/etc/eks/nodeadm.d/10-rlimits.yaml`:
+```yaml
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  containerd:
+    baseRuntimeSpec:
+      process:
+        rlimits:
+          - type: RLIMIT_NOFILE
+            soft: 65536
+            hard: 65536
+```
+
+The resulting configuration used by `nodeadm` will contain the `RLIMIT_NOFILE` values from the drop-in file (`65536`), overriding the values set in user data.
+
+---
 ## Using instance ID as node name
 
 When the `InstanceIdNodeName` feature gate is enabled, `nodeadm` will use the EC2 instance's ID (e.g. `i-abcdefg1234`) as the name of the `Node` object created by `kubelet`, instead of the EC2 instance's private DNS Name (e.g. `ip-192-168-1-1.ec2.internal`).
@@ -156,6 +213,8 @@ spec:
             soft: 1024
             hard: 1024
 ```
+
+This can be supplied in user data alongside the rest of your `NodeConfig`, or as a [drop-in file](#overriding-configuration-with-drop-in-files) under `/etc/eks/nodeadm.d/`.
 
 ---
 
