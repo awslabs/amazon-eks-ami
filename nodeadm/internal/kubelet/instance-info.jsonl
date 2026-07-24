@@ -346,7 +346,6 @@
 {"instanceType":"d3en.6xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15}
 {"instanceType":"d3en.8xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":20}
 {"instanceType":"d3en.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":3}
-{"instanceType":"dl1.24xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
 {"instanceType":"dl2q.24xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
 {"instanceType":"f2.12xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30}
 {"instanceType":"f2.48xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50}
