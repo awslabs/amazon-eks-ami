@@ -61,3 +61,8 @@ sudo systemctl enable \
 
 # create the drop-in config directory
 sudo mkdir -p /etc/eks/nodeadm.d/
+
+sudo systemctl stop containerd
+
+sudo systemctl enable ebs-initialize-bin@nodeadm
+sudo systemctl enable ebs-initialize-bin@nodeadm-internal

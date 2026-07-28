@@ -20,7 +20,8 @@ NVIDIA_GRID_SUBDEVICES=(
   "27b8:1737" # L4:L4-12Q
 )
 
-INSTANCE_TYPE=$(imds /latest/meta-data/instance-type)
+# Read instance type from DMI sysfs data (available without network)
+INSTANCE_TYPE=$(cat /sys/devices/virtual/dmi/id/product_name 2> /dev/null || echo "unknown")
 
 # return the path of the file containing devices supported by the nvidia-open kmod
 # fail if the expected file doesn't exist
@@ -101,4 +102,4 @@ esac
 # https://nvdam.widen.net/s/gpqp6wmz7s/cuda-whitepaper--cdmm-pdf
 echo "options nvidia NVreg_CoherentGPUMemoryMode=driver" > /etc/modprobe.d/40-eks-nvidia-openrm.conf
 
-kmod-util load "${MODULE_NAME}"
+kmod-util load "${MODULE_NAME}" true
