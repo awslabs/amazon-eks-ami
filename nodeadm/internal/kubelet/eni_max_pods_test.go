@@ -73,8 +73,11 @@ func TestCalcMaxPods(t *testing.T) {
 func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 	var tests = []struct {
 		expression          string
+		instanceType        string
 		defaultENIs         int
 		ipsPerENI           int
+		vcpus               int
+		memoryMiB           int64
 		standardMaxPods     int32
 		expectedValue       int32
 		expectErr           bool
@@ -134,6 +137,40 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			expectedValue:   9,
 		},
 		{
+			// regression: a 3-var-only expression evaluates identically with the new vars registered
+			expression:      "max_pods < 110 ? max_pods : 110",
+			standardMaxPods: 58,
+			expectedValue:   58,
+		},
+		{
+			// new: vcpus is usable (ternary equivalent of min(max_pods, vcpus * 10))
+			expression:      "(vcpus * 10) < max_pods ? (vcpus * 10) : max_pods",
+			vcpus:           2,
+			standardMaxPods: 58,
+			expectedValue:   20,
+		},
+		{
+			// new: memory_mib is usable
+			expression:      "(memory_mib / 1024) > 32 ? 110 : max_pods",
+			memoryMiB:       65536,
+			standardMaxPods: 58,
+			expectedValue:   110,
+		},
+		{
+			// new: instance_type string comparison is usable
+			expression:      "instance_type == 'm5.large' ? 29 : max_pods",
+			instanceType:    "m5.large",
+			standardMaxPods: 58,
+			expectedValue:   29,
+		},
+		{
+			// new: instance_type comparison falls through when it doesn't match
+			expression:      "instance_type == 'm5.large' ? 29 : max_pods",
+			instanceType:    "c5.large",
+			standardMaxPods: 58,
+			expectedValue:   58,
+		},
+		{
 			// false variable references should error
 			expression:          "default_enis + fake_variable",
 			expectErr:           true,
@@ -170,10 +207,16 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		instanceType := test.instanceType
+		if instanceType == "" {
+			instanceType = "fake-type1.xlarge"
+		}
 		val, err := evaluateCustomMaxPodsExpression(test.expression, util.InstanceInfo{
-			InstanceType:              "fake-type1.xlarge",
+			InstanceType:              instanceType,
 			DefaultMaxENIs:            int32(test.defaultENIs),
 			Ipv4AddressesPerInterface: int32(test.ipsPerENI),
+			VCpus:                     int32(test.vcpus),
+			MemoryMiB:                 test.memoryMiB,
 		}, test.standardMaxPods)
 		if test.expectErr {
 			assert.Error(t, err)
@@ -290,6 +333,7 @@ func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
 	}
+	var sawVCpusAndMemory bool
 	for s := bufio.NewScanner(bytes.NewReader(cachedInstanceInfoBytes)); s.Scan(); {
 		var instanceInfo util.InstanceInfo
 		if err := json.Unmarshal(s.Bytes(), &instanceInfo); err != nil {
@@ -300,5 +344,14 @@ func TestInstanceInfoLoadable(t *testing.T) {
 		assert.Greater(t, instanceInfo.Ipv4AddressesPerInterface, int32(0))
 		// we expect at least 2 pods for the host networking ones
 		assert.Greater(t, calculateStandardMaxPods(instanceInfo), int32(1))
+		// a modern instance type must carry the vcpus/memory_mib keys the CEL env now exposes;
+		// legacy supplemented types (addInstanceTypeSupplements) legitimately carry zeros, so
+		// we assert against a known type rather than every line
+		if instanceInfo.InstanceType == "m5.large" {
+			sawVCpusAndMemory = true
+			assert.Equal(t, int32(2), instanceInfo.VCpus)
+			assert.Equal(t, int64(8192), instanceInfo.MemoryMiB)
+		}
 	}
+	assert.True(t, sawVCpusAndMemory, "expected m5.large in instance-info.jsonl to verify vcpus/memoryMib keys are emitted")
 }

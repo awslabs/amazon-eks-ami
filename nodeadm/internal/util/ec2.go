@@ -16,6 +16,8 @@ type InstanceInfo struct {
 	InstanceType              string `json:"instanceType"`
 	DefaultMaxENIs            int32  `json:"defaultMaxENIs"`
 	Ipv4AddressesPerInterface int32  `json:"ipv4AddressesPerInterface"`
+	VCpus                     int32  `json:"vcpus"`
+	MemoryMiB                 int64  `json:"memoryMib"`
 }
 
 type EC2API interface {
@@ -46,10 +48,18 @@ func getInstanceInfoFromDescribeResponse(ec2Info types.InstanceTypeInfo) (Instan
 	if aws.ToInt32(defaultMaxENIs) <= 0 {
 		return InstanceInfo{}, fmt.Errorf("found a non-positive value for the maximum number of interfaces supported on the network card index %d for instance type %s: %d", aws.ToInt32(ec2Info.NetworkInfo.DefaultNetworkCardIndex), instanceType, aws.ToInt32(defaultMaxENIs))
 	}
+	if ec2Info.VCpuInfo == nil || ec2Info.VCpuInfo.DefaultVCpus == nil {
+		return InstanceInfo{}, fmt.Errorf("failed to find the number of default vCPUs for instance type %s", instanceType)
+	}
+	if ec2Info.MemoryInfo == nil || ec2Info.MemoryInfo.SizeInMiB == nil {
+		return InstanceInfo{}, fmt.Errorf("failed to find the memory size for instance type %s", instanceType)
+	}
 	return InstanceInfo{
 		InstanceType:              instanceType,
 		DefaultMaxENIs:            aws.ToInt32(defaultMaxENIs),
 		Ipv4AddressesPerInterface: ptr.ToInt32(ec2Info.NetworkInfo.Ipv4AddressesPerInterface),
+		VCpus:                     aws.ToInt32(ec2Info.VCpuInfo.DefaultVCpus),
+		MemoryMiB:                 aws.ToInt64(ec2Info.MemoryInfo.SizeInMiB),
 	}, nil
 }
 

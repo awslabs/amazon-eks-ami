@@ -18,9 +18,12 @@ import (
 )
 
 const (
-	defaultENIsVar = "default_enis"
-	ipsPerENIVar   = "ips_per_eni"
-	maxPodsVar     = "max_pods"
+	defaultENIsVar  = "default_enis"
+	ipsPerENIVar    = "ips_per_eni"
+	maxPodsVar      = "max_pods"
+	vcpusVar        = "vcpus"
+	memoryMiBVar    = "memory_mib"
+	instanceTypeVar = "instance_type"
 )
 
 // default value from kubelet
@@ -81,6 +84,9 @@ func evaluateCustomMaxPodsExpression(expression string, instanceInfo util.Instan
 		cel.Variable(defaultENIsVar, cel.IntType),
 		cel.Variable(ipsPerENIVar, cel.IntType),
 		cel.Variable(maxPodsVar, cel.IntType),
+		cel.Variable(vcpusVar, cel.IntType),
+		cel.Variable(memoryMiBVar, cel.IntType),
+		cel.Variable(instanceTypeVar, cel.StringType),
 	)
 	if err != nil {
 		return -1, fmt.Errorf("failed to create environment for custom max pods expression: %w", err)
@@ -97,9 +103,12 @@ func evaluateCustomMaxPodsExpression(expression string, instanceInfo util.Instan
 		return -1, fmt.Errorf("failed to form program from custom max pods expression: %w", err)
 	}
 	rawVal, _, err := program.Eval(map[string]interface{}{
-		defaultENIsVar: instanceInfo.DefaultMaxENIs,
-		ipsPerENIVar:   instanceInfo.Ipv4AddressesPerInterface,
-		maxPodsVar:     standardMaxPods,
+		defaultENIsVar:  instanceInfo.DefaultMaxENIs,
+		ipsPerENIVar:    instanceInfo.Ipv4AddressesPerInterface,
+		maxPodsVar:      standardMaxPods,
+		vcpusVar:        instanceInfo.VCpus,
+		memoryMiBVar:    instanceInfo.MemoryMiB,
+		instanceTypeVar: instanceInfo.InstanceType,
 	})
 	if castVal := rawVal.ConvertToType(cel.IntType); types.IsError(castVal) {
 		return -1, fmt.Errorf("could not interpret result \"%v\" from evaluation of custom max pods expression as an integer: %v", rawVal.Value(), castVal.Value())
