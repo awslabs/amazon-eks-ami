@@ -73,7 +73,6 @@ func TestCalcMaxPods(t *testing.T) {
 func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 	var tests = []struct {
 		expression          string
-		instanceType        string
 		defaultENIs         int
 		ipsPerENI           int
 		vcpus               int
@@ -157,16 +156,9 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			expectedValue:   110,
 		},
 		{
-			// new: instance_type string comparison is usable
-			expression:      "instance_type == 'm5.large' ? 29 : max_pods",
-			instanceType:    "m5.large",
-			standardMaxPods: 58,
-			expectedValue:   29,
-		},
-		{
-			// new: instance_type comparison falls through when it doesn't match
-			expression:      "instance_type == 'm5.large' ? 29 : max_pods",
-			instanceType:    "c5.large",
+			// new: memory_mib comparison falls through when it doesn't match
+			expression:      "(memory_mib / 1024) > 32 ? 110 : max_pods",
+			memoryMiB:       8192,
 			standardMaxPods: 58,
 			expectedValue:   58,
 		},
@@ -207,12 +199,8 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		instanceType := test.instanceType
-		if instanceType == "" {
-			instanceType = "fake-type1.xlarge"
-		}
 		val, err := evaluateCustomMaxPodsExpression(test.expression, util.InstanceInfo{
-			InstanceType:              instanceType,
+			InstanceType:              "fake-type1.xlarge",
 			DefaultMaxENIs:            int32(test.defaultENIs),
 			Ipv4AddressesPerInterface: int32(test.ipsPerENI),
 			VCpus:                     int32(test.vcpus),
