@@ -42,7 +42,7 @@ func TestGetInstanceInfo(t *testing.T) {
 				DefaultMaxENIs:            3,
 				Ipv4AddressesPerInterface: 6,
 				VCpus:                     2,
-				MemoryMiB:                 4096,
+				PhysicalMemoryMiB:         4096,
 			},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{
@@ -73,7 +73,7 @@ func TestGetInstanceInfo(t *testing.T) {
 				DefaultMaxENIs:            2,
 				Ipv4AddressesPerInterface: 6,
 				VCpus:                     2,
-				MemoryMiB:                 4096,
+				PhysicalMemoryMiB:         4096,
 			},
 			mockResponse: ec2.DescribeInstanceTypesOutput{
 				InstanceTypes: []types.InstanceTypeInfo{

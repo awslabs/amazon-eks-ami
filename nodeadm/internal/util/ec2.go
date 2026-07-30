@@ -17,7 +17,7 @@ type InstanceInfo struct {
 	DefaultMaxENIs            int32  `json:"defaultMaxENIs"`
 	Ipv4AddressesPerInterface int32  `json:"ipv4AddressesPerInterface"`
 	VCpus                     int32  `json:"vcpus"`
-	MemoryMiB                 int64  `json:"memoryMib"`
+	PhysicalMemoryMiB         int64  `json:"physicalMemoryMib"`
 }
 
 type EC2API interface {
@@ -59,7 +59,7 @@ func getInstanceInfoFromDescribeResponse(ec2Info types.InstanceTypeInfo) (Instan
 		DefaultMaxENIs:            aws.ToInt32(defaultMaxENIs),
 		Ipv4AddressesPerInterface: ptr.ToInt32(ec2Info.NetworkInfo.Ipv4AddressesPerInterface),
 		VCpus:                     aws.ToInt32(ec2Info.VCpuInfo.DefaultVCpus),
-		MemoryMiB:                 aws.ToInt64(ec2Info.MemoryInfo.SizeInMiB),
+		PhysicalMemoryMiB:         aws.ToInt64(ec2Info.MemoryInfo.SizeInMiB),
 	}, nil
 }
 
@@ -145,6 +145,14 @@ func addInstanceTypeSupplements(infoByInstanceType map[string]InstanceInfo) {
 	// eni-max-pods.txt file to the new JSON lines format. This list should only include all the instance
 	// types that existed in the text file but were not discovered by default.
 	// TODO: remove supplements as they become unnecessary
+	//
+	// These types are no longer returned by ec2:DescribeInstanceTypes, so VCpus/PhysicalMemoryMiB
+	// cannot be discovered and must be supplied here. The High Memory (u-*.metal) values below come
+	// from the AWS High Memory specs (https://docs.aws.amazon.com/ec2/latest/instancetypes/mo.html):
+	// all are 448 vCPUs and PhysicalMemoryMiB is the advertised GiB * 1024. The remaining types
+	// (cr1.8xlarge, hs1.8xlarge, c5a.metal, c5ad.metal, bmn-sf1.metal) have no current public spec
+	// page, so their VCpus/PhysicalMemoryMiB are left as zero; expressions keying on those fields
+	// will see 0 for these types (see doc/examples.md).
 	supplementaryInfos := []InstanceInfo{
 		{
 			InstanceType:              "cr1.8xlarge",
@@ -160,26 +168,36 @@ func addInstanceTypeSupplements(infoByInstanceType map[string]InstanceInfo) {
 			InstanceType:              "u-6tb1.metal",
 			DefaultMaxENIs:            5,
 			Ipv4AddressesPerInterface: 30,
+			VCpus:                     448,
+			PhysicalMemoryMiB:         6144 * 1024,
 		},
 		{
 			InstanceType:              "u-12tb1.metal",
 			DefaultMaxENIs:            5,
 			Ipv4AddressesPerInterface: 30,
+			VCpus:                     448,
+			PhysicalMemoryMiB:         12288 * 1024,
 		},
 		{
 			InstanceType:              "u-18tb1.metal",
 			DefaultMaxENIs:            15,
 			Ipv4AddressesPerInterface: 50,
+			VCpus:                     448,
+			PhysicalMemoryMiB:         18432 * 1024,
 		},
 		{
 			InstanceType:              "u-24tb1.metal",
 			DefaultMaxENIs:            15,
 			Ipv4AddressesPerInterface: 50,
+			VCpus:                     448,
+			PhysicalMemoryMiB:         24576 * 1024,
 		},
 		{
 			InstanceType:              "u-9tb1.metal",
 			DefaultMaxENIs:            5,
 			Ipv4AddressesPerInterface: 30,
+			VCpus:                     448,
+			PhysicalMemoryMiB:         9216 * 1024,
 		},
 		{
 			InstanceType:              "hs1.8xlarge",

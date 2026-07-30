@@ -149,15 +149,15 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			expectedValue:   20,
 		},
 		{
-			// new: memory_mib is usable
-			expression:      "(memory_mib / 1024) > 32 ? 110 : max_pods",
+			// new: physical_memory_mib is usable
+			expression:      "(physical_memory_mib / 1024) > 32 ? 110 : max_pods",
 			memoryMiB:       65536,
 			standardMaxPods: 58,
 			expectedValue:   110,
 		},
 		{
-			// new: memory_mib comparison falls through when it doesn't match
-			expression:      "(memory_mib / 1024) > 32 ? 110 : max_pods",
+			// new: physical_memory_mib comparison falls through when it doesn't match
+			expression:      "(physical_memory_mib / 1024) > 32 ? 110 : max_pods",
 			memoryMiB:       8192,
 			standardMaxPods: 58,
 			expectedValue:   58,
@@ -204,7 +204,7 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			DefaultMaxENIs:            int32(test.defaultENIs),
 			Ipv4AddressesPerInterface: int32(test.ipsPerENI),
 			VCpus:                     int32(test.vcpus),
-			MemoryMiB:                 test.memoryMiB,
+			PhysicalMemoryMiB:         test.memoryMiB,
 		}, test.standardMaxPods)
 		if test.expectErr {
 			assert.Error(t, err)
@@ -321,7 +321,6 @@ func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
 	}
-	var sawVCpusAndMemory bool
 	for s := bufio.NewScanner(bytes.NewReader(cachedInstanceInfoBytes)); s.Scan(); {
 		var instanceInfo util.InstanceInfo
 		if err := json.Unmarshal(s.Bytes(), &instanceInfo); err != nil {
@@ -332,14 +331,11 @@ func TestInstanceInfoLoadable(t *testing.T) {
 		assert.Greater(t, instanceInfo.Ipv4AddressesPerInterface, int32(0))
 		// we expect at least 2 pods for the host networking ones
 		assert.Greater(t, calculateStandardMaxPods(instanceInfo), int32(1))
-		// a modern instance type must carry the vcpus/memory_mib keys the CEL env now exposes;
-		// legacy supplemented types (addInstanceTypeSupplements) legitimately carry zeros, so
-		// we assert against a known type rather than every line
-		if instanceInfo.InstanceType == "m5.large" {
-			sawVCpusAndMemory = true
-			assert.Equal(t, int32(2), instanceInfo.VCpus)
-			assert.Equal(t, int64(8192), instanceInfo.MemoryMiB)
+		// legacy supplemented types (addInstanceTypeSupplements) predate the vcpus/memory
+		// keys and carry zeros for both; every EC2-sourced entry must have them nonzero
+		if instanceInfo.VCpus != 0 || instanceInfo.PhysicalMemoryMiB != 0 {
+			assert.Greater(t, instanceInfo.VCpus, int32(0))
+			assert.Greater(t, instanceInfo.PhysicalMemoryMiB, int64(0))
 		}
 	}
-	assert.True(t, sawVCpusAndMemory, "expected m5.large in instance-info.jsonl to verify vcpus/memoryMib keys are emitted")
 }

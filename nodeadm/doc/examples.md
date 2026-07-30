@@ -223,13 +223,17 @@ This can be supplied in user data alongside the rest of your `NodeConfig`, or as
 Under certain circumstances, the desired max pods value for a given node or instance type can diverge from the
 default calculation. Since the use of a static `NodeConfig` is encouraged as the input source for nodeadm, nodeadm
 accepts a `maxPodsExpression` to determine the final `maxPods` value passed to kubelet. This string is interpreted
-as a [CEL](https://cel.dev/overview/cel-overview) expression with three variables set in the environment:
+as a [CEL](https://cel.dev/overview/cel-overview) expression with the following variables set in the environment:
 
 * `default_enis` - the maximum number of network interfaces attachable on the default network card
 * `ips_per_eni` - the maximum number of IPv4 addresses attachable to a single interface
 * `max_pods` - the standard `maxPods` for the current instance type. This can be equivalently expressed in CEL as `(default_enis * (ips_per_eni - 1)) + 2`
+* `vcpus` - the number of default vCPUs for the instance type
+* `physical_memory_mib` - the total physical memory of the instance type, in MiB (this is the hardware total; the memory perceivable by the OS will be somewhat lower)
 
 ⚠️ **Note**: These values will vary between instance types and may require `ec2:DescribeInstanceTypes` API calls. Expressions should be tested to confirm desired outputs before final use in the intended environment.
+
+⚠️ **Note**: `vcpus` and `physical_memory_mib` are `0` for a small set of older instance types that `ec2:DescribeInstanceTypes` no longer returns and for which AWS publishes no current specifications (`cr1.8xlarge`, `hs1.8xlarge`, `c5a.metal`, `c5ad.metal`, `bmn-sf1.metal`). Expressions that key on these variables should guard against `0` if they may run on those types.
 
 Some common use cases:
 
@@ -240,6 +244,9 @@ Some common use cases:
 3. Limit the number of ENIs that can be used for pods
    * e.g. `((default_enis - 3) * (ips_per_eni - 1)) + 2` to reserve three ENIs
    * For instances utilizing the [AWS VPC CNI's Custom Networking](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html) feature, reserving a single ENI may be necessary
+4. Scale `maxPods` with instance size using `vcpus` or `physical_memory_mib`
+   * e.g. `vcpus * 10 < max_pods ? vcpus * 10 : max_pods` to cap at 10 pods per vCPU
+   * e.g. `physical_memory_mib / 1024 > 32 ? 110 : max_pods` to raise the limit only on instances with more than 32 GiB
 
 ```yaml
 ---
@@ -248,7 +255,7 @@ kind: NodeConfig
 spec:
   cluster: ...
   kubelet:
-    maxPodsExpression: "((default_enis - 1) * (ips_per_eni - 1)) + 2"
+    maxPodsExpression: "vcpus * 10 < max_pods ? vcpus * 10 : max_pods"
 ```
 ⚠️ **Note**: Values set for `maxPods` in the `kubelet` config will take precedence over the result of the `maxPodsExpression`. `kubeReserved` will be calculated using the result of the expression or
 the internally calculated max pods value, if the expression cannot be evaluated.
