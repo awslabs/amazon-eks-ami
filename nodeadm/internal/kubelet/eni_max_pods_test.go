@@ -317,6 +317,17 @@ func TestGetInstanceInfo(t *testing.T) {
 	cachedInstanceInfoBytes = initialCacheContents
 }
 
+// legacy supplemented types (addInstanceTypeSupplements) that AWS no longer returns from
+// ec2:DescribeInstanceTypes and publishes no current specs for, so they carry zero vcpus/memory.
+// This allowlist should only ever shrink: a new instance type with zero vcpus/memory is a bug.
+var instanceTypesToleratingZeroVCpusAndMemory = map[string]bool{
+	"cr1.8xlarge":   true,
+	"hs1.8xlarge":   true,
+	"c5a.metal":     true,
+	"c5ad.metal":    true,
+	"bmn-sf1.metal": true,
+}
+
 func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
@@ -331,11 +342,9 @@ func TestInstanceInfoLoadable(t *testing.T) {
 		assert.Greater(t, instanceInfo.Ipv4AddressesPerInterface, int32(0))
 		// we expect at least 2 pods for the host networking ones
 		assert.Greater(t, calculateStandardMaxPods(instanceInfo), int32(1))
-		// legacy supplemented types (addInstanceTypeSupplements) predate the vcpus/memory
-		// keys and carry zeros for both; every EC2-sourced entry must have them nonzero
-		if instanceInfo.VCpus != 0 || instanceInfo.PhysicalMemoryMiB != 0 {
-			assert.Greater(t, instanceInfo.VCpus, int32(0))
-			assert.Greater(t, instanceInfo.PhysicalMemoryMiB, int64(0))
+		if !instanceTypesToleratingZeroVCpusAndMemory[instanceInfo.InstanceType] {
+			assert.Greater(t, instanceInfo.VCpus, int32(0), "unexpected zero vcpus for %s", instanceInfo.InstanceType)
+			assert.Greater(t, instanceInfo.PhysicalMemoryMiB, int64(0), "unexpected zero memory for %s", instanceInfo.InstanceType)
 		}
 	}
 }
