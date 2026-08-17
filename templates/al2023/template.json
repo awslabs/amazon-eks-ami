@@ -28,7 +28,8 @@
     "kubernetes_version": null,
     "launch_block_device_mappings_volume_size": null,
     "nodeadm_build_image": null,
-    "nvidia_driver_major_version": null,
+    "nvidia_driver_lts_version": null,
+    "nvidia_driver_pb_version": null,
     "nvidia_repository_url": null,
     "nvidia_grid_runfile_bucket_name": null,
     "enable_nvidia_gdrcopy_driver": null,
@@ -260,20 +261,17 @@
     {
       "type": "shell",
       "remote_folder": "{{ user `remote_folder`}}",
-      "script": "{{template_dir}}/provisioners/install-nvidia-driver.sh",
+      "script": "{{template_dir}}/provisioners/install-nvidia-driver-trees.sh",
       "environment_vars": [
         "AWS_REGION={{user `aws_region`}}",
         "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
         "AWS_ACCESS_KEY_ID={{user `aws_access_key_id`}}",
         "AWS_SECRET_ACCESS_KEY={{user `aws_secret_access_key`}}",
         "AWS_SESSION_TOKEN={{user `aws_session_token`}}",
-        "BINARY_BUCKET_NAME={{user `binary_bucket_name`}}",
-        "BINARY_BUCKET_REGION={{user `binary_bucket_region`}}",
-        "NVIDIA_DRIVER_MAJOR_VERSION={{user `nvidia_driver_major_version`}}",
+        "NVIDIA_DRIVER_LTS_VERSION={{user `nvidia_driver_lts_version`}}",
+        "NVIDIA_DRIVER_PB_VERSION={{user `nvidia_driver_pb_version`}}",
         "NVIDIA_REPOSITORY={{user `nvidia_repository_url`}}",
         "EC2_GRID_DRIVER_S3_BUCKET={{user `nvidia_grid_runfile_bucket_name`}}",
-        "ENABLE_NVIDIA_GDRCOPY_DRIVER={{user `enable_nvidia_gdrcopy_driver`}}",
-        "NVIDIA_GDRCOPY_DRIVER_VERSION={{user `nvidia_gdrcopy_driver_version`}}",
         "WORKING_DIR={{user `working_dir`}}"
       ]
     },
@@ -303,7 +301,9 @@
       "remote_folder": "{{ user `remote_folder`}}",
       "script": "{{template_dir}}/provisioners/validate.sh",
       "environment_vars": [
-        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}"
+        "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
+        "NVIDIA_DRIVER_LTS_VERSION={{user `nvidia_driver_lts_version`}}",
+        "NVIDIA_DRIVER_PB_VERSION={{user `nvidia_driver_pb_version`}}"
       ]
     },
     {
