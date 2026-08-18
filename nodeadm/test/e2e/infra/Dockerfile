@@ -27,6 +27,9 @@ COPY test/e2e/infra/requirements.txt /
 RUN pip install --user -r requirements.txt
 # I know how this looks, but it lets us use moto with our mocked IMDS and for now the simplicity is worth the hack
 RUN sed -i 's/= random_instance_id()/= "i-1234567890abcdef0"/g' $HOME/.local/lib/python*/site-packages/moto/ec2/models/instances.py
+# moto 5.1.x's random_mac_address has a broken f-string that yields invalid MACs;
+# pin it to the metadata mock's MAC so ENI lookups by mac-address resolve.
+RUN sed -i 's|    return f"02:00:00:.*|    return "0e:49:61:0f:c3:11"|' $HOME/.local/lib/python*/site-packages/moto/ec2/utils.py
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 # The content of ec2 userdata in the 'aemm-default-config.json'
 # file is the base64 encoding of a minimally viable NodeConfig.
