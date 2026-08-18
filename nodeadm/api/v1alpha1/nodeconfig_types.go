@@ -178,7 +178,7 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull,OSManagedNoManageENIs}
 type Feature string
 
 const (
@@ -190,4 +190,12 @@ const (
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull Feature = "FastImagePull"
+
+	// OSManagedNoManageENIs lets nodeadm configure secondary ENIs the VPC CNI
+	// opts out of managing (tagged node.k8s.amazonaws.com/no_manage=true) via
+	// systemd-networkd. Without it such an ENI, attached after boot, stays down
+	// with no address: nodeadm defers post-boot ENIs to the CNI, and the CNI
+	// ignores no_manage. Requires ec2:DescribeNetworkInterfaces on the node's
+	// instance role.
+	OSManagedNoManageENIs Feature = "OSManagedNoManageENIs"
 )

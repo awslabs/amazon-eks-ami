@@ -20,6 +20,10 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
+
+	// OSManagedNoManageENIs lets nodeadm configure secondary ENIs the VPC CNI
+	// opts out of managing (tagged node.k8s.amazonaws.com/no_manage=true).
+	OSManagedNoManageENIs: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {
