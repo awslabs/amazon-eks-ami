@@ -3,6 +3,7 @@ package udev
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -95,9 +96,15 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	// TODO: in the future we should communicate with another broker that checks
 	// with the CNI (IPAMD) to get info on whether a given interface should be
 	// managed or not.
-	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(c.iface)
+	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(ctx, c.iface, c.selfMac)
 	if err != nil {
-		return fmt.Errorf("failed to determine manager: %v", err)
+		if errors.Is(err, ErrPermanentOptOutLookup) {
+			log.Error("cannot evaluate VPC CNI no_manage opt-out; retrying will not help. "+
+				"Ensure the node's instance role grants ec2:DescribeNetworkInterfaces (part of "+
+				"AmazonEKS_CNI_Policy, which may sit on the aws-node IRSA/Pod Identity role instead)",
+				zap.Error(err), zap.String("mac", c.selfMac))
+		}
+		return fmt.Errorf("failed to determine manager: %w", err)
 	}
 	log.Info("resolved net manager", zap.String("name", manager))
 

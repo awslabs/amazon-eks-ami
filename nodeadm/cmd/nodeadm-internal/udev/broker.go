@@ -1,9 +1,12 @@
 package udev
 
 import (
+	"context"
 	"errors"
-	"os"
+	"fmt"
+	"io/fs"
 	"path/filepath"
+	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -11,44 +14,95 @@ import (
 )
 
 type NetworkInterfaceBroker interface {
-	ManagerFor(interfaceName string) (string, error)
+	ManagerFor(ctx context.Context, interfaceName, mac string) (string, error)
 }
 
 const NetworkManagerCacheDir = "/etc/eks/nodeadm/udev-net-manager"
 
+// defaultOptOutLookupTimeout bounds client build (region/credential discovery
+// via IMDS) plus describe, capping the SDK's retry/backoff. The oneshot
+// udev-net-manager@.service's TimeoutStartSec must stay comfortably above this
+// plus the IMDS eventual-consistency retry that precedes it in addAction.
+const defaultOptOutLookupTimeout = 10 * time.Second
+
 type fsBroker struct {
-	cache util.FSCache
+	cache              util.FSCache
+	markerPath         string
+	noManageMarkerPath string
+	// newResolver is built lazily, so the EC2 client and its IAM requirement are
+	// never exercised unless the feature is enabled.
+	newResolver   func(ctx context.Context) (cniOptOutResolver, error)
+	lookupTimeout time.Duration
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
 	return &fsBroker{
-		cache: util.NewFSCache(filepath.Join(NetworkManagerCacheDir, instanceID)),
+		cache:              util.NewFSCache(filepath.Join(NetworkManagerCacheDir, instanceID)),
+		markerPath:         system.MarkerPath(),
+		noManageMarkerPath: system.OSManagedNoManageENIsMarkerPath(),
+		newResolver: func(ctx context.Context) (cniOptOutResolver, error) {
+			return newEC2TagResolver(ctx, instanceID)
+		},
+		lookupTimeout: defaultOptOutLookupTimeout,
 	}
 }
 
-func (b *fsBroker) determineManager(_ string) (string, error) {
+func (b *fsBroker) determineManager(ctx context.Context, mac string) (string, error) {
 	// This path is created when the second phase of nodeadm runs.
 	// For users who incorrectly call nodeadm init in user data, this ensures
 	// that systemd won't accidentally try to manage interfaces added by the
 	// VPC CNI.
-	if _, err := os.Stat(system.MarkerPath()); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return ManagerSystemd, nil
-		}
+	markerExists, err := util.IsFilePathExists(b.markerPath)
+	if err != nil {
 		return "", err
+	}
+	if !markerExists {
+		return ManagerSystemd, nil
+	}
+
+	// feature off: default to CNI, no EC2 call.
+	noManageEnabled, err := util.IsFilePathExists(b.noManageMarkerPath)
+	if err != nil {
+		return "", err
+	}
+	if !noManageEnabled {
+		return ManagerCNI, nil
+	}
+
+	// Propagated, not defaulted to CNI: ManagerFor caches the result permanently,
+	// and the unit retries on failure (Restart=on-failure).
+	ctx, cancel := context.WithTimeout(ctx, b.lookupTimeout)
+	defer cancel()
+
+	resolver, err := b.newResolver(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to build CNI opt-out resolver for mac %s: %w", mac, err)
+	}
+	optedOut, err := resolver.IsOptedOut(ctx, mac)
+	if err != nil {
+		return "", fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)
+	}
+	if optedOut {
+		return ManagerSystemd, nil
 	}
 	return ManagerCNI, nil
 }
 
-func (b *fsBroker) ManagerFor(interfaceName string) (string, error) {
+func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.
-	if manager, err := b.cache.Read(interfaceName); err == nil {
+	manager, err := b.cache.Read(interfaceName)
+	if err == nil {
 		return manager, nil
 	}
+	if !errors.Is(err, fs.ErrNotExist) {
+		// unlike a cold cache, this (e.g. a cache dir permissions problem) would
+		// silently force a full re-resolution on every event.
+		zap.L().Warn("failed reading manager from cache, re-resolving", zap.Error(err), zap.String("interface", interfaceName))
+	}
 
-	manager, err := b.determineManager(interfaceName)
+	manager, err = b.determineManager(ctx, mac)
 	if err != nil {
 		return "", err
 	}

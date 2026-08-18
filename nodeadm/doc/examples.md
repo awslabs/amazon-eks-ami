@@ -174,6 +174,26 @@ spec:
 
 ---
 
+## Managing CNI-unmanaged (`no_manage`) secondary ENIs (experimental)
+
+When the `OSManagedNoManageENIs` feature gate is enabled, `nodeadm` configures secondary ENIs that the Amazon VPC CNI opts out of managing — those tagged `node.k8s.amazonaws.com/no_manage=true` — via `systemd-networkd`.
+
+Without it, such an ENI attached after boot is left administratively down with no IP: the VPC CNI ignores `no_manage` ENIs, and `nodeadm` otherwise defers post-boot ENIs to the CNI, so no component owns the interface. This is typically used for dedicated dataplane interfaces (e.g. attached out-of-band by a controller for use with Multus). CNI-managed ENIs are never touched.
+
+⚠️ **Note**: When enabled, the node's instance role must grant `ec2:DescribeNetworkInterfaces` — `nodeadm` reads the ENI's tags to decide whether to adopt it. It is included in `AmazonEKS_CNI_Policy`, but that policy is not necessarily on the node role: when the VPC CNI authenticates via IRSA or EKS Pod Identity, it typically lives on the `aws-node` service account role instead. Verify the node role before enabling. When the feature is disabled (the default), no EC2 call is made.
+
+### To enable this feature:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    OSManagedNoManageENIs: true
+```
+
+---
+
 ## Configuring `containerd`
 
 Additional `containerd` configuration can be supplied in your `NodeConfig`. The values in your inline TOML document will overwrite any default value set by `nodeadm`.
