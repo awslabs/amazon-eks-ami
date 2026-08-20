@@ -32,9 +32,7 @@ func (c *bootHookCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *bootHookCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
-	ctx := context.Background()
-
+func (c *bootHookCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
 	identity, err := imds.NewClient(imds.New(true)).GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return err

@@ -1,6 +1,8 @@
 package kubelet
 
 import (
+	"context"
+
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
@@ -31,7 +33,7 @@ func NewKubeletDaemon(daemonManager daemon.DaemonManager, resources system.Resou
 	}
 }
 
-func (k *kubelet) Configure(cfg *api.NodeConfig) error {
+func (k *kubelet) Configure(ctx context.Context, cfg *api.NodeConfig) error {
 	if err := k.writeKubeletConfig(cfg); err != nil {
 		return err
 	}
@@ -50,11 +52,11 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	return nil
 }
 
-func (k *kubelet) EnsureRunning() error {
-	return k.daemonManager.RestartDaemon(KubeletDaemonName)
+func (k *kubelet) EnsureRunning(ctx context.Context) error {
+	return k.daemonManager.RestartDaemon(ctx, KubeletDaemonName)
 }
 
-func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {
+func (k *kubelet) PostLaunch(_ context.Context, _ *api.NodeConfig) error {
 	return nil
 }
 

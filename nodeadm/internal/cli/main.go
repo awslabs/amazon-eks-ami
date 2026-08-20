@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 )
@@ -30,7 +32,8 @@ func (m *Main) Run() {
 
 	for _, cmd := range m.Commands {
 		if cmd.Flaggy().Used {
-			err := cmd.Run(log, opts)
+			ctx := context.Background()
+			err := cmd.Run(ctx, log, opts)
 			if err != nil {
 				log.Fatal("Command failed", zap.Error(err))
 			}

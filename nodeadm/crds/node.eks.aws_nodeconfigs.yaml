@@ -163,6 +163,34 @@ spec:
                           type: string
                         type: array
                     type: object
+                  storage:
+                    description: |-
+                      StorageOptions configures additional EBS volumes to be mounted for
+                      container runtime directories such as /var/lib/containerd.
+                    properties:
+                      volumes:
+                        description: Volumes is a list of EBS volumes to format and
+                          mount on the node.
+                        items:
+                          description: VolumeMount specifies an EBS volume device
+                            and where it should be mounted.
+                          properties:
+                            device:
+                              description: Device is the block device path (e.g.,
+                                "/dev/xvdb").
+                              type: string
+                            fsType:
+                              description: |-
+                                FsType is the filesystem type to format the volume with.
+                                Defaults to "xfs" if unspecified.
+                              type: string
+                            mountTarget:
+                              description: MountTarget is the directory to mount this
+                                volume on.
+                              type: string
+                          type: object
+                        type: array
+                    type: object
                 type: object
               kubelet:
                 description: KubeletOptions are additional parameters passed to `kubelet`.

@@ -2,6 +2,7 @@ package system
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"path/filepath"
 	"strings"
@@ -83,5 +84,5 @@ func (a *resolveAspect) reloadSystemdResolved() error {
 	if err != nil {
 		return err
 	}
-	return manager.RestartDaemon("systemd-resolved")
+	return manager.RestartDaemon(context.TODO(), "systemd-resolved")
 }

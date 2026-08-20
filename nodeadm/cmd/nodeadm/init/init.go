@@ -49,7 +49,7 @@ func (c *initCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+func (c *initCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
 	start := time.Now()
 
 	log.Info("Checking user is root..")
@@ -82,7 +82,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		// we don't need to enrich config when defaulting to a cache, since that is
 		// the only time we already have the NodeConfig .status details populated.
 		log.Info("Enriching configuration..")
-		if err := c.enrichConfig(log, nodeConfig, opts); err != nil {
+		if err := c.enrichConfig(ctx, log, nodeConfig, opts); err != nil {
 			return err
 		}
 	}
@@ -127,7 +127,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		}
 
 		log.Info("Configuring daemons...")
-		if err := c.configureDaemons(log, nodeConfig, daemons); err != nil {
+		if err := c.configureDaemons(ctx, log, nodeConfig, daemons); err != nil {
 			return err
 		}
 
@@ -149,7 +149,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 		}
 
 		log.Info("Running daemons...")
-		if err := c.runDaemons(log, nodeConfig, daemons); err != nil {
+		if err := c.runDaemons(ctx, log, nodeConfig, daemons); err != nil {
 			return err
 		}
 	}
@@ -161,7 +161,7 @@ func (c *initCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
 
 // enrichConfig populates the internal .status portion of the NodeConfig, used
 // only for internal implementation details.
-func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
+func (*initCmd) enrichConfig(ctx context.Context, log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
 	log.Info("Fetching kubelet version..")
 	kubeletVersion, err := kubelet.GetKubeletVersion()
 	if err != nil {
@@ -176,7 +176,7 @@ func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.Glo
 		// https://github.com/aws/aws-sdk-go-v2/blob/838fb872e9701fc62b7b86164389791f5313bfcb/aws/logging.go#L18
 		awsClientLogMode = aws.ClientLogMode((1 << 64) - 1)
 	}
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
+	awsConfig, err := config.LoadDefaultConfig(ctx,
 		config.WithClientLogMode(awsClientLogMode),
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
 			o.Client = imds.New(true /* treat 404's as retryable to make credential chain more resilient */)
@@ -194,7 +194,7 @@ func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.Glo
 		// we'll give up after approximately 10 minutes
 		awsConfig.RetryMaxAttempts = 30
 	}
-	instanceDetails, err := api.GetInstanceDetails(context.TODO(), cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
+	instanceDetails, err := api.GetInstanceDetails(ctx, cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (*initCmd) enrichConfig(log *zap.Logger, cfg *api.NodeConfig, opts *cli.Glo
 	return nil
 }
 
-func (c *initCmd) configureDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
+func (c *initCmd) configureDaemons(ctx context.Context, log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
 	for _, daemon := range daemons {
 		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 			continue
@@ -216,7 +216,7 @@ func (c *initCmd) configureDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons
 		log := log.With(zap.String("name", daemon.Name()))
 
 		log.Info("Configuring daemon...")
-		if err := daemon.Configure(cfg); err != nil {
+		if err := daemon.Configure(ctx, cfg); err != nil {
 			return err
 		}
 		log.Info("Configured daemon")
@@ -224,7 +224,7 @@ func (c *initCmd) configureDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons
 	return nil
 }
 
-func (c *initCmd) runDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
+func (c *initCmd) runDaemons(ctx context.Context, log *zap.Logger, cfg *api.NodeConfig, daemons []daemon.Daemon) error {
 	for _, daemon := range daemons {
 		if len(c.daemons) > 0 && !slices.Contains(c.daemons, daemon.Name()) {
 			continue
@@ -232,13 +232,13 @@ func (c *initCmd) runDaemons(log *zap.Logger, cfg *api.NodeConfig, daemons []dae
 		log := log.With(zap.String("name", daemon.Name()))
 
 		log.Info("Ensuring daemon is running..")
-		if err := daemon.EnsureRunning(); err != nil {
+		if err := daemon.EnsureRunning(ctx); err != nil {
 			return err
 		}
 		log.Info("Daemon is running")
 
 		log.Info("Running post-launch tasks..")
-		if err := daemon.PostLaunch(cfg); err != nil {
+		if err := daemon.PostLaunch(ctx, cfg); err != nil {
 			return err
 		}
 		log.Info("Finished post-launch tasks")

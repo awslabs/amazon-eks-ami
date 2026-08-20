@@ -1,21 +1,23 @@
 package daemon
 
 import (
+	"context"
+
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 )
 
 type Daemon interface {
 	// Configure configures the daemon.
-	Configure(*api.NodeConfig) error
+	Configure(context.Context, *api.NodeConfig) error
 	// EnsureRunning ensures that the daemon is running by either
 	// starting/restarting the daemon, then blocking until the status of the
 	// daemon reflects that it is running.
 	//	* If the daemon is not running, it will be started.
 	//	* If the daemon is already running, and has been re-configured, it will be restarted.
-	EnsureRunning() error
+	EnsureRunning(context.Context) error
 	// PostLaunch runs any additional step that needs to occur after the service
 	// daemon as been started
-	PostLaunch(*api.NodeConfig) error
+	PostLaunch(context.Context, *api.NodeConfig) error
 	// Name returns the name of the daemon.
 	Name() string
 }
