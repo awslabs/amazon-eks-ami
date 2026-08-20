@@ -72,3 +72,38 @@ if command -v dkms > /dev/null; then
     exit 1
   fi
 fi
+
+#############################
+### nvidia drivers #####
+#############################
+NVIDIA_DRIVER_MODULES=(nvidia nvidia-drm nvidia-modeset nvidia-peermem nvidia-uvm)
+KERNEL_RELEASE=$(uname -r)
+
+# GRID is harvested by glob rather than from a dkms manifest, so confirm the tree
+# ended up with exactly the driver's modules.
+validate_nvidia_grid_modules() {
+  local tree=$1
+  local extra_dir="/opt/nvidia/${tree}/flavors/grid/lib/modules/${KERNEL_RELEASE}/extra"
+  local module_name harvested
+
+  for module_name in "${NVIDIA_DRIVER_MODULES[@]}"; do
+    if [ ! -f "${extra_dir}/${module_name}.ko" ]; then
+      echo "${extra_dir} is missing ${module_name}.ko"
+      exit 1
+    fi
+  done
+
+  harvested=("${extra_dir}"/*.ko)
+  if [ "${#harvested[@]}" -ne "${#NVIDIA_DRIVER_MODULES[@]}" ]; then
+    echo "${extra_dir} has ${#harvested[@]} modules, expected ${#NVIDIA_DRIVER_MODULES[@]}: ${harvested[*]##*/}"
+    exit 1
+  fi
+}
+
+if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
+  # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
+  if [ "$(uname -m)" == "x86_64" ]; then
+    validate_nvidia_grid_modules lts
+    validate_nvidia_grid_modules pb
+  fi
+fi
