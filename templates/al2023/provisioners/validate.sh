@@ -100,10 +100,74 @@ validate_nvidia_grid_modules() {
   fi
 }
 
-if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
-  # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
-  if [ "$(uname -m)" == "x86_64" ]; then
-    validate_nvidia_grid_modules lts
-    validate_nvidia_grid_modules pb
+NVIDIA_TREES=(lts pb)
+NVIDIA_KMOD_FLAVORS=(open proprietary grid)
+
+# A tree is pinned to one driver version so its kernel modules and userspace are compatible.
+validate_nvidia_tree_version() {
+  local tree=$1
+  local tree_dir="/opt/nvidia/${tree}"
+  local driver_version flavor extra_dir modules module_version
+
+  driver_version=$(cat "${tree_dir}/.version")
+
+  for flavor in "${NVIDIA_KMOD_FLAVORS[@]}"; do
+    # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
+    if [ "${flavor}" == "grid" ] && [ "$(uname -m)" == "aarch64" ]; then
+      continue
+    fi
+
+    extra_dir="${tree_dir}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+    # The suffix varies with the kernel's module compression.
+    modules=("${extra_dir}"/nvidia.ko*)
+    if [ ! -e "${modules[0]}" ]; then
+      echo "${extra_dir} has no nvidia.ko"
+      exit 1
+    fi
+
+    module_version=$(modinfo -F version "${modules[0]}")
+    if [ "${module_version}" != "${driver_version}" ]; then
+      echo "${modules[0]} reports version ${module_version}, expected ${driver_version}"
+      exit 1
+    fi
+  done
+
+  # libcuda is version-locked to nvidia.ko
+  if [ ! -e "${tree_dir}/usr/lib64/libcuda.so.${driver_version}" ]; then
+    echo "${tree_dir} has no libcuda.so.${driver_version}"
+    exit 1
   fi
+}
+
+# Boot-time flavor selection reads this list, so a baked tree without one picks the wrong
+# kernel module.
+validate_nvidia_supported_device_list() {
+  local tree=$1
+  local major_version
+
+  major_version=$(cut -d. -f1 "/opt/nvidia/${tree}/.version")
+  if [ ! -f "/etc/eks/nvidia-open-supported-devices-${major_version}.txt" ]; then
+    echo "/etc/eks is missing the supported-devices list for major version ${major_version}"
+    exit 1
+  fi
+}
+
+if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
+  for tree in "${NVIDIA_TREES[@]}"; do
+    validate_nvidia_tree_version "${tree}"
+    validate_nvidia_supported_device_list "${tree}"
+
+    # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
+    if [ "$(uname -m)" != "aarch64" ]; then
+      validate_nvidia_grid_modules "${tree}"
+    fi
+  done
+
+  # Emulated from the nvidia-persistenced rpm's %pre, which never runs on an extracted package.
+  if ! getent passwd nvidia-persistenced > /dev/null; then
+    echo "the nvidia-persistenced user was not created"
+    exit 1
+  fi
+
+  echo "NVIDIA driver trees were validated: ${NVIDIA_TREES[*]}"
 fi

@@ -68,7 +68,7 @@ function build-grid-kmods() {
   local TREE_DIR="${1}"
   local DRIVER_VERSION="${2}"
 
-  if [ "${ARCH}" != "x86_64" ]; then
+  if [ "${ARCH}" == "aarch64" ]; then
     echo "No GRID runfile is published for ${ARCH}, skipping"
     return 0
   fi

@@ -35,6 +35,8 @@ readonly NVIDIA_TREE_ROOT="/opt/nvidia"
 
 # shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/nvidia-kmods.sh"
+# shellcheck disable=SC1090
+source "${WORKING_DIR}/helpers/nvidia-userspace.sh"
 
 ################################################################################
 ### Add repository #############################################################
@@ -93,10 +95,6 @@ sudo dnf versionlock 'kernel*'
 
 sudo dnf -y install dkms
 
-################################################################################
-### Resolve versions and create the driver trees ###############################
-################################################################################
-
 # To ensure proper functionality, we need to enforce that all three kernel modules are on the same NVIDIA driver version
 # so they are compatible with the same userspace components.
 # If one of the open module or the grid driver runfile version are older, we use that version for all installations.
@@ -129,7 +127,8 @@ function resolve-tree-version() {
   fi
 }
 
-function build-driver-tree() {
+# Sets up a nvidia driver version tree
+function create-driver-tree() {
   local TREE="${1}"
   local MAJOR_VERSION="${2}"
 
@@ -142,11 +141,63 @@ function build-driver-tree() {
   echo "${DRIVER_VERSION}" | sudo tee "${TREE_DIR}/.version" > /dev/null
   # A simple marker to act as conditional for systemd services
   sudo touch "${TREE_DIR}/.tree-${TREE}"
+}
 
+# Builds contents of a nvidia driver version tree.
+# Stores kernel modules as well as userspace package contents.
+function build-driver-tree() {
+  local TREE="${1}"
+  local TREE_DIR="${NVIDIA_TREE_ROOT}/${TREE}"
+
+  local DRIVER_VERSION
+  DRIVER_VERSION=$(cat "${TREE_DIR}/.version")
+
+  extract-version-specific-rpms "${TREE}"
   build-open-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
   build-proprietary-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
   build-grid-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
+  install-supported-device-list "${TREE}"
 }
 
-build-driver-tree lts "${NVIDIA_DRIVER_LTS_VERSION}"
-build-driver-tree pb "${NVIDIA_DRIVER_PB_VERSION}"
+################################################################################
+### Resolve versions and create the driver trees ###############################
+################################################################################
+
+# Runs for every tree first: the rpm download below needs each tree's resolved version.
+create-driver-tree lts "${NVIDIA_DRIVER_LTS_VERSION}"
+create-driver-tree pb "${NVIDIA_DRIVER_PB_VERSION}"
+
+################################################################################
+### NVIDIA version dependent userspace packages  ###############################
+################################################################################
+
+# Download all rpms for each version. Partition them into packages shared between both
+# versions vs specific to a version. Install the shared packages directly on the host.
+download-nvidia-userspace-rpms lts
+download-nvidia-userspace-rpms pb
+partition-nvidia-userspace-rpms lts pb
+
+install-version-shared-rpms
+
+################################################################################
+### Build the driver trees #####################################################
+################################################################################
+
+build-driver-tree lts
+build-driver-tree pb
+
+################################################################################
+### Set up rest of the host ####################################################
+################################################################################
+
+# NVLSM
+# https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
+echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
+sudo dnf -y install \
+  libibumad \
+  infiniband-diags \
+  nvlsm
+sudo dnf -y install nvidia-container-toolkit
+
+# %pre scripts of nvidia-persistenced adds a user required to run the persistenced daemon.
+create-persistenced-user
