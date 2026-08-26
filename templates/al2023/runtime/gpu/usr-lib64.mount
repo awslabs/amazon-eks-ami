@@ -1,0 +1,23 @@
+[Unit]
+Description=NVIDIA driver overlay for /usr/lib64
+# DefaultDependencies=no severs the auto Before=local-fs.target that closes the cycle
+# mount -> resolve -> basic -> sysinit -> local-fs -> mount. Umount ordering re-added
+# for graceful shutdown.
+DefaultDependencies=no
+Conflicts=umount.target
+Before=umount.target
+After=local-fs.target nvidia-driver-resolve.service
+Wants=nvidia-driver-resolve.service
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+RequiresMountsFor=/var
+RefuseManualStart=yes
+RefuseManualStop=yes
+
+[Mount]
+What=overlay
+Where=/usr/lib64
+Type=overlay
+Options=lowerdir=/opt/nvidia/current/usr/lib64:/usr/lib64,upperdir=/var/lib/eks/nvidia/lib64/upper,workdir=/var/lib/eks/nvidia/lib64/work
+
+[Install]
+WantedBy=local-fs.target

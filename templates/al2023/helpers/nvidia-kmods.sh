@@ -13,12 +13,13 @@ readonly ARCH
 function build-open-kmods() {
   local TREE_DIR="${1}"
   local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/open"
 
   echo "Building open kernel modules for NVIDIA ${DRIVER_VERSION}"
-  extract-kmod-source "kmod-nvidia-open-dkms-${DRIVER_VERSION}" "${TREE_DIR}"
+  extract-kmod-source "kmod-nvidia-open-dkms-${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
   sudo dkms add -m nvidia -v "${DRIVER_VERSION}"
   sudo dkms build -m nvidia -v "${DRIVER_VERSION}"
-  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${TREE_DIR}/flavors/open"
+  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
 
   # Built here, while this version's nvidia source is the only one in /usr/src.
   build-gdrdrv "${TREE_DIR}" "${DRIVER_VERSION}"
@@ -31,21 +32,23 @@ function build-open-kmods() {
 function build-proprietary-kmods() {
   local TREE_DIR="${1}"
   local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/proprietary"
 
   echo "Building proprietary kernel modules for NVIDIA ${DRIVER_VERSION}"
-  extract-kmod-source "kmod-nvidia-latest-dkms-${DRIVER_VERSION}" "${TREE_DIR}"
+  extract-kmod-source "kmod-nvidia-latest-dkms-${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
   sudo dkms add -m nvidia -v "${DRIVER_VERSION}"
   sudo dkms build -m nvidia -v "${DRIVER_VERSION}"
-  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${TREE_DIR}/flavors/proprietary"
+  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
 
   sudo dkms remove -m nvidia -v "${DRIVER_VERSION}" --all
   sudo rm -rf "/usr/src/nvidia-${DRIVER_VERSION}"
 }
 
-# Build and harvests gdrdrv kernel modules. Built only with the open nvidia flavor
+# Build and harvests gdrdrv kernel modules. Built only with the open nvidia flavor.
 function build-gdrdrv() {
   local TREE_DIR="${1}"
   local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/open"
 
   if [ "${ENABLE_NVIDIA_GDRCOPY_DRIVER}" != "true" ] || [ -z "${NVIDIA_GDRCOPY_DRIVER_VERSION}" ]; then
     return 0
@@ -54,10 +57,10 @@ function build-gdrdrv() {
   local GDRCOPY_VERSION="${NVIDIA_GDRCOPY_DRIVER_VERSION}"
 
   echo "Building gdrdrv ${GDRCOPY_VERSION} against NVIDIA ${DRIVER_VERSION}"
-  extract-kmod-source "gdrcopy-kmod-${GDRCOPY_VERSION}" "${TREE_DIR}"
+  extract-kmod-source "gdrcopy-kmod-${GDRCOPY_VERSION}" "${FLAVOR_SUBTREE}"
   sudo dkms add -m gdrdrv -v "${GDRCOPY_VERSION}"
   sudo dkms build -m gdrdrv -v "${GDRCOPY_VERSION}"
-  harvest-dkms-modules gdrdrv "${GDRCOPY_VERSION}" "${TREE_DIR}/flavors/open"
+  harvest-dkms-modules gdrdrv "${GDRCOPY_VERSION}" "${FLAVOR_SUBTREE}"
 
   sudo dkms remove -m gdrdrv -v "${GDRCOPY_VERSION}" --all
   sudo rm -rf "/usr/src/gdrdrv-${GDRCOPY_VERSION}"
@@ -116,7 +119,7 @@ function build-grid-kmods() {
 # Download a kmod source rpm and unpack it
 function extract-kmod-source() {
   local SOURCE_PACKAGE="${1}"
-  local TREE_DIR="${2}"
+  local RPM_STAGING_DIR="${2}"
   local DOWNLOAD_DIR="${WORKING_DIR}/nvidia-kmod-rpms"
 
   mkdir -p "${DOWNLOAD_DIR}"
@@ -127,8 +130,8 @@ function extract-kmod-source() {
   rpm2cpio "${DOWNLOAD_DIR}"/*.rpm | (cd / && sudo cpio -idmu --quiet)
 
   # Save the RPM files for rpmdb registration later.
-  sudo install -d "${TREE_DIR}/.rpms"
-  sudo mv "${DOWNLOAD_DIR}"/*.rpm "${TREE_DIR}/.rpms/"
+  sudo install -d "${RPM_STAGING_DIR}/.rpms"
+  sudo mv "${DOWNLOAD_DIR}"/*.rpm "${RPM_STAGING_DIR}/.rpms/"
   sudo rm -rf "${DOWNLOAD_DIR}"
 }
 

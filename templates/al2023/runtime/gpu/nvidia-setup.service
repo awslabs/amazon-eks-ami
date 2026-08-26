@@ -1,0 +1,19 @@
+[Unit]
+Description=NVIDIA setup
+After=nvidia-driver-resolve.service usr-bin.mount usr-lib64.mount usr-share.mount
+Wants=usr-bin.mount usr-lib64.mount usr-share.mount
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+RefuseManualStart=yes
+RefuseManualStop=yes
+StartLimitBurst=5
+StartLimitIntervalSec=infinity
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/etc/eks/setup-nvidia.sh
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+[Unit]
+Description=NVIDIA driver overlay for /usr/bin
+# DefaultDependencies=no severs the auto Before=local-fs.target that closes the cycle
+# mount -> resolve -> basic -> sysinit -> local-fs -> mount. Umount ordering re-added
+# for graceful shutdown.
+DefaultDependencies=no
+Before=umount.target
+Conflicts=umount.target
+# ensure that this starts iff nvidia-driver-resolve succeeds but
+# does not propagate its failure since the SSM agent will fail to starts
+# if /usr/bin mount fails to start
+After=local-fs.target nvidia-driver-resolve.service
+RequiresMountsFor=/var
+Wants=nvidia-driver-resolve.service
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+RefuseManualStart=yes
+RefuseManualStop=yes
+
+[Mount]
+What=overlay
+Where=/usr/bin
+Type=overlay
+Options=lowerdir=/opt/nvidia/current/usr/bin:/usr/bin,upperdir=/var/lib/eks/nvidia/bin/upper,workdir=/var/lib/eks/nvidia/bin/work
+
+[Install]
+WantedBy=local-fs.target

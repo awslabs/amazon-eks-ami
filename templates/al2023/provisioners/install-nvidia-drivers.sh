@@ -201,3 +201,31 @@ sudo dnf -y install nvidia-container-toolkit
 
 # %pre scripts of nvidia-persistenced adds a user required to run the persistenced daemon.
 create-persistenced-user
+
+################################################################################
+### Install boot scripts #######################################################
+################################################################################
+
+sudo install -d -m 0755 /etc/eks
+sudo install -m 0755 "${WORKING_DIR}/gpu/resolve-nvidia-driver.sh" /etc/eks/resolve-nvidia-driver.sh
+sudo install -m 0755 "${WORKING_DIR}/gpu/setup-nvidia.sh" /etc/eks/setup-nvidia.sh
+
+################################################################################
+### Install systemd units ######################################################
+################################################################################
+
+sudo install -d -m 0755 /etc/systemd/system
+sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-driver-resolve.service" /etc/systemd/system/nvidia-driver-resolve.service
+sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-setup.service" /etc/systemd/system/nvidia-setup.service
+sudo install -m 0644 "${WORKING_DIR}/gpu/usr-bin.mount" /etc/systemd/system/usr-bin.mount
+sudo install -m 0644 "${WORKING_DIR}/gpu/usr-lib64.mount" /etc/systemd/system/usr-lib64.mount
+sudo install -m 0644 "${WORKING_DIR}/gpu/usr-share.mount" /etc/systemd/system/usr-share.mount
+
+# Overlay upperdir/workdir. Must exist before mount units activate.
+sudo mkdir -p /var/lib/eks/nvidia/{bin,lib64,share}/{upper,work}
+
+sudo systemctl enable nvidia-driver-resolve.service \
+  nvidia-setup.service \
+  usr-bin.mount \
+  usr-lib64.mount \
+  usr-share.mount

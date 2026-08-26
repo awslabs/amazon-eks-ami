@@ -1,0 +1,17 @@
+[Unit]
+Description=NVIDIA driver resolve
+ConditionPathExists=!/opt/nvidia/current/.driver-flavor
+DefaultDependencies=no
+After=local-fs.target
+Before=shutdown.target
+Conflicts=shutdown.target
+RefuseManualStart=yes
+RefuseManualStop=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/etc/eks/resolve-nvidia-driver.sh
+
+[Install]
+WantedBy=multi-user.target
