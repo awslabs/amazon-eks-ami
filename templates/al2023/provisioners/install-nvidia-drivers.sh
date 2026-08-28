@@ -221,6 +221,11 @@ sudo install -m 0644 "${WORKING_DIR}/gpu/usr-bin.mount" /etc/systemd/system/usr-
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-lib64.mount" /etc/systemd/system/usr-lib64.mount
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-share.mount" /etc/systemd/system/usr-share.mount
 
+# installed but not started at build-time b/c it has an ordering dependency on
+# nvidia-persistenced, which is only added at runtime
+sudo install -m 0644 "${WORKING_DIR}/gpu/set-nvidia-clocks.service" \
+  /etc/systemd/system/set-nvidia-clocks.service
+
 # Overlay upperdir/workdir. Must exist before mount units activate.
 sudo mkdir -p /var/lib/eks/nvidia/{bin,lib64,share}/{upper,work}
 

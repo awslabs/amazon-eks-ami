@@ -96,3 +96,20 @@ if [[ ! -f "${COMMITTED_SENTINEL}" ]]; then
     echo "kernel=${KERNEL_VERSION}"
   } > "${COMMITTED_SENTINEL}"
 fi
+
+readonly DAEMONS_INSTALLED_SENTINEL="${TREE}/.daemons-installed"
+if [[ ! -f "${DAEMONS_INSTALLED_SENTINEL}" ]]; then
+  # /usr/lib/systemd/system/ is the correct target for package-provided units —
+  # /etc/systemd/system/ is reserved for admin overrides.
+  install -m 0644 "${TREE}/usr/lib/systemd/system"/*.service /usr/lib/systemd/system/
+
+  systemctl daemon-reload
+  systemctl enable nvidia-persistenced.service nvidia-fabricmanager.service \
+    set-nvidia-clocks.service
+  # let systemd handle service starts in the background b/c they have a declared ordering
+  # with this service and so that any potential failures or startup time are not absorbed here
+  systemctl start --no-block nvidia-persistenced.service nvidia-fabricmanager.service \
+    set-nvidia-clocks.service
+
+  touch "${DAEMONS_INSTALLED_SENTINEL}"
+fi

@@ -169,5 +169,57 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
     exit 1
   fi
 
+  #############################
+  ### boot-time integration ###
+  #############################
+
+  # Every baked tree must carry its identity marker.
+  for tree in "${NVIDIA_TREES[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/.tree-${tree}" ]; then
+      echo "/opt/nvidia/${tree}/.tree-${tree} is missing"
+      exit 1
+    fi
+  done
+
+  # Every baked tree must carry the daemon services setup will install at first boot.
+  for tree in "${NVIDIA_TREES[@]}"; do
+    for DAEMON in nvidia-persistenced nvidia-fabricmanager; do
+      if [ ! -f "/opt/nvidia/${tree}/usr/lib/systemd/system/${DAEMON}.service" ]; then
+        echo "tree ${tree} is missing ${DAEMON}.service"
+        exit 1
+      fi
+    done
+  done
+
+  # nvidia-setup.service must Before= the two daemon services so systemd orders them
+  # correctly on subsequent boots
+  for DAEMON in nvidia-persistenced.service nvidia-fabricmanager.service; do
+    if ! grep -q "^Before=.*\b${DAEMON}\b" /etc/systemd/system/nvidia-setup.service; then
+      echo "nvidia-setup.service does not declare Before=${DAEMON}"
+      exit 1
+    fi
+  done
+
+  if [ ! -f "/etc/systemd/system/set-nvidia-clocks.service" ]; then
+    echo "set-nvidia-clocks.service was not staged at build time"
+    exit 1
+  fi
+  # set-nvidia-clocks should not be pulled into the boot-ordering chain b/c it has an ordering
+  # dependency with nvidia-persistenced, which is not added until first boot
+  if compgen -G "/etc/systemd/system/*.wants/set-nvidia-clocks.service" > /dev/null \
+    || compgen -G "/etc/systemd/system/*.requires/set-nvidia-clocks.service" > /dev/null; then
+    echo "set-nvidia-clocks.service has activation links at build time; must be enabled by setup at first boot"
+    exit 1
+  fi
+
+  # these daemons are expected to be added at runtime, not build-time, since the .service files are extracted from
+  # version-specific RPMs into the tree
+  for DAEMON in nvidia-persistenced nvidia-fabricmanager; do
+    if [ -f "/usr/lib/systemd/system/${DAEMON}.service" ]; then
+      echo "/usr/lib/systemd/system/${DAEMON}.service exists at build time; should be installed by setup at first boot"
+      exit 1
+    fi
+  done
+
   echo "NVIDIA driver trees were validated: ${NVIDIA_TREES[*]}"
 fi

@@ -2,6 +2,7 @@
 Description=NVIDIA setup
 After=nvidia-driver-resolve.service usr-bin.mount usr-lib64.mount usr-share.mount
 Wants=usr-bin.mount usr-lib64.mount usr-share.mount
+Before=nvidia-persistenced.service nvidia-fabricmanager.service
 ConditionPathExists=/opt/nvidia/current/.driver-flavor
 RefuseManualStart=yes
 RefuseManualStop=yes
