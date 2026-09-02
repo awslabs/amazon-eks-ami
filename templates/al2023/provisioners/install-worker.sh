@@ -73,6 +73,11 @@ KERNEL_PACKAGE="kernel"
 if [[ "$(uname -r)" == 6.12.* ]]; then
   KERNEL_PACKAGE="kernel6.12"
 fi
+
+if [[ "$(uname -r)" == 6.18.* ]]; then
+  KERNEL_PACKAGE="kernel6.18"
+fi
+
 sudo dnf -y install \
   "${KERNEL_PACKAGE}-devel" \
   "${KERNEL_PACKAGE}-headers"
@@ -235,7 +240,7 @@ fi
 ### AMI Metadata ###############################################################
 ################################################################################
 
-BASE_AMI_ID=$($WORKING_DIR/shared/bin/imds /latest/meta-data/ami-id)
+BASE_AMI_ID=$($WORKING_DIR/bin/imds /latest/meta-data/ami-id)
 cat << EOF | sudo tee /etc/eks/release
 BASE_AMI_ID="$BASE_AMI_ID"
 BUILD_TIME="$(date)"

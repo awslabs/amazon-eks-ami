@@ -75,6 +75,8 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 		expression          string
 		defaultENIs         int
 		ipsPerENI           int
+		vcpus               int
+		memoryMiB           int64
 		standardMaxPods     int32
 		expectedValue       int32
 		expectErr           bool
@@ -134,6 +136,33 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			expectedValue:   9,
 		},
 		{
+			// regression: a 3-var-only expression evaluates identically with the new vars registered
+			expression:      "max_pods < 110 ? max_pods : 110",
+			standardMaxPods: 58,
+			expectedValue:   58,
+		},
+		{
+			// new: vcpus is usable (ternary equivalent of min(max_pods, vcpus * 10))
+			expression:      "(vcpus * 10) < max_pods ? (vcpus * 10) : max_pods",
+			vcpus:           2,
+			standardMaxPods: 58,
+			expectedValue:   20,
+		},
+		{
+			// new: physical_memory_mib is usable
+			expression:      "(physical_memory_mib / 1024) > 32 ? 110 : max_pods",
+			memoryMiB:       65536,
+			standardMaxPods: 58,
+			expectedValue:   110,
+		},
+		{
+			// new: physical_memory_mib comparison falls through when it doesn't match
+			expression:      "(physical_memory_mib / 1024) > 32 ? 110 : max_pods",
+			memoryMiB:       8192,
+			standardMaxPods: 58,
+			expectedValue:   58,
+		},
+		{
 			// false variable references should error
 			expression:          "default_enis + fake_variable",
 			expectErr:           true,
@@ -174,6 +203,8 @@ func TestEvaluateCustomMaxPodsExpression(t *testing.T) {
 			InstanceType:              "fake-type1.xlarge",
 			DefaultMaxENIs:            int32(test.defaultENIs),
 			Ipv4AddressesPerInterface: int32(test.ipsPerENI),
+			VCpus:                     int32(test.vcpus),
+			PhysicalMemoryMiB:         test.memoryMiB,
 		}, test.standardMaxPods)
 		if test.expectErr {
 			assert.Error(t, err)
@@ -286,6 +317,17 @@ func TestGetInstanceInfo(t *testing.T) {
 	cachedInstanceInfoBytes = initialCacheContents
 }
 
+// legacy supplemented types (addInstanceTypeSupplements) that AWS no longer returns from
+// ec2:DescribeInstanceTypes and publishes no current specs for, so they carry zero vcpus/memory.
+// This allowlist should only ever shrink: a new instance type with zero vcpus/memory is a bug.
+var instanceTypesToleratingZeroVCpusAndMemory = map[string]bool{
+	"cr1.8xlarge":   true,
+	"hs1.8xlarge":   true,
+	"c5a.metal":     true,
+	"c5ad.metal":    true,
+	"bmn-sf1.metal": true,
+}
+
 func TestInstanceInfoLoadable(t *testing.T) {
 	if (len(cachedInstanceInfoBytes) == 0) || string(cachedInstanceInfoBytes) != string(initialCacheContents) {
 		assert.FailNow(t, "instance info cache is missing or incorrectly set")
@@ -300,5 +342,9 @@ func TestInstanceInfoLoadable(t *testing.T) {
 		assert.Greater(t, instanceInfo.Ipv4AddressesPerInterface, int32(0))
 		// we expect at least 2 pods for the host networking ones
 		assert.Greater(t, calculateStandardMaxPods(instanceInfo), int32(1))
+		if !instanceTypesToleratingZeroVCpusAndMemory[instanceInfo.InstanceType] {
+			assert.Greater(t, instanceInfo.VCpus, int32(0), "unexpected zero vcpus for %s", instanceInfo.InstanceType)
+			assert.Greater(t, instanceInfo.PhysicalMemoryMiB, int64(0), "unexpected zero memory for %s", instanceInfo.InstanceType)
+		}
 	}
 }

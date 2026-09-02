@@ -10,7 +10,8 @@
   },
   "instance": {
     "localStorage": {},
-    "network": {}
+    "network": {},
+    "storage": {}
   },
   "kubelet": {}
 }

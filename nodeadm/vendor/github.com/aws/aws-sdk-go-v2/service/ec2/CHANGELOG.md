@@ -1,3 +1,152 @@
+# v1.316.0 (2026-07-10)
+
+* **Feature**: New Amazon EC2 instances. M9g, M9gd, C9g, and C9gd on AWS Graviton5. C8in, M8in, and R8in add 600 Gbps network. C8ib, M8ib, and R8ib add 300 Gbps EBS. C8ine, M8ine, M8idn, R8idn, M8idb, and R8idb round out Intel Xeon 6. Mac-m3ultra with Apple M3 Ultra. G7 with NVIDIA RTX PRO 4500 Blackwell GPUs.
+
+# v1.315.0 (2026-07-09)
+
+* **Feature**: Added support for additional override parameters in CreateFleet, including LaunchTemplateSpecificationUserData, KeyName, IamInstanceProfile, and MetadataOptions. The CreateFleet response now also includes SubnetId, AvailabilityZone, and AvailabilityZoneId for launched instances.
+
+# v1.314.0 (2026-07-08)
+
+* **Feature**: Replace Root Volume now supports a VolumeId parameter. This allows the customer to pass in a pre-prepared volume as the target root volume for an RRV workflow.
+
+# v1.313.0 (2026-07-07)
+
+* **Feature**: This launch surfaces the public SSM parameter associated with public AMIs in the AMI metadata.
+
+# v1.312.0 (2026-07-06)
+
+* **Feature**: Add request serialization snapshot tests.
+
+# v1.311.0 (2026-07-01)
+
+* **Feature**: Use declarative policies to enable VPC Encryption Controls across your organization or select accounts. Added AMD SEV-SNP support for EC2 Dedicated Hosts. Managed resource visibility settings control whether AWS-provisioned resources in your account appear in console views and API list operations.
+* **Bug Fix**: Bump smithy-go to 1.27.3, fix JSON encorder for document.Number, endpoint host label format validation and CBOR union serialization on new serde
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.310.0 (2026-06-30)
+
+* **Feature**: Adds ModifyVpcEndpointPayerResponsibility API, which enables VPC endpoint service owners to modify the billing account for VPC endpoint usage charges at the individual endpoint level
+
+# v1.309.0 (2026-06-29)
+
+* **Feature**: Adds support for the precision time strategy and a parentGroupId parameter on CreatePlacementGroup and DescribePlacementGroups. Precision time placement groups and cluster placement groups with a parent precision time placement group ensure instances launch on precision time capable hardware.
+
+# v1.308.0 (2026-06-22)
+
+* **Feature**: This release adds support for AMI Watermark and Allowed AMIs integration
+
+# v1.307.1 (2026-06-18)
+
+* **Documentation**: Documentation updates clarifying CancelCapacityReservation cancellable states
+
+# v1.307.0 (2026-06-10)
+
+* **Feature**: This release adds support for AMI Watermark which a structured identifier that helps in tracking AMI provenance
+
+# v1.306.0 (2026-06-09)
+
+* **Feature**: Added TagFieldSpecifications to CreateFlowLogs and DescribeFlowLogs APIs. Customers can now specify tag keys in their Flow Logs subscriptions to capture associated EC2 resource tag values in their logs, enabling tag-based visibility.
+
+# v1.305.3 (2026-06-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.305.2 (2026-06-04)
+
+* **Dependency Update**: Update to smithy-go v1.27.1 to fix several union-related deserialization bugs in schema-serde-enabled services.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.305.1 (2026-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.305.0 (2026-06-02)
+
+* **Feature**: Amazon EC2 now supports self-service cancellation of future-dated Capacity Reservations. A cancellation charge applies based on remaining commitment. Customers can generate a cancellation quote to review charges before confirming.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.304.2 (2026-05-29)
+
+* **Dependency Update**: Update to smithy-go v1.26.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.304.1 (2026-05-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.304.0 (2026-05-22)
+
+* **Feature**: The ModifyInstanceAttribute API now supports modification of EnclaveOptions for the instance as a typed parameter.
+
+# v1.303.0 (2026-05-18)
+
+* **Feature**: Amazon VPC IP Address Manager (IPAM) now supports tags on IPAM pool allocations, enabling all standard tagging features for allocations including tag-on-create.
+
+# v1.302.0 (2026-05-13)
+
+* **Feature**: Include length limits in the SDK and documentation for text fields in Image (AMI) APIs such as the image name and description
+
+# v1.301.0 (2026-05-07)
+
+* **Feature**: DescribeInstanceTypes now accepts an IncludeUnsupportedInRegion parameter. When set, the response also lists instance types that are not available in the current Region. Each instance type includes a SupportedInRegion field indicating its regional availability.
+
+# v1.300.0 (2026-05-04)
+
+* **Feature**: This feature allows customers to change the tunnel bandwidth on existing VPN connections using the ModifyVpnConnectionOptions API
+
+# v1.299.1 (2026-04-29)
+
+* **Dependency Update**: Update to smithy-go v1.25.1.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.299.0 (2026-04-22)
+
+* **Feature**: Managed resource visibility settings control whether resources that AWS services provision on your behalf within your AWS account appear in your Amazon console views and API list operations.
+
+# v1.298.0 (2026-04-20)
+
+* **Feature**: Added Transit Gateway Integration into AWS Client VPN.
+
+# v1.297.1 (2026-04-17)
+
+* **Dependency Update**: Bump smithy-go to 1.25.0 to support endpointBdd trait
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.297.0 (2026-04-07)
+
+* **Feature**: EC2 Capacity Manager adds new dimensions for grouping and filtering capacity metrics, including tag-based dimensions and Account Name.
+
+# v1.296.2 (2026-03-31)
+
+* **Documentation**: This release updates the examples in the documentation for DescribeRegions and DescribeAvailabilityZones.
+
+# v1.296.1 (2026-03-26)
+
+* **Bug Fix**: Fix a bug where a recorded clock skew could persist on the client even if the client and server clock ended up realigning.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.296.0 (2026-03-19)
+
+* **Feature**: Amazon EC2 Fleet instant mode now supports launching instances into Interruptible Capacity Reservations, enabling customers to use spare capacity shared by Capacity Reservation owners within their AWS Organization.
+
+# v1.295.0 (2026-03-18)
+
+* **Feature**: The DescribeInstanceTypes API now returns default connection tracking timeout values for TCP, UDP, and UDP stream via the new connectionTrackingConfiguration field on NetworkInfo.
+
+# v1.294.1 (2026-03-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.294.0 (2026-03-05)
+
+* **Feature**: Added metadata field to CapacityAllocation.
+
+# v1.293.1 (2026-03-03)
+
+* **Dependency Update**: Bump minimum Go version to 1.24
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.293.0 (2026-02-26)
 
 * **Feature**: Add c8id, m8id and hpc8a instance types.

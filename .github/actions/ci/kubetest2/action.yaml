@@ -29,14 +29,11 @@ runs:
       run: |
         export PATH=${PATH}:$(go env GOPATH)/bin
         # old versions of packages are sometimes cached by the proxy, just disable it
-        GOPROXY=direct
+        export GOPROXY=direct
         go install sigs.k8s.io/kubetest2/...@latest
         go install github.com/aws/aws-k8s-tester/...@HEAD
 
         case "${{ inputs.os_distro }}" in
-          al2)
-            KUBETEST2_ARGS="--user-data-format=bootstrap.sh"
-            ;;
           al2023)
             KUBETEST2_ARGS="--user-data-format=nodeadm"
             ;;

@@ -35,14 +35,15 @@ invoking Packer directly. You can initiate the build process by running the
 following command in the root of this repository:
 
 ```bash
+
 # build an AMI with the latest Kubernetes version and the default OS distro
 make
 
 # build an AMI with a specific Kubernetes version and the default OS distro
-make k8s=1.31
+make k8s=1.32
 
 # build an AMI with a specific Kubernetes version and a specific OS distro
-make k8s=1.31 os_distro=al2023
+make k8s=1.32 os_distro=al2023
 
 # check default value and options in help doc
 make help

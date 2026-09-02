@@ -202,7 +202,6 @@ class CICommand {
     // a map of file path prefixes to OS distros that are associated with the file paths
     // a value of "*" implies multiple OS distros are associated with the path, and we should just rely on the workflow's default
     osDistroPathPrefixHints = {
-        "templates/al2/": "al2",
         "templates/al2023/": "al2023",
         "templates/shared/": "*",
         "nodeadm/": "al2023",

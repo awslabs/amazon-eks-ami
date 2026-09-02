@@ -91,8 +91,30 @@ type ContainerdOptions struct {
 // InstanceOptions determines how the node's operating system and devices are configured.
 type InstanceOptions struct {
 	LocalStorage LocalStorageOptions `json:"localStorage,omitempty"`
+	Storage      StorageOptions      `json:"storage,omitempty"`
 	Environment  EnvironmentOptions  `json:"environment,omitempty"`
 	Network      NetworkOptions      `json:"network,omitempty"`
+}
+
+// StorageOptions configures additional EBS volumes to be mounted for
+// container runtime directories such as /var/lib/containerd.
+type StorageOptions struct {
+	// Volumes is a list of EBS volumes to format and mount on the node.
+	Volumes []VolumeMount `json:"volumes,omitempty"`
+}
+
+// VolumeMount specifies an EBS volume device and where it should be mounted.
+type VolumeMount struct {
+	// Device is the block device path (e.g., "/dev/xvdb").
+	Device string `json:"device"`
+
+	// MountTarget is the directory to mount this volume on.
+	MountTarget string `json:"mountTarget"`
+
+	// FsType is the filesystem type to format the volume with.
+	// Defaults to "xfs" if unspecified.
+	// +optional
+	FsType string `json:"fsType,omitempty"`
 }
 
 // NetworkOptions are parameters used to configure networking on the host OS.
