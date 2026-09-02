@@ -61,7 +61,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - merge_with_upstream_v20260818 #main
       - build:
           name: build dev
           context:
