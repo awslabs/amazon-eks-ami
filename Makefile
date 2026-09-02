@@ -19,14 +19,14 @@ arch ?= x86_64
 
 BUILD_TARGETS := build k8s validate
 
-ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
-ifndef os_distro
-$(error os_distro is required (e.g., os_distro=al2023))
-endif
-ifndef k8s
-$(error k8s is required (e.g., k8s=1.35))
-endif
-endif
+# ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
+# ifndef os_distro
+# $(error os_distro is required (e.g., os_distro=al2023))
+# endif
+# ifndef k8s
+# $(error k8s is required (e.g., k8s=1.32))
+# endif
+# endif
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023

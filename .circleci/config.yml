@@ -1,14 +1,12 @@
-version: 2.1
+# version: 2.1
 
 executors:
   packer:
     docker:
       - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0.release-release
 
-# workflow jobs definition
 jobs:
   prepare_env:
-    # job to prepare build environment
     executor: packer
     working_directory: ~/aws_ecr_ami
     steps:
@@ -18,11 +16,18 @@ jobs:
           root: "~"
           paths:
             - aws_ecr_ami
+
   build:
     executor: packer
+    parameters:
+      os_distro:
+        type: string
+      k8s_version:
+        type: string
+        default: "1.32"
     environment:
-      K8S_VERSION: 1.32
-      os_distro: "al2"
+      K8S_VERSION: << parameters.k8s_version >>
+      os_distro: << parameters.os_distro >>
     steps:
       - attach_workspace:
             at: .
@@ -31,10 +36,8 @@ jobs:
           command: |
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
-            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')"
+            AMI_NAME="amazon-eks-node-${os_distro}-${K8S_VERSION}-$(date '+%Y-%m-%d')"
             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
-
-
       - run:
           name: Install aws cli
           command: apk add aws-cli
@@ -43,19 +46,20 @@ jobs:
           command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
       - run:
           name: Packer validate and build AMI
-          # AWS sometimes take really long to finish ami build.
-          # By default, Circle CI have 10 minutes timeout without response,
-          # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
-          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 ${K8S_VERSION}
+          command: |
+            cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-${os_distro}-variables.json \
+              make -e -j2 build os_distro=${os_distro} k8s=${K8S_VERSION}
 
 workflows:
   aws_eks_ami:
     jobs:
       - prepare_env:
           context: AWS_OPERATIONS_DEV_0
+
       - build:
-          name: build main
+          name: build main al2
+          os_distro: "al2"
           context:
             - AWS_OPERATIONS_0
             - PACKER_OPERATIONS_0
@@ -65,8 +69,23 @@ workflows:
             branches:
               only:
                 - merge_upstream_v20260818 #main
+
       - build:
-          name: build dev
+          name: build main al2023
+          os_distro: "al2023"
+          context:
+            - AWS_OPERATIONS_0
+            - PACKER_OPERATIONS_0
+          requires:
+            - prepare_env
+          filters:
+            branches:
+              only:
+                - merge_upstream_v20260818 #main
+
+      - build:
+          name: build dev al2
+          os_distro: "al2"
           context:
             - AWS_OPERATIONS_DEV_0
             - PACKER_OPERATIONS_DEV_0
@@ -76,4 +95,16 @@ workflows:
             branches:
               only:
                 - dev
-                # - DO-5567_merge_with_upstream_v20260304
+
+      - build:
+          name: build dev al2023
+          os_distro: "al2023"
+          context:
+            - AWS_OPERATIONS_DEV_0
+            - PACKER_OPERATIONS_DEV_0
+          requires:
+            - prepare_env
+          filters:
+            branches:
+              only:
+                - dev
