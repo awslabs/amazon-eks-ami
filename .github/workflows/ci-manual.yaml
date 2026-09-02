@@ -26,8 +26,8 @@ on:
           - "build"
           - "test"
       os_distros:
-        description: 'Operating System Distributions (comma-separated, e.g., al2,al2023)'
-        default: "al2,al2023"
+        description: 'Operating System Distributions (comma-separated, e.g., al2023)'
+        default: "al2023"
         required: false
         type: string
       k8s_versions:
@@ -64,7 +64,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # 8.0.0
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # 9.0.0
         with:
           script: |
             github.rest.issues.createComment({
@@ -96,7 +96,7 @@ jobs:
       - setup
       - ci
     steps:
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # 8.0.0
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # 9.0.0
         with:
           script: |
             const { data } = await github.rest.actions.listJobsForWorkflowRun({

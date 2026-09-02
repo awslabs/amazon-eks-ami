@@ -100,6 +100,11 @@ KERNEL_PACKAGE="kernel"
 if [[ "$(uname -r)" == 6.12.* ]]; then
   KERNEL_PACKAGE="kernel6.12"
 fi
+
+if [[ "$(uname -r)" == 6.18.* ]]; then
+  KERNEL_PACKAGE="kernel6.18"
+fi
+
 sudo dnf -y install \
   "${KERNEL_PACKAGE}-devel" \
   "${KERNEL_PACKAGE}-headers" \
@@ -138,6 +143,10 @@ function archive-open-kmods() {
   KMOD_MAJOR_VERSION=$(sudo kmod-util module-version nvidia-open | cut -d. -f1)
   SUPPORTED_DEVICE_FILE="${WORKING_DIR}/gpu/nvidia-open-supported-devices-${KMOD_MAJOR_VERSION}.txt"
   sudo mv "${SUPPORTED_DEVICE_FILE}" /etc/eks/
+
+  if [[ "$ENABLE_NVIDIA_GDRCOPY_DRIVER" == "true" ]] && [[ -n "${NVIDIA_GDRCOPY_DRIVER_VERSION:-}" ]]; then
+    archive-gdrdrv-kmod
+  fi
 
   sudo kmod-util remove nvidia-open
 
@@ -216,6 +225,17 @@ function archive-proprietary-kmod() {
   sudo kmod-util archive nvidia
   sudo kmod-util remove nvidia
   sudo rm -rf /usr/src/nvidia*
+}
+
+function archive-gdrdrv-kmod() {
+  echo "Archiving gdrdrv kmod"
+
+  sudo dnf -y install gdrcopy-kmod-${NVIDIA_GDRCOPY_DRIVER_VERSION}
+
+  sudo kmod-util archive gdrdrv
+  sudo kmod-util remove gdrdrv
+
+  sudo dnf -y remove --all gdrcopy-kmod-${NVIDIA_GDRCOPY_DRIVER_VERSION}
 }
 
 archive-grid-kmod

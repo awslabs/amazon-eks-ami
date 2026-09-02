@@ -10,8 +10,8 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
-    - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # 6.3.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # 7.0.1
+    - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # 6.5.0
       with:
         go-version: 'stable'
     - run: |

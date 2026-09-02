@@ -51,4 +51,6 @@ spec: ...
 
 The source for the configuration object can be specified with the `--config-source` flag and follows a URI format. The default is `imds://user-data`, which pulls from EC2 instance userdata, but you may provide a file path with `file://...`.
 
+The `nodeadm-run.service` systemd unit is configured with two config sources: `imds://user-data` and `file:///etc/eks/nodeadm.d/`. Any `NodeConfig` files (`.yaml`, `.yml`, or `.json`) placed under `/etc/eks/nodeadm.d/` will be merged with the config supplied via user data, and take precedence over it. See the [examples](doc/examples.md#overriding-configuration-with-drop-in-files) for details.
+
 The [API reference documentation](doc/api.md) contains the details of the configuration types.

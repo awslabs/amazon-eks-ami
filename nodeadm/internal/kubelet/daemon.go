@@ -38,7 +38,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 	if err := k.writeKubeconfig(cfg); err != nil {
 		return err
 	}
-	if err := k.writeImageCredentialProviderConfig(); err != nil {
+	if err := k.writeImageCredentialProviderConfig(cfg.Status.KubeletVersion); err != nil {
 		return err
 	}
 	if err := writeClusterCaCert(cfg.Spec.Cluster.CertificateAuthority); err != nil {
@@ -51,7 +51,7 @@ func (k *kubelet) Configure(cfg *api.NodeConfig) error {
 }
 
 func (k *kubelet) EnsureRunning() error {
-	return k.daemonManager.StartDaemon(KubeletDaemonName)
+	return k.daemonManager.RestartDaemon(KubeletDaemonName)
 }
 
 func (k *kubelet) PostLaunch(_ *api.NodeConfig) error {

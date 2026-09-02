@@ -15,17 +15,27 @@ K8S_VERSION_MINOR := $(word 1,${K8S_VERSION_PARTS}).$(word 2,${K8S_VERSION_PARTS
 AMI_VARIANT ?= amazon-eks
 AMI_VERSION ?= v$(shell date '+%Y%m%d')
 aws_region ?= us-west-2
-os_distro ?= al2
 arch ?= x86_64
+
+BUILD_TARGETS := build k8s validate
+
+ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
+ifndef os_distro
+$(error os_distro is required (e.g., os_distro=al2023))
+endif
+ifndef k8s
+$(error k8s is required (e.g., k8s=1.35))
+endif
+endif
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
 ifeq ($(arch), arm64)
-	instance_type ?= m6g.large
+	instance_type ?= m6g.xlarge
 	AMI_VARIANT := $(AMI_VARIANT)-arm64
 else
-	instance_type ?= m5.large
+	instance_type ?= m5.xlarge
 endif
 ifeq ($(enable_fips), true)
 	AMI_VARIANT := $(AMI_VARIANT)-fips
@@ -33,7 +43,6 @@ endif
 
 ifdef enable_accelerator
 	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
-
 	ifeq ($(os_distro), al2)
 		enable_efa ?= true
 		launch_block_device_mappings_volume_size ?= 100
@@ -49,10 +58,10 @@ else ifneq ($(filter $(aws_region),us-gov-west-1 us-gov-east-1),)
 endif
 
 # default to the latest supported Kubernetes version
-k8s=1.31
+k8s=1.32
 
 .PHONY: build
-build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
+build: ## Build EKS Optimized AMI (requires os_distro=al2023)
 	$(MAKE) k8s $(shell hack/latest-binaries.sh $(k8s) $(aws_region))
 
 .PHONY: fmt
@@ -74,10 +83,6 @@ lint-code: ## Check the source files for syntax and format issues
 	hack/shfmt --diff
 	hack/shellcheck --format gcc --severity warning
 	hack/lint-space-errors.sh
-
-.PHONY: test
-test: ## run the test-harness
-	templates/test/test-harness.sh
 
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= templates/$(os_distro)

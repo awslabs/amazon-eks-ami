@@ -62,6 +62,63 @@ spec:
 The configuration objects will be merged in the order they appear in the MIME multi-part document, meaning the value in the lattermost configuration object will take precedence.
 
 ---
+
+## Overriding configuration with drop-in files
+
+On EKS AMIs, `nodeadm-run.service` is invoked with two configuration sources: user data and `/etc/eks/nodeadm.d/`.
+
+Any `NodeConfig` objects placed in `/etc/eks/nodeadm.d/` (as files with a `.yaml`, `.yml`, or `.json` extension) will be merged on top of the configuration provided via EC2 user data. Because drop-in files are evaluated *after* user data in the config source chain, **values set in `/etc/eks/nodeadm.d/` take precedence over values set in user data**.
+
+This is useful when you want to override a subset of the configuration for a specific instance or AMI (for example, from cloud-init or when building a custom AMI) without having to regenerate the full user data document. The directory is created for you during AMI build, so you can drop files into it directly.
+
+⚠️ **Note**: A drop-in file only needs to contain the fields you want to override — it does not need to be a complete `NodeConfig`. At least one source in **user data** must provide the required `cluster` fields, so drop-in files cannot be used on their own.
+
+For example, given the following user data:
+```
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: application/node.eks.aws
+
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  containerd:
+    baseRuntimeSpec:
+      process:
+        rlimits:
+          - type: RLIMIT_NOFILE
+            soft: 1024
+            hard: 1024
+
+--BOUNDARY--
+```
+
+And the following drop-in file at `/etc/eks/nodeadm.d/10-rlimits.yaml`:
+```yaml
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  containerd:
+    baseRuntimeSpec:
+      process:
+        rlimits:
+          - type: RLIMIT_NOFILE
+            soft: 65536
+            hard: 65536
+```
+
+The resulting configuration used by `nodeadm` will contain the `RLIMIT_NOFILE` values from the drop-in file (`65536`), overriding the values set in user data.
+
+---
 ## Using instance ID as node name
 
 When the `InstanceIdNodeName` feature gate is enabled, `nodeadm` will use the EC2 instance's ID (e.g. `i-abcdefg1234`) as the name of the `Node` object created by `kubelet`, instead of the EC2 instance's private DNS Name (e.g. `ip-192-168-1-1.ec2.internal`).
@@ -157,6 +214,8 @@ spec:
             hard: 1024
 ```
 
+This can be supplied in user data alongside the rest of your `NodeConfig`, or as a [drop-in file](#overriding-configuration-with-drop-in-files) under `/etc/eks/nodeadm.d/`.
+
 ---
 
 ## Defining a Max Pods Expression
@@ -164,13 +223,17 @@ spec:
 Under certain circumstances, the desired max pods value for a given node or instance type can diverge from the
 default calculation. Since the use of a static `NodeConfig` is encouraged as the input source for nodeadm, nodeadm
 accepts a `maxPodsExpression` to determine the final `maxPods` value passed to kubelet. This string is interpreted
-as a [CEL](https://cel.dev/overview/cel-overview) expression with three variables set in the environment:
+as a [CEL](https://cel.dev/overview/cel-overview) expression with the following variables set in the environment:
 
 * `default_enis` - the maximum number of network interfaces attachable on the default network card
 * `ips_per_eni` - the maximum number of IPv4 addresses attachable to a single interface
 * `max_pods` - the standard `maxPods` for the current instance type. This can be equivalently expressed in CEL as `(default_enis * (ips_per_eni - 1)) + 2`
+* `vcpus` - the number of default vCPUs for the instance type
+* `physical_memory_mib` - the total physical memory of the instance type, in MiB (this is the hardware total; the memory perceivable by the OS will be somewhat lower)
 
 ⚠️ **Note**: These values will vary between instance types and may require `ec2:DescribeInstanceTypes` API calls. Expressions should be tested to confirm desired outputs before final use in the intended environment.
+
+⚠️ **Note**: `vcpus` and `physical_memory_mib` are `0` for a small set of older instance types that `ec2:DescribeInstanceTypes` no longer returns and for which AWS publishes no current specifications (`cr1.8xlarge`, `hs1.8xlarge`, `c5a.metal`, `c5ad.metal`, `bmn-sf1.metal`). Expressions that key on these variables should guard against `0` if they may run on those types.
 
 Some common use cases:
 
@@ -181,6 +244,9 @@ Some common use cases:
 3. Limit the number of ENIs that can be used for pods
    * e.g. `((default_enis - 3) * (ips_per_eni - 1)) + 2` to reserve three ENIs
    * For instances utilizing the [AWS VPC CNI's Custom Networking](https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html) feature, reserving a single ENI may be necessary
+4. Scale `maxPods` with instance size using `vcpus` or `physical_memory_mib`
+   * e.g. `vcpus * 10 < max_pods ? vcpus * 10 : max_pods` to cap at 10 pods per vCPU
+   * e.g. `physical_memory_mib / 1024 > 32 ? 110 : max_pods` to raise the limit only on instances with more than 32 GiB
 
 ```yaml
 ---
@@ -189,7 +255,7 @@ kind: NodeConfig
 spec:
   cluster: ...
   kubelet:
-    maxPodsExpression: "((default_enis - 1) * (ips_per_eni - 1)) + 2"
+    maxPodsExpression: "vcpus * 10 < max_pods ? vcpus * 10 : max_pods"
 ```
 ⚠️ **Note**: Values set for `maxPods` in the `kubelet` config will take precedence over the result of the `maxPodsExpression`. `kubeReserved` will be calculated using the result of the expression or
 the internally calculated max pods value, if the expression cannot be evaluated.
