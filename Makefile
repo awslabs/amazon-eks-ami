@@ -120,7 +120,6 @@ k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(enable_accelerator),enable_accelerator=$(enable_accelerator))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
 
-<<<<<<< HEAD
 # DEPRECATION NOTICE: `make` targets for each Kubernetes minor version will not be added after 1.28
 # Use the `k8s` variable to specify a minor version instead
 
@@ -160,8 +159,7 @@ k8s: validate ## Build default K8s version of EKS Optimized AMI
 1.31: ## Build EKS Optimized AMI - K8s 1.31
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.31 $(aws_region))
 
-=======
->>>>>>> v20260818
+
 .PHONY: lint-docs
 lint-docs: ## Lint the docs
 	hack/lint-docs.sh
