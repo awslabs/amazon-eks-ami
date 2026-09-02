@@ -19,14 +19,14 @@ arch ?= x86_64
 
 BUILD_TARGETS := build k8s validate
 
-# ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
-# ifndef os_distro
-# $(error os_distro is required (e.g., os_distro=al2023))
-# endif
-# ifndef k8s
-# $(error k8s is required (e.g., k8s=1.32))
-# endif
-# endif
+ifneq ($(filter $(BUILD_TARGETS),$(MAKECMDGOALS)),)
+ifndef os_distro
+$(error os_distro is required (e.g., os_distro=al2023))
+endif
+ifndef k8s
+$(error k8s is required (e.g., k8s=1.32))
+endif
+endif
 
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
@@ -58,7 +58,8 @@ else ifneq ($(filter $(aws_region),us-gov-west-1 us-gov-east-1),)
 endif
 
 # default to the latest supported Kubernetes version
-k8s=1.32
+#k8s=1.32
+k8s ?= 1.32
 
 .PHONY: build
 build: ## Build EKS Optimized AMI (requires os_distro=al2023)
@@ -160,6 +161,14 @@ k8s: validate ## Build default K8s version of EKS Optimized AMI
 # .PHONY: 1.32
 # 1.32: ## Build EKS Optimized AMI - K8s 1.32
 # 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.32 $(aws_region))	
+
+.PHONY: 1.%
+1.%: ## Build EKS Optimized AMI - K8s 1.x (e.g. `make 1.32 os_distro=al2023`)
+ifndef os_distro
+	$(error os_distro is required (e.g., os_distro=al2023))
+endif
+	$(MAKE) k8s os_distro=$(os_distro) k8s=$@ $(shell hack/latest-binaries.sh $@ $(aws_region))
+
 
 .PHONY: lint-docs
 lint-docs: ## Lint the docs
