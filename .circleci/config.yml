@@ -102,7 +102,7 @@ jobs:
     executor: packer
     environment:
       K8S_VERSION: 1.32
-      os_distro: "al2023"
+      os_distro: "al2"
     steps:
       - attach_workspace:
             at: .
