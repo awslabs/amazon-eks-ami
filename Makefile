@@ -157,6 +157,10 @@ k8s: validate ## Build default K8s version of EKS Optimized AMI
 1.31: ## Build EKS Optimized AMI - K8s 1.31
 	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.31 $(aws_region))
 
+.PHONY: 1.32
+1.32: ## Build EKS Optimized AMI - K8s 1.32
+	$(MAKE) k8s $(shell hack/latest-binaries.sh 1.32 $(aws_region))	
+
 .PHONY: lint-docs
 lint-docs: ## Lint the docs
 	hack/lint-docs.sh
