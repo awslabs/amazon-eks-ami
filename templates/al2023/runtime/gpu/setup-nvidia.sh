@@ -30,18 +30,29 @@ if [[ ! -d "${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}" ]]; then
   exit 1
 fi
 
+if [[ ! -d "${TREE}/etc" ]]; then
+  echo >&2 "setup: no ${TREE}/etc"
+  exit 1
+fi
+
 VERSION="$(cat "${TREE}/.version")"
 readonly VERSION
+
+# copy /etc/ files including modprobe.d and configs
+cp -a --reflink=auto "${TREE}/etc/." /etc/
+for ENTRY in "${TREE}"/etc/*; do
+  restorecon -R "/etc/$(basename "${ENTRY}")" 2> /dev/null || true
+done
 
 readonly LOADED_SENTINEL="${TREE}/.loaded"
 if [[ ! -f "${LOADED_SENTINEL}" ]]; then
   mkdir -p "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra"
-  cp -a --reflink=auto "${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}"/extra/ "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
+  cp -a --reflink=auto "${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/extra/." "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
   restorecon -R "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/" 2> /dev/null || true
 
   readonly FIRMWARE_STAGE="${TREE}/${FIRMWARE_DIR}/nvidia"
-  mkdir -p "${FIRMWARE_DIR}/nvidia"
-  cp -a --reflink=auto "${FIRMWARE_STAGE}/${VERSION}"/ "${FIRMWARE_DIR}/nvidia/${VERSION}"
+  mkdir -p "${FIRMWARE_DIR}/nvidia/${VERSION}"
+  cp -a --reflink=auto "${FIRMWARE_STAGE}/${VERSION}/." "${FIRMWARE_DIR}/nvidia/${VERSION}/"
   restorecon -R "${FIRMWARE_DIR}/nvidia/${VERSION}" 2> /dev/null || true
 
   depmod "${KERNEL_VERSION}"

@@ -311,7 +311,8 @@
       "environment_vars": [
         "ENABLE_ACCELERATOR={{user `enable_accelerator`}}",
         "NVIDIA_DRIVER_LTS_VERSION={{user `nvidia_driver_lts_version`}}",
-        "NVIDIA_DRIVER_PB_VERSION={{user `nvidia_driver_pb_version`}}"
+        "NVIDIA_DRIVER_PB_VERSION={{user `nvidia_driver_pb_version`}}",
+        "ENABLE_NVIDIA_GDRCOPY_DRIVER={{user `enable_nvidia_gdrcopy_driver`}}"
       ]
     },
     {

@@ -12,6 +12,7 @@ readonly NVIDIA_USERSPACE_PACKAGES=(
   nvidia-driver
   nvidia-driver-cuda
   nvidia-fabricmanager
+  nvidia-imex
   nvidia-libXNVCtrl-devel
   nvidia-persistenced
   nvidia-settings
@@ -91,7 +92,10 @@ function extract-version-specific-rpms() {
   local TREE="${1}"
   local TREE_DIR="${NVIDIA_TREE_ROOT}/${TREE}"
   local RPM_LIST="${NVIDIA_USERSPACE_RPM_DIR}/${TREE}"
-  local RPM
+  local RPM RPM_FILENAME
+
+  local DRIVER_VERSION
+  DRIVER_VERSION=$(cat "${TREE_DIR}/.version")
 
   if ! compgen -G "${RPM_LIST}/*.rpm" > /dev/null; then
     echo >&2 "ERROR: nothing version-specific for tree ${TREE}, check that the trees resolved to different versions"
@@ -104,7 +108,17 @@ function extract-version-specific-rpms() {
   # Staged whole so the boot-time commit phase can register them in the rpm database.
   sudo install -d "${TREE_DIR}/.rpms"
   for RPM in "${VERSION_SPECIFIC_RPMS[@]}"; do
-    echo "  $(basename "${RPM}")"
+    RPM_FILENAME=$(basename "${RPM}")
+    # The kmod rpms come as a dependency of nvidia-driver -> nvidia-kmod-common.
+    # The flavor subtrees already stages the kmod rpms. A copy here would put both flavors'
+    # in one rpmdb registration, where they conflict over the same /usr/src paths.
+    case "${RPM_FILENAME}" in
+      kmod-nvidia-open-dkms-"${DRIVER_VERSION}"-* | kmod-nvidia-latest-dkms-"${DRIVER_VERSION}"-*)
+        echo "  skipping ${RPM_FILENAME}, staged under the flavor subtree"
+        continue
+        ;;
+    esac
+    echo "  ${RPM_FILENAME}"
     rpm2cpio "${RPM}" | (cd "${TREE_DIR}" && sudo cpio -idmu --quiet)
     sudo install -m 0644 "${RPM}" "${TREE_DIR}/.rpms/"
   done
