@@ -50,6 +50,7 @@ fi
 sudo dnf update -y
 
 # Install necessary packages
+# versionlock is built into dnf5, so there is no plugin package to install.
 sudo dnf install -y \
   aws-cfn-bootstrap \
   chrony \
@@ -64,26 +65,30 @@ sudo dnf install -y \
   unzip \
   wget \
   mdadm \
-  pigz \
-  python3-dnf-plugin-versionlock
+  pigz
 
-# we need to handle different kernel packages depending on the namespace
-# associated with the minor version.
-KERNEL_PACKAGE="kernel"
-if [[ "$(uname -r)" == 6.12.* ]]; then
-  KERNEL_PACKAGE="kernel6.12"
-fi
-
-if [[ "$(uname -r)" == 6.18.* ]]; then
-  KERNEL_PACKAGE="kernel6.18"
-fi
-
+# AL2027 namespaces kernel packages by minor version (e.g. kernel7.1), but each
+# keeps a virtual Provides for the unversioned name, so the plain names resolve
+# without hardcoding a version here.
 sudo dnf -y install \
-  "${KERNEL_PACKAGE}-devel" \
-  "${KERNEL_PACKAGE}-headers"
+  kernel-devel \
+  kernel-headers
 
 # versionlock kernel packages so they remain consistent.
-sudo dnf versionlock 'kernel*'
+sudo dnf versionlock add 'kernel*'
+
+################################################################################
+### EFA ########################################################################
+################################################################################
+
+# AL2027 doesn't need EFA userspace install. efa.ko is built into the kernel package and autoloads from its PCI alias when an EFA device is attached.
+# The only userspace library the EFA libfabric provider needs (libibverbs, with the libefa provider) is already present as a transitive dependency.
+# So just check that the kernel still ships the driver, so we never publish an AMI that drops EFA support.
+if ! modinfo efa > /dev/null 2>&1; then
+  echo "EFA driver (efa.ko) is not present in kernel $(uname -r)!"
+  exit 1
+fi
+modinfo efa --field version | xargs -I{} echo "EFA driver version: {}"
 
 ################################################################################
 ### Networking #################################################################
@@ -93,7 +98,7 @@ sudo dnf versionlock 'kernel*'
 sudo dnf install -y iptables-nft
 
 # updating this package may trigger post-install hooks or config changes that undo what happens below
-sudo dnf versionlock amazon-ec2-net-utils
+sudo dnf versionlock add amazon-ec2-net-utils
 
 # Mask udev triggers installed by amazon-ec2-net-utils package
 sudo touch /etc/udev/rules.d/99-vpc-policy-routes.rules
@@ -141,7 +146,7 @@ if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
 fi
-sudo dnf versionlock containerd-*
+sudo dnf versionlock add 'containerd-*'
 
 # generate and store containerd version in file /etc/eks/containerd-version.txt
 containerd --version | sudo tee /etc/eks/containerd-version.txt

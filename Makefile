@@ -31,6 +31,11 @@ endif
 ifeq ($(os_distro), al2023)
 	AMI_VARIANT := $(AMI_VARIANT)-al2023
 endif
+
+ifeq ($(os_distro), al2027)
+	AMI_VARIANT := $(AMI_VARIANT)-al2027
+endif
+
 ifeq ($(arch), arm64)
 	instance_type ?= m6g.xlarge
 	AMI_VARIANT := $(AMI_VARIANT)-arm64
@@ -42,6 +47,9 @@ ifeq ($(enable_fips), true)
 endif
 
 ifdef enable_accelerator
+ifeq ($(os_distro), al2027)
+$(error enable_accelerator is not supported for os_distro=al2027)
+endif
 	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
 endif
 
