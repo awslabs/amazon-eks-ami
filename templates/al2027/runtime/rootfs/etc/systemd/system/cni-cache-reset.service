@@ -1,0 +1,10 @@
+[Unit]
+Description=Reset the CNI results cache
+Before=cloud-init.target
+
+[Service]
+Type=oneshot
+ExecStart=rm -rf /var/lib/cni/results
+
+[Install]
+WantedBy=multi-user.target

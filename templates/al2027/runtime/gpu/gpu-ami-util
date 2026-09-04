@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+function has-nvidia-devices() {
+  NVIDIA_VENDOR_ID="10de"
+  NVIDIA_DEVICES=$(lspci -d "${NVIDIA_VENDOR_ID}::" | wc -l)
+  if [ ${NVIDIA_DEVICES} -gt 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 COMMAND"
+  echo
+  echo "Valid values for COMMAND:"
+  declare -F | awk '{print "\t" $3}'
+  exit 1
+fi
+
+if eval $1; then
+  echo >&2 "true"
+  exit 0
+else
+  echo >&2 "false"
+  exit 1
+fi

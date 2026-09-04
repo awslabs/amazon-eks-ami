@@ -1,0 +1,10 @@
+[Unit]
+Description=soci snapshotter containerd plugin (socket)
+Documentation=https://github.com/awslabs/soci-snapshotter
+
+[Socket]
+ListenStream=/run/soci-snapshotter-grpc/soci-snapshotter-grpc.sock
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

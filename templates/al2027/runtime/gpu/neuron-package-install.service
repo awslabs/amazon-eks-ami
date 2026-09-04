@@ -1,0 +1,13 @@
+[Unit]
+Description=Install Neuron packages
+# Run before cloud-init so packages are installed
+# before user data that may query the installed information
+Before=cloud-init.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/neuron-package-install.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

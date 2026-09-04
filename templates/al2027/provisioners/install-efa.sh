@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -o pipefail
+set -o nounset
+set -o errexit
+
+if [ "$ENABLE_EFA" != "true" ]; then
+  exit 0
+fi
+
+##########################################################################################
+### Setup installer ######################################################################
+### https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa-start.html#efa-start-enable ##
+##########################################################################################
+EFA_VERSION="latest"
+EFA_PACKAGE="aws-efa-installer-${EFA_VERSION}.tar.gz"
+EFA_URL="https://efa-installer.amazonaws.com"
+
+PARTITION=$(imds "/latest/meta-data/services/partition")
+if [[ "${PARTITION}" =~ ^aws-iso ]]; then
+  AWS_DOMAIN=$(imds "/latest/meta-data/services/domain")
+  EFA_URL="https://aws-efa-installer.s3.${AWS_REGION}.${AWS_DOMAIN}"
+fi
+
+EFA_INSTALL_DIR="${WORKING_DIR}/efa-installer"
+mkdir -p "${EFA_INSTALL_DIR}"
+cd "${EFA_INSTALL_DIR}"
+
+#https://github.com/amazonlinux/amazon-linux-2023/issues/243
+sudo dnf swap -y gnupg2-minimal gnupg2-full
+
+##########################################################################################
+### Download installer ###################################################################
+##########################################################################################
+if [ ${PARTITION} == "aws-iso-e" ]; then
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE} .
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
+  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
+else
+  curl -O "${EFA_URL}/${EFA_PACKAGE}"
+  curl -O "${EFA_URL}/aws-efa-installer.key" && gpg --import aws-efa-installer.key
+  curl -O "${EFA_URL}/${EFA_PACKAGE}.sig"
+fi
+
+if ! gpg --verify ./aws-efa-installer-${EFA_VERSION}.tar.gz.sig &> /dev/null; then
+  echo "EFA Installer signature failed verification!"
+  exit 2
+fi
+
+##########################################################################################
+### Install and cleanup ##################################################################
+##########################################################################################
+tar -xf ${EFA_PACKAGE} && cd aws-efa-installer
+sudo ./efa_installer.sh --minimal -y
+
+cd -
+sudo rm -rf "${EFA_INSTALL_DIR}"
+sudo dnf swap -y gnupg2-full gnupg2-minimal
+
+##########################################################################################
+### Erase efa-nv-peermem on non-NVIDIA AMIs. It owns efa_nv_peermem.conf and loads the  ##
+### nvidia kmod at boot, which fails where there is no nvidia driver.                    ##
+##########################################################################################
+if [ "${ENABLE_ACCELERATOR:-}" != "nvidia" ]; then
+  sudo rpm -e --nodeps efa-nv-peermem 2> /dev/null || true
+fi

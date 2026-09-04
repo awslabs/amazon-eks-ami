@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# usage: set-kernel-arg "ARG[ ARG...]"
+#
+# Adds kernel command-line argument(s) to the current boot entries and to
+# GRUB_CMDLINE_LINUX in /etc/default/grub, so they also survive a regeneration
+# of the boot config. Idempotent.
+
+set -o pipefail
+set -o nounset
+set -o errexit
+
+if [ "$#" -eq 0 ]; then
+  echo >&2 "usage: set-kernel-arg \"ARG[ ARG...]\""
+  exit 1
+fi
+
+KERNEL_ARGS="$*"
+
+# Apply to the current boot entries.
+sudo grubby --update-kernel=ALL --args="${KERNEL_ARGS}"
+
+. /etc/default/grub
+CMDLINE="${GRUB_CMDLINE_LINUX:-}"
+# Append each arg that isn't already present.
+for arg in ${KERNEL_ARGS}; do
+  grep -qFw -- "${arg}" <<< "${CMDLINE}" || CMDLINE+=" ${arg}"
+done
+CMDLINE="${CMDLINE# }"
+
+# Replace the existing GRUB_CMDLINE_LINUX line, or add it if absent.
+if grep -q '^GRUB_CMDLINE_LINUX=' /etc/default/grub; then
+  sudo sed -i "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=\"${CMDLINE}\"|" /etc/default/grub
+else
+  echo "GRUB_CMDLINE_LINUX=\"${CMDLINE}\"" | sudo tee -a /etc/default/grub > /dev/null
+fi
