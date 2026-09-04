@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -o nounset
+set -o errexit
+set -o pipefail
+
+TAG="localhost/kubernetes/pause:latest"
+EXPORT_PATH="/etc/eks/pause.tar"
+
+while getopts 'i:t:e:' OPTION; do
+  case "$OPTION" in
+    i) PAUSE_CONTAINER_IMAGE="$OPTARG" ;;
+    t) TAG="$OPTARG" ;;
+    e) EXPORT_PATH="$OPTARG" ;;
+    *)
+      echo "usage: $0 [-i] [-t] [-e]" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# pull the sandbox using aws credentials and tag it under a different name
+PULL_ARGS=""
+if [[ "${PAUSE_CONTAINER_IMAGE}" == *"dkr.ecr"* ]]; then
+  PULL_ARGS="${PULL_ARGS} --user AWS:$(aws ecr get-login-password)"
+elif [[ "${PAUSE_CONTAINER_IMAGE}" == *"public.ecr.aws"* ]]; then
+  # ECR public authentication must always be through us-east-1
+  # https://docs.aws.amazon.com/AmazonECR/latest/public/public-registry-auth.html
+  if ECR_PUBLIC_PASSWORD=$(aws ecr-public get-login-password --region=us-east-1); then
+    PULL_ARGS="${PULL_ARGS} --user AWS:${ECR_PUBLIC_PASSWORD}"
+  else
+    echo "Failed to authenticate to public ECR, retrying with unauthenticated pull" >&2
+  fi
+fi
+sudo ctr --namespace k8s.io image pull ${PULL_ARGS} ${PAUSE_CONTAINER_IMAGE}
+sudo ctr --namespace k8s.io image tag ${PAUSE_CONTAINER_IMAGE} ${TAG}
+# label the image with CRI aware key for pinning to keep the image from being GC'd
+# see: https://github.com/containerd/containerd/blob/0abada6251993fd1e7f6b048cad92cee9fbf9805/internal/cri/labels/labels.go#L26-L27
+sudo ctr --namespace k8s.io image label ${TAG} io.cri-containerd.pinned=pinned
+# add a label with context about the tag's source image
+sudo ctr --namespace k8s.io image label ${TAG} io.cri-containerd.source=${PAUSE_CONTAINER_IMAGE}
+# store the archive locally so that it can be imported in the future in case of issues
+sudo ctr --namespace k8s.io image export ${EXPORT_PATH} ${TAG}

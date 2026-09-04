@@ -1,0 +1,14 @@
+[Unit]
+Description=Loading NVIDIA kernel modules
+# the script needs to use IMDS, so wait for the network to be up to avoid any flakiness
+After=network-online.target
+Wants=network-online.target
+Before=nvidia-fabricmanager.service nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/eks/nvidia-kmod-load.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
