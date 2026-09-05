@@ -45,6 +45,7 @@ function runTest() {
     --mac-address "$(jq -r '.metadata.values.mac' $case_dir/../../infra/aemm-default-config.json)"
     --workdir "$workdir"
     --volume "$(pwd)/$case_dir:$workdir"
+    --volume "$(pwd)/../templates/al2023/runtime/rootfs/etc/systemd/system/udev-net-manager@.service:/udev-net-manager@.service:ro"
   )
 
   for binary in "${!MOUNT_TARGETS[@]}"; do
