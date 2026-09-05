@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"path/filepath"
 	"time"
 
@@ -20,9 +21,8 @@ type NetworkInterfaceBroker interface {
 const NetworkManagerCacheDir = "/etc/eks/nodeadm/udev-net-manager"
 
 // defaultOptOutLookupTimeout bounds client build (region/credential discovery
-// via IMDS) plus describe, capping the SDK's retry/backoff. The oneshot
-// udev-net-manager@.service's TimeoutStartSec must stay comfortably above this
-// plus the IMDS eventual-consistency retry that precedes it in addAction.
+// via IMDS) plus describe, capping the SDK's retry/backoff. Other IMDS calls
+// in addAction retain their existing retry behavior.
 const defaultOptOutLookupTimeout = 10 * time.Second
 
 type fsBroker struct {
@@ -33,6 +33,7 @@ type fsBroker struct {
 	// never exercised unless the feature is enabled.
 	newResolver   func(ctx context.Context) (cniOptOutResolver, error)
 	lookupTimeout time.Duration
+	linkIsUp      func(string) (bool, error)
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
@@ -44,10 +45,17 @@ func NewFSBroker(instanceID string) *fsBroker {
 			return newEC2TagResolver(ctx, instanceID)
 		},
 		lookupTimeout: defaultOptOutLookupTimeout,
+		linkIsUp: func(name string) (bool, error) {
+			link, err := net.InterfaceByName(name)
+			if err != nil {
+				return false, err
+			}
+			return link.Flags&net.FlagUp != 0, nil
+		},
 	}
 }
 
-func (b *fsBroker) determineManager(ctx context.Context, mac string) (string, error) {
+func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac string) (string, error) {
 	// This path is created when the second phase of nodeadm runs.
 	// For users who incorrectly call nodeadm init in user data, this ensures
 	// that systemd won't accidentally try to manage interfaces added by the
@@ -69,6 +77,17 @@ func (b *fsBroker) determineManager(ctx context.Context, mac string) (string, er
 		return ManagerCNI, nil
 	}
 
+	// Never adopt a link already brought up by CNI or another manager. This
+	// also lets an untagged ENI leave the pending state once CNI configures it.
+	up, err := b.linkIsUp(interfaceName)
+	if err != nil {
+		return "", err
+	}
+	if up {
+		zap.L().Info("deferring interface management", zap.String("interface", interfaceName), zap.String("manager", ManagerCNI), zap.String("reason", "link already up"))
+		return ManagerCNI, nil
+	}
+
 	// Propagated, not defaulted to CNI: ManagerFor caches the result permanently,
 	// and the unit retries on failure (Restart=on-failure).
 	ctx, cancel := context.WithTimeout(ctx, b.lookupTimeout)
@@ -83,6 +102,15 @@ func (b *fsBroker) determineManager(ctx context.Context, mac string) (string, er
 		return "", fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)
 	}
 	if optedOut {
+		// CNI may have brought the link up during the EC2 request.
+		up, err := b.linkIsUp(interfaceName)
+		if err != nil {
+			return "", err
+		}
+		if up {
+			zap.L().Info("deferring interface management", zap.String("interface", interfaceName), zap.String("manager", ManagerCNI), zap.String("reason", "link brought up during EC2 lookup"))
+			return ManagerCNI, nil
+		}
 		return ManagerSystemd, nil
 	}
 	return ManagerCNI, nil
@@ -102,7 +130,7 @@ func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (s
 		zap.L().Warn("failed reading manager from cache, re-resolving", zap.Error(err), zap.String("interface", interfaceName))
 	}
 
-	manager, err = b.determineManager(ctx, mac)
+	manager, err = b.determineManager(ctx, interfaceName, mac)
 	if err != nil {
 		return "", err
 	}
