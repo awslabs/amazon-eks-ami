@@ -1,8 +1,7 @@
 [Unit]
 Description=Setup network interface %i
-# 20 restarts per 30min before the unit lands in failed (start-limit-hit).
-StartLimitIntervalSec=30min
-StartLimitBurst=20
+# Recover after EC2 outages or IAM corrections without manual reset-failed.
+StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
@@ -12,5 +11,3 @@ RemainAfterExit=yes
 User=root
 Restart=on-failure
 RestartSec=5
-# oneshot units have no timeout by default.
-TimeoutStartSec=60
