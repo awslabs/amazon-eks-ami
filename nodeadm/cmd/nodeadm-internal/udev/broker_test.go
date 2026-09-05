@@ -51,6 +51,7 @@ func newTestBroker(t *testing.T, markerExists, flagExists bool, newResolver reso
 		noManageMarkerPath: filepath.Join(dir, "no-manage"),
 		newResolver:        newResolver,
 		lookupTimeout:      defaultOptOutLookupTimeout,
+		linkIsUp:           func(string) (bool, error) { return false, nil },
 	}
 	touch := func(path string, create bool) {
 		if !create {
@@ -123,7 +124,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 				return res, nil
 			})
 
-			got, err := b.determineManager(context.TODO(), "0a:1b:2c:3d:4e:5f")
+			got, err := b.determineManager(context.TODO(), "ens6", "0a:1b:2c:3d:4e:5f")
 			if tc.wantErr {
 				assert.Error(t, err)
 				assert.Empty(t, got)
@@ -145,7 +146,7 @@ func Test_fsBroker_determineManager_lookupTimeout(t *testing.T) {
 	b.lookupTimeout = 20 * time.Millisecond
 
 	start := time.Now()
-	got, err := b.determineManager(context.TODO(), "mac")
+	got, err := b.determineManager(context.TODO(), "ens6", "mac")
 	elapsed := time.Since(start)
 
 	// a hung lookup errors promptly (so systemd retries the unit) rather than

@@ -2,9 +2,7 @@ package udev
 
 import (
 	"context"
-	"errors"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -27,115 +25,111 @@ func (f *fakeDescribeNetworkInterfaces) DescribeNetworkInterfaces(ctx context.Co
 }
 
 func eniWithTags(tags map[string]string) ec2types.NetworkInterface {
-	var ts []ec2types.Tag
+	eni := ec2types.NetworkInterface{}
 	for k, v := range tags {
-		ts = append(ts, ec2types.Tag{Key: aws.String(k), Value: aws.String(v)})
+		eni.TagSet = append(eni.TagSet, ec2types.Tag{Key: aws.String(k), Value: aws.String(v)})
 	}
-	return ec2types.NetworkInterface{TagSet: ts}
+	return eni
 }
 
 func Test_ec2TagResolver_IsOptedOut(t *testing.T) {
-	tests := []struct {
-		name          string
-		timeout       time.Duration // if non-zero, the subtest creates a context with this deadline
-		out           *ec2.DescribeNetworkInterfacesOutput
-		err           error
-		wantErr       bool
-		wantPermanent bool
-		wantOptOut    bool
-		wantCalls     int
+	const instanceID = "i-1234567890abcdef0"
+	for _, tc := range []struct {
+		name    string
+		tags    map[string]string
+		want    bool
+		unknown bool
 	}{
-		{
-			name: "no_manage true",
-			out: &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{
-				eniWithTags(map[string]string{noManageTagKey: "true"}),
-			}},
-			wantOptOut: true,
-			wantCalls:  1,
-		},
-		{
-			// IPAMD compares case-sensitively, so a non-lowercase value leaves the
-			// ENI CNI-managed; adopting it would give it two managers.
-			name: "no_manage non-lowercase value stays CNI-managed",
-			out: &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{
-				eniWithTags(map[string]string{noManageTagKey: "True"}),
-			}},
-			wantOptOut: false,
-			wantCalls:  1,
-		},
-		{
-			name: "no_manage false",
-			out: &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{
-				eniWithTags(map[string]string{noManageTagKey: "false"}),
-			}},
-			wantOptOut: false,
-			wantCalls:  1,
-		},
-		{
-			name: "tag absent",
-			out: &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{
-				eniWithTags(map[string]string{"Name": "dataplane"}),
-			}},
-			wantOptOut: false,
-			wantCalls:  1,
-		},
-		{
-			// an empty result means the ENI isn't visible via the eventually
-			// consistent EC2 API yet; retry until the caller's deadline, then error
-			// rather than let a wrong decision get cached.
-			name:      "no interfaces returned retries until deadline",
-			timeout:   50 * time.Millisecond,
-			out:       &ec2.DescribeNetworkInterfacesOutput{},
-			wantErr:   true,
-			wantCalls: 1, // at least one attempt before the deadline fires
-		},
-		{
-			name:      "api error",
-			err:       errors.New("boom"),
-			wantErr:   true,
-			wantCalls: 1,
-		},
-		{
-			// an IAM denial will not resolve on retry, so it is flagged for an
-			// actionable log line rather than retried to the deadline.
-			name:          "unauthorized api error is permanent",
-			err:           &smithy.GenericAPIError{Code: "UnauthorizedOperation", Message: "not authorized"},
-			wantErr:       true,
-			wantPermanent: true,
-			wantCalls:     1,
-		},
-		{
-			// throttling/5xx/unknown codes must stay unclassified so a transient
-			// failure is not mistaken for a permanent one.
-			name:      "throttling api error is not permanent",
-			err:       &smithy.GenericAPIError{Code: "RequestLimitExceeded", Message: "slow down"},
-			wantErr:   true,
-			wantCalls: 1,
-		},
-	}
-	for _, tc := range tests {
+		{name: "opted out", tags: map[string]string{noManageTagKey: "true"}, want: true},
+		{name: "case sensitive", tags: map[string]string{noManageTagKey: "True"}},
+		{name: "explicit false", tags: map[string]string{noManageTagKey: "false"}},
+		{name: "empty value", tags: map[string]string{noManageTagKey: ""}},
+		{name: "tags absent", unknown: true},
+		{name: "unrelated tag", tags: map[string]string{"Name": "dataplane"}, unknown: true},
+		{name: "instance tag alone does not settle ownership", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": instanceID}, unknown: true},
+		{name: "another instance", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": "i-other"}, unknown: true},
+		{name: "opt out takes precedence", tags: map[string]string{noManageTagKey: "true", "node.k8s.amazonaws.com/instance_id": instanceID}, want: true},
+	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-			if tc.timeout > 0 {
-				var cancel context.CancelFunc
-				ctx, cancel = context.WithTimeout(ctx, tc.timeout)
-				t.Cleanup(cancel)
+			client := &fakeDescribeNetworkInterfaces{out: &ec2.DescribeNetworkInterfacesOutput{
+				NetworkInterfaces: []ec2types.NetworkInterface{eniWithTags(tc.tags)},
+			}}
+			r := &ec2TagResolver{client: client, instanceID: instanceID}
+			got, err := r.IsOptedOut(context.Background(), "0a:1b:2c:3d:4e:5f")
+			if tc.unknown {
+				assert.ErrorIs(t, err, errOwnershipUnknown)
+			} else {
+				assert.NoError(t, err)
 			}
-			fake := &fakeDescribeNetworkInterfaces{out: tc.out, err: tc.err}
-			r := &ec2TagResolver{client: fake, instanceID: "i-1234567890abcdef0"}
-
-			got, err := r.IsOptedOut(ctx, "0a:1b:2c:3d:4e:5f")
-			if tc.wantErr {
-				assert.Error(t, err)
-				assert.GreaterOrEqual(t, fake.calls, tc.wantCalls)
-				assert.Equal(t, tc.wantPermanent, errors.Is(err, ErrPermanentOptOutLookup))
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, tc.wantOptOut, got)
-			assert.Equal(t, tc.wantCalls, fake.calls)
-			// the lookup must be scoped to both the MAC and this instance.
-			assert.Len(t, fake.gotInput.Filters, 2)
+			assert.Equal(t, tc.want, got)
+			assert.Equal(t, 1, client.calls)
+			assert.ElementsMatch(t, []ec2types.Filter{
+				{Name: aws.String("mac-address"), Values: []string{"0a:1b:2c:3d:4e:5f"}},
+				{Name: aws.String("attachment.instance-id"), Values: []string{instanceID}},
+			}, client.gotInput.Filters)
 		})
 	}
+}
+
+func Test_fsBroker_eventualConsistency(t *testing.T) {
+	// Simulate separate systemd attempts: missing ENI, missing tags, then tags.
+	client := &fakeDescribeNetworkInterfaces{out: &ec2.DescribeNetworkInterfacesOutput{}}
+	b := newTestBroker(t, true, true, staticResolver(&ec2TagResolver{client: client, instanceID: "i-test"}))
+	for _, enis := range [][]ec2types.NetworkInterface{nil, {eniWithTags(nil)}} {
+		client.out.NetworkInterfaces = enis
+		_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+		assert.ErrorIs(t, err, errOwnershipUnknown)
+		keys, err := b.cache.Keys()
+		assert.NoError(t, err)
+		assert.Empty(t, keys)
+	}
+	client.out.NetworkInterfaces = []ec2types.NetworkInterface{eniWithTags(map[string]string{noManageTagKey: "true"})}
+	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	assert.NoError(t, err)
+	assert.Equal(t, ManagerSystemd, manager)
+	assert.Equal(t, 3, client.calls)
+}
+
+func Test_fsBroker_recoversAfterAPIError(t *testing.T) {
+	for _, code := range []string{"UnauthorizedOperation", "RequestLimitExceeded", "InternalError"} {
+		t.Run(code, func(t *testing.T) {
+			apiErr := &smithy.GenericAPIError{Code: code, Message: "lookup failed"}
+			client := &fakeDescribeNetworkInterfaces{err: apiErr}
+			b := newTestBroker(t, true, true, staticResolver(&ec2TagResolver{client: client}))
+			_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+			assert.ErrorIs(t, err, apiErr)
+			client.err = nil
+			client.out = &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{eniWithTags(map[string]string{noManageTagKey: "true"})}}
+			manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+			assert.NoError(t, err)
+			assert.Equal(t, ManagerSystemd, manager)
+			assert.Equal(t, 2, client.calls)
+		})
+	}
+}
+
+func Test_fsBroker_doesNotAdoptActiveLink(t *testing.T) {
+	resolver := &fakeResolver{err: errOwnershipUnknown}
+	b := newTestBroker(t, true, true, staticResolver(resolver))
+	_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	assert.ErrorIs(t, err, errOwnershipUnknown)
+	// CNI brings up the ENI while EC2 tags are still propagating.
+	b.linkIsUp = func(string) (bool, error) { return true, nil }
+	resolver.optedOut, resolver.err = true, nil
+	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	assert.NoError(t, err)
+	assert.Equal(t, ManagerCNI, manager)
+	assert.Equal(t, 1, resolver.calls)
+}
+
+func Test_fsBroker_linkBroughtUpDuringLookup(t *testing.T) {
+	b := newTestBroker(t, true, true, staticResolver(&fakeResolver{optedOut: true}))
+	checks := 0
+	b.linkIsUp = func(string) (bool, error) {
+		checks++
+		return checks > 1, nil
+	}
+	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	assert.NoError(t, err)
+	assert.Equal(t, ManagerCNI, manager)
 }
