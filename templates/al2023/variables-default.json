@@ -20,7 +20,7 @@
     "encrypted": "false",
     "iam_instance_profile": "",
     "kms_key_id": "",
-    "launch_block_device_mappings_volume_size": "20",
+    "launch_block_device_mappings_volume_size": "100",
     "nodeadm_build_image": "public.ecr.aws/eks-distro-build-tooling/golang:1.25",
     "nvidia_driver_major_version": "580",
     "nvidia_repository_url": null,
