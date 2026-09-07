@@ -37,3 +37,5 @@ nodeadm-internal udev-net-manager --action add --interface $interface
 assert::file-not-exists /run/systemd/network/70-eks-$interface.network
 assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "cni"
 nodeadm-internal udev-net-manager --action remove --interface $interface
+
+./networkd-ownership.sh

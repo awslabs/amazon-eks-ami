@@ -5,16 +5,17 @@ RUN mv /bin/cmd /imds-mock
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG CONTAINERD_VERSION
+ARG TARGETARCH
 RUN yum install -y --allowerasing curl && yum clean all
 RUN dnf -y update && \
-    dnf -y install systemd jq awscli nmap-ncat iptables iproute tar procps git e2fsprogs xfsprogs util-linux && \
+    dnf -y install systemd systemd-udev jq awscli nmap-ncat iptables iproute tar procps git e2fsprogs xfsprogs util-linux && \
     dnf -y install python3-3.9.24-1.amzn2023.0.4 python3-libs-3.9.24-1.amzn2023.0.4 --allowerasing && \
     dnf clean all
 # TO-DO: install containerd v2 from AL repo as well once it is available
 RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
         dnf install -y containerd-${CONTAINERD_VERSION}; \
     else \
-        curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz && \
+        curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-${TARGETARCH}.tar.gz && \
         mkdir -p /tmp/containerd && \
         tar -C /tmp/containerd -xzf /tmp/containerd.tar.gz && \
         cp /tmp/containerd/bin/* /usr/local/bin/ && \

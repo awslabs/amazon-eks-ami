@@ -1,0 +1,5 @@
+# Standalone systemd >=258 fixture for
+# cases/udev-net-manager/networkd-ownership.sh. No AWS access is needed.
+FROM fedora:43
+RUN dnf -y install systemd systemd-udev systemd-networkd iproute && dnf clean all
+CMD ["/usr/sbin/init"]
