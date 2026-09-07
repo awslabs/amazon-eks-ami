@@ -25,6 +25,8 @@ const NetworkManagerCacheDir = "/etc/eks/nodeadm/udev-net-manager"
 // in addAction retain their existing retry behavior.
 const defaultOptOutLookupTimeout = 10 * time.Second
 
+var errOwnershipUnknown = errors.New("ENI ownership tags not yet visible")
+
 type fsBroker struct {
 	cache              util.FSCache
 	markerPath         string
@@ -77,8 +79,8 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return ManagerCNI, nil
 	}
 
-	// Never adopt a link already brought up by CNI or another manager. This
-	// also lets an untagged ENI leave the pending state once CNI configures it.
+	// An up link is a reason to leave management alone, not proof that CNI owns
+	// it. ManagerCNI also represents delegation to an existing external manager.
 	up, err := b.linkIsUp(interfaceName)
 	if err != nil {
 		return "", err
@@ -97,11 +99,12 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 	if err != nil {
 		return "", fmt.Errorf("failed to build CNI opt-out resolver for mac %s: %w", mac, err)
 	}
-	optedOut, err := resolver.IsOptedOut(ctx, mac)
+	decision, err := resolver.Resolve(ctx, mac)
 	if err != nil {
 		return "", fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)
 	}
-	if optedOut {
+	switch decision {
+	case ownershipSystemd:
 		// CNI may have brought the link up during the EC2 request.
 		up, err := b.linkIsUp(interfaceName)
 		if err != nil {
@@ -112,8 +115,13 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 			return ManagerCNI, nil
 		}
 		return ManagerSystemd, nil
+	case ownershipCNI:
+		return ManagerCNI, nil
+	case ownershipPending:
+		return "", fmt.Errorf("mac %s: %w", mac, errOwnershipUnknown)
+	default:
+		return "", fmt.Errorf("invalid ownership decision: %d", decision)
 	}
-	return ManagerCNI, nil
 }
 
 func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {

@@ -2,7 +2,6 @@ package udev
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,14 +12,22 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 )
 
-// noManageTagKey opts an ENI out of VPC CNI management, leaving nodeadm
-// responsible for configuring it.
+// noManageTagKey opts an ENI out of VPC CNI management. Nodeadm may adopt it
+// only when OSManagedNoManageENIs is enabled and the link is eligible.
 //
 // see: https://github.com/aws/amazon-vpc-cni-k8s/blob/5359e6b0ffaedae2bb831dceeea0337891c6f2ad/pkg/ipamd/ipamd.go#L129
 const noManageTagKey = "node.k8s.amazonaws.com/no_manage"
 
+type ownershipDecision uint8
+
+const (
+	ownershipPending ownershipDecision = iota
+	ownershipCNI
+	ownershipSystemd
+)
+
 type cniOptOutResolver interface {
-	IsOptedOut(ctx context.Context, mac string) (bool, error)
+	Resolve(ctx context.Context, mac string) (ownershipDecision, error)
 }
 
 type describeNetworkInterfacesAPI interface {
@@ -47,11 +54,9 @@ func newEC2TagResolver(ctx context.Context, instanceID string) (*ec2TagResolver,
 	}, nil
 }
 
-// Missing tags are not a definitive CNI decision: EC2 may expose the ENI
-// before its tags. Let systemd retry without persisting a negative result.
-var errOwnershipUnknown = errors.New("ENI ownership tags not yet visible")
-
-func (r *ec2TagResolver) IsOptedOut(ctx context.Context, mac string) (bool, error) {
+// Resolve distinguishes incomplete visibility from an API failure. Neither is
+// a definitive CNI decision, and neither may be cached as one.
+func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (ownershipDecision, error) {
 	out, err := r.client.DescribeNetworkInterfaces(ctx, &ec2.DescribeNetworkInterfacesInput{
 		Filters: []ec2types.Filter{
 			{Name: aws.String("mac-address"), Values: []string{mac}},
@@ -60,7 +65,7 @@ func (r *ec2TagResolver) IsOptedOut(ctx context.Context, mac string) (bool, erro
 		},
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed to describe network interface for mac %s (check EC2 connectivity and ec2:DescribeNetworkInterfaces on the node role): %w", mac, err)
+		return ownershipPending, fmt.Errorf("failed to describe network interface for mac %s (check EC2 connectivity and ec2:DescribeNetworkInterfaces on the node role): %w", mac, err)
 	}
 	for _, eni := range out.NetworkInterfaces {
 		for _, tag := range eni.TagSet {
@@ -69,9 +74,12 @@ func (r *ec2TagResolver) IsOptedOut(ctx context.Context, mac string) (bool, erro
 			//
 			// see: https://github.com/aws/amazon-vpc-cni-k8s/blob/5359e6b0ffaedae2bb831dceeea0337891c6f2ad/pkg/ipamd/ipamd.go#L272
 			if aws.ToString(tag.Key) == noManageTagKey {
-				return aws.ToString(tag.Value) == "true", nil
+				if aws.ToString(tag.Value) == "true" {
+					return ownershipSystemd, nil
+				}
+				return ownershipCNI, nil
 			}
 		}
 	}
-	return false, fmt.Errorf("mac %s: %w", mac, errOwnershipUnknown)
+	return ownershipPending, nil
 }

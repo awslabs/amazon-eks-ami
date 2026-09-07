@@ -32,35 +32,30 @@ func eniWithTags(tags map[string]string) ec2types.NetworkInterface {
 	return eni
 }
 
-func Test_ec2TagResolver_IsOptedOut(t *testing.T) {
+func Test_ec2TagResolver_Resolve(t *testing.T) {
 	const instanceID = "i-1234567890abcdef0"
 	for _, tc := range []struct {
-		name    string
-		tags    map[string]string
-		want    bool
-		unknown bool
+		name string
+		tags map[string]string
+		want ownershipDecision
 	}{
-		{name: "opted out", tags: map[string]string{noManageTagKey: "true"}, want: true},
-		{name: "case sensitive", tags: map[string]string{noManageTagKey: "True"}},
-		{name: "explicit false", tags: map[string]string{noManageTagKey: "false"}},
-		{name: "empty value", tags: map[string]string{noManageTagKey: ""}},
-		{name: "tags absent", unknown: true},
-		{name: "unrelated tag", tags: map[string]string{"Name": "dataplane"}, unknown: true},
-		{name: "instance tag alone does not settle ownership", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": instanceID}, unknown: true},
-		{name: "another instance", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": "i-other"}, unknown: true},
-		{name: "opt out takes precedence", tags: map[string]string{noManageTagKey: "true", "node.k8s.amazonaws.com/instance_id": instanceID}, want: true},
+		{name: "opted out", tags: map[string]string{noManageTagKey: "true"}, want: ownershipSystemd},
+		{name: "case sensitive", tags: map[string]string{noManageTagKey: "True"}, want: ownershipCNI},
+		{name: "explicit false", tags: map[string]string{noManageTagKey: "false"}, want: ownershipCNI},
+		{name: "empty value", tags: map[string]string{noManageTagKey: ""}, want: ownershipCNI},
+		{name: "tags absent", want: ownershipPending},
+		{name: "unrelated tag", tags: map[string]string{"Name": "dataplane"}, want: ownershipPending},
+		{name: "instance tag alone does not settle ownership", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": instanceID}, want: ownershipPending},
+		{name: "another instance", tags: map[string]string{"node.k8s.amazonaws.com/instance_id": "i-other"}, want: ownershipPending},
+		{name: "opt out takes precedence", tags: map[string]string{noManageTagKey: "true", "node.k8s.amazonaws.com/instance_id": instanceID}, want: ownershipSystemd},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &fakeDescribeNetworkInterfaces{out: &ec2.DescribeNetworkInterfacesOutput{
 				NetworkInterfaces: []ec2types.NetworkInterface{eniWithTags(tc.tags)},
 			}}
 			r := &ec2TagResolver{client: client, instanceID: instanceID}
-			got, err := r.IsOptedOut(context.Background(), "0a:1b:2c:3d:4e:5f")
-			if tc.unknown {
-				assert.ErrorIs(t, err, errOwnershipUnknown)
-			} else {
-				assert.NoError(t, err)
-			}
+			got, err := r.Resolve(context.Background(), "0a:1b:2c:3d:4e:5f")
+			assert.NoError(t, err)
 			assert.Equal(t, tc.want, got)
 			assert.Equal(t, 1, client.calls)
 			assert.ElementsMatch(t, []ec2types.Filter{
@@ -109,13 +104,13 @@ func Test_fsBroker_recoversAfterAPIError(t *testing.T) {
 }
 
 func Test_fsBroker_doesNotAdoptActiveLink(t *testing.T) {
-	resolver := &fakeResolver{err: errOwnershipUnknown}
+	resolver := &fakeResolver{decision: ownershipPending}
 	b := newTestBroker(t, true, true, staticResolver(resolver))
 	_, err := b.ManagerFor(context.Background(), "ens6", "mac")
 	assert.ErrorIs(t, err, errOwnershipUnknown)
 	// CNI brings up the ENI while EC2 tags are still propagating.
 	b.linkIsUp = func(string) (bool, error) { return true, nil }
-	resolver.optedOut, resolver.err = true, nil
+	resolver.decision, resolver.err = ownershipSystemd, nil
 	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
 	assert.NoError(t, err)
 	assert.Equal(t, ManagerCNI, manager)
@@ -123,7 +118,7 @@ func Test_fsBroker_doesNotAdoptActiveLink(t *testing.T) {
 }
 
 func Test_fsBroker_linkBroughtUpDuringLookup(t *testing.T) {
-	b := newTestBroker(t, true, true, staticResolver(&fakeResolver{optedOut: true}))
+	b := newTestBroker(t, true, true, staticResolver(&fakeResolver{decision: ownershipSystemd}))
 	checks := 0
 	b.linkIsUp = func(string) (bool, error) {
 		checks++

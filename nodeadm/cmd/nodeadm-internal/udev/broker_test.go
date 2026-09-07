@@ -12,22 +12,22 @@ import (
 )
 
 type fakeResolver struct {
-	optedOut bool
+	decision ownershipDecision
 	err      error
 	calls    int
 }
 
-func (f *fakeResolver) IsOptedOut(ctx context.Context, mac string) (bool, error) {
+func (f *fakeResolver) Resolve(ctx context.Context, mac string) (ownershipDecision, error) {
 	f.calls++
-	return f.optedOut, f.err
+	return f.decision, f.err
 }
 
 // blockingResolver models a slow or unreachable EC2/IMDS endpoint.
 type blockingResolver struct{}
 
-func (blockingResolver) IsOptedOut(ctx context.Context, mac string) (bool, error) {
+func (blockingResolver) Resolve(ctx context.Context, mac string) (ownershipDecision, error) {
 	<-ctx.Done()
-	return false, ctx.Err()
+	return ownershipPending, ctx.Err()
 }
 
 type resolverBuilder func(ctx context.Context) (cniOptOutResolver, error)
@@ -91,7 +91,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 			name:         "feature on and ENI opted out of CNI resolves to systemd",
 			markerExists: true,
 			flagExists:   true,
-			resolver:     &fakeResolver{optedOut: true},
+			resolver:     &fakeResolver{decision: ownershipSystemd},
 			want:         ManagerSystemd,
 			wantCalls:    1,
 		},
@@ -99,7 +99,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 			name:         "feature on and ENI managed by CNI resolves to cni",
 			markerExists: true,
 			flagExists:   true,
-			resolver:     &fakeResolver{optedOut: false},
+			resolver:     &fakeResolver{decision: ownershipCNI},
 			want:         ManagerCNI,
 			wantCalls:    1,
 		},
@@ -182,7 +182,7 @@ func Test_fsBroker_ManagerFor_caching(t *testing.T) {
 	}{
 		{
 			name:      "decision is cached and reused",
-			resolver:  &fakeResolver{optedOut: true},
+			resolver:  &fakeResolver{decision: ownershipSystemd},
 			want:      ManagerSystemd,
 			wantCalls: 1,
 			wantKeys:  []string{"ens6"},
