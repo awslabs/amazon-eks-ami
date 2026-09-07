@@ -21,8 +21,8 @@ jobs:
   build:
     executor: packer
     environment:
-      K8S_VERSION: "1.30" # specify the Kubernetes version here
-      os_distro: "al2"
+      K8S_VERSION: "1.32" # specify the Kubernetes version here
+      os_distro: "al2023"
     steps:
       - attach_workspace:
             at: .
@@ -45,7 +45,7 @@ jobs:
           # By default, Circle CI have 10 minutes timeout without response,
           # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
-          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2-variables.json make -e -j2 ${K8S_VERSION}
+          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2023-variables.json make -e -j2 ${K8S_VERSION}
 workflows:
   aws_eks_ami:
     jobs:
@@ -72,5 +72,5 @@ workflows:
           filters:
             branches:
               only:
-                - dev
+                - DO-6065-al2023-ami-eks-1.32 #dev
                 # - DO-5368_merge_with_upstream_v20260120
