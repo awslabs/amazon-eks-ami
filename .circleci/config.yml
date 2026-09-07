@@ -1,79 +1,3 @@
-# version: 2.1
-
-# executors:
-#   packer:
-#     docker:
-#       - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0.release-release
-
-# # workflow jobs definition
-# jobs:
-#   prepare_env:
-#     # job to prepare build environment
-#     executor: packer
-#     working_directory: ~/aws_ecr_ami
-#     steps:
-#       - checkout:
-#           path: ~/aws_ecr_ami
-#       - persist_to_workspace:
-#           root: "~"
-#           paths:
-#             - aws_ecr_ami
-#   build:
-#     executor: packer
-#     environment:
-#       K8S_VERSION: "1.32" # specify the Kubernetes version here
-#       os_distro: "al2023"
-#     steps:
-#       - attach_workspace:
-#             at: .
-#       - run:
-#           name: Prepare BUILD_TAG env
-#           command: |
-#             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
-#             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
-#             AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')"
-#             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
-#       - run:
-#           name: Install aws cli
-#           command: apk add aws-cli
-#       - run:
-#           name: Install dependency for packer
-#           command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
-#       - run:
-#           name: Packer validate and build AMI
-#           # AWS sometimes take really long to finish ami build.
-#           # By default, Circle CI have 10 minutes timeout without response,
-#           # so we must extend that timeout limit to be sure that ami build can pass
-#           no_output_timeout: 60m
-#           command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2023-variables.json make -e -j2 ${K8S_VERSION}
-# workflows:
-#   aws_eks_ami:
-#     jobs:
-#       - prepare_env:
-#           context: AWS_OPERATIONS_DEV_0
-#       - build:
-#           name: build main
-#           context:
-#             - AWS_OPERATIONS_0
-#             - PACKER_OPERATIONS_0
-#           requires:
-#             - prepare_env
-#           filters:
-#             branches:
-#               only:
-#                 - main
-#       - build:
-#           name: build dev
-#           context:
-#             - AWS_OPERATIONS_DEV_0
-#             - PACKER_OPERATIONS_DEV_0
-#           requires:
-#             - prepare_env
-#           filters:
-#             branches:
-#               only:
-#                 - DO-6065-al2023-ami-eks-1.32-upstream_v20260818
-#                 #dev
 version: 2.1
 
 executors:
@@ -81,8 +5,10 @@ executors:
     docker:
       - image: 411466821576.dkr.ecr.us-west-2.amazonaws.com/devops/ci/packer:1.11.0.release-release
 
+# workflow jobs definition
 jobs:
   prepare_env:
+    # job to prepare build environment
     executor: packer
     working_directory: ~/aws_ecr_ami
     steps:
@@ -92,64 +18,46 @@ jobs:
           root: "~"
           paths:
             - aws_ecr_ami
-
   build:
     executor: packer
     environment:
-      K8S_VERSION: "1.32"
+      K8S_VERSION: "1.32" # specify the Kubernetes version here
       os_distro: "al2023"
     steps:
       - attach_workspace:
             at: .
-
       - run:
           name: Prepare BUILD_TAG env
           command: |
             NORMALIZED_BRANCH_NAME=$(echo ${CIRCLE_BRANCH} | sed 's/[^a-zA-Z0-9]/-/g' | cut -c 1-50)
             echo "export BUILD_TAG=${NORMALIZED_BRANCH_NAME}-${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1::7}" >> ${BASH_ENV}
-            AMI_NAME="amazon-eks-node-al2023-${K8S_VERSION}-$(date '+%Y-%m-%d')"
+            AMI_NAME="amazon-eks-node-${K8S_VERSION}-$(date '+%Y-%m-%d')"
             echo "export AMI_NAME=${AMI_NAME}" >> ${BASH_ENV}
-
       - run:
-          name: Install aws cli (official bundled binary, avoids musl/python pyexpat ABI mismatch)
+          name: Fix Alpine packages and install AWS CLI
           command: |
-            apk add --no-cache curl unzip gcompat
-            curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
-            unzip -q awscliv2.zip
-            ./aws/install
+            set -eux
+            apk update
+            apk add --no-cache --upgrade \
+              expat \
+              python3 \
+              aws-cli
             aws --version
-
-      - run:
-          name: Debug aws cli connectivity (fails fast before spending Packer/EC2 time)
-          command: |
-            aws sts get-caller-identity
-            aws s3api list-objects-v2 \
-              --bucket amazon-eks \
-              --prefix "${K8S_VERSION}" \
-              --query 'Contents[0].Key' \
-              --output text \
-              --region us-west-2
-
       - run:
           name: Install dependency for packer
           command: cd aws_ecr_ami && packer plugins install github.com/hashicorp/amazon
-
       - run:
           name: Packer validate and build AMI
-          # AWS sometimes takes really long to finish an AMI build.
-          # By default, CircleCI has a 10 minute timeout without response,
-          # so we extend that timeout limit to be sure the AMI build can pass.
+          # AWS sometimes take really long to finish ami build.
+          # By default, Circle CI have 10 minutes timeout without response,
+          # so we must extend that timeout limit to be sure that ami build can pass
           no_output_timeout: 60m
-          command: |
-            cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2023-variables.json \
-              make -e -j2 build os_distro=${os_distro} k8s=${K8S_VERSION}
-
+          command: cd aws_ecr_ami && PACKER_VARIABLE_FILE=fluence-eks-worker-al2023-variables.json make -e -j2 ${K8S_VERSION}
 workflows:
   aws_eks_ami:
     jobs:
       - prepare_env:
           context: AWS_OPERATIONS_DEV_0
-
       - build:
           name: build main
           context:
@@ -161,7 +69,6 @@ workflows:
             branches:
               only:
                 - main
-
       - build:
           name: build dev
           context:
@@ -173,3 +80,4 @@ workflows:
             branches:
               only:
                 - DO-6065-al2023-ami-eks-1.32-upstream_v20260818
+                #dev
