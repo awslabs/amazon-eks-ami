@@ -37,6 +37,7 @@ type fsBroker struct {
 	lookupTimeout time.Duration
 	linkIsUp      func(string) (bool, error)
 	waitRetry     func(context.Context, time.Duration) error
+	checkIdentity func(string, string) error
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
@@ -49,6 +50,7 @@ func NewFSBroker(instanceID string) *fsBroker {
 		},
 		lookupTimeout: defaultOptOutLookupTimeout,
 		waitRetry:     waitForOwnershipRetry,
+		checkIdentity: checkInterfaceIdentity,
 		linkIsUp: func(name string) (bool, error) {
 			link, err := net.InterfaceByName(name)
 			if err != nil {
@@ -126,14 +128,33 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 }
 
 func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac string) (string, error) {
+	if err := b.checkIdentity(interfaceName, mac); err != nil {
+		return "", err
+	}
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.
 	manager, err := b.cache.Read(interfaceName)
 	if err == nil {
-		return manager, nil
+		entry, decodeErr := decodeManagerCacheEntry(manager)
+		if decodeErr != nil {
+			// A corrupt entry must not turn an existing CNI link into a boot
+			// interface eligible for systemd. Surface it rather than guessing.
+			return "", decodeErr
+		}
+		if entry.MAC == "" {
+			zap.L().Warn("upgrading legacy network manager cache without historical MAC", zap.String("interface", interfaceName), zap.String("mac", mac))
+			if err := writeManagerCacheEntry(b.cache, interfaceName, mac, entry.Manager); err != nil {
+				return "", err
+			}
+			return entry.Manager, nil
+		}
+		if entry.MAC == mac {
+			return entry.Manager, nil
+		}
+		zap.L().Info("resolving ownership for a replaced interface", zap.String("interface", interfaceName), zap.String("mac", mac), zap.String("cachedMAC", entry.MAC))
 	}
-	if !errors.Is(err, fs.ErrNotExist) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		// unlike a cold cache, this (e.g. a cache dir permissions problem) would
 		// silently force a full re-resolution on every event.
 		zap.L().Warn("failed reading manager from cache, re-resolving", zap.Error(err), zap.String("interface", interfaceName))
@@ -143,8 +164,11 @@ func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac str
 	if err != nil {
 		return "", err
 	}
+	if err := b.checkIdentity(interfaceName, mac); err != nil {
+		return "", err
+	}
 
-	if err := b.cache.Write(interfaceName, manager); err != nil {
+	if err := writeManagerCacheEntry(b.cache, interfaceName, mac, manager); err != nil {
 		zap.L().Warn("failed writing manager back to cache", zap.Error(err), zap.String("interface", interfaceName), zap.String("manager", manager))
 	}
 	return manager, nil

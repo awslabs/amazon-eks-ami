@@ -7,7 +7,6 @@
 # and provide native restarts. it also executes non-blocking so that the udev
 # event fires and triggers systemd-networkd to start probing network readiness.
 SUBSYSTEM=="net", ACTION=="add", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl enable --now --no-block udev-net-manager@$name.service"
-# the 'remove' workflow just disables the service, the action does not need to
-# be called because when the interface does not exist the network configuration
-# is a noop. if the interface returns, it is re-configured in-place.
-SUBSYSTEM=="net", ACTION=="remove", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl disable --now udev-net-manager@$name.service"
+# Stop a pending lookup before removing the generated config. Ownership stays
+# cached by MAC for reboots, while a replacement ENI is resolved independently.
+SUBSYSTEM=="net", ACTION=="remove", ENV{ID_NET_DRIVER}=="vif|ena|ixgbevf", RUN+="/usr/bin/systemctl disable --now udev-net-manager@$name.service", RUN+="/usr/bin/nodeadm-internal udev-net-manager --action remove --interface $name"

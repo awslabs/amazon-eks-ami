@@ -52,6 +52,7 @@ func newTestBroker(t *testing.T, markerExists, flagExists bool, newResolver reso
 		newResolver:        newResolver,
 		lookupTimeout:      defaultOptOutLookupTimeout,
 		waitRetry:          waitForOwnershipRetry,
+		checkIdentity:      func(string, string) error { return nil },
 		linkIsUp:           func(string) (bool, error) { return false, nil },
 	}
 	touch := func(path string, create bool) {

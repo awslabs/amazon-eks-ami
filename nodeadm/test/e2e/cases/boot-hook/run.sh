@@ -54,6 +54,8 @@ function mock-states() {
 }
 
 mkdir -p /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/
+# The boot hook validates the identity of secondary links in sysfs.
+ip link add eth1 address 02:00:00:00:00:02 type dummy
 
 (
   mock-states
@@ -64,7 +66,7 @@ mkdir -p /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/
 ) &
 # setup eth1 as a secondary interface that was attached on boot and should be
 # managed by systemd.
-echo "io.systemd.Network" > /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/eth1
+echo '{"mac":"02:00:00:00:00:02","manager":"io.systemd.Network"}' > /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/eth1
 nodeadm-internal boot-hook
 assert::json-files-equal expected-interface-eth1-managed-state.json <(networkctl list --json=pretty)
 
@@ -77,6 +79,6 @@ assert::json-files-equal expected-interface-eth1-managed-state.json <(networkctl
 ) &
 # setup eth1 as a secondary interface that was attached after boot and cached
 # as managed by the cni.
-echo "cni" > /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/eth1
+echo '{"mac":"02:00:00:00:00:02","manager":"cni"}' > /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/eth1
 nodeadm-internal boot-hook
 assert::json-files-equal expected-interface-eth1-unmanaged-state.json <(networkctl list --json=pretty)

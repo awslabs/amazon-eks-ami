@@ -4,7 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
@@ -33,6 +35,27 @@ func renderNetworkTemplate(templateVars networkTemplateVars) ([]byte, error) {
 
 func eksNetworkPath(iface string) string {
 	return filepath.Join("/run/systemd/network/", fmt.Sprintf("70-eks-%s.network", iface))
+}
+
+// Remove only nodeadm's generated file when its named interface now has a
+// different identity. No user .network files or drop-ins are changed.
+func removeStaleNetworkConfig(configPath, mac string) error {
+	data, err := os.ReadFile(configPath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if value, found := strings.CutPrefix(strings.TrimSpace(line), "PermanentMACAddress="); found {
+			if value == mac {
+				return nil
+			}
+			return os.Remove(configPath)
+		}
+	}
+	return fmt.Errorf("network configuration %s has no permanent MAC; refusing to replace it", configPath)
 }
 
 func disableDefaultEc2Networking() error {

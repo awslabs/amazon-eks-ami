@@ -89,6 +89,9 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 		return err
 	}
 	log.Info("found self interface mac", zap.String("address", c.selfMac))
+	if err := removeStaleNetworkConfig(eksNetworkPath(c.iface), c.selfMac); err != nil {
+		return err
+	}
 
 	// this is the our first request to IMDS, so we use a client that tolerates
 	// and retries 404 responses to accomodate for eventual consistency.
@@ -186,7 +189,21 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		return fmt.Errorf("failed to render network template: %w", err)
 	}
 
+	if err := checkInterfaceIdentity(c.iface, c.selfMac); err != nil {
+		return err
+	}
 	return util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644)
+}
+
+func checkInterfaceIdentity(iface, expectedMAC string) error {
+	mac, err := getInterfaceMAC(iface)
+	if err != nil {
+		return err
+	}
+	if mac != expectedMAC {
+		return fmt.Errorf("interface %s changed identity from %s to %s", iface, expectedMAC, mac)
+	}
+	return nil
 }
 
 func getInterfaceMAC(iface string) (string, error) {
