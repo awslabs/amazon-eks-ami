@@ -105,12 +105,19 @@ validate: ## Validate packer config
 k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(enable_accelerator),enable_accelerator=$(enable_accelerator))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
-ifneq ($(strip $(unsupported_instance_types)),)
+ifneq ($(strip $(supported_instance_types)$(unsupported_instance_types)),)
 	@ami_id="$$(jq -er '.builds[] | select(.builder_type == "amazon-ebs") | .artifact_id | split(":")[1]' "$(ami_name)-manifest.json")"; \
+	instance_type_specification=''; \
+	if [ -n "$(supported_instance_types)" ]; then \
+		instance_type_specification="SupportedInstanceTypes=$(supported_instance_types)"; \
+	fi; \
+	if [ -n "$(unsupported_instance_types)" ]; then \
+		instance_type_specification="$${instance_type_specification}$${instance_type_specification:+,}UnsupportedInstanceTypes=$(unsupported_instance_types)"; \
+	fi; \
 	$(AWS_CLI) ec2 replace-image-instance-type-specification \
 		--region "$(aws_region)" \
 		--image-id "$$ami_id" \
-		--instance-type-specification 'UnsupportedInstanceTypes=$(unsupported_instance_types)'
+		--instance-type-specification "$$instance_type_specification"
 endif
 
 .PHONY: lint-docs
