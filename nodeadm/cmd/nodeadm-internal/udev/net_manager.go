@@ -5,8 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -43,13 +45,20 @@ func (c *netManager) Flaggy() *flaggy.Subcommand {
 }
 
 func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
+	// systemctl stop on detach must cancel a pending lookup or backoff promptly.
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	if len(c.iface) == 0 {
 		return fmt.Errorf("interface name cannot be empty")
 	}
 	log = log.With(zap.String("interface", c.iface))
 	switch c.action {
 	case "add":
-		return c.addAction(ctx, log)
+		err := c.addAction(ctx, log)
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
 	case "remove":
 		return c.removeAction(ctx, log)
 	}

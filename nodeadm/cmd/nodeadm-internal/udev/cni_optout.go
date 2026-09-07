@@ -49,7 +49,11 @@ func newEC2TagResolver(ctx context.Context, instanceID string) (*ec2TagResolver,
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 	return &ec2TagResolver{
-		client:     ec2.NewFromConfig(cfg),
+		// Bound wire attempts as well as elapsed time; outer ownership polling
+		// supplies recovery after the SDK has exhausted this attempt's budget.
+		client: ec2.NewFromConfig(cfg, func(o *ec2.Options) {
+			o.RetryMaxAttempts = 3
+		}),
 		instanceID: instanceID,
 	}, nil
 }

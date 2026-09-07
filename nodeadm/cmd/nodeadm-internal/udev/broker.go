@@ -36,6 +36,7 @@ type fsBroker struct {
 	newResolver   func(ctx context.Context) (cniOptOutResolver, error)
 	lookupTimeout time.Duration
 	linkIsUp      func(string) (bool, error)
+	waitRetry     func(context.Context, time.Duration) error
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
@@ -47,6 +48,7 @@ func NewFSBroker(instanceID string) *fsBroker {
 			return newEC2TagResolver(ctx, instanceID)
 		},
 		lookupTimeout: defaultOptOutLookupTimeout,
+		waitRetry:     waitForOwnershipRetry,
 		linkIsUp: func(name string) (bool, error) {
 			link, err := net.InterfaceByName(name)
 			if err != nil {
@@ -90,18 +92,17 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return ManagerCNI, nil
 	}
 
-	// Propagated, not defaulted to CNI: ManagerFor caches the result permanently,
-	// and the unit retries on failure (Restart=on-failure).
+	// Bound each attempt independently, including region and credential lookup.
 	ctx, cancel := context.WithTimeout(ctx, b.lookupTimeout)
 	defer cancel()
 
 	resolver, err := b.newResolver(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to build CNI opt-out resolver for mac %s: %w", mac, err)
+		return "", &optOutLookupError{fmt.Errorf("failed to build CNI opt-out resolver for mac %s: %w", mac, err)}
 	}
 	decision, err := resolver.Resolve(ctx, mac)
 	if err != nil {
-		return "", fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)
+		return "", &optOutLookupError{fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)}
 	}
 	switch decision {
 	case ownershipSystemd:
@@ -124,7 +125,7 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 	}
 }
 
-func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
+func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac string) (string, error) {
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.

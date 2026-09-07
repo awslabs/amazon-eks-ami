@@ -1,7 +1,5 @@
 [Unit]
 Description=Setup network interface %i
-# Recover after EC2 outages or IAM corrections without manual reset-failed.
-StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
@@ -10,4 +8,4 @@ ExecStartPost=/usr/bin/networkctl reload
 RemainAfterExit=yes
 User=root
 Restart=on-failure
-RestartSec=5
+RestartSec=1

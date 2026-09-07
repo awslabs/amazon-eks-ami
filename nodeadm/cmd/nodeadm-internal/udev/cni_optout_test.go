@@ -72,14 +72,14 @@ func Test_fsBroker_eventualConsistency(t *testing.T) {
 	b := newTestBroker(t, true, true, staticResolver(&ec2TagResolver{client: client, instanceID: "i-test"}))
 	for _, enis := range [][]ec2types.NetworkInterface{nil, {eniWithTags(nil)}} {
 		client.out.NetworkInterfaces = enis
-		_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+		_, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 		assert.ErrorIs(t, err, errOwnershipUnknown)
 		keys, err := b.cache.Keys()
 		assert.NoError(t, err)
 		assert.Empty(t, keys)
 	}
 	client.out.NetworkInterfaces = []ec2types.NetworkInterface{eniWithTags(map[string]string{noManageTagKey: "true"})}
-	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	manager, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 	assert.NoError(t, err)
 	assert.Equal(t, ManagerSystemd, manager)
 	assert.Equal(t, 3, client.calls)
@@ -91,11 +91,11 @@ func Test_fsBroker_recoversAfterAPIError(t *testing.T) {
 			apiErr := &smithy.GenericAPIError{Code: code, Message: "lookup failed"}
 			client := &fakeDescribeNetworkInterfaces{err: apiErr}
 			b := newTestBroker(t, true, true, staticResolver(&ec2TagResolver{client: client}))
-			_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+			_, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 			assert.ErrorIs(t, err, apiErr)
 			client.err = nil
 			client.out = &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: []ec2types.NetworkInterface{eniWithTags(map[string]string{noManageTagKey: "true"})}}
-			manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+			manager, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 			assert.NoError(t, err)
 			assert.Equal(t, ManagerSystemd, manager)
 			assert.Equal(t, 2, client.calls)
@@ -106,12 +106,12 @@ func Test_fsBroker_recoversAfterAPIError(t *testing.T) {
 func Test_fsBroker_doesNotAdoptActiveLink(t *testing.T) {
 	resolver := &fakeResolver{decision: ownershipPending}
 	b := newTestBroker(t, true, true, staticResolver(resolver))
-	_, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	_, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 	assert.ErrorIs(t, err, errOwnershipUnknown)
 	// CNI brings up the ENI while EC2 tags are still propagating.
 	b.linkIsUp = func(string) (bool, error) { return true, nil }
 	resolver.decision, resolver.err = ownershipSystemd, nil
-	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	manager, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 	assert.NoError(t, err)
 	assert.Equal(t, ManagerCNI, manager)
 	assert.Equal(t, 1, resolver.calls)
@@ -124,7 +124,7 @@ func Test_fsBroker_linkBroughtUpDuringLookup(t *testing.T) {
 		checks++
 		return checks > 1, nil
 	}
-	manager, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	manager, err := b.managerForAttempt(context.Background(), "ens6", "mac")
 	assert.NoError(t, err)
 	assert.Equal(t, ManagerCNI, manager)
 }

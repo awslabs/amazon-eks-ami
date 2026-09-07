@@ -51,6 +51,7 @@ func newTestBroker(t *testing.T, markerExists, flagExists bool, newResolver reso
 		noManageMarkerPath: filepath.Join(dir, "no-manage"),
 		newResolver:        newResolver,
 		lookupTimeout:      defaultOptOutLookupTimeout,
+		waitRetry:          waitForOwnershipRetry,
 		linkIsUp:           func(string) (bool, error) { return false, nil },
 	}
 	touch := func(path string, create bool) {
@@ -156,7 +157,7 @@ func Test_fsBroker_determineManager_lookupTimeout(t *testing.T) {
 	assert.Less(t, elapsed, time.Second)
 }
 
-func Test_fsBroker_ManagerFor_prefersCache(t *testing.T) {
+func Test_fsBroker_managerForAttempt_prefersCache(t *testing.T) {
 	// with the run-phase marker absent a recompute would yield ManagerSystemd, so
 	// reading back ManagerCNI proves the cached value was used.
 	b := newTestBroker(t, false, false, unbuildableResolver)
@@ -164,12 +165,12 @@ func Test_fsBroker_ManagerFor_prefersCache(t *testing.T) {
 		t.Fatalf("failed to seed cache: %v", err)
 	}
 
-	got, err := b.ManagerFor(context.TODO(), "ens6", "mac")
+	got, err := b.managerForAttempt(context.TODO(), "ens6", "mac")
 	assert.NoError(t, err)
 	assert.Equal(t, ManagerCNI, got)
 }
 
-func Test_fsBroker_ManagerFor_caching(t *testing.T) {
+func Test_fsBroker_managerForAttempt_caching(t *testing.T) {
 	tests := []struct {
 		name     string
 		resolver *fakeResolver
@@ -200,7 +201,7 @@ func Test_fsBroker_ManagerFor_caching(t *testing.T) {
 			b := newTestBroker(t, true, true, staticResolver(tc.resolver))
 
 			for i := 0; i < 2; i++ {
-				got, err := b.ManagerFor(context.TODO(), "ens6", "mac")
+				got, err := b.managerForAttempt(context.TODO(), "ens6", "mac")
 				if tc.wantErr {
 					assert.Error(t, err)
 					assert.Empty(t, got)

@@ -28,8 +28,8 @@ nodeadm init --daemon="" --config-source file://config.yaml
 test -f /run/nodeadm/init
 test -f /run/nodeadm/os-managed-no-manage-enis
 
-# Use the production unit. Only the executable path and retry delay differ in
-# the harness; the start-limit policy and networkctl reload remain unchanged.
+# Use the production unit and retry timing. Only the executable path and AWS
+# endpoints differ in the harness.
 ln -s /usr/local/bin/nodeadm-internal /usr/bin/nodeadm-internal
 cp /udev-net-manager@.service /etc/systemd/system/
 mkdir -p /etc/systemd/system/udev-net-manager@.service.d
@@ -37,11 +37,10 @@ env | grep '^AWS_' > /run/net-manager-test.env
 cat > /etc/systemd/system/udev-net-manager@.service.d/test.conf << 'EOF'
 [Service]
 EnvironmentFile=/run/net-manager-test.env
-RestartSec=100ms
 EOF
 systemctl daemon-reload
 systemctl start systemd-networkd
-test "$(systemctl show "$unit" -p StartLimitIntervalUSec --value)" = 0
+test "$(systemctl show "$unit" -p RestartUSec --value)" = 1s
 test "$(systemctl show "$unit" -p TimeoutStartUSec --value)" = infinity
 
 function wait::until() {
@@ -55,8 +54,8 @@ function wait::until() {
   done
 }
 
-function retried-past-old-limit() {
-  [ "$(systemctl show "$unit" -p NRestarts --value)" -gt 20 ]
+function ownership-pending() {
+  journalctl -u "$unit" --no-pager | grep -q "ENI or ownership tag not yet visible"
 }
 
 function reset::link() {
@@ -65,10 +64,14 @@ function reset::link() {
   ip link set "$interface" down
 }
 
-# EC2 sees the ENI before its tags: remain uncached, survive the old retry
-# budget, then recover automatically when the tag becomes visible.
+# EC2 sees the ENI before its tags: remain uncached and keep the same process
+# waiting, then recover automatically when the tag becomes visible.
 systemctl start --no-block "$unit"
-wait::until retried-past-old-limit
+wait::until ownership-pending
+pending_pid=$(systemctl show "$unit" -p MainPID --value)
+sleep 12
+test "$(systemctl show "$unit" -p MainPID --value)" = "$pending_pid"
+test "$(systemctl show "$unit" -p NRestarts --value)" = 0
 assert::file-not-exists "$cache"
 assert::file-not-exists "$network"
 aws ec2 create-tags --resources "$eni_id" --tags "$no_manage_tag"
