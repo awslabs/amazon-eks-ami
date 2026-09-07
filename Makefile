@@ -72,6 +72,7 @@ lint-code: ## Check the source files for syntax and format issues
 	hack/lint-space-errors.sh
 
 PACKER_BINARY ?= packer
+AWS_CLI ?= aws
 PACKER_TEMPLATE_DIR ?= templates/$(os_distro)
 PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
 PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
@@ -104,6 +105,13 @@ validate: ## Validate packer config
 k8s: validate ## Build default K8s version of EKS Optimized AMI
 	@echo "Building AMI [os_distro=$(os_distro) kubernetes_version=$(kubernetes_version) arch=$(arch) $(if $(enable_accelerator),enable_accelerator=$(enable_accelerator))]"
 	$(PACKER_BINARY) build -timestamp-ui -color=false $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
+ifneq ($(strip $(unsupported_instance_types)),)
+	@ami_id="$$(jq -er '.builds[] | select(.builder_type == "amazon-ebs") | .artifact_id | split(":")[1]' "$(ami_name)-manifest.json")"; \
+	$(AWS_CLI) ec2 replace-image-instance-type-specification \
+		--region "$(aws_region)" \
+		--image-id "$$ami_id" \
+		--instance-type-specification 'UnsupportedInstanceTypes=$(unsupported_instance_types)'
+endif
 
 .PHONY: lint-docs
 lint-docs: ## Lint the docs

@@ -18,12 +18,19 @@ cd amazon-eks-ami
 ### Build command
 
 ```bash
-make k8s=1.32 os_distro=al2023 enable_accelerator=nvidia enable_efa=true nvidia_driver_major_version=595
+make k8s=1.32 os_distro=al2023 enable_accelerator=nvidia enable_efa=true \
+  nvidia_driver_major_version=595 \
+  unsupported_instance_types='p3.*,p3dn.*,g6f.*'
 ```
 
 This produces an AMI with NVIDIA 595 drivers suitable for G7 instances. The build pulls the driver from the [NVIDIA CUDA repository for AL2023](https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/).
 
-The build takes approximately 45-60 minutes and outputs the AMI ID upon completion.
+The build takes approximately 45-60 minutes and outputs the AMI ID upon completion. The
+`unsupported_instance_types` option configures an [AMI instance type
+specification](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-allowed-instance-types.html)
+after the AMI is created, preventing the AMI from launching on P3, P3dn, or G6f
+instances. The AWS credentials used for the build must have permission to call
+`ec2:ReplaceImageInstanceTypeSpecification`.
 
 ### Using the custom AMI with a managed node group
 
