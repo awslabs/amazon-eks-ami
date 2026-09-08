@@ -289,7 +289,13 @@ build {
   sources = ["source.amazon-ebs.al2023"]
 
   provisioner "shell" {
-    inline = ["mkdir -p ${local.working_dir}/rootfs", "mkdir -p ${local.working_dir}/bin", "mkdir -p ${local.working_dir}/log-collector-script", "mkdir -p ${local.working_dir}/nodeadm", "mkdir -p ${local.working_dir}/gpu"]
+    inline = [
+      "mkdir -p ${local.working_dir}/rootfs",
+      "mkdir -p ${local.working_dir}/bin",
+      "mkdir -p ${local.working_dir}/log-collector-script",
+      "mkdir -p ${local.working_dir}/nodeadm",
+      "mkdir -p ${local.working_dir}/gpu"
+      ]
   }
 
   provisioner "file" {
@@ -313,7 +319,10 @@ build {
   }
 
   provisioner "shell" {
-    inline = ["sudo mkdir -p /etc/eks/log-collector-script/", "sudo cp -v ${local.working_dir}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"]
+    inline = [
+      "sudo mkdir -p /etc/eks/log-collector-script/",
+      "sudo cp -v ${local.working_dir}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"
+      ]
   }
 
   provisioner "file" {
@@ -326,7 +335,11 @@ build {
   }
 
   provisioner "shell" {
-    inline = ["sudo chmod -R a+x ${local.working_dir}/bin/", "sudo cp -rv ${local.working_dir}/bin/* /usr/bin/", "sudo chmod -R a+x ${local.working_dir}/gpu/*"]
+    inline = [
+      "sudo chmod -R a+x ${local.working_dir}/bin/",
+      "sudo cp -rv ${local.working_dir}/bin/* /usr/bin/",
+      "sudo chmod -R a+x ${local.working_dir}/gpu/*"
+      ]
   }
 
   provisioner "shell" {
@@ -347,37 +360,76 @@ build {
   }
 
   provisioner "shell" {
-    environment_vars = ["BINARY_BUCKET_NAME=${var.binary_bucket_name}", "BINARY_BUCKET_REGION=${var.binary_bucket_region}", "CONTAINERD_VERSION=${var.containerd_version}", "INSTALL_CONTAINERD_FROM_S3=${var.install_containerd_from_s3}", "KUBERNETES_BUILD_DATE=${var.kubernetes_build_date}", "KUBERNETES_VERSION=${var.kubernetes_version}", "RUNC_VERSION=${var.runc_version}", "SSM_AGENT_VERSION=${var.ssm_agent_version}", "WORKING_DIR=${local.working_dir}"]
+    environment_vars = [
+      "BINARY_BUCKET_NAME=${var.binary_bucket_name}",
+      "BINARY_BUCKET_REGION=${var.binary_bucket_region}",
+      "CONTAINERD_VERSION=${var.containerd_version}",
+      "INSTALL_CONTAINERD_FROM_S3=${var.install_containerd_from_s3}",
+      "KUBERNETES_BUILD_DATE=${var.kubernetes_build_date}",
+      "KUBERNETES_VERSION=${var.kubernetes_version}",
+      "RUNC_VERSION=${var.runc_version}",
+      "SSM_AGENT_VERSION=${var.ssm_agent_version}",
+      "WORKING_DIR=${local.working_dir}"
+      ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-worker.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["AWS_REGION=${var.aws_region}", "BUILD_IMAGE=${var.nodeadm_build_image}", "PROJECT_DIR=${local.working_dir}/nodeadm"]
+    environment_vars = [
+      "AWS_REGION=${var.aws_region}",
+      "BUILD_IMAGE=${var.nodeadm_build_image}",
+      "PROJECT_DIR=${local.working_dir}/nodeadm"
+     ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-nodeadm.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["AWS_REGION=${var.aws_region}", "PAUSE_CONTAINER_IMAGE=${var.pause_container_image}"]
+    environment_vars = [
+      "AWS_REGION=${var.aws_region}",
+      "PAUSE_CONTAINER_IMAGE=${var.pause_container_image}"
+      ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/cache-pause-container.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["AWS_REGION=${var.aws_region}", "ENABLE_ACCELERATOR=${var.enable_accelerator}", "WORKING_DIR=${local.working_dir}"]
+    environment_vars = [
+      "AWS_REGION=${var.aws_region}",
+      "ENABLE_ACCELERATOR=${var.enable_accelerator}",
+      "WORKING_DIR=${local.working_dir}"
+     ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-neuron-driver.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["AWS_REGION=${var.aws_region}", "ENABLE_ACCELERATOR=${var.enable_accelerator}", "BINARY_BUCKET_NAME=${var.binary_bucket_name}", "BINARY_BUCKET_REGION=${var.binary_bucket_region}", "NVIDIA_DRIVER_MAJOR_VERSION=${var.nvidia_driver_major_version}", "NVIDIA_REPOSITORY=${var.nvidia_repository_url}", "EC2_GRID_DRIVER_S3_BUCKET=${var.nvidia_grid_runfile_bucket_name}", "ENABLE_NVIDIA_GDRCOPY_DRIVER=${var.enable_nvidia_gdrcopy_driver}", "NVIDIA_GDRCOPY_DRIVER_VERSION=${var.nvidia_gdrcopy_driver_version}", "WORKING_DIR=${local.working_dir}"]
+    environment_vars = [
+      "AWS_REGION=${var.aws_region}",
+      "ENABLE_ACCELERATOR=${var.enable_accelerator}",
+      "BINARY_BUCKET_NAME=${var.binary_bucket_name}",
+      "BINARY_BUCKET_REGION=${var.binary_bucket_region}",
+      "NVIDIA_DRIVER_MAJOR_VERSION=${var.nvidia_driver_major_version}",
+      "NVIDIA_REPOSITORY=${var.nvidia_repository_url}",
+      "EC2_GRID_DRIVER_S3_BUCKET=${var.nvidia_grid_runfile_bucket_name}",
+      "ENABLE_NVIDIA_GDRCOPY_DRIVER=${var.enable_nvidia_gdrcopy_driver}",
+      "NVIDIA_GDRCOPY_DRIVER_VERSION=${var.nvidia_gdrcopy_driver_version}",
+      "WORKING_DIR=${local.working_dir}"
+     ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-nvidia-driver.sh"
   }
 
   provisioner "shell" {
-    environment_vars = ["AWS_REGION=${var.aws_region}", "BINARY_BUCKET_NAME=${var.binary_bucket_name}", "BINARY_BUCKET_REGION=${var.binary_bucket_region}", "ENABLE_ACCELERATOR=${var.enable_accelerator}", "ENABLE_EFA=${var.enable_efa}", "WORKING_DIR=${local.working_dir}"]
+    environment_vars = [
+      "AWS_REGION=${var.aws_region}",
+      "BINARY_BUCKET_NAME=${var.binary_bucket_name}",
+      "BINARY_BUCKET_REGION=${var.binary_bucket_region}",
+      "ENABLE_ACCELERATOR=${var.enable_accelerator}",
+      "ENABLE_EFA=${var.enable_efa}",
+      "WORKING_DIR=${local.working_dir}"
+      ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-efa.sh"
   }
