@@ -76,28 +76,48 @@ fi
 #############################
 ### nvidia drivers #####
 #############################
-NVIDIA_DRIVER_MODULES=(nvidia nvidia-drm nvidia-modeset nvidia-peermem nvidia-uvm)
+NVIDIA_DRIVER_MODULES=(nvidia nvidia-drm nvidia-modeset nvidia-uvm)
 KERNEL_RELEASE=$(uname -r)
 
-# GRID is harvested by glob rather than from a dkms manifest, so confirm the tree
-# ended up with exactly the driver's modules.
-validate_nvidia_grid_modules() {
+validate_nvidia_boot_modules() {
   local tree=$1
-  local extra_dir="/opt/nvidia/${tree}/flavors/grid/lib/modules/${KERNEL_RELEASE}/extra"
-  local module_name harvested
+  local flavor=$2
+  local extra_dir="/opt/nvidia/${tree}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+  local expected=("${NVIDIA_DRIVER_MODULES[@]}")
+  local module_name
 
-  for module_name in "${NVIDIA_DRIVER_MODULES[@]}"; do
-    if [ ! -f "${extra_dir}/${module_name}.ko" ]; then
+  # gdrdrv is only harvested on the open flavor, and only when the build enabled it.
+  if [ "${flavor}" = "open" ] && [ "${ENABLE_NVIDIA_GDRCOPY_DRIVER}" = "true" ]; then
+    expected+=(gdrdrv)
+  fi
+
+  for module_name in "${expected[@]}"; do
+    # The suffix varies with the kernel's module compression.
+    if ! compgen -G "${extra_dir}/${module_name}.ko*" > /dev/null; then
       echo "${extra_dir} is missing ${module_name}.ko"
       exit 1
     fi
   done
+}
 
-  harvested=("${extra_dir}"/*.ko)
-  if [ "${#harvested[@]}" -ne "${#NVIDIA_DRIVER_MODULES[@]}" ]; then
-    echo "${extra_dir} has ${#harvested[@]} modules, expected ${#NVIDIA_DRIVER_MODULES[@]}: ${harvested[*]##*/}"
-    exit 1
-  fi
+# vGPU license userspace the rpm tree has no package for, so it can only come from the GRID runfile.
+# Node paths, since a tree mirrors /.
+NVIDIA_GRID_USERSPACE=(
+  /usr/bin/nvidia-gridd
+  /usr/lib/systemd/system/nvidia-gridd.service
+  /etc/nvidia/gridd.conf.template
+)
+
+validate_nvidia_grid_userspace() {
+  local tree=$1
+  local path
+
+  for path in "${NVIDIA_GRID_USERSPACE[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/${path}" ]; then
+      echo "tree ${tree} is missing ${path}"
+      exit 1
+    fi
+  done
 }
 
 NVIDIA_TREES=(lts pb)
@@ -152,32 +172,6 @@ validate_nvidia_supported_device_list() {
   fi
 }
 
-# boot-critical NVIDIA modules that setup-nvidia.sh will modprobe. every flavor
-# must ship the four core modules
-NVIDIA_BOOT_MODULES=(nvidia nvidia-modeset nvidia-drm nvidia-uvm)
-
-validate_nvidia_boot_modules() {
-  local tree=$1
-  local flavor=$2
-  local extra_dir="/opt/nvidia/${tree}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
-  local module_name
-
-  for module_name in "${NVIDIA_BOOT_MODULES[@]}"; do
-    if ! compgen -G "${extra_dir}/${module_name}.ko*" > /dev/null; then
-      echo "${extra_dir} is missing ${module_name}.ko"
-      exit 1
-    fi
-  done
-
-  # gdrdrv is only harvested on the open flavor, and only when the build enabled it.
-  if [ "${flavor}" = "open" ] && [ "${ENABLE_NVIDIA_GDRCOPY_DRIVER}" = "true" ]; then
-    if ! compgen -G "${extra_dir}/gdrdrv.ko*" > /dev/null; then
-      echo "${extra_dir} is missing gdrdrv.ko"
-      exit 1
-    fi
-  fi
-}
-
 if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
   for tree in "${NVIDIA_TREES[@]}"; do
     validate_nvidia_tree_version "${tree}"
@@ -187,8 +181,8 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
 
     # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
     if [ "$(uname -m)" != "aarch64" ]; then
-      validate_nvidia_grid_modules "${tree}"
       validate_nvidia_boot_modules "${tree}" grid
+      validate_nvidia_grid_userspace "${tree}"
     fi
   done
 
@@ -220,9 +214,9 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
     done
   done
 
-  # nvidia-setup.service must Before= the two daemon services so systemd orders them
+  # nvidia-setup.service must Before= the daemon services so systemd orders them
   # correctly on subsequent boots
-  for DAEMON in nvidia-persistenced.service nvidia-fabricmanager.service; do
+  for DAEMON in nvidia-persistenced.service nvidia-fabricmanager.service nvidia-gridd.service; do
     if ! grep -q "^Before=.*\b${DAEMON}\b" /etc/systemd/system/nvidia-setup.service; then
       echo "nvidia-setup.service does not declare Before=${DAEMON}"
       exit 1
@@ -243,7 +237,7 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
 
   # these daemons are expected to be added at runtime, not build-time, since the .service files are extracted from
   # version-specific RPMs into the tree
-  for DAEMON in nvidia-persistenced nvidia-fabricmanager; do
+  for DAEMON in nvidia-persistenced nvidia-fabricmanager nvidia-gridd; do
     if [ -f "/usr/lib/systemd/system/${DAEMON}.service" ]; then
       echo "/usr/lib/systemd/system/${DAEMON}.service exists at build time; should be installed by setup at first boot"
       exit 1

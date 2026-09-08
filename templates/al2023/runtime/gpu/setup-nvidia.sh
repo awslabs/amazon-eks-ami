@@ -38,22 +38,24 @@ fi
 VERSION="$(cat "${TREE}/.version")"
 readonly VERSION
 
-# copy /etc/ files including modprobe.d and configs
-cp -a --reflink=auto "${TREE}/etc/." /etc/
+# copy /etc/ files including modprobe.d and configs. this runs on every boot, and /etc holds
+# config files, so -n keeps it from replacing a config a user changed after the first boot.
+# TODO: -n is deperecated. Move to --update=none when coreutils 9.3+ is available.
+cp -a -n --reflink=auto "${TREE}/etc/." /etc/
 for ENTRY in "${TREE}"/etc/*; do
-  restorecon -R "/etc/$(basename "${ENTRY}")" 2> /dev/null || true
+  restorecon -R "/etc/$(basename "${ENTRY}")"
 done
 
 readonly LOADED_SENTINEL="${TREE}/.loaded"
 if [[ ! -f "${LOADED_SENTINEL}" ]]; then
   mkdir -p "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra"
   cp -a --reflink=auto "${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/extra/." "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
-  restorecon -R "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/" 2> /dev/null || true
+  restorecon -R "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
 
   readonly FIRMWARE_STAGE="${TREE}/${FIRMWARE_DIR}/nvidia"
   mkdir -p "${FIRMWARE_DIR}/nvidia/${VERSION}"
   cp -a --reflink=auto "${FIRMWARE_STAGE}/${VERSION}/." "${FIRMWARE_DIR}/nvidia/${VERSION}/"
-  restorecon -R "${FIRMWARE_DIR}/nvidia/${VERSION}" 2> /dev/null || true
+  restorecon -R "${FIRMWARE_DIR}/nvidia/${VERSION}"
 
   depmod "${KERNEL_VERSION}"
 
@@ -108,13 +110,18 @@ if [[ ! -f "${DAEMONS_INSTALLED_SENTINEL}" ]]; then
   # /etc/systemd/system/ is reserved for admin overrides.
   install -m 0644 "${TREE}/usr/lib/systemd/system"/*.service /usr/lib/systemd/system/
 
+  DAEMONS=(nvidia-persistenced.service nvidia-fabricmanager.service set-nvidia-clocks.service)
+  # gridd is what obtains the vGPU license, and only vGPU devices resolve to the grid flavor.
+  # there is nothing to license on passthrough hardware, so it stays disabled there.
+  if [[ "${FLAVOR}" == "grid" ]]; then
+    DAEMONS+=(nvidia-gridd.service)
+  fi
+
   systemctl daemon-reload
-  systemctl enable nvidia-persistenced.service nvidia-fabricmanager.service \
-    set-nvidia-clocks.service
+  systemctl enable "${DAEMONS[@]}"
   # let systemd handle service starts in the background b/c they have a declared ordering
   # with this service and so that any potential failures or startup time are not absorbed here
-  systemctl start --no-block nvidia-persistenced.service nvidia-fabricmanager.service \
-    set-nvidia-clocks.service
+  systemctl start --no-block "${DAEMONS[@]}"
 
   touch "${DAEMONS_INSTALLED_SENTINEL}"
 fi

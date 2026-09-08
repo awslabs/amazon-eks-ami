@@ -91,13 +91,14 @@ function build-grid-kmods() {
 
   local GRID_DIR="${WORKING_DIR}/nvidia-grid-${DRIVER_VERSION}"
   local RUNFILE_PATH="${GRID_DIR}/${RUNFILE_NAME}"
-  local KERNEL_OPEN_DIR="${GRID_DIR}/source/kernel-open"
+  local EXTRACT_DIR="${GRID_DIR}/source"
+  local KERNEL_OPEN_DIR="${EXTRACT_DIR}/kernel-open"
   mkdir -p "${GRID_DIR}"
 
   echo "Building GRID kernel modules for NVIDIA ${DRIVER_VERSION}"
   aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${RUNFILE_KEY}" "${RUNFILE_PATH}"
   chmod +x "${RUNFILE_PATH}"
-  "${RUNFILE_PATH}" --extract-only --target "${GRID_DIR}/source"
+  "${RUNFILE_PATH}" --extract-only --target "${EXTRACT_DIR}"
 
   make -C "${KERNEL_OPEN_DIR}" \
     -j"$(nproc)" \
@@ -113,7 +114,22 @@ function build-grid-kmods() {
     sudo install -m 0644 "${MODULE_PATH}" "${DEST_DIR}/"
   done
 
+  harvest-grid-license-server "${EXTRACT_DIR}" "${TREE_DIR}"
+
   sudo rm -rf "${GRID_DIR}"
+}
+
+# Harvest the vGPU license server stack from an extracted GRID runfile.
+function harvest-grid-license-server() {
+  local EXTRACT_DIR="${1}"
+  local TREE_DIR="${2}"
+
+  echo "Harvesting the GRID vGPU userspace into ${TREE_DIR}"
+  sudo install -d "${TREE_DIR}/usr/bin" "${TREE_DIR}/usr/lib/systemd/system" "${TREE_DIR}/etc/nvidia"
+  sudo install -m 0755 "${EXTRACT_DIR}/nvidia-gridd" "${TREE_DIR}/usr/bin/"
+  sudo install -m 0644 "${EXTRACT_DIR}/init-scripts/systemd/nvidia-gridd.service" \
+    "${TREE_DIR}/usr/lib/systemd/system/"
+  sudo install -m 0644 "${EXTRACT_DIR}/gridd.conf.template" "${TREE_DIR}/etc/nvidia/"
 }
 
 # Download a kmod source rpm and unpack it
