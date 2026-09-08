@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import re
 
@@ -11,10 +10,10 @@ boundary = '<!-- template-variable-table-boundary -->'
 
 def update_doc(doc: str, template_path: str) -> str:
     with open(template_path) as template_file:
-        template = json.load(template_file)
+        template = template_file.read()
 
     all_vars = {}
-    for var in template['variables']:
+    for var in sorted(re.findall(r'^variable "([^"]+)" \{', template, re.MULTILINE)):
         all_vars[var] = None
 
     table_pattern = f"{boundary}([\\S\\s]*){boundary}"
@@ -55,6 +54,6 @@ for template in ['al2023']:
     doc_file_name = f'../doc/usage/{template}.md'
     with open(doc_file_name) as doc_file:
         doc = doc_file.read()
-        doc = update_doc(doc, f'../templates/{template}/template.json')
+        doc = update_doc(doc, f'../templates/{template}/template.pkr.hcl')
     with open(doc_file_name, 'w') as doc_file:
         doc_file.write(doc)

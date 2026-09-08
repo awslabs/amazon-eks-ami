@@ -1,0 +1,3 @@
+enable_nvidia_gdrcopy_driver  = "false"
+nvidia_gdrcopy_driver_version = ""
+source_ami_filter_name        = "al2023-ami-minimal-2023.*-kernel-6.1-*"
