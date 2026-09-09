@@ -41,7 +41,8 @@ readonly VERSION
 # copy /etc/ files including modprobe.d and configs. this runs on every boot, and /etc holds
 # config files, so -n keeps it from replacing a config a user changed after the first boot.
 # TODO: -n is deperecated. Move to --update=none when coreutils 9.3+ is available.
-cp -a -n --reflink=auto "${TREE}/etc/." /etc/
+shopt -s dotglob
+cp -a -n --reflink=auto "${TREE}"/etc/* /etc/
 for ENTRY in "${TREE}"/etc/*; do
   restorecon -R "/etc/$(basename "${ENTRY}")"
 done
