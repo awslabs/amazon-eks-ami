@@ -118,22 +118,36 @@ function main() {
   esac
 
   tree_path="${NVIDIA_TREE_ROOT}/${tree}"
-  if [[ ! -d "${tree_path}" || ! -f "${tree_path}/.tree-${tree}" ]]; then
-    echo >&2 "resolve: no ${tree} tree at ${tree_path} (missing directory or .tree-${tree} marker)"
-    exit 1
+  current_tree_path="${NVIDIA_TREE_ROOT}/current"
+
+  if ! [[ -d "${current_tree_path}" ]]; then
+    if ! [[ -d "${tree_path}" && -f "${tree_path}/.tree-${tree}" ]]; then
+      echo >&2 "resolve: chosen tree ${tree} not found at ${tree_path} or ${current_tree_path}"
+      exit 1
+    fi
+
+    if ! mv "${tree_path}" "${current_tree_path}"; then
+      echo >&2 "resolve: mv ${tree_path} ${current_tree_path} failed"
+      exit 1
+    fi
   fi
 
-  current_tree_path="${NVIDIA_TREE_ROOT}/current"
-  if ! ln -sfn "${tree_path}" "${current_tree_path}"; then
-    echo >&2 "resolve: ln -sfn ${tree_path} ${current_tree_path} failed"
-    exit 1
-  fi
+  # reclaims disk by removing any other tree subdir under NVIDIA_TREE_ROOT, assumes that
+  # only tree directories would have a .tree-{type} marker file at the top-level
+  local other_dir
+  for other_dir in "${NVIDIA_TREE_ROOT}"/*/; do
+    other_dir="${other_dir%/}"
+    [[ "${other_dir}" == "${current_tree_path}" ]] && continue
+    if compgen -G "${other_dir}/.tree-*" > /dev/null; then
+      rm -rf "${other_dir}"
+    fi
+  done
 
   printf 'options nvidia NVreg_CoherentGPUMemoryMode=driver\n' \
     > "${MODPROBE_D_DIR}/40-eks-nvidia-openrm.conf"
 
-  # commit the driver flavor to a state file at the end so that it can be used as a sentinel
-  # for systemd to skip running the service on subsequent boots
+  # commit the driver flavor at the end. its presence acts as the sentinel condition-check for
+  # the resolve service on subsequent boots.
   printf '%s\n' "${flavor}" > "${current_tree_path}/.driver-flavor"
 }
 
