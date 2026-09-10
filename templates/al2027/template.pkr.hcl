@@ -57,6 +57,13 @@ variable "binary_bucket_region" {
   type = string
 }
 
+# Tag value applied to the build instance at launch.
+# Our build tooling requires it.
+variable "build_task_identifier" {
+  type    = string
+  default = ""
+}
+
 variable "containerd_version" {
   type = string
 }
@@ -134,6 +141,12 @@ variable "security_group_id" {
   type = string
 }
 
+# Skip the IAM GetInstanceProfile call that Packer makes to validate `iam_instance_profile`. In a network-isolated VPC, the IAM endpoint may not be accessible.
+variable "skip_profile_validation" {
+  type    = string
+  default = "false"
+}
+
 variable "source_ami_filter_name" {
   type = string
 }
@@ -186,6 +199,7 @@ locals {
   ami_component_description = coalesce(var.ami_component_description, "(k8s: ${var.kubernetes_version}, containerd: ${var.containerd_version})")
   # Was: "{{user `remote_folder`}}/worker"
   working_dir = coalesce(var.working_dir, "${var.remote_folder}/worker")
+  build_task_identifier = var.build_task_identifier != "" ? var.build_task_identifier : "${var.creator}-${legacy_isotime("20060102150405")}"
 }
 
 # source blocks are generated from your builders; a source can be referenced in
@@ -199,7 +213,8 @@ source "amazon-ebs" "al2027" {
     volume_size           = 20
     volume_type           = "${var.volume_type}"
   }
-  ami_description             = "${var.ami_description}, ${local.ami_component_description}"
+  # Packer sets the description with a ModifyImageAttribute call that the build role may not have.
+  ami_description             = var.ami_description != "" ? "${var.ami_description}, ${local.ami_component_description}" : ""
   ami_name                    = "${var.ami_name}"
   ami_regions                 = compact(split(",", var.ami_regions))
   ami_users                   = compact(split(",", var.ami_users))
@@ -220,15 +235,20 @@ source "amazon-ebs" "al2027" {
     volume_type           = "${var.volume_type}"
   }
   metadata_options {
-    http_tokens = "required"
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
   }
   region = "${var.aws_region}"
+  # `creator` identifies the build
   run_tags = {
-    creator = "${var.creator}"
+    creator             = "${var.creator}"
+    BuildTaskIdentifier = "${local.build_task_identifier}"
   }
-  security_group_id = "${var.security_group_id}"
-  snapshot_users    = compact(split(",", var.ami_users))
-  source_ami        = var.source_ami_id
+  security_group_id       = "${var.security_group_id}"
+  skip_profile_validation = "${var.skip_profile_validation}"
+  snapshot_users          = compact(split(",", var.ami_users))
+  source_ami              = var.source_ami_id
   source_ami_filter {
     filters = {
       architecture        = var.arch
@@ -244,15 +264,18 @@ source "amazon-ebs" "al2027" {
   ssh_pty       = true
   ssh_username  = "${var.ssh_username}"
   subnet_id     = "${var.subnet_id}"
+  # ed25519 RSA keys are used for the SSH session Packer tunnels over SSM.
+  temporary_key_pair_type = "${var.temporary_key_pair_type}"
   tags = {
-    Name               = "${var.ami_name}"
-    build_region       = "{{ .BuildRegion }}"
-    containerd_version = "${var.containerd_version}"
-    created            = "{{timestamp}}"
-    kubernetes         = "${var.kubernetes_version}/${var.kubernetes_build_date}/bin/linux/${var.arch}"
-    source_ami_id      = "{{ .SourceAMI }}"
-    source_ami_name    = "{{ .SourceAMIName }}"
-    ssm_agent_version  = "${var.ssm_agent_version}"
+    Name                = "${var.ami_name}"
+    build_region        = "{{ .BuildRegion }}"
+    containerd_version  = "${var.containerd_version}"
+    created             = "{{timestamp}}"
+    kubernetes          = "${var.kubernetes_version}/${var.kubernetes_build_date}/bin/linux/${var.arch}"
+    source_ami_id       = "{{ .SourceAMI }}"
+    source_ami_name     = "{{ .SourceAMIName }}"
+    ssm_agent_version   = "${var.ssm_agent_version}"
+    BuildTaskIdentifier = "${local.build_task_identifier}"
   }
   temporary_security_group_source_cidrs = compact(split(",", var.temporary_security_group_source_cidrs))
   # AL2027 minimal source AMIs do not ship amazon-ssm-agent.
