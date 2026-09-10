@@ -84,6 +84,10 @@ variable "encrypted" {
 
 variable "iam_instance_profile" {
   type = string
+  validation {
+    condition     = var.iam_instance_profile != ""
+    error_message = "The iam_instance_profile variable is required because AL2027 builds connect over Session Manager, which needs a profile granting the instance ssm:UpdateInstanceInformation and the ssmmessages channel actions."
+  }
 }
 
 variable "install_containerd_from_s3" {
@@ -164,10 +168,6 @@ variable "temporary_key_pair_type" {
 }
 
 variable "temporary_security_group_source_cidrs" {
-  type = string
-}
-
-variable "user_data_file" {
   type = string
 }
 
@@ -255,7 +255,10 @@ source "amazon-ebs" "al2027" {
     ssm_agent_version  = "${var.ssm_agent_version}"
   }
   temporary_security_group_source_cidrs = compact(split(",", var.temporary_security_group_source_cidrs))
-  user_data_file                        = "${var.user_data_file}"
+  # AL2027 minimal source AMIs do not ship amazon-ssm-agent.
+  # But we need SSM for our internal build tooling and to allow customers to connect to instances.
+  # So the build user-data.sh is necessary to install the agent.
+  user_data_file = "${path.root}/user-data.sh"
 }
 
 # a build block invokes sources and runs provisioning steps on them. The
@@ -292,7 +295,7 @@ build {
     inline = [
       "sudo mkdir -p /etc/eks/log-collector-script/",
       "sudo cp -v ${local.working_dir}/log-collector-script/eks-log-collector.sh /etc/eks/log-collector-script/"
-      ]
+    ]
   }
 
   provisioner "file" {
@@ -339,9 +342,9 @@ build {
       "RUNC_VERSION=${var.runc_version}",
       "SSM_AGENT_VERSION=${var.ssm_agent_version}",
       "WORKING_DIR=${local.working_dir}"
-      ]
-    remote_folder    = "${var.remote_folder}"
-    script           = "${path.root}/provisioners/install-worker.sh"
+    ]
+    remote_folder = "${var.remote_folder}"
+    script        = "${path.root}/provisioners/install-worker.sh"
   }
 
   provisioner "shell" {
@@ -349,18 +352,18 @@ build {
       "AWS_REGION=${var.aws_region}",
       "BUILD_IMAGE=${var.nodeadm_build_image}",
       "PROJECT_DIR=${local.working_dir}/nodeadm"
-     ]
-    remote_folder    = "${var.remote_folder}"
-    script           = "${path.root}/provisioners/install-nodeadm.sh"
+    ]
+    remote_folder = "${var.remote_folder}"
+    script        = "${path.root}/provisioners/install-nodeadm.sh"
   }
 
   provisioner "shell" {
     environment_vars = [
       "AWS_REGION=${var.aws_region}",
       "PAUSE_CONTAINER_IMAGE=${var.pause_container_image}"
-      ]
-    remote_folder    = "${var.remote_folder}"
-    script           = "${path.root}/provisioners/cache-pause-container.sh"
+    ]
+    remote_folder = "${var.remote_folder}"
+    script        = "${path.root}/provisioners/cache-pause-container.sh"
   }
 
   provisioner "shell" {
