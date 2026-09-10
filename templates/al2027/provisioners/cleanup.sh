@@ -26,6 +26,10 @@ sudo rm -rf \
   /var/log/wtmp \
   /var/log/messages
 
+# SSM-connected packer build instances leave per-instance agent state (keyed by the build
+# instance's ID, plus session and document history) that must not ship.
+sudo rm -rf /var/lib/amazon/ssm
+
 # Stop auditd before purging: a blind rm against a running auditd leaves the held
 # inode in place, so build-time AVC denials ship in the AMI.
 sudo service auditd stop 2> /dev/null || true
