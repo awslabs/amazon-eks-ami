@@ -87,23 +87,7 @@ for ko in "${EXTRA_DIR}"/*.ko*; do
   fi
 done
 
-# rpm db registration can carry a big time penalty; to optimize first-boot time
-# we keep this at the end so it's out of the critical path for functionality
-readonly COMMITTED_SENTINEL="${TREE}/.driver-committed"
-if [[ ! -f "${COMMITTED_SENTINEL}" ]]; then
-  ldconfig
-  shopt -s nullglob # the GRID flavor has no specific RPMs to expand to
-  readonly RPMS_TO_REGISTER=("${TREE}"/.rpms/*.rpm "${FLAVOR_SUBTREE}"/.rpms/*.rpm)
-  shopt -u nullglob
-  if ((${#RPMS_TO_REGISTER[@]} > 0)); then
-    rpm -i --justdb --noscripts --nodeps --nodigest --nosignature "${RPMS_TO_REGISTER[@]}"
-  fi
-  {
-    echo "version=${VERSION}"
-    echo "flavor=${FLAVOR}"
-    echo "kernel=${KERNEL_VERSION}"
-  } > "${COMMITTED_SENTINEL}"
-fi
+ldconfig
 
 readonly DAEMONS_INSTALLED_SENTINEL="${TREE}/.daemons-installed"
 if [[ ! -f "${DAEMONS_INSTALLED_SENTINEL}" ]]; then

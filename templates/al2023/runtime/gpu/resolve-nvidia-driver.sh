@@ -139,7 +139,10 @@ function main() {
     other_dir="${other_dir%/}"
     [[ "${other_dir}" == "${current_tree_path}" ]] && continue
     if compgen -G "${other_dir}/.tree-*" > /dev/null; then
-      rm -rf "${other_dir}"
+      # the directories are greater than a GB so the recursive remove can take
+      # some time. we remove them in the background to avoid delaying startup
+      # as this is only to free space and does not impact functionality
+      rm -rf "${other_dir}" &
     fi
   done
 
