@@ -115,26 +115,7 @@ sudo systemctl restart sshd.service
 ### awscli #####################################################################
 ################################################################################
 
-### isolated regions can't communicate to awscli.amazonaws.com so installing awscli through dnf
-
-PARTITION=$(imds /latest/meta-data/services/partition)
-if [[ "${PARTITION}" =~ ^aws-iso ]]; then
-  echo "Installing awscli package"
-  sudo dnf install -y awscli
-else
-  # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-  echo "Installing awscli v2 bundle"
-  AWSCLI_DIR="${WORKING_DIR}/awscli-install"
-  mkdir "${AWSCLI_DIR}"
-  curl \
-    --silent \
-    --show-error \
-    --retry 10 \
-    --retry-delay 1 \
-    -L "https://awscli.amazonaws.com/awscli-exe-linux-${MACHINE}.zip" -o "${AWSCLI_DIR}/awscliv2.zip"
-  unzip -q "${AWSCLI_DIR}/awscliv2.zip" -d ${AWSCLI_DIR}
-  sudo "${AWSCLI_DIR}/aws/install" --bin-dir /bin/ --update
-fi
+sudo dnf install -y awscli-2
 
 ###############################################################################
 ### Containerd setup ##########################################################
