@@ -49,7 +49,7 @@ else ifneq ($(filter $(aws_region),us-gov-west-1 us-gov-east-1),)
 endif
 
 # default to the latest supported Kubernetes version
-k8s=1.31
+k8s=1.32
 
 .PHONY: build
 build: ## Build EKS Optimized AMI, default using AL2, use os_distro=al2023 for AL2023 AMI
