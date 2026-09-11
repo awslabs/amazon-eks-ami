@@ -1,9 +1,12 @@
 [Unit]
-Description=NVIDIA setup
+Description=NVIDIA package install
 After=nvidia-driver-resolve.service usr-bin.mount usr-lib64.mount usr-share.mount
 Wants=usr-bin.mount usr-lib64.mount usr-share.mount
-Before=nvidia-cdi-refresh.service nvidia-persistenced.service nvidia-fabricmanager.service nvidia-gridd.service
+# this service should run before cloud-final in case user data scripts
+# interact with dnf or have assumptions about packages already being installed
+Before=cloud-final.service
 ConditionPathExists=/opt/nvidia/current/.driver-flavor
+ConditionPathExists=!/opt/nvidia/current/.packages-installed
 RefuseManualStart=yes
 RefuseManualStop=yes
 StartLimitBurst=5
@@ -12,7 +15,8 @@ StartLimitIntervalSec=infinity
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/etc/eks/setup-nvidia.sh
+ExecStart=/etc/eks/install-nvidia-packages.sh
+ExecStartPost=/usr/bin/touch /opt/nvidia/current/.packages-installed
 Restart=on-failure
 RestartSec=5s
 
