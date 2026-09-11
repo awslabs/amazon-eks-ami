@@ -5,16 +5,17 @@ RUN mv /bin/cmd /imds-mock
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG CONTAINERD_VERSION
+ARG TARGETARCH
 RUN yum install -y --allowerasing curl && yum clean all
 RUN dnf -y update && \
-    dnf -y install systemd jq awscli nmap-ncat iptables tar procps git e2fsprogs xfsprogs util-linux && \
+    dnf -y install systemd systemd-udev jq awscli nmap-ncat iptables iproute tar procps git e2fsprogs xfsprogs util-linux && \
     dnf -y install python3-3.9.24-1.amzn2023.0.4 python3-libs-3.9.24-1.amzn2023.0.4 --allowerasing && \
     dnf clean all
 # TO-DO: install containerd v2 from AL repo as well once it is available
 RUN if [[ "$CONTAINERD_VERSION" == *".*" ]]; then \
         dnf install -y containerd-${CONTAINERD_VERSION}; \
     else \
-        curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz && \
+        curl -L -o /tmp/containerd.tar.gz https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-${TARGETARCH}.tar.gz && \
         mkdir -p /tmp/containerd && \
         tar -C /tmp/containerd -xzf /tmp/containerd.tar.gz && \
         cp /tmp/containerd/bin/* /usr/local/bin/ && \
@@ -27,6 +28,10 @@ COPY test/e2e/infra/requirements.txt /
 RUN pip install --user -r requirements.txt
 # I know how this looks, but it lets us use moto with our mocked IMDS and for now the simplicity is worth the hack
 RUN sed -i 's/= random_instance_id()/= "i-1234567890abcdef0"/g' $HOME/.local/lib/python*/site-packages/moto/ec2/models/instances.py
+# moto 5.1.x's random_mac_address has a broken f-string that yields invalid MACs;
+# pin it to the metadata mock's MAC so ENI lookups by mac-address resolve.
+RUN sed -i 's|    return f"02:00:00:.*|    return "0e:49:61:0f:c3:11"|' $HOME/.local/lib/python*/site-packages/moto/ec2/utils.py && \
+    python3 -c 'from moto.ec2.utils import random_mac_address; actual = random_mac_address(); assert actual == "0e:49:61:0f:c3:11", f"Moto MAC patch failed: got {actual!r}"'
 COPY --from=imds-mock-build /imds-mock /usr/local/bin/imds-mock
 # The content of ec2 userdata in the 'aemm-default-config.json'
 # file is the base64 encoding of a minimally viable NodeConfig.

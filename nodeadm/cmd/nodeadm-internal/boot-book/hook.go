@@ -2,7 +2,6 @@ package bootbook
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -11,7 +10,6 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 const SystemdNetworkdDaemonName = "systemd-networkd"
@@ -37,22 +35,10 @@ func (c *bootHookCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.Global
 	if err != nil {
 		return err
 	}
-	cache := util.NewFSCache(filepath.Join(udev.NetworkManagerCacheDir, identity.InstanceID))
-	interfaceNames, err := cache.Keys()
+	managedInterfaces, err := udev.CachedManagedInterfaces(identity.InstanceID)
 	if err != nil {
 		return err
 	}
-	var managedInterfaces []string
-	for _, interfaceName := range interfaceNames {
-		manager, err := cache.Read(interfaceName)
-		if err != nil {
-			return err
-		}
-		if manager == udev.ManagerSystemd {
-			managedInterfaces = append(managedInterfaces, interfaceName)
-		}
-	}
-
 	log.Info("Waiting for consistent network interfaces..")
 	if err := system.EnsureEKSNetworkConfiguration(ctx, managedInterfaces); err != nil {
 		return err

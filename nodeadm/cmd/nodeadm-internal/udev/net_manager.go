@@ -5,8 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
@@ -43,13 +45,20 @@ func (c *netManager) Flaggy() *flaggy.Subcommand {
 }
 
 func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
+	// systemctl stop on detach must cancel a pending lookup or backoff promptly.
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
 	if len(c.iface) == 0 {
 		return fmt.Errorf("interface name cannot be empty")
 	}
 	log = log.With(zap.String("interface", c.iface))
 	switch c.action {
 	case "add":
-		return c.addAction(ctx, log)
+		err := c.addAction(ctx, log)
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
 	case "remove":
 		return c.removeAction(ctx, log)
 	}
@@ -57,11 +66,11 @@ func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalO
 }
 
 const (
-	// in a future version of systemd (v258+?) the network manager reads udev
-	// properties to tell if the interface link should be managed. by default it
-	// assumes they should be, but if the 'ID_NET_MANAGED_BY' property exists
-	// and its value is not equal to 'io.systemd.Network', systemd is forced to
-	// stop managing the link.
+	// This name is compatible with systemd's ID_NET_MANAGED_BY convention.
+	// Nodeadm currently selects managed links by writing explicit .network
+	// files and disabling the default EC2 match, rather than setting that udev
+	// property. On systemd versions honoring it, an external manager's property
+	// prevents networkd from matching the link even with a matching .network.
 	//
 	// see: https://github.com/systemd/systemd/pull/29782
 	// see: https://github.com/systemd/systemd/blob/9709deba913c9c2c2e9764bcded35c6081b05197/src/network/networkd-link.c#L1372-L1396
@@ -80,6 +89,9 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 		return err
 	}
 	log.Info("found self interface mac", zap.String("address", c.selfMac))
+	if err := removeStaleNetworkConfig(eksNetworkPath(c.iface), c.selfMac); err != nil {
+		return err
+	}
 
 	// this is the our first request to IMDS, so we use a client that tolerates
 	// and retries 404 responses to accomodate for eventual consistency.
@@ -92,12 +104,9 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	if err != nil {
 		return err
 	}
-	// TODO: in the future we should communicate with another broker that checks
-	// with the CNI (IPAMD) to get info on whether a given interface should be
-	// managed or not.
-	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(c.iface)
+	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(ctx, c.iface, c.selfMac)
 	if err != nil {
-		return fmt.Errorf("failed to determine manager: %v", err)
+		return fmt.Errorf("failed to determine manager: %w", err)
 	}
 	log.Info("resolved net manager", zap.String("name", manager))
 
@@ -180,7 +189,21 @@ func (c *netManager) manageLink(ctx context.Context) error {
 		return fmt.Errorf("failed to render network template: %w", err)
 	}
 
+	if err := checkInterfaceIdentity(c.iface, c.selfMac); err != nil {
+		return err
+	}
 	return util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644)
+}
+
+func checkInterfaceIdentity(iface, expectedMAC string) error {
+	mac, err := getInterfaceMAC(iface)
+	if err != nil {
+		return err
+	}
+	if mac != expectedMAC {
+		return fmt.Errorf("interface %s changed identity from %s to %s", iface, expectedMAC, mac)
+	}
+	return nil
 }
 
 func getInterfaceMAC(iface string) (string, error) {

@@ -174,6 +174,32 @@ spec:
 
 ---
 
+## Managing CNI-unmanaged (`no_manage`) secondary ENIs (experimental)
+
+When the `OSManagedNoManageENIs` feature gate is enabled, `nodeadm` configures secondary ENIs that the Amazon VPC CNI opts out of managing — those tagged `node.k8s.amazonaws.com/no_manage=true` — via `systemd-networkd`.
+
+Without it, such an ENI attached after boot is left administratively down with no IP: the VPC CNI ignores `no_manage` ENIs, and `nodeadm` otherwise defers post-boot ENIs to the CNI, so no component owns the interface. This is typically used for dedicated dataplane interfaces (e.g. attached out-of-band by a controller for use with Multus). CNI-managed ENIs are never touched.
+
+Tag the ENI before attachment. If EC2 has not exposed the ENI or its ownership tags yet, nodeadm leaves the interface untouched and retries without caching a decision. Interfaces already administratively up are left with their existing manager. Untagged interfaces remain pending until a manager brings them up or ownership tags become visible; set `node.k8s.amazonaws.com/no_manage=false` to explicitly delegate a down interface to CNI. Decisions are cached with the MAC address under the instance ID, so a different ENI reusing the same interface name is resolved independently. Legacy name-only cache entries preserve their previous decision once and acquire the current MAC on first read; historical name reuse before that migration cannot be detected. Fresh nodes have no legacy entries. In-place retagging of an already managed interface is not supported.
+
+Ownership resolution recovers after API outages or node-role IAM corrections. The node must be able to reach the regional EC2 endpoint (directly, through a VPC endpoint, or through its configured proxy).
+
+An uncached, down ENI with unknown ownership is polled within the interface service. Each lookup has a ten-second deadline and at most three EC2 API attempts. Between lookups, nodeadm waits with exponential backoff (5, 10, 20, 40, then 60 seconds, with up to 20% downward jitter). After reaching the cap, each pending ENI performs roughly one lookup per minute; SDK retries can add requests. Detaching the interface stops the service and cancels the wait. The base systemd restart policy and feature-off boot behavior are unchanged. Link-state checks are best effort and do not provide mutual exclusion with another network manager.
+
+⚠️ **Note**: When enabled, the node's instance role must grant `ec2:DescribeNetworkInterfaces` — `nodeadm` reads the ENI's tags to decide whether to adopt it. It is included in `AmazonEKS_CNI_Policy`, but that policy is not necessarily on the node role: when the VPC CNI authenticates via IRSA or EKS Pod Identity, it typically lives on the `aws-node` service account role instead. Verify the node role before enabling. When the feature is disabled (the default), no EC2 call is made.
+
+### To enable this feature:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    OSManagedNoManageENIs: true
+```
+
+---
+
 ## Configuring `containerd`
 
 Additional `containerd` configuration can be supplied in your `NodeConfig`. The values in your inline TOML document will overwrite any default value set by `nodeadm`.
