@@ -87,8 +87,6 @@ for ko in "${EXTRA_DIR}"/*.ko*; do
   fi
 done
 
-ldconfig
-
 readonly DAEMONS_INSTALLED_SENTINEL="${TREE}/.daemons-installed"
 if [[ ! -f "${DAEMONS_INSTALLED_SENTINEL}" ]]; then
   # /usr/lib/systemd/system/ is the correct target for package-provided units —
