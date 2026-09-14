@@ -21,8 +21,10 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
 
-	// OSManagedNoManageENIs lets nodeadm configure secondary ENIs the VPC CNI
-	// opts out of managing (tagged node.k8s.amazonaws.com/no_manage=true).
+	// OSManagedNoManageENIs configures secondary ENIs tagged
+	// node.k8s.amazonaws.com/no_manage=true via systemd-networkd instead of
+	// leaving them to the VPC CNI, which ignores them. Requires
+	// ec2:DescribeNetworkInterfaces on the node instance role.
 	OSManagedNoManageENIs: DefaultFalse,
 }
 
