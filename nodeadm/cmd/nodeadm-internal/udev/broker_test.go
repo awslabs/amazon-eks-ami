@@ -250,3 +250,36 @@ func Test_fsBroker_ManagerFor_cancellation(t *testing.T) {
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.Equal(t, 1, resolver.calls)
 }
+
+func Test_fsBroker_replacementENI(t *testing.T) {
+	for _, priorManager := range []string{networkmanager.ManagerCNI, networkmanager.ManagerSystemd} {
+		t.Run(priorManager, func(t *testing.T) {
+			resolver := &fakeResolver{manager: networkmanager.ManagerSystemd}
+			want := networkmanager.ManagerSystemd
+			if priorManager == networkmanager.ManagerSystemd {
+				resolver.manager, want = networkmanager.ManagerCNI, networkmanager.ManagerCNI
+			}
+			b := newTestBroker(t, true, true, staticResolver(resolver))
+			assert.NoError(t, networkmanager.WriteCacheEntry(b.cache, "ens6", "old-mac", priorManager))
+			manager, err := b.ManagerFor(context.Background(), "ens6", "new-mac")
+			assert.NoError(t, err)
+			assert.Equal(t, want, manager)
+			assert.Equal(t, 1, resolver.calls)
+			value, err := b.cache.Read("ens6")
+			assert.NoError(t, err)
+			entry, err := networkmanager.DecodeCacheEntry(value)
+			assert.NoError(t, err)
+			assert.Equal(t, networkmanager.CacheEntry{MAC: "new-mac", Manager: want}, entry)
+		})
+	}
+}
+
+func Test_fsBroker_sameENIAcrossBoot(t *testing.T) {
+	for _, manager := range []string{networkmanager.ManagerCNI, networkmanager.ManagerSystemd} {
+		b := newTestBroker(t, false, false, unbuildableResolver)
+		assert.NoError(t, networkmanager.WriteCacheEntry(b.cache, "ens6", "mac", manager))
+		got, err := b.ManagerFor(context.Background(), "ens6", "mac")
+		assert.NoError(t, err)
+		assert.Equal(t, manager, got)
+	}
+}
