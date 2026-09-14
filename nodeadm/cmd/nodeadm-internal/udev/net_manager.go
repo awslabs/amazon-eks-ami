@@ -92,6 +92,9 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	if err != nil {
 		return err
 	}
+	// TODO: in the future we should communicate with another broker that checks
+	// with the CNI (IPAMD) to get info on whether a given interface should be
+	// managed or not.
 	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(ctx, c.iface, c.selfMac)
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %w", err)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net"
 	"path/filepath"
 	"time"
@@ -20,20 +19,24 @@ type NetworkInterfaceBroker interface {
 
 const NetworkManagerCacheDir = "/etc/eks/nodeadm/udev-net-manager"
 
-// defaultOptOutLookupTimeout bounds client build (region/credential discovery
-// via IMDS) plus describe, capping the SDK's retry/backoff. Other IMDS calls
-// in addAction retain their existing retry behavior.
-const defaultOptOutLookupTimeout = 10 * time.Second
+const (
+	// covers region/credential discovery and the describe call, including the
+	// SDK's own retries.
+	ownershipLookupTimeout = 10 * time.Second
+
+	initialOwnershipRetryDelay = 5 * time.Second
+	maxOwnershipRetryDelay     = time.Minute
+)
+
+var errOwnershipPending = errors.New("ENI ownership pending")
 
 type fsBroker struct {
 	cache              util.FSCache
 	markerPath         string
 	noManageMarkerPath string
-	// newResolver is built lazily, so the EC2 client and its IAM requirement are
-	// never exercised unless the feature is enabled.
-	newResolver   func(ctx context.Context) (cniOptOutResolver, error)
-	lookupTimeout time.Duration
-	linkIsUp      func(string) (bool, error)
+	newResolver        func(ctx context.Context) (cniOptOutResolver, error)
+	linkUp             func(interfaceName string) (bool, error)
+	waitRetry          func(context.Context, time.Duration) error
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
@@ -44,15 +47,17 @@ func NewFSBroker(instanceID string) *fsBroker {
 		newResolver: func(ctx context.Context) (cniOptOutResolver, error) {
 			return newEC2TagResolver(ctx, instanceID)
 		},
-		lookupTimeout: defaultOptOutLookupTimeout,
-		linkIsUp: func(name string) (bool, error) {
-			link, err := net.InterfaceByName(name)
-			if err != nil {
-				return false, err
-			}
-			return link.Flags&net.FlagUp != 0, nil
-		},
+		linkUp:    isLinkUp,
+		waitRetry: waitForOwnershipRetry,
 	}
+}
+
+func isLinkUp(interfaceName string) (bool, error) {
+	link, err := net.InterfaceByName(interfaceName)
+	if err != nil {
+		return false, err
+	}
+	return link.Flags&net.FlagUp != 0, nil
 }
 
 func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac string) (string, error) {
@@ -77,60 +82,34 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return ManagerCNI, nil
 	}
 
-	// Never adopt a link already brought up by CNI or another manager. This
-	// also lets an untagged ENI leave the pending state once CNI configures it.
-	up, err := b.linkIsUp(interfaceName)
+	up, err := b.linkUp(interfaceName)
 	if err != nil {
 		return "", err
 	}
 	if up {
-		zap.L().Info("deferring interface management", zap.String("interface", interfaceName), zap.String("manager", ManagerCNI), zap.String("reason", "link already up"))
+		zap.L().Info("link already up, leaving it to its current manager", zap.String("interface", interfaceName))
 		return ManagerCNI, nil
 	}
 
-	// Propagated, not defaulted to CNI: ManagerFor caches the result permanently,
-	// and the unit retries on failure (Restart=on-failure).
-	ctx, cancel := context.WithTimeout(ctx, b.lookupTimeout)
+	ctx, cancel := context.WithTimeout(ctx, ownershipLookupTimeout)
 	defer cancel()
 
 	resolver, err := b.newResolver(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to build CNI opt-out resolver for mac %s: %w", mac, err)
+		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
 	}
-	optedOut, err := resolver.IsOptedOut(ctx, mac)
-	if err != nil {
-		return "", fmt.Errorf("failed to determine CNI opt-out status for mac %s: %w", mac, err)
-	}
-	if optedOut {
-		// CNI may have brought the link up during the EC2 request.
-		up, err := b.linkIsUp(interfaceName)
-		if err != nil {
-			return "", err
-		}
-		if up {
-			zap.L().Info("deferring interface management", zap.String("interface", interfaceName), zap.String("manager", ManagerCNI), zap.String("reason", "link brought up during EC2 lookup"))
-			return ManagerCNI, nil
-		}
-		return ManagerSystemd, nil
-	}
-	return ManagerCNI, nil
+	return resolver.Resolve(ctx, mac)
 }
 
-func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
+func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac string) (string, error) {
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.
-	manager, err := b.cache.Read(interfaceName)
-	if err == nil {
+	if manager, err := b.cache.Read(interfaceName); err == nil {
 		return manager, nil
 	}
-	if !errors.Is(err, fs.ErrNotExist) {
-		// unlike a cold cache, this (e.g. a cache dir permissions problem) would
-		// silently force a full re-resolution on every event.
-		zap.L().Warn("failed reading manager from cache, re-resolving", zap.Error(err), zap.String("interface", interfaceName))
-	}
 
-	manager, err = b.determineManager(ctx, interfaceName, mac)
+	manager, err := b.determineManager(ctx, interfaceName, mac)
 	if err != nil {
 		return "", err
 	}
@@ -139,4 +118,33 @@ func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (s
 		zap.L().Warn("failed writing manager back to cache", zap.Error(err), zap.String("interface", interfaceName), zap.String("manager", manager))
 	}
 	return manager, nil
+}
+
+func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
+	delay := initialOwnershipRetryDelay
+	for {
+		manager, err := b.managerForAttempt(ctx, interfaceName, mac)
+		if err == nil {
+			return manager, nil
+		}
+		// only EC2/credential failures and incomplete visibility poll here,
+		// filesystem and link errors follow the systemd restart policy.
+		if !errors.Is(err, errOwnershipPending) {
+			return "", err
+		}
+		zap.L().Warn("waiting to resolve interface ownership", zap.String("interface", interfaceName), zap.String("mac", mac), zap.Duration("retryIn", delay), zap.Error(err))
+		if err := b.waitRetry(ctx, delay); err != nil {
+			return "", err
+		}
+		delay = min(2*delay, maxOwnershipRetryDelay)
+	}
+}
+
+func waitForOwnershipRetry(ctx context.Context, delay time.Duration) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(delay):
+		return nil
+	}
 }
