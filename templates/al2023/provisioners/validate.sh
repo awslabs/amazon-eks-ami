@@ -244,5 +244,10 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
     fi
   done
 
+  if ! grep -q 'stream=DRIVER_TREE_VERSION_PLACEHOLDER' /etc/dnf/modules.d/nvidia-driver.module; then
+    echo "/etc/dnf/modules.d/nvidia-driver.module missing placeholder for driver version"
+    exit 1
+  fi
+
   echo "NVIDIA driver trees were validated: ${NVIDIA_TREES[*]}"
 fi
