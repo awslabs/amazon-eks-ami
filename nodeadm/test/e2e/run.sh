@@ -46,6 +46,7 @@ function runTest() {
     --workdir "$workdir"
     --volume "$(pwd)/$case_dir:$workdir"
     --volume "$(pwd)/../templates/al2023/runtime/rootfs/etc/systemd/system/udev-net-manager@.service:/udev-net-manager@.service:ro"
+    --volume "$(pwd)/../templates/al2023/runtime/rootfs/etc/udev/rules.d/90-eks.rules:/90-eks.rules:ro"
   )
 
   for binary in "${!MOUNT_TARGETS[@]}"; do
