@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/configprovider"
@@ -26,7 +28,7 @@ func (c *checkCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *checkCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+func (c *checkCmd) Run(_ context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
 	log.Info("Checking configuration", zap.Strings("source", c.configSources))

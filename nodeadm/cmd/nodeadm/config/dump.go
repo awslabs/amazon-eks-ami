@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -34,7 +35,7 @@ func (c *dumpCmd) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *dumpCmd) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+func (c *dumpCmd) Run(_ context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
 	c.configSources = cli.ResolveConfigSources(c.configSources)
 
 	if c.configOutput != "" {

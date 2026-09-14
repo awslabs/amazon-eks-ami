@@ -35,8 +35,9 @@ sudo nerdctl run \
   --workdir /workdir \
   --volume $PROJECT_DIR:/workdir \
   --env GOTOOLCHAIN=local \
+  --quiet \
   $BUILD_IMAGE \
-  make build
+  make release
 
 # cleanup build image and snapshots
 sudo nerdctl rmi \
@@ -58,6 +59,9 @@ sudo systemctl enable \
   nodeadm-boot-hook \
   nodeadm-config \
   nodeadm-run
+
+sudo systemctl enable ebs-initialize-bin@nodeadm
+sudo systemctl enable ebs-initialize-bin@nodeadm-internal
 
 # create the drop-in config directory
 sudo mkdir -p /etc/eks/nodeadm.d/

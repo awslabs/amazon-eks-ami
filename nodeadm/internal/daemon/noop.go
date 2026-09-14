@@ -2,6 +2,8 @@
 
 package daemon
 
+import "context"
+
 var _ DaemonManager = &noopDaemonManager{}
 
 type noopDaemonManager struct{}
@@ -10,27 +12,31 @@ func NewDaemonManager() (DaemonManager, error) {
 	return &noopDaemonManager{}, nil
 }
 
-func (m *noopDaemonManager) StartDaemon(name string) error {
+func (m *noopDaemonManager) StartDaemon(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m *noopDaemonManager) StopDaemon(name string) error {
+func (m *noopDaemonManager) StopDaemon(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m *noopDaemonManager) RestartDaemon(name string) error {
+func (m *noopDaemonManager) RestartDaemon(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m *noopDaemonManager) GetDaemonStatus(name string) (DaemonStatus, error) {
+func (m *noopDaemonManager) GetDaemonStatus(ctx context.Context, name string) (DaemonStatus, error) {
 	return DaemonStatusUnknown, nil
 }
 
-func (m *noopDaemonManager) EnableDaemon(name string) error {
+func (m *noopDaemonManager) EnableDaemon(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m *noopDaemonManager) DisableDaemon(name string) error {
+func (m *noopDaemonManager) DisableDaemon(ctx context.Context, name string) error {
+	return nil
+}
+
+func (m *noopDaemonManager) Reload(ctx context.Context) error {
 	return nil
 }
 

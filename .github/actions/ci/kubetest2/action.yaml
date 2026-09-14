@@ -28,8 +28,13 @@ runs:
       shell: bash
       run: |
         export PATH=${PATH}:$(go env GOPATH)/bin
-        # old versions of packages are sometimes cached by the proxy, just disable it
-        export GOPROXY=direct
+        # Resolve only the tools directly, since the proxy sometimes serves a stale
+        # @latest/@HEAD. Resolving their whole module graph directly would make this
+        # step depend on every host in it, and gitlab.alpinelinux.org (an indirect
+        # dependency via sigs.k8s.io/bom) answers 418 to GitHub Actions runners.
+        # "|" rather than "," so any error falls through, not just 404/410.
+        export GOPROXY='https://proxy.golang.org|direct'
+        export GONOPROXY='sigs.k8s.io/kubetest2,github.com/aws/aws-k8s-tester'
         go install sigs.k8s.io/kubetest2/...@latest
         go install github.com/aws/aws-k8s-tester/...@HEAD
 

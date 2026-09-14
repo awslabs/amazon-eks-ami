@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 )
@@ -8,7 +10,7 @@ import (
 type CommandContainer interface {
 	AddCommand(Command)
 	Flaggy() *flaggy.Subcommand
-	Run(log *zap.Logger, opts *GlobalOptions) error
+	Run(ctx context.Context, log *zap.Logger, opts *GlobalOptions) error
 	AsCommand() Command
 }
 
@@ -36,10 +38,10 @@ func (c *cmdContainer) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *cmdContainer) Run(log *zap.Logger, opts *GlobalOptions) error {
+func (c *cmdContainer) Run(ctx context.Context, log *zap.Logger, opts *GlobalOptions) error {
 	for _, cmd := range c.cmds {
 		if cmd.Flaggy().Used {
-			return cmd.Run(log, opts)
+			return cmd.Run(ctx, log, opts)
 		}
 	}
 	flaggy.ShowHelpAndExit("No command specified")

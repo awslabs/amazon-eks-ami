@@ -42,11 +42,10 @@ func (c *netManager) Flaggy() *flaggy.Subcommand {
 	return c.cmd
 }
 
-func (c *netManager) Run(log *zap.Logger, opts *cli.GlobalOptions) error {
+func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOptions) error {
 	if len(c.iface) == 0 {
 		return fmt.Errorf("interface name cannot be empty")
 	}
-	ctx := context.TODO()
 	log = log.With(zap.String("interface", c.iface))
 	switch c.action {
 	case "add":

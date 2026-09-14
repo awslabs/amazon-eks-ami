@@ -476,11 +476,11 @@
 {"instanceType":"i7ie.24xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":96,"physicalMemoryMib":786432}
 {"instanceType":"i7ie.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":8,"physicalMemoryMib":65536}
 {"instanceType":"i7ie.3xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":12,"physicalMemoryMib":98304}
-{"instanceType":"i7ie.48xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
+{"instanceType":"i7ie.48xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
 {"instanceType":"i7ie.6xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30,"vcpus":24,"physicalMemoryMib":196608}
 {"instanceType":"i7ie.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10,"vcpus":2,"physicalMemoryMib":16384}
 {"instanceType":"i7ie.metal-24xl","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":96,"physicalMemoryMib":786432}
-{"instanceType":"i7ie.metal-48xl","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
+{"instanceType":"i7ie.metal-48xl","defaultMaxENIs":8,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
 {"instanceType":"i7ie.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":4,"physicalMemoryMib":32768}
 {"instanceType":"i8g.12xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30,"vcpus":48,"physicalMemoryMib":393216}
 {"instanceType":"i8g.16xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":64,"physicalMemoryMib":524288}
@@ -498,11 +498,11 @@
 {"instanceType":"i8ge.24xlarge","defaultMaxENIs":16,"ipv4AddressesPerInterface":50,"vcpus":96,"physicalMemoryMib":786432}
 {"instanceType":"i8ge.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":8,"physicalMemoryMib":65536}
 {"instanceType":"i8ge.3xlarge","defaultMaxENIs":6,"ipv4AddressesPerInterface":30,"vcpus":12,"physicalMemoryMib":98304}
-{"instanceType":"i8ge.48xlarge","defaultMaxENIs":24,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
+{"instanceType":"i8ge.48xlarge","defaultMaxENIs":12,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
 {"instanceType":"i8ge.6xlarge","defaultMaxENIs":10,"ipv4AddressesPerInterface":30,"vcpus":24,"physicalMemoryMib":196608}
 {"instanceType":"i8ge.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10,"vcpus":2,"physicalMemoryMib":16384}
 {"instanceType":"i8ge.metal-24xl","defaultMaxENIs":16,"ipv4AddressesPerInterface":50,"vcpus":96,"physicalMemoryMib":786432}
-{"instanceType":"i8ge.metal-48xl","defaultMaxENIs":24,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
+{"instanceType":"i8ge.metal-48xl","defaultMaxENIs":12,"ipv4AddressesPerInterface":50,"vcpus":192,"physicalMemoryMib":1572864}
 {"instanceType":"i8ge.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":4,"physicalMemoryMib":32768}
 {"instanceType":"im4gn.16xlarge","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":64,"physicalMemoryMib":262144}
 {"instanceType":"im4gn.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":8,"physicalMemoryMib":32768}

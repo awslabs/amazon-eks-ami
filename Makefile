@@ -5,7 +5,7 @@ MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 # initialize the kubernetes version from the provided packer file if missing.
 ifeq ($(kubernetes_version),)
 ifneq ($(PACKER_VARIABLE_FILE),)
-	kubernetes_version ?= $(shell jq -r .kubernetes_version $(PACKER_VARIABLE_FILE))
+	kubernetes_version ?= $(shell awk -F'"' '/^ *kubernetes_version *=/ {print $$2}' $(PACKER_VARIABLE_FILE))
 endif
 endif
 
@@ -73,9 +73,9 @@ lint-code: ## Check the source files for syntax and format issues
 
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= templates/$(os_distro)
-PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.json
-PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.json
-PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).json
+PACKER_TEMPLATE_FILE ?= $(PACKER_TEMPLATE_DIR)/template.pkr.hcl
+PACKER_DEFAULT_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-default.pkrvars.hcl
+PACKER_OPTIONAL_K8S_VARIABLE_FILE ?= $(PACKER_TEMPLATE_DIR)/variables-$(K8S_VERSION_MINOR).pkrvars.hcl
 ifeq (,$(wildcard $(PACKER_OPTIONAL_K8S_VARIABLE_FILE)))
 	# unset the variable, no k8s-specific variable file exists
 	PACKER_OPTIONAL_K8S_VARIABLE_FILE=
@@ -83,7 +83,7 @@ endif
 
 # extract Packer variables from the template file,
 # then store variables that are defined in the Makefile's execution context
-AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep 'template-variable' | awk -F ',' '{print $$4}')
+AVAILABLE_PACKER_VARIABLES := $(shell $(PACKER_BINARY) inspect -machine-readable $(PACKER_TEMPLATE_FILE) | grep -o 'var\.[a-z_0-9]*' | sed 's/^var\.//' | sort -u)
 PACKER_VARIABLES := $(foreach packerVar,$(AVAILABLE_PACKER_VARIABLES),$(if $($(packerVar)),$(packerVar)))
 # read & construct Packer arguments in order from the following sources:
 # 1. default variable files
@@ -94,8 +94,12 @@ PACKER_ARGS := -var-file $(PACKER_DEFAULT_VARIABLE_FILE) \
 	$(if $(PACKER_VARIABLE_FILE),-var-file=$(PACKER_VARIABLE_FILE),) \
 	$(foreach packerVar,$(PACKER_VARIABLES),-var $(packerVar)='$($(packerVar))')
 
+.PHONY: init
+init: ## Install the Packer plugins required by the template
+	$(PACKER_BINARY) init $(PACKER_TEMPLATE_FILE)
+
 .PHONY: validate
-validate: ## Validate packer config
+validate: init ## Validate packer config
 	@echo "PACKER_TEMPLATE_FILE: $(PACKER_TEMPLATE_FILE)"
 	@echo "PACKER_ARGS: $(PACKER_ARGS)"
 	$(PACKER_BINARY) validate $(PACKER_ARGS) $(PACKER_TEMPLATE_FILE)
