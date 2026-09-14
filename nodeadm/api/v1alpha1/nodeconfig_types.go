@@ -191,11 +191,9 @@ const (
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull Feature = "FastImagePull"
 
-	// OSManagedNoManageENIs lets nodeadm configure secondary ENIs the VPC CNI
-	// opts out of managing (tagged node.k8s.amazonaws.com/no_manage=true) via
-	// systemd-networkd. Without it such an ENI, attached after boot, stays down
-	// with no address: nodeadm defers post-boot ENIs to the CNI, and the CNI
-	// ignores no_manage. Requires ec2:DescribeNetworkInterfaces on the node's
-	// instance role.
+	// OSManagedNoManageENIs configures secondary ENIs tagged
+	// node.k8s.amazonaws.com/no_manage=true via systemd-networkd instead of
+	// leaving them to the VPC CNI, which ignores them. Requires
+	// ec2:DescribeNetworkInterfaces on the node instance role.
 	OSManagedNoManageENIs Feature = "OSManagedNoManageENIs"
 )
