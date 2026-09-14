@@ -92,6 +92,7 @@ systemctl start --no-block "$unit"
 aws ec2 create-tags --resources "$eni_id" --tags "$no_manage_tag"
 wait::until test -f "$network"
 wait::until systemctl is-active --quiet "$unit"
+assert::file-contains "$cache" '"mac":"0e:49:61:0f:c3:11"'
 assert::file-contains "$cache" "io.systemd.Network"
 assert::file-contains "$network" "RouteMetric=512"
 wait::until networkd-selected-config
@@ -102,6 +103,16 @@ aws ec2 create-tags --resources "$eni_id" --tags Key=node.k8s.amazonaws.com/no_m
 systemctl start "$unit"
 assert::file-contains "$cache" "cni"
 assert::file-not-exists "$network"
+
+# a different ENI reusing the name does not inherit the cached decision.
+systemctl stop "$unit"
+systemctl reset-failed
+echo '{"mac":"02:00:00:00:00:09","manager":"cni"}' > "$cache"
+aws ec2 create-tags --resources "$eni_id" --tags "$no_manage_tag"
+systemctl start "$unit"
+assert::file-contains "$cache" '"mac":"0e:49:61:0f:c3:11"'
+assert::file-contains "$cache" "io.systemd.Network"
+wait::until networkd-selected-config
 
 # a link another manager already brought up is left alone, tag or not.
 reset::link

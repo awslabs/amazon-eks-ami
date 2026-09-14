@@ -51,21 +51,7 @@ func EnsureEKSNetworkConfiguration(ctx context.Context, interfaceManagerCache ut
 }
 
 func collectExpectedManagedInterfaceNames(interfaceManagerCache util.FSCache) ([]string, error) {
-	interfaceNames, err := interfaceManagerCache.Keys()
-	if err != nil {
-		return []string{}, err
-	}
-	var managedInterfaces []string
-	for _, interfaceName := range interfaceNames {
-		manager, err := interfaceManagerCache.Read(interfaceName)
-		if err != nil {
-			return []string{}, err
-		}
-		if manager == networkmanager.ManagerSystemd {
-			managedInterfaces = append(managedInterfaces, interfaceName)
-		}
-	}
-	return managedInterfaces, nil
+	return networkmanager.ManagedInterfaces(interfaceManagerCache, networkmanager.InterfaceMAC)
 }
 
 func getLinkNameByMacAddress(macAddress string) (string, error) {
