@@ -43,9 +43,6 @@ readonly VERSION
 # TODO: -n is deperecated. Move to --update=none when coreutils 9.3+ is available.
 shopt -s dotglob
 cp -a -n --reflink=auto "${TREE}"/etc/* /etc/
-for ENTRY in "${TREE}"/etc/*; do
-  restorecon -R "/etc/$(basename "${ENTRY}")"
-done
 
 readonly LOADED_SENTINEL="${TREE}/.loaded"
 if [[ ! -f "${LOADED_SENTINEL}" ]]; then
@@ -56,7 +53,6 @@ if [[ ! -f "${LOADED_SENTINEL}" ]]; then
   readonly FIRMWARE_STAGE="${TREE}/${FIRMWARE_DIR}/nvidia"
   mkdir -p "${FIRMWARE_DIR}/nvidia/${VERSION}"
   cp -a --reflink=auto "${FIRMWARE_STAGE}/${VERSION}/." "${FIRMWARE_DIR}/nvidia/${VERSION}/"
-  restorecon -R "${FIRMWARE_DIR}/nvidia/${VERSION}"
 
   depmod "${KERNEL_VERSION}"
 
