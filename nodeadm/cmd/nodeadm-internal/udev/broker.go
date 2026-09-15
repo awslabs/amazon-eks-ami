@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
@@ -14,15 +15,13 @@ type NetworkInterfaceBroker interface {
 	ManagerFor(interfaceName string) (string, error)
 }
 
-const NetworkManagerCacheDir = "/etc/eks/nodeadm/udev-net-manager"
-
 type fsBroker struct {
 	cache util.FSCache
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
 	return &fsBroker{
-		cache: util.NewFSCache(filepath.Join(NetworkManagerCacheDir, instanceID)),
+		cache: util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
 	}
 }
 
@@ -33,11 +32,11 @@ func (b *fsBroker) determineManager(_ string) (string, error) {
 	// VPC CNI.
 	if _, err := os.Stat(system.MarkerPath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return ManagerSystemd, nil
+			return networkmanager.ManagerSystemd, nil
 		}
 		return "", err
 	}
-	return ManagerCNI, nil
+	return networkmanager.ManagerCNI, nil
 }
 
 func (b *fsBroker) ManagerFor(interfaceName string) (string, error) {
