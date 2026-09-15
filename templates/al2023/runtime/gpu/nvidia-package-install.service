@@ -1,0 +1,24 @@
+[Unit]
+Description=NVIDIA package install
+After=nvidia-driver-resolve.service usr-bin.mount usr-lib64.mount usr-share.mount
+Wants=usr-bin.mount usr-lib64.mount usr-share.mount
+# this service should run before cloud-final in case user data scripts
+# interact with dnf or have assumptions about packages already being installed
+Before=cloud-final.service
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+ConditionPathExists=!/opt/nvidia/current/.packages-installed
+RefuseManualStart=yes
+RefuseManualStop=yes
+StartLimitBurst=5
+StartLimitIntervalSec=infinity
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/etc/eks/install-nvidia-packages.sh
+ExecStartPost=/usr/bin/touch /opt/nvidia/current/.packages-installed
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

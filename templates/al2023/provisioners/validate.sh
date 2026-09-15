@@ -73,40 +73,181 @@ if command -v dkms > /dev/null; then
   fi
 fi
 
+#############################
+### nvidia drivers #####
+#############################
+NVIDIA_DRIVER_MODULES=(nvidia nvidia-drm nvidia-modeset nvidia-uvm)
+KERNEL_RELEASE=$(uname -r)
+
+validate_nvidia_boot_modules() {
+  local tree=$1
+  local flavor=$2
+  local extra_dir="/opt/nvidia/${tree}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+  local expected=("${NVIDIA_DRIVER_MODULES[@]}")
+  local module_name
+
+  # gdrdrv is only harvested on the open flavor, and only when the build enabled it.
+  if [ "${flavor}" = "open" ] && [ "${ENABLE_NVIDIA_GDRCOPY_DRIVER}" = "true" ]; then
+    expected+=(gdrdrv)
+  fi
+
+  for module_name in "${expected[@]}"; do
+    # The suffix varies with the kernel's module compression.
+    if ! compgen -G "${extra_dir}/${module_name}.ko*" > /dev/null; then
+      echo "${extra_dir} is missing ${module_name}.ko"
+      exit 1
+    fi
+  done
+}
+
+# vGPU license userspace the rpm tree has no package for, so it can only come from the GRID runfile.
+# Node paths, since a tree mirrors /.
+NVIDIA_GRID_USERSPACE=(
+  /usr/bin/nvidia-gridd
+  /usr/lib/systemd/system/nvidia-gridd.service
+  /etc/nvidia/gridd.conf.template
+)
+
+validate_nvidia_grid_userspace() {
+  local tree=$1
+  local path
+
+  for path in "${NVIDIA_GRID_USERSPACE[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/${path}" ]; then
+      echo "tree ${tree} is missing ${path}"
+      exit 1
+    fi
+  done
+}
+
+NVIDIA_TREES=(lts pb)
+NVIDIA_KMOD_FLAVORS=(open proprietary grid)
+
+# A tree is pinned to one driver version so its kernel modules and userspace are compatible.
+validate_nvidia_tree_version() {
+  local tree=$1
+  local tree_dir="/opt/nvidia/${tree}"
+  local driver_version flavor extra_dir modules module_version
+
+  driver_version=$(cat "${tree_dir}/.version")
+
+  for flavor in "${NVIDIA_KMOD_FLAVORS[@]}"; do
+    # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
+    if [ "${flavor}" == "grid" ] && [ "$(uname -m)" == "aarch64" ]; then
+      continue
+    fi
+
+    extra_dir="${tree_dir}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+    # The suffix varies with the kernel's module compression.
+    modules=("${extra_dir}"/nvidia.ko*)
+    if [ ! -e "${modules[0]}" ]; then
+      echo "${extra_dir} has no nvidia.ko"
+      exit 1
+    fi
+
+    module_version=$(modinfo -F version "${modules[0]}")
+    if [ "${module_version}" != "${driver_version}" ]; then
+      echo "${modules[0]} reports version ${module_version}, expected ${driver_version}"
+      exit 1
+    fi
+  done
+
+  # libcuda is version-locked to nvidia.ko
+  if [ ! -e "${tree_dir}/usr/lib64/libcuda.so.${driver_version}" ]; then
+    echo "${tree_dir} has no libcuda.so.${driver_version}"
+    exit 1
+  fi
+}
+
+# Boot-time flavor selection reads this list, so a baked tree without one picks the wrong
+# kernel module.
+validate_nvidia_supported_device_list() {
+  local tree=$1
+  local major_version
+
+  major_version=$(cut -d. -f1 "/opt/nvidia/${tree}/.version")
+  if [ ! -f "/etc/eks/nvidia-open-supported-devices-${major_version}.txt" ]; then
+    echo "/etc/eks is missing the supported-devices list for major version ${major_version}"
+    exit 1
+  fi
+}
+
 if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
-  # Validate that for every nvidia module archived, it is one of nvidia, nvidia-open-grid, or nvidia-open,
-  # and they all have the same version
-  NVIDIA_DRIVER_FULL_VERSION=""
-  MODULE_COUNT=0
-  for ARCHIVE in /var/lib/dkms-archive/nvidia*; do
-    for MODULE in "$ARCHIVE"/*; do
-      CURRENT_MODULE_VERSION=$(basename "$MODULE" | sed -E 's/nvidia-(open-grid-|open-)?([0-9]+\.[0-9]+\.[0-9]+).*/\2/')
-      if [[ -n "$NVIDIA_DRIVER_FULL_VERSION" ]] && [[ "$NVIDIA_DRIVER_FULL_VERSION" != "$CURRENT_MODULE_VERSION" ]]; then
-        echo "Mismatch in driver versions in dkms archive: saw $NVIDIA_DRIVER_FULL_VERSION and $CURRENT_VERSION"
-        ls --recursive /var/lib/dkms-archive/nvidia*
+  for tree in "${NVIDIA_TREES[@]}"; do
+    validate_nvidia_tree_version "${tree}"
+    validate_nvidia_supported_device_list "${tree}"
+    validate_nvidia_boot_modules "${tree}" open
+    validate_nvidia_boot_modules "${tree}" proprietary
+
+    # NVIDIA publishes no aarch64 GRID runfile, so that flavor is never built there.
+    if [ "$(uname -m)" != "aarch64" ]; then
+      validate_nvidia_boot_modules "${tree}" grid
+      validate_nvidia_grid_userspace "${tree}"
+    fi
+  done
+
+  # Emulated from the nvidia-persistenced rpm's %pre, which never runs on an extracted package.
+  if ! getent passwd nvidia-persistenced > /dev/null; then
+    echo "the nvidia-persistenced user was not created"
+    exit 1
+  fi
+
+  #############################
+  ### boot-time integration ###
+  #############################
+
+  # Every baked tree must carry its identity marker.
+  for tree in "${NVIDIA_TREES[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/.tree-${tree}" ]; then
+      echo "/opt/nvidia/${tree}/.tree-${tree} is missing"
+      exit 1
+    fi
+  done
+
+  # Every baked tree must carry the daemon services setup will install at first boot.
+  for tree in "${NVIDIA_TREES[@]}"; do
+    for DAEMON in nvidia-persistenced nvidia-fabricmanager; do
+      if [ ! -f "/opt/nvidia/${tree}/usr/lib/systemd/system/${DAEMON}.service" ]; then
+        echo "tree ${tree} is missing ${DAEMON}.service"
         exit 1
-      else
-        MODULE_COUNT=$((MODULE_COUNT + 1))
-        NVIDIA_DRIVER_FULL_VERSION="$CURRENT_MODULE_VERSION"
       fi
     done
   done
 
-  if [[ "$(uname -m)" == "x86_64" ]] && [[ "$MODULE_COUNT" != "3" ]]; then
-    echo "Expected 3 nvidia modules archived, have $MODULE_COUNT"
-    ls --recursive /var/lib/dkms-archive/nvidia*
+  # nvidia-setup.service must Before= the daemon services so systemd orders them
+  # correctly on subsequent boots
+  for DAEMON in nvidia-persistenced.service nvidia-fabricmanager.service nvidia-gridd.service; do
+    if ! grep -q "^Before=.*\b${DAEMON}\b" /etc/systemd/system/nvidia-setup.service; then
+      echo "nvidia-setup.service does not declare Before=${DAEMON}"
+      exit 1
+    fi
+  done
+
+  if [ ! -f "/etc/systemd/system/set-nvidia-clocks.service" ]; then
+    echo "set-nvidia-clocks.service was not staged at build time"
     exit 1
-  elif [[ "$(uname -m)" == "aarch64" ]] && [[ "$MODULE_COUNT" != "2" ]]; then
-    # there are no grid drivers installed for aarch64 at the moment
-    echo "Expected 2 nvidia modules archived, found $MODULE_COUNT"
-    ls --recursive /var/lib/dkms-archive/nvidia*
+  fi
+  # set-nvidia-clocks should not be pulled into the boot-ordering chain b/c it has an ordering
+  # dependency with nvidia-persistenced, which is not added until first boot
+  if compgen -G "/etc/systemd/system/*.wants/set-nvidia-clocks.service" > /dev/null \
+    || compgen -G "/etc/systemd/system/*.requires/set-nvidia-clocks.service" > /dev/null; then
+    echo "set-nvidia-clocks.service has activation links at build time; must be enabled by setup at first boot"
     exit 1
   fi
 
-  # Verify that all nvidia* packages have the same version as the nvidia driver, ensures user-space compatibility.
-  # Skips nvidia-container-toolkit because it's independently versioned and released
-  if rpmquery --all --queryformat '%{NAME} %{VERSION}\n' nvidia* | grep -v "$NVIDIA_DRIVER_FULL_VERSION" | grep -v "nvidia-container-toolkit" | grep -v "nvidia-release" | grep -v "nvidia-repo-s3"; then
-    echo "Installed version mismatch for one or more nvidia package(s)!"
+  # these daemons are expected to be added at runtime, not build-time, since the .service files are extracted from
+  # version-specific RPMs into the tree
+  for DAEMON in nvidia-persistenced nvidia-fabricmanager nvidia-gridd; do
+    if [ -f "/usr/lib/systemd/system/${DAEMON}.service" ]; then
+      echo "/usr/lib/systemd/system/${DAEMON}.service exists at build time; should be installed by setup at first boot"
+      exit 1
+    fi
+  done
+
+  if ! grep -q 'stream=DRIVER_TREE_VERSION_PLACEHOLDER' /etc/dnf/modules.d/nvidia-driver.module; then
+    echo "/etc/dnf/modules.d/nvidia-driver.module missing placeholder for driver version"
     exit 1
   fi
+
+  echo "NVIDIA driver trees were validated: ${NVIDIA_TREES[*]}"
 fi

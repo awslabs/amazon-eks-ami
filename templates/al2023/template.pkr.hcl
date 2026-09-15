@@ -122,7 +122,11 @@ variable "nodeadm_build_image" {
   type = string
 }
 
-variable "nvidia_driver_major_version" {
+variable "nvidia_driver_lts_version" {
+  type = string
+}
+
+variable "nvidia_driver_pb_version" {
   type = string
 }
 
@@ -294,7 +298,8 @@ build {
       "mkdir -p ${local.working_dir}/bin",
       "mkdir -p ${local.working_dir}/log-collector-script",
       "mkdir -p ${local.working_dir}/nodeadm",
-      "mkdir -p ${local.working_dir}/gpu"
+      "mkdir -p ${local.working_dir}/gpu",
+      "mkdir -p ${local.working_dir}/helpers"
       ]
   }
 
@@ -306,6 +311,11 @@ build {
   provisioner "file" {
     destination = "${local.working_dir}/gpu"
     source      = "${path.root}/runtime/gpu/"
+  }
+
+  provisioner "file" {
+    destination = "${local.working_dir}/helpers"
+    source      = "${path.root}/helpers/"
   }
 
   provisioner "file" {
@@ -408,9 +418,8 @@ build {
     environment_vars = [
       "AWS_REGION=${var.aws_region}",
       "ENABLE_ACCELERATOR=${var.enable_accelerator}",
-      "BINARY_BUCKET_NAME=${var.binary_bucket_name}",
-      "BINARY_BUCKET_REGION=${var.binary_bucket_region}",
-      "NVIDIA_DRIVER_MAJOR_VERSION=${var.nvidia_driver_major_version}",
+      "NVIDIA_DRIVER_LTS_VERSION=${var.nvidia_driver_lts_version}",
+      "NVIDIA_DRIVER_PB_VERSION=${var.nvidia_driver_pb_version}",
       "NVIDIA_REPOSITORY=${var.nvidia_repository_url}",
       "EC2_GRID_DRIVER_S3_BUCKET=${var.nvidia_grid_runfile_bucket_name}",
       "ENABLE_NVIDIA_GDRCOPY_DRIVER=${var.enable_nvidia_gdrcopy_driver}",
@@ -418,7 +427,7 @@ build {
       "WORKING_DIR=${local.working_dir}"
      ]
     remote_folder    = "${var.remote_folder}"
-    script           = "${path.root}/provisioners/install-nvidia-driver.sh"
+    script           = "${path.root}/provisioners/install-nvidia-drivers.sh"
   }
 
   provisioner "shell" {
@@ -440,7 +449,10 @@ build {
   }
 
   provisioner "shell" {
-    environment_vars = ["ENABLE_ACCELERATOR=${var.enable_accelerator}"]
+    environment_vars = [
+      "ENABLE_ACCELERATOR=${var.enable_accelerator}",
+      "ENABLE_NVIDIA_GDRCOPY_DRIVER=${var.enable_nvidia_gdrcopy_driver}"
+      ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/validate.sh"
   }

@@ -1,0 +1,23 @@
+[Unit]
+Description=NVIDIA driver overlay for /usr/share
+# DefaultDependencies=no severs the auto Before=local-fs.target that closes the cycle
+# mount -> resolve -> basic -> sysinit -> local-fs -> mount. Umount ordering re-added
+# for graceful shutdown.
+DefaultDependencies=no
+Conflicts=umount.target
+Before=umount.target
+After=local-fs.target nvidia-driver-resolve.service
+Wants=nvidia-driver-resolve.service
+RequiresMountsFor=/var
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+RefuseManualStart=yes
+RefuseManualStop=yes
+
+[Mount]
+What=overlay
+Where=/usr/share
+Type=overlay
+Options=lowerdir=/opt/nvidia/current/usr/share:/usr/share,upperdir=/var/lib/eks/nvidia/share/upper,workdir=/var/lib/eks/nvidia/share/work
+
+[Install]
+WantedBy=local-fs.target
