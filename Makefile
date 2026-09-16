@@ -66,10 +66,14 @@ lint: lint-docs lint-code
   # Convenience target to run all lints. This is not run during presubmits, add new checks in lint-docs or lint-code.
 
 .PHONY: lint-code
-lint-code: ## Check the source files for syntax and format issues
+lint-code: test-log-collector ## Check the source files for syntax and format issues
 	hack/shfmt --diff
 	hack/shellcheck --format gcc --severity warning
 	hack/lint-space-errors.sh
+
+.PHONY: test-log-collector
+test-log-collector: ## Run focused Linux log collector tests
+	bash log-collector-script/linux/tests/common-logs-metadata.sh
 
 PACKER_BINARY ?= packer
 PACKER_TEMPLATE_DIR ?= templates/$(os_distro)

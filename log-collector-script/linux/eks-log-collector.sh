@@ -417,48 +417,51 @@ get_iptables_info() {
 }
 
 get_common_logs() {
+  local common_log_root="${1:-/var/log}"
+  local collect_dir="${2:-${COLLECT_DIR}}"
+
   try "collect common operating system logs"
 
   for entry in "${COMMON_LOGS[@]}"; do
-    if [[ -e "/var/log/${entry}" ]]; then
+    if [[ -e "${common_log_root}/${entry}" ]]; then
       if [[ "${entry}" == "messages" ]]; then
-        tail -c 100M /var/log/messages > "${COLLECT_DIR}"/var_log/messages
+        tail -c 100M "${common_log_root}/messages" > "${collect_dir}"/var_log/messages
         continue
       fi
       if [[ "${entry}" == "containers" ]]; then
-        cp --force --dereference --recursive /var/log/containers/aws-node* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/coredns-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/kube-proxy* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/ebs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/efs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/fsx-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/fsx-openzfs-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/file-cache-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/s3-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/mp_*_mount_s3* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/containers/eks-node-monitoring-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/aws-node* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/kube-system_cni-metrics-helper* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/coredns-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/kube-proxy* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/ebs-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/efs-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/fsx-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/fsx-openzfs-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/file-cache-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/s3-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/mp_*_mount_s3* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/eks-pod-identity-agent* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/containers/eks-node-monitoring-agent* "${collect_dir}"/var_log/ 2> /dev/null
         continue
       fi
       if [[ "${entry}" == "pods" ]]; then
-        cp --force --dereference --recursive /var/log/pods/kube-system_aws-node* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_cni-metrics-helper* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_coredns* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_kube-proxy* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_ebs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_efs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_fsx-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_fsx-openzfs-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_file-cache-csi-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_s3-csi* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/mount-s3_mp-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/mount-s3_hr-* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_eks-pod-identity-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
-        cp --force --dereference --recursive /var/log/pods/kube-system_eks-node-monitoring-agent* "${COLLECT_DIR}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_aws-node* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_cni-metrics-helper* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_coredns* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_kube-proxy* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_ebs-csi-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_efs-csi-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_fsx-csi-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_fsx-openzfs-csi-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_file-cache-csi-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_s3-csi* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/mount-s3_mp-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/mount-s3_hr-* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_eks-pod-identity-agent* "${collect_dir}"/var_log/ 2> /dev/null
+        cp --force --dereference --recursive "${common_log_root}"/pods/kube-system_eks-node-monitoring-agent* "${collect_dir}"/var_log/ 2> /dev/null
         continue
       fi
-      cp --force --recursive --dereference /var/log/"${entry}" "${COLLECT_DIR}"/var_log/ 2> /dev/null
+      cp --force --recursive --dereference "${common_log_root}/${entry}" "${collect_dir}"/var_log/ 2> /dev/null
     fi
   done
 
@@ -983,9 +986,11 @@ banner() {
 
 # -----------------------------------------------------------------------------
 # Entrypoint
-parse_options "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  parse_options "$@"
 
-collect
-pack
-finished
-banner
+  collect
+  pack
+  finished
+  banner
+fi
