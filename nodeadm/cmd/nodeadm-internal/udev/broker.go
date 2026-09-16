@@ -86,7 +86,6 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return networkmanager.ManagerSystemd, nil
 	}
 
-	// feature off: default to CNI, no EC2 call.
 	noManageEnabled, err := util.IsFilePathExists(b.noManageMarkerPath)
 	if err != nil {
 		return "", err
