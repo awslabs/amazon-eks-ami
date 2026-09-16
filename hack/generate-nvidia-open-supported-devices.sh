@@ -36,7 +36,9 @@ OUTPUT_FILE="../templates/al2023/runtime/gpu/nvidia-open-supported-devices-${RUN
 printf '%s\n%s\n' "${ACKNOWLEDGEMENT}" "${COMMENTED_LICENSE}" \
   | tee "${OUTPUT_FILE}"
 
+# chips carrying legacybranch are not supported by this driver, the field names the branch that
+# does support them. their features are stale and can still claim kernelopen, so drop them first.
 cat "${TEMP_DIR}/${RUNFILE_DIR}/${SUPPORTED_GPUS_FILE}" \
-  | jq -r '.chips[] | select(.features[] | contains("kernelopen")) | "\(.devid) \(.name)"' \
+  | jq -r '.chips[] | select(.legacybranch == null and (.features | index("kernelopen"))) | "\(.devid) \(.name)"' \
   | sort -u \
   | tee -a "${OUTPUT_FILE}"
