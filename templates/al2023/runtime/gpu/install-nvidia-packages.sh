@@ -32,6 +32,8 @@ if ((${#RPMS_TO_REGISTER[@]} > 0)); then
   rpm -i --justdb --noscripts --nodeps --nodigest --nosignature "${RPMS_TO_REGISTER[@]}"
 fi
 
-# enable the correct NVIDIA repo module stream for the chosen driver version
-# TODO: consider selecting the {ver}-dkms stream for the proprietary driver
-sed -i "s/DRIVER_TREE_VERSION_PLACEHOLDER/${TREE_MAJOR_VERSION}-open/g" /etc/dnf/modules.d/nvidia-driver.module
+if [ -f /etc/dnf/modules.d/nvidia-driver.module ]; then
+  # if a module stream is enabled, make sure it points to the correct version
+  # ISO partitions use the AL NVIDIA repo, which does not include module streams
+  sed -i "s/DRIVER_TREE_VERSION_PLACEHOLDER/${TREE_MAJOR_VERSION}-open/g" /etc/dnf/modules.d/nvidia-driver.module
+fi
