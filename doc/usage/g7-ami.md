@@ -25,6 +25,26 @@ This produces an AMI with NVIDIA 595 drivers suitable for G7 instances. The buil
 
 The build takes approximately 45-60 minutes and outputs the AMI ID upon completion.
 
+### Restricting incompatible instance types
+
+To prevent this AMI from launching on instance types that are incompatible with
+driver 595, set an [AMI instance type specification](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ami-allowed-instance-types.html)
+after the build completes. Replace `ami-xxxx` with the AMI ID produced by the
+build:
+
+```bash
+aws ec2 replace-image-instance-type-specification \
+  --region us-east-1 \
+  --image-id ami-xxxx \
+  --instance-type-specification '{
+    "UnsupportedInstanceTypes": ["p3.*", "p3dn.*", "g6f.*"]
+  }'
+```
+
+Only the AMI owner can configure this setting. The restriction is enforced when
+new instances launch, so ensure launch templates, managed node groups, and
+Karpenter NodePools do not select P3, P3dn, or G6f instance types.
+
 ### Using the custom AMI with a managed node group
 
 Create a launch template referencing your custom AMI, then attach it to your managed node group:
