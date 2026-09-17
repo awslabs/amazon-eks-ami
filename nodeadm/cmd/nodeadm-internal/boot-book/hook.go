@@ -7,9 +7,9 @@ import (
 	"github.com/integrii/flaggy"
 	"go.uber.org/zap"
 
-	"github.com/awslabs/amazon-eks-ami/nodeadm/cmd/nodeadm-internal/udev"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
@@ -37,24 +37,8 @@ func (c *bootHookCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.Global
 	if err != nil {
 		return err
 	}
-	cache := util.NewFSCache(filepath.Join(udev.NetworkManagerCacheDir, identity.InstanceID))
-	interfaceNames, err := cache.Keys()
-	if err != nil {
-		return err
-	}
-	var managedInterfaces []string
-	for _, interfaceName := range interfaceNames {
-		manager, err := cache.Read(interfaceName)
-		if err != nil {
-			return err
-		}
-		if manager == udev.ManagerSystemd {
-			managedInterfaces = append(managedInterfaces, interfaceName)
-		}
-	}
-
 	log.Info("Waiting for consistent network interfaces..")
-	if err := system.EnsureEKSNetworkConfiguration(ctx, managedInterfaces); err != nil {
+	if err := system.EnsureEKSNetworkConfiguration(ctx, util.NewFSCache(filepath.Join(networkmanager.CacheDir, identity.InstanceID))); err != nil {
 		return err
 	}
 	log.Info("Completed boot hook!")

@@ -15,6 +15,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
 type NetworkctlInterface struct {
@@ -33,7 +35,7 @@ const (
 
 // EnsureEKSNetworkConfiguration will assert and wait for the OS networking
 // stack components required for EKS to be configured and ready.
-func EnsureEKSNetworkConfiguration(ctx context.Context, interfaceHints []string) error {
+func EnsureEKSNetworkConfiguration(ctx context.Context, interfaceManagerCache util.FSCache) error {
 	primaryENIMac, err := imds.DefaultClient().GetProperty(ctx, imds.MAC)
 	if err != nil {
 		return fmt.Errorf("failed to get MAC from IMDS: %w", err)
@@ -42,10 +44,28 @@ func EnsureEKSNetworkConfiguration(ctx context.Context, interfaceHints []string)
 	if err != nil {
 		return fmt.Errorf("failed to determine the name of primary link: %w", err)
 	}
-	if err := ensureInterfacesConfigured(ctx, append(interfaceHints, primaryLinkName)); err != nil {
+	if err := ensureInterfacesConfigured(ctx, primaryLinkName, interfaceManagerCache); err != nil {
 		return fmt.Errorf("failed to ensure primary ENI only configuration: %w", err)
 	}
 	return nil
+}
+
+func collectExpectedManagedInterfaceNames(interfaceManagerCache util.FSCache) ([]string, error) {
+	interfaceNames, err := interfaceManagerCache.Keys()
+	if err != nil {
+		return []string{}, err
+	}
+	var managedInterfaces []string
+	for _, interfaceName := range interfaceNames {
+		manager, err := interfaceManagerCache.Read(interfaceName)
+		if err != nil {
+			return []string{}, err
+		}
+		if manager == networkmanager.ManagerSystemd {
+			managedInterfaces = append(managedInterfaces, interfaceName)
+		}
+	}
+	return managedInterfaces, nil
 }
 
 func getLinkNameByMacAddress(macAddress string) (string, error) {
@@ -72,7 +92,7 @@ func getLinkNameByMacAddress(macAddress string) (string, error) {
 	return "", fmt.Errorf("could not find interface with MAC address %q", macAddress)
 }
 
-func ensureInterfacesConfigured(ctx context.Context, interfaceNames []string) error {
+func ensureInterfacesConfigured(ctx context.Context, primaryLinkName string, interfaceManagerCache util.FSCache) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	for {
@@ -81,6 +101,17 @@ func ensureInterfacesConfigured(ctx context.Context, interfaceNames []string) er
 			return ctx.Err()
 		case <-time.After(50 * time.Millisecond):
 			zap.L().Info("checking link states...")
+			requiredManagedInterfaceNames, err := collectExpectedManagedInterfaceNames(interfaceManagerCache)
+			if err != nil {
+				return err
+			}
+			requiredManagedMap := map[string]bool{
+				// the primary interface should always be managed
+				primaryLinkName: false,
+			}
+			for _, interfaceName := range requiredManagedInterfaceNames {
+				requiredManagedMap[interfaceName] = false
+			}
 
 			var rawListOutput bytes.Buffer
 			var networkctlOutput NetworkctlList
@@ -92,11 +123,6 @@ func ensureInterfacesConfigured(ctx context.Context, interfaceNames []string) er
 			}
 			if err := json.Unmarshal(rawListOutput.Bytes(), &networkctlOutput); err != nil {
 				return err
-			}
-
-			requiredManagedMap := map[string]bool{}
-			for _, interfaceName := range interfaceNames {
-				requiredManagedMap[interfaceName] = false
 			}
 
 			// circuit break to false if we find an interface that is NOT
