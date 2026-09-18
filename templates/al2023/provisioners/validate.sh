@@ -33,6 +33,11 @@ validate_file_nonexists '/var/log/wtmp'
 
 REQUIRED_COMMANDS=(unpigz)
 
+# igzip is only installed on x86_64, where it outperforms unpigz.
+if [ "$(uname -m)" == "x86_64" ]; then
+  REQUIRED_COMMANDS+=(igzip)
+fi
+
 for ENTRY in "${REQUIRED_COMMANDS[@]}"; do
   if ! command -v "$ENTRY" > /dev/null; then
     echo "Required command does not exist: '$ENTRY'"

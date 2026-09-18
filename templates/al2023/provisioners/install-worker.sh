@@ -67,6 +67,14 @@ sudo dnf install -y \
   pigz \
   python3-dnf-plugin-versionlock
 
+# igzip (isa-l-tools) decompresses faster than unpigz on x86_64, but is slower
+# than unpigz on arm64. The default containerd snapshotter has no
+# knob for this: it uses igzip whenever the binary is in PATH, so leaving
+# isa-l-tools uninstalled is what keeps arm64 on unpigz.
+if [ "$MACHINE" == "x86_64" ]; then
+  sudo dnf install -y isa-l-tools
+fi
+
 # we need to handle different kernel packages depending on the namespace
 # associated with the minor version.
 KERNEL_PACKAGE="kernel"
