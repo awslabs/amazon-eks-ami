@@ -18,7 +18,7 @@ jobs:
         with:
           # fetch complete history
           fetch-depth: 0
-      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # 6.2.4
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # 6.3.0
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_SYNC_TO_CODECOMMIT }}
