@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -30,8 +31,8 @@ var (
 	//go:embed config2.template.toml
 	containerdConfigTemplateData2 string
 
-	//go:embed snapshotter/soci-snapshotter.config.toml
-	sociSnapshotterTemplateData []byte
+	//go:embed snapshotter/soci-snapshotter.config.template.toml
+	sociSnapshotterTemplateData string
 )
 
 type ConfigSchema string
@@ -54,6 +55,10 @@ type containerdTemplateVars struct {
 	RuntimeName        string
 	RuntimeBinaryName  string
 	UseSOCISnapshotter bool
+}
+
+type sociSnapshotterTemplateVars struct {
+	GzipDecompressPath string
 }
 
 func writeContainerdConfig(cfg *api.NodeConfig, resources system.Resources) error {
@@ -158,10 +163,37 @@ func migrateConfig() error {
 
 func writeSnapshotterConfig(cfg *api.NodeConfig, resources system.Resources) error {
 	if UseSOCISnapshotter(cfg, resources) {
-		return util.WriteFileWithDir(sociSnapshotterConfigFile, sociSnapshotterTemplateData, configPerm)
+		snapshotterConfig, err := generateSnapshotterConfig()
+		if err != nil {
+			return err
+		}
+		return util.WriteFileWithDir(sociSnapshotterConfigFile, snapshotterConfig, configPerm)
 	}
 
 	return nil
+}
+
+func generateSnapshotterConfig() ([]byte, error) {
+	var decompressPath string
+	switch runtime.GOARCH {
+	// Testing showed igzip was faster on amd64.
+	case "amd64":
+		decompressPath = "/usr/bin/igzip"
+	case "arm64":
+		decompressPath = "/usr/bin/unpigz"
+	default:
+		return nil, fmt.Errorf("Unexpected arch: %s", runtime.GOARCH)
+	}
+	configVars := sociSnapshotterTemplateVars{
+		GzipDecompressPath: decompressPath,
+	}
+
+	var buf bytes.Buffer
+	sociSnapshotterConfigTemplate := template.Must(template.New(sociSnapshotterConfigFile).Parse(sociSnapshotterTemplateData))
+	if err := sociSnapshotterConfigTemplate.Execute(&buf, configVars); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func UseSOCISnapshotter(cfg *api.NodeConfig, resources system.Resources) bool {
