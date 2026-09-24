@@ -158,6 +158,11 @@ variable "security_group_id" {
   type = string
 }
 
+variable "skip_profile_validation" {
+  type    = bool
+  default = false
+}
+
 variable "source_ami_filter_name" {
   type = string
 }
@@ -254,9 +259,10 @@ source "amazon-ebs" "al2023" {
   run_tags = {
     creator = "${var.creator}"
   }
-  security_group_id = "${var.security_group_id}"
-  snapshot_users    = compact(split(",", var.ami_users))
-  source_ami        = var.source_ami_id
+  security_group_id       = "${var.security_group_id}"
+  skip_profile_validation = var.skip_profile_validation
+  snapshot_users          = compact(split(",", var.ami_users))
+  source_ami              = var.source_ami_id
   source_ami_filter {
     filters = {
       architecture        = var.arch
