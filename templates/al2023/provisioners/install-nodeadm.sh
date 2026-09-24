@@ -60,8 +60,5 @@ sudo systemctl enable \
   nodeadm-config \
   nodeadm-run
 
-sudo systemctl enable ebs-initialize-bin@nodeadm
-sudo systemctl enable ebs-initialize-bin@nodeadm-internal
-
 # create the drop-in config directory
 sudo mkdir -p /etc/eks/nodeadm.d/
