@@ -174,6 +174,31 @@ spec:
 
 ---
 
+## Managing CNI-unmanaged (`no_manage`) secondary ENIs
+
+When the `OSManagedNoManageENIs` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `node.k8s.amazonaws.com/no_manage=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, such an ENI attached after boot is left down with no address: the VPC CNI ignores `no_manage` ENIs and `nodeadm` defers post-boot interfaces to the CNI.
+
+Tag the ENI before attaching it. Ownership is resolved per interface:
+
+- An interface that is already up keeps its current manager.
+- An ENI tagged `true` is configured by `systemd-networkd`; any other value delegates it to the CNI.
+- If the ENI is not visible yet, the `no_manage` tag is absent, or the lookup fails, the interface is left untouched. Lookups are retried after delays of 5, 10, 20, 40, then 60 seconds between attempts. An ENI without the tag remains pending even if EC2 returns its other tags; retries continue until ownership is resolved, the interface is brought up by another manager, or it is detached.
+- Decisions are cached per interface and MAC address for the lifetime of the instance. Retagging an interface in place is not supported.
+
+**Note**: the node instance role must grant `ec2:DescribeNetworkInterfaces`, and the node must reach the regional EC2 endpoint directly, through a VPC endpoint, or through its configured proxy. That permission is part of `AmazonEKS_CNI_Policy`, but with IRSA or EKS Pod Identity it is usually attached to the `aws-node` role rather than the node role. No EC2 call is made when the feature is disabled (the default).
+
+### To enable this feature:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    OSManagedNoManageENIs: true
+```
+
+---
+
 ## Configuring `containerd`
 
 Additional `containerd` configuration can be supplied in your `NodeConfig`. The values in your inline TOML document will overwrite any default value set by `nodeadm`.
