@@ -66,6 +66,7 @@ COMMON_DIRECTORIES=(
   storage
   var_log
   networking
+  pstore
   sandbox-image # eks
   ipamd         # eks
   sysctls       # eks
@@ -304,6 +305,7 @@ collect() {
   get_region
   get_common_logs
   get_kernel_info
+  get_pstore_info
   get_modinfo
   get_mounts_info
   get_selinux_info
@@ -474,6 +476,35 @@ get_kernel_info() {
   dmesg > "${COLLECT_DIR}/kernel/dmesg.current"
   dmesg --ctime > "${COLLECT_DIR}/kernel/dmesg.human.current"
   uname -a > "${COLLECT_DIR}/kernel/uname.txt"
+
+  ok
+}
+
+get_pstore_info() {
+  try "collect pstore contents for kernel panic debugging"
+
+  mkdir -p "${COLLECT_DIR}/pstore/sys_fs_pstore"
+  if [[ -d /sys/fs/pstore ]]; then
+    if [[ -n "$(ls -A /sys/fs/pstore 2> /dev/null)" ]]; then
+      # Preserve filenames; pstore files encode panic count / type / part in the name.
+      cp --force --recursive --dereference /sys/fs/pstore/. "${COLLECT_DIR}/pstore/sys_fs_pstore/" 2> /dev/null
+    else
+      echo "/sys/fs/pstore is present but empty (no captured crash records)." > "${COLLECT_DIR}/pstore/sys_fs_pstore.txt"
+    fi
+  else
+    echo "/sys/fs/pstore is not present on this system (pstore backend may not be configured)." > "${COLLECT_DIR}/pstore/sys_fs_pstore.txt"
+  fi
+
+  mkdir -p "${COLLECT_DIR}/pstore/systemd_pstore"
+  if [[ -d /var/lib/systemd/pstore ]]; then
+    if [[ -n "$(ls -A /var/lib/systemd/pstore 2> /dev/null)" ]]; then
+      cp --force --recursive --dereference /var/lib/systemd/pstore/. "${COLLECT_DIR}/pstore/systemd_pstore/" 2> /dev/null
+    else
+      echo "/var/lib/systemd/pstore is present but empty (no archived crash records)." > "${COLLECT_DIR}/pstore/systemd_pstore.txt"
+    fi
+  else
+    echo "/var/lib/systemd/pstore is not present on this system (systemd-pstore.service may not be enabled)." > "${COLLECT_DIR}/pstore/systemd_pstore.txt"
+  fi
 
   ok
 }
