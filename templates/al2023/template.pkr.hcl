@@ -464,9 +464,10 @@ build {
   }
 
   provisioner "shell" {
-    execute_command = "chmod +x {{ .Path }}; {{ .Path }} ${local.working_dir}/version-info.json"
-    remote_folder   = "${var.remote_folder}"
-    script          = "${path.root}/provisioners/generate-version-info.sh"
+    environment_vars = ["ENABLE_ACCELERATOR=${var.enable_accelerator}"]
+    execute_command  = "chmod +x {{ .Path }}; {{ .Vars }} {{ .Path }} ${local.working_dir}/version-info.json"
+    remote_folder    = "${var.remote_folder}"
+    script           = "${path.root}/provisioners/generate-version-info.sh"
   }
 
   provisioner "file" {

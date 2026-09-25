@@ -11,8 +11,26 @@ fi
 
 OUTPUT_FILE="$1"
 
-# packages
+# packages (installed in the rpm database)
 sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
+
+# nvidia drivers
+if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
+  for VERSION_DIR in /opt/nvidia/*/; do
+    VERSION_PATH="${VERSION_DIR%/}"
+    VERSION=$(basename "$VERSION_PATH")
+    RPMS=""
+    # userspace rpms plus every flavor's kmod rpms (open, proprietary; grid ships
+    # no rpm). All flavors are recorded so the consistency check guards each one.
+    for RPM in "$VERSION_PATH"/.rpms/*.rpm "$VERSION_PATH"/flavors/*/.rpms/*.rpm; do
+      [ -f "$RPM" ] && RPMS="$RPMS $RPM"
+    done
+    [ -n "$RPMS" ] || continue
+    VERSION_JSON=$(sudo rpm --query --package \
+      --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' $RPMS | jq --slurp --sort-keys 'add')
+    echo "$(jq --arg version "$VERSION" --argjson pkgs "$VERSION_JSON" '.nvidia[$version] = $pkgs' $OUTPUT_FILE)" > $OUTPUT_FILE
+  done
+fi
 
 # kernel modules
 for modname in $(sudo lsmod | cut -d' ' -f 1 | tail -n +2); do
