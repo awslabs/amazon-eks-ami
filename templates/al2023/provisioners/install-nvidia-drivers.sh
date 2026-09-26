@@ -219,6 +219,7 @@ sudo install -d -m 0755 /etc/systemd/system
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-driver-resolve.service" /etc/systemd/system/nvidia-driver-resolve.service
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-setup.service" /etc/systemd/system/nvidia-setup.service
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-package-install.service" /etc/systemd/system/nvidia-package-install.service
+sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-ldcache-update.service" /etc/systemd/system/nvidia-ldcache-update.service
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-bin.mount" /etc/systemd/system/usr-bin.mount
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-lib64.mount" /etc/systemd/system/usr-lib64.mount
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-share.mount" /etc/systemd/system/usr-share.mount
@@ -234,6 +235,7 @@ sudo mkdir -p /var/lib/eks/nvidia/{bin,lib64,share}/{upper,work}
 sudo systemctl enable nvidia-driver-resolve.service \
   nvidia-setup.service \
   nvidia-package-install.service \
+  nvidia-ldcache-update.service \
   usr-bin.mount \
   usr-lib64.mount \
   usr-share.mount
