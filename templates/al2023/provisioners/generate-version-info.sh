@@ -11,8 +11,33 @@ fi
 
 OUTPUT_FILE="$1"
 
-# packages
+# packages (installed in the rpm database)
 sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
+
+# nvidia drivers
+if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
+  for VERSION_DIR in /opt/nvidia/*/; do
+    VERSION_PATH="${VERSION_DIR%/}"
+    VERSION=$(basename "$VERSION_PATH")
+    RPMS=""
+    # userspace rpms plus every flavor's kmod rpms (open, proprietary; grid ships
+    # no rpm). All flavors are recorded so the consistency check guards each one.
+    for RPM in "$VERSION_PATH"/.rpms/*.rpm "$VERSION_PATH"/flavors/*/.rpms/*.rpm; do
+      [ -f "$RPM" ] && RPMS="$RPMS $RPM"
+    done
+    [ -n "$RPMS" ] || continue
+    VERSION_JSON=$(sudo rpm --query --package \
+      --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' $RPMS | jq --slurp --sort-keys 'add')
+    # Every kmod flavor provides the virtual capability "nvidia-kmod" at the driver
+    # version. Record it (epoch stripped) as a flavor-agnostic entry representing the
+    # driver, regardless of which flavor is ultimately installed.
+    NVIDIA_KMOD=$(sudo rpm --query --package --provides $RPMS | awk '/^nvidia-kmod = /{print $3}' | sed 's/^[0-9]*://' | sort -u | head -n1)
+    if [ -n "$NVIDIA_KMOD" ]; then
+      VERSION_JSON=$(echo "$VERSION_JSON" | jq --arg v "$NVIDIA_KMOD" '. + {"nvidia-kmod": $v}')
+    fi
+    echo "$(jq --arg version "$VERSION" --argjson pkgs "$VERSION_JSON" '.nvidia[$version] = $pkgs' $OUTPUT_FILE)" > $OUTPUT_FILE
+  done
+fi
 
 # kernel modules
 for modname in $(sudo lsmod | cut -d' ' -f 1 | tail -n +2); do
