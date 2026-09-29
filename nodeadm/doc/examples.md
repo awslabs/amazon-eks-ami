@@ -182,7 +182,7 @@ Tag the ENI before attaching it. Ownership is resolved per interface:
 
 - An interface that is already up keeps its current manager.
 - An ENI tagged `true` is configured by `systemd-networkd`; any other value delegates it to the CNI.
-- If the ENI is not visible yet, the `no_manage` tag is absent, or the lookup fails, the interface is left untouched. Lookups are retried after delays of 5, 10, 20, 40, then 60 seconds between attempts. An ENI without the tag remains pending even if EC2 returns its other tags; retries continue until ownership is resolved, the interface is brought up by another manager, or it is detached.
+- If the ENI is not visible yet, the `no_manage` tag is absent, or the lookup fails, the interface is left untouched. Lookups are retried after delays of 5, 10, 20, 40, then 60 seconds between attempts, each extended by a random 0–50% so nodes hitting the same failure do not retry in lock-step. An ENI without the tag remains pending even if EC2 returns its other tags; retries continue until ownership is resolved, the interface is brought up by another manager, or it is detached.
 - Decisions are cached per interface and MAC address for the lifetime of the instance. Retagging an interface in place is not supported.
 
 **Note**: the node instance role must grant `ec2:DescribeNetworkInterfaces`, and the node must reach the regional EC2 endpoint directly, through a VPC endpoint, or through its configured proxy. That permission is part of `AmazonEKS_CNI_Policy`, but with IRSA or EKS Pod Identity it is usually attached to the `aws-node` role rather than the node role. No EC2 call is made when the feature is disabled (the default).

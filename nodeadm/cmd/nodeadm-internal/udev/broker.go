@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"net"
 	"path/filepath"
 	"time"
@@ -121,7 +122,7 @@ func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac str
 }
 
 func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
-	delay := initialOwnershipRetryDelay
+	backoff := initialOwnershipRetryDelay
 	for {
 		manager, err := b.managerForAttempt(ctx, interfaceName, mac)
 		if err == nil {
@@ -132,12 +133,18 @@ func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (s
 		if !errors.Is(err, errOwnershipPending) {
 			return "", err
 		}
+		delay := jitter(backoff)
 		zap.L().Warn("waiting to resolve interface ownership", zap.String("interface", interfaceName), zap.String("mac", mac), zap.Duration("retryIn", delay), zap.Error(err))
 		if err := b.waitRetry(ctx, delay); err != nil {
 			return "", err
 		}
-		delay = min(2*delay, maxOwnershipRetryDelay)
+		backoff = min(2*backoff, maxOwnershipRetryDelay)
 	}
+}
+
+// jitter extends d by a random amount of up to half its length.
+func jitter(d time.Duration) time.Duration {
+	return d + rand.N(d/2)
 }
 
 func waitForOwnershipRetry(ctx context.Context, delay time.Duration) error {
