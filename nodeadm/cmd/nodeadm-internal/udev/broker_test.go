@@ -203,7 +203,25 @@ func Test_fsBroker_ManagerFor_retriesUntilOwnershipVisible(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, networkmanager.ManagerSystemd, manager)
 	assert.Equal(t, 8, resolver.calls)
-	assert.Equal(t, []time.Duration{5 * time.Second, 10 * time.Second, 20 * time.Second, 40 * time.Second, time.Minute, time.Minute, time.Minute}, delays)
+	backoffs := []time.Duration{5 * time.Second, 10 * time.Second, 20 * time.Second, 40 * time.Second, time.Minute, time.Minute, time.Minute}
+	assert.Len(t, delays, len(backoffs))
+	for i, backoff := range backoffs {
+		assert.GreaterOrEqual(t, delays[i], backoff)
+		assert.Less(t, delays[i], backoff*3/2)
+	}
+}
+
+func Test_jitter(t *testing.T) {
+	for _, d := range []time.Duration{initialOwnershipRetryDelay, maxOwnershipRetryDelay} {
+		seen := map[time.Duration]bool{}
+		for i := 0; i < 1000; i++ {
+			got := jitter(d)
+			assert.GreaterOrEqual(t, got, d)
+			assert.Less(t, got, d*3/2)
+			seen[got] = true
+		}
+		assert.Greater(t, len(seen), 1)
+	}
 }
 
 func Test_fsBroker_ManagerFor_rechecksEligibility(t *testing.T) {
