@@ -1393,12 +1393,6 @@ type BaselinePerformanceFactorsRequest struct {
 	noSmithyDocumentSerde
 }
 
-type BlobAttributeValue struct {
-	Value []byte
-
-	noSmithyDocumentSerde
-}
-
 // Describes a block device mapping, which defines the EBS volumes and instance
 // store volumes to attach to an instance at launch.
 type BlockDeviceMapping struct {
@@ -2172,6 +2166,23 @@ type CapacityManagerTagDimension struct {
 // Describes a Capacity Reservation.
 type CapacityReservation struct {
 
+	// The configuration that the Capacity Reservation will have after the requested
+	// adjustment is applied.
+	AdjustmentDetails *CapacityReservationAdjustmentDetails
+
+	// The status of the most recent modification to the Capacity Reservation. A
+	// Capacity Reservation can have one of the following adjustment statuses:
+	//
+	//   - requested - The modification was requested and is being processed.
+	//
+	//   - applied - The modification was applied to the Capacity Reservation.
+	//
+	//   - rejected - The modification was not applied and the Capacity Reservation
+	//   keeps its existing configuration.
+	//
+	// This field is not returned if the Capacity Reservation has never been modified.
+	AdjustmentStatus CapacityReservationAdjustmentStatus
+
 	// The Availability Zone in which the capacity is reserved.
 	AvailabilityZone *string
 
@@ -2271,6 +2282,22 @@ type CapacityReservation struct {
 	// source reservation for interruptible Capacity Reservations.
 	InterruptionInfo *InterruptionInfo
 
+	// Only supported for UltraServers.
+	//
+	// Indicates whether you can launch instances into the Capacity Reservation. A
+	// Capacity Reservation can have the following launch statuses:
+	//
+	//   - launchable - You can launch instances into the Capacity Reservation.
+	//
+	//   - unlaunchable - You can't launch instances into the Capacity Reservation. For
+	//   example, the Capacity Reservation is not active.
+	LaunchStatus CapacityReservationLaunchStatus
+
+	// The start date that you originally requested for the Capacity Reservation, in
+	// the ISO8601 format in the UTC time zone ( YYYY-MM-DDThh:mm:ss.sssZ ). This value
+	// doesn't change when you push out the start date.
+	OriginalStartDate *time.Time
+
 	// The Amazon Resource Name (ARN) of the Outpost on which the Capacity Reservation
 	// was created.
 	OutpostArn *string
@@ -2360,6 +2387,44 @@ type CapacityReservation struct {
 	// capacity of the Capacity Reservation is assigned.
 	UnusedReservationBillingOwnerId *string
 
+	//  The zero-size preference configured for the interruptible Capacity
+	// Reservation. A value of retain keeps the interruptible Capacity Reservation
+	// active at zero capacity when you reduce its allocation to zero. A value of
+	// default cancels the interruptible Capacity Reservation when you reduce its
+	// allocation to zero.
+	ZeroSizePreference ZeroSizePreference
+
+	noSmithyDocumentSerde
+}
+
+// Describes the configuration that a Capacity Reservation will have after a
+// pending adjustment is applied.
+type CapacityReservationAdjustmentDetails struct {
+
+	// The commitment duration, in seconds, that the Capacity Reservation will have
+	// after the adjustment.
+	CommitmentDuration *int64
+
+	// The date and time at which the commitment duration will expire after the
+	// adjustment.
+	CommitmentEndDate *time.Time
+
+	// The end date that the Capacity Reservation will have after the adjustment.
+	EndDate *time.Time
+
+	// Indicates the way in which the Capacity Reservation will end after the
+	// adjustment. Possible values are:
+	//
+	//   - unlimited - The Capacity Reservation remains active until you explicitly
+	//   cancel it.
+	//
+	//   - limited - The Capacity Reservation expires automatically at the date and
+	//   time given by endDate .
+	EndDateType *string
+
+	// The start date that the Capacity Reservation will have after the adjustment.
+	StartDate *time.Time
+
 	noSmithyDocumentSerde
 }
 
@@ -2429,6 +2494,11 @@ type CapacityReservationCancellationQuote struct {
 
 // Information about your commitment for a future-dated Capacity Reservation.
 type CapacityReservationCommitmentInfo struct {
+
+	// The commitment duration, in seconds, for the future-dated Capacity Reservation.
+	// This is the minimum duration for which you commit to having the Capacity
+	// Reservation in the active state in your account after it has been delivered.
+	CommitmentDuration *int64
 
 	// The date and time at which the commitment duration expires, in the ISO8601
 	// format in the UTC time zone ( YYYY-MM-DDThh:mm:ss.sssZ ). You can't decrease the
@@ -2591,6 +2661,45 @@ type CapacityReservationInfo struct {
 
 	// The tenancy of the Capacity Reservation.
 	Tenancy CapacityReservationTenancy
+
+	noSmithyDocumentSerde
+}
+
+// Describes a Capacity Reservation modification quote, which provides the terms
+// for changing the start date or the commitment of a future-dated Capacity
+// Reservation.
+type CapacityReservationModificationQuote struct {
+
+	// The ID of the Capacity Reservation associated with the modification quote.
+	CapacityReservationId *string
+
+	// The ID of the modification quote.
+	CapacityReservationModificationQuoteId *string
+
+	// The date and time at which the modification quote was created.
+	CreateTime *time.Time
+
+	// The configuration that the Capacity Reservation has at the time the quote was
+	// generated.
+	CurrentConfiguration *ModificationQuoteCurrentConfiguration
+
+	// The date and time at which the modification quote expires.
+	ExpirationTime *time.Time
+
+	// The terms of the modification, including the configuration that the Capacity
+	// Reservation will have if you accept them by using ModifyCapacityReservation .
+	ModificationTerms *ModificationTerms
+
+	// The state of the modification quote itself. Possible values are:
+	//
+	//   - active - The quote can still be used.
+	//
+	//   - expired - The quote can no longer be used. A quote becomes expired at its
+	//   expirationTime .
+	QuoteState CapacityReservationModificationQuoteState
+
+	// The tags assigned to the modification quote.
+	Tags []Tag
 
 	noSmithyDocumentSerde
 }
@@ -3122,6 +3231,10 @@ type ClientVpnAuthorizationRuleStatus struct {
 // Describes a client connection.
 type ClientVpnConnection struct {
 
+	// The date and time the authorization policy was last evaluated for the client
+	// connection, if applicable.
+	AuthorizationPolicyLastEvaluatedTime *string
+
 	// The IP address of the client.
 	ClientIp *string
 
@@ -3240,6 +3353,10 @@ type ClientVpnEndpoint struct {
 
 	// A brief description of the endpoint.
 	Description *string
+
+	// The device trust providers configured for the Client VPN endpoint, if
+	// applicable.
+	DevicePostureOptions *DevicePostureResponseOptions
 
 	// Indicates whether the client VPN session is disconnected after the maximum
 	// sessionTimeoutHours is reached. If true , users are prompted to reconnect client
@@ -3398,6 +3515,50 @@ type ClientVpnRouteStatus struct {
 	noSmithyDocumentSerde
 }
 
+// Information about a device trust provider configured for a Client VPN endpoint.
+type ClientVpnTrustProvider struct {
+
+	// The URL of the public signing key that is used to verify the identity token
+	// issued by the device trust provider.
+	PublicSigningKeyUrl *string
+
+	// The tenant ID associated with your device trust provider account.
+	TenantId *string
+
+	// The type of the device trust provider. Possible values include:
+	//
+	//   - crowdstrike - CrowdStrike device trust provider.
+	//
+	//   - jamf - Jamf device trust provider.
+	//
+	//   - jumpcloud - JumpCloud device trust provider.
+	TrustProviderType ClientVpnDeviceTrustProviderType
+
+	noSmithyDocumentSerde
+}
+
+// Describes a device trust provider to configure for a Client VPN endpoint.
+type ClientVpnTrustProviderRequest struct {
+
+	// The URL of the public signing key that is used to verify the identity token
+	// issued by the device trust provider.
+	PublicSigningKeyUrl *string
+
+	// The tenant ID associated with your device trust provider account.
+	TenantId *string
+
+	// The type of the device trust provider. Possible values include:
+	//
+	//   - crowdstrike - CrowdStrike device trust provider.
+	//
+	//   - jamf - Jamf device trust provider.
+	//
+	//   - jumpcloud - JumpCloud device trust provider.
+	TrustProviderType ClientVpnDeviceTrustProviderType
+
+	noSmithyDocumentSerde
+}
+
 // Options for sending VPN tunnel logs to CloudWatch.
 type CloudWatchLogOptions struct {
 
@@ -3534,6 +3695,10 @@ type ConnectionLogOptions struct {
 	// Indicates whether connection logging is enabled.
 	Enabled *bool
 
+	// Specifies whether to include the authorization policy evaluation context in the
+	// connection logs for the Client VPN endpoint.
+	IncludeAuthorizationPolicyContext *bool
+
 	noSmithyDocumentSerde
 }
 
@@ -3552,6 +3717,10 @@ type ConnectionLogResponseOptions struct {
 	// Indicates whether client connection logging is enabled for the Client VPN
 	// endpoint.
 	Enabled *bool
+
+	// Specifies whether the authorization policy evaluation context is included in
+	// the connection logs for the Client VPN endpoint.
+	IncludeAuthorizationPolicyContext *bool
 
 	noSmithyDocumentSerde
 }
@@ -3820,7 +3989,9 @@ type CreateFleetError struct {
 	LaunchTemplateAndOverrides *LaunchTemplateAndOverridesResponse
 
 	// Indicates if the instance that could not be launched was a Spot, On-Demand,
-	// Capacity Block, or Interruptible Capacity Reservation instance.
+	// Capacity Block for ML, or interruptible Capacity Reservation instance. If you
+	// are using ReservedCapacityOptions with on-demand-capacity-reservation in the
+	// ReservationTypes list, the value can also be on-demand-capacity-reservation .
 	Lifecycle InstanceLifecycle
 
 	noSmithyDocumentSerde
@@ -3853,7 +4024,7 @@ type CreateFleetInstance struct {
 	LaunchTemplateAndOverrides *LaunchTemplateAndOverridesResponse
 
 	// Indicates if the instance that was launched is a Spot, On-Demand, Capacity
-	// Block, or Interruptible Capacity Reservation instance.
+	// Block for ML, or interruptible Capacity Reservation instance.
 	Lifecycle InstanceLifecycle
 
 	// The value is windows for Windows instances in an EC2 Fleet. Otherwise, the
@@ -4619,13 +4790,13 @@ type DescribeFleetError struct {
 	// The error code that indicates why the instance could not be launched. For more
 	// information about error codes, see [Error codes].
 	//
-	// [Error codes]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html.html
+	// [Error codes]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
 	ErrorCode *string
 
 	// The error message that describes why the instance could not be launched. For
 	// more information about error messages, see [Error codes].
 	//
-	// [Error codes]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html.html
+	// [Error codes]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
 	ErrorMessage *string
 
 	// The launch templates and overrides that were used for launching the instances.
@@ -4634,7 +4805,9 @@ type DescribeFleetError struct {
 	LaunchTemplateAndOverrides *LaunchTemplateAndOverridesResponse
 
 	// Indicates if the instance that could not be launched was a Spot, On-Demand,
-	// Capacity Block, or Interruptible Capacity Reservation instance.
+	// Capacity Block for ML, or interruptible Capacity Reservation instance. If you
+	// are using ReservedCapacityOptions with on-demand-capacity-reservation in the
+	// ReservationTypes list, the value can also be on-demand-capacity-reservation .
 	Lifecycle InstanceLifecycle
 
 	noSmithyDocumentSerde
@@ -4655,7 +4828,7 @@ type DescribeFleetsInstances struct {
 	LaunchTemplateAndOverrides *LaunchTemplateAndOverridesResponse
 
 	// Indicates if the instance that was launched is a Spot, On-Demand, Capacity
-	// Block, or Interruptible Capacity Reservation instance.
+	// Block for ML, or interruptible Capacity Reservation instance.
 	Lifecycle InstanceLifecycle
 
 	// The value is windows for Windows instances in an EC2 Fleet. Otherwise, the
@@ -4708,6 +4881,31 @@ type DeviceOptions struct {
 
 	// The ID of the tenant application with the device-identity provider.
 	TenantId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the device posture options for a Client VPN endpoint. Device posture
+// options specify the device trust providers that the endpoint uses to evaluate
+// the security posture of connecting devices.
+type DevicePostureOptions struct {
+
+	// Indicates whether device posture evaluation is enabled for the Client VPN
+	// endpoint. Specify false to disable device posture, which clears the configured
+	// device trust providers.
+	Enabled *bool
+
+	// The device trust providers to configure for the Client VPN endpoint.
+	TrustProviders []ClientVpnTrustProviderRequest
+
+	noSmithyDocumentSerde
+}
+
+// Information about the device posture options for a Client VPN endpoint.
+type DevicePostureResponseOptions struct {
+
+	// The device trust providers configured for the Client VPN endpoint.
+	TrustProviders []ClientVpnTrustProvider
 
 	noSmithyDocumentSerde
 }
@@ -6620,6 +6818,22 @@ type FleetCapacityReservation struct {
 	noSmithyDocumentSerde
 }
 
+// Describes the target Capacity Reservations or Capacity Reservation Resource
+// Groups for an EC2 Fleet that launches into reserved capacity. You can specify
+// Capacity Reservation IDs or a Capacity Reservation Resource Group ARN, but not
+// both.
+type FleetCapacityReservationTargetRequest struct {
+
+	// The IDs of the Capacity Reservations in which to launch the instances.
+	CapacityReservationIds []string
+
+	// The ARNs of the Capacity Reservation Resource Groups in which to launch the
+	// instances.
+	CapacityReservationResourceGroupArns []string
+
+	noSmithyDocumentSerde
+}
+
 // Describes an EC2 Fleet.
 type FleetData struct {
 
@@ -8187,6 +8401,10 @@ type Image struct {
 	//
 	// [Configure the AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#configure-IMDS-new-instances-ami-configuration
 	ImdsSupport ImdsSupportValues
+
+	// The instance type specification for the AMI, which defines which instance types
+	// are compatible with this image.
+	InstanceTypeSpecification *InstanceTypeSpecification
 
 	// The kernel associated with the image, if any. Only applicable for machine
 	// images.
@@ -11274,8 +11492,7 @@ type InstanceStateChange struct {
 // attached EBS status, and application status.
 type InstanceStatus struct {
 
-	// Reports impaired functionality that stems from issues with applications running
-	// on the instance.
+	// Reports the application-level health status for the instance.
 	ApplicationStatus *ApplicationStatusSummary
 
 	// Reports impaired functionality that stems from an attached Amazon EBS volume
@@ -11565,6 +11782,15 @@ type InstanceTypeInfoFromInstanceRequirements struct {
 	noSmithyDocumentSerde
 }
 
+// An instance type name or wildcard pattern in an instance type specification.
+type InstanceTypeItem struct {
+
+	// The instance type or wildcard pattern (for example, t3.* or m5.large ).
+	InstanceType *string
+
+	noSmithyDocumentSerde
+}
+
 // The instance types offered.
 type InstanceTypeOffering struct {
 
@@ -11580,6 +11806,45 @@ type InstanceTypeOffering struct {
 
 	// The location type.
 	LocationType LocationType
+
+	noSmithyDocumentSerde
+}
+
+// Describes the instance type compatibility rules for an AMI, including lists of
+// supported and unsupported instance type patterns.
+type InstanceTypeSpecification struct {
+
+	// The instance types that the AMI supports.
+	SupportedInstanceTypes []InstanceTypeItem
+
+	// The instance types that the AMI does not support.
+	UnsupportedInstanceTypes []InstanceTypeItem
+
+	noSmithyDocumentSerde
+}
+
+// The instance type specification for an AMI, which contains lists of supported
+// and unsupported instance types that define which instance types are compatible
+// with the AMI.
+type InstanceTypeSpecificationRequest struct {
+
+	// The instance types that the AMI supports. You can specify instance type names
+	// or use wildcard patterns (for example, t3.* ).
+	//
+	// Constraints: Maximum 100 entries. Each entry must be 1-24 characters and match
+	// the pattern ^[A-Za-z0-9_.*-]+$ . Consecutive wildcard characters ( ** ) are not
+	// allowed. Entries must be unique within each list and across both lists;
+	// duplicate entries cause the request to fail.
+	SupportedInstanceTypes []string
+
+	// The instance types that the AMI does not support. You can specify instance type
+	// names or use wildcard patterns (for example, t3.* ).
+	//
+	// Constraints: Maximum 100 entries. Each entry must be 1-24 characters and match
+	// the pattern ^[A-Za-z0-9_.*-]+$ . Consecutive wildcard characters ( ** ) are not
+	// allowed. Entries must be unique within each list and across both lists;
+	// duplicate entries cause the request to fail.
+	UnsupportedInstanceTypes []string
 
 	noSmithyDocumentSerde
 }
@@ -11661,6 +11926,14 @@ type InterruptibleCapacityAllocation struct {
 	//  After your modify request, the requested number of instances allocated to
 	// interruptible reservation.
 	TargetInstanceCount *int32
+
+	//  Specifies how Amazon EC2 handles the interruptible Capacity Reservation when
+	// you reduce its allocation to zero instances. A value of retain keeps the
+	// interruptible Capacity Reservation active at zero capacity so that you can
+	// allocate instances to it again later. A value of default cancels the
+	// interruptible Capacity Reservation and returns the capacity to your source
+	// Capacity Reservation.
+	ZeroSizePreference ZeroSizePreference
 
 	noSmithyDocumentSerde
 }
@@ -12191,6 +12464,10 @@ type IpamInternetRegistryAssociation struct {
 	// enable-complete | enable-failed | delete-in-progress | delete-complete |
 	// delete-failed .
 	State IpamInternetRegistryAssociationState
+
+	// A message describing the current state of the internet registry association,
+	// including additional details such as the reason for a failure.
+	StateMessage *string
 
 	// The tags assigned to the internet registry association.
 	Tags []Tag
@@ -16048,6 +16325,57 @@ type MetricValue struct {
 	noSmithyDocumentSerde
 }
 
+// Describes the configuration that a Capacity Reservation has at the time a
+// modification quote is generated.
+type ModificationQuoteCurrentConfiguration struct {
+
+	// The number of instances in the Capacity Reservation.
+	InstanceCount *int32
+
+	// The start date that the Capacity Reservation was originally requested with.
+	// This value does not change when you push out the start date.
+	OriginalStartDate *time.Time
+
+	// The current state of the Capacity Reservation.
+	ReservationState *string
+
+	// The start date that the Capacity Reservation has before the quoted modification
+	// is applied.
+	StartDate *time.Time
+
+	noSmithyDocumentSerde
+}
+
+// Describes the changes that a Capacity Reservation modification quote will apply
+// to a Capacity Reservation.
+type ModificationReservationUpdate struct {
+
+	// The commitment duration, in seconds, that the Capacity Reservation will have
+	// after the modification.
+	NewCommitmentDuration *int32
+
+	// The date and time at which the commitment duration will expire after the
+	// modification, in the ISO8601 format in the UTC time zone (
+	// YYYY-MM-DDThh:mm:ss.sssZ ).
+	NewCommitmentEndDate *time.Time
+
+	// The start date that the Capacity Reservation will have after the modification,
+	// in the ISO8601 format in the UTC time zone ( YYYY-MM-DDThh:mm:ss.sssZ ).
+	NewStartDate *time.Time
+
+	noSmithyDocumentSerde
+}
+
+// Describes the terms of a Capacity Reservation modification quote.
+type ModificationTerms struct {
+
+	// The changes that will be applied to the Capacity Reservation if you accept the
+	// modification terms.
+	ReservationUpdate *ModificationReservationUpdate
+
+	noSmithyDocumentSerde
+}
+
 // The transit gateway options.
 type ModifyTransitGatewayOptions struct {
 
@@ -16841,6 +17169,9 @@ type NetworkCardInfo struct {
 
 	// The default number of the ENA queues for each interface.
 	DefaultEnaQueueCountPerInterface *int32
+
+	// The supported interface types for the network card.
+	InterfaceTypes []NetworkCardInterfaceType
 
 	// The maximum number of the ENA queues.
 	MaximumEnaQueueCount *int32
@@ -19512,18 +19843,61 @@ type ReservationValue struct {
 	noSmithyDocumentSerde
 }
 
-// Defines EC2 Fleet preferences for utilizing reserved capacity when
-// DefaultTargetCapacityType is set to reserved-capacity .
-type ReservedCapacityOptions struct {
+// Describes the fallback behavior for an EC2 Fleet that uses reserved capacity
+// when the reserved capacity is not enough to meet the target capacity. If you
+// don't specify fallback options, EC2 Fleet does not fall back to any other market
+// type after the specified reservation types are exhausted.
+type ReservedCapacityFallbackOptions struct {
 
-	// The types of Capacity Reservations used for fulfilling the EC2 Fleet request.
-	ReservationTypes []FleetReservationType
+	// The instance purchasing options to fall back to when the reserved capacity is
+	// not enough to meet the target capacity. The only supported value is on-demand ,
+	// which launches On-Demand Instances to fulfill the remaining target capacity.
+	MarketTypes []ReservedCapacityFallbackMarketType
+
+	noSmithyDocumentSerde
+}
+
+// Describes the fallback behavior for an EC2 Fleet that uses reserved capacity
+// when the reserved capacity is not enough to meet the target capacity. If you
+// don't specify fallback options, EC2 Fleet does not fall back to any other market
+// type after the specified reservation types are exhausted.
+type ReservedCapacityFallbackOptionsRequest struct {
+
+	// The instance purchasing options to fall back to when the reserved capacity is
+	// not enough to meet the target capacity. The only supported value is on-demand ,
+	// which launches On-Demand Instances to fulfill the remaining target capacity.
+	MarketTypes []ReservedCapacityFallbackMarketType
 
 	noSmithyDocumentSerde
 }
 
 // Defines EC2 Fleet preferences for utilizing reserved capacity when
-// DefaultTargetCapacityType is set to reserved-capacity .
+// DefaultTargetCapacityType is set to reserved-capacity . EC2 Fleet can fulfill
+// reserved capacity using On-Demand Capacity Reservations, Capacity Blocks for ML,
+// and interruptible Capacity Reservations.
+type ReservedCapacityOptions struct {
+
+	// The strategy that determines the order in which EC2 Fleet launches instances
+	// across the reservation types that you specify. The only supported value is
+	// prioritized , which launches instances in the priority order that you specify in
+	// your launch template overrides. If you don't specify an allocation strategy,
+	// instances are launched in a random order.
+	AllocationStrategy ReservedCapacityAllocationStrategy
+
+	// The types of Capacity Reservations used for fulfilling the EC2 Fleet request.
+	ReservationTypes []FleetReservationType
+
+	// The fallback behavior for the EC2 Fleet when there is not enough reserved
+	// capacity available to meet the target capacity.
+	ReservedCapacityFallbackOptions *ReservedCapacityFallbackOptions
+
+	noSmithyDocumentSerde
+}
+
+// Defines EC2 Fleet preferences for utilizing reserved capacity when
+// DefaultTargetCapacityType is set to reserved-capacity . EC2 Fleet can fulfill
+// reserved capacity using On-Demand Capacity Reservations, Capacity Blocks for ML,
+// and interruptible Capacity Reservations.
 //
 // This configuration can only be used if the EC2 Fleet is of type instant .
 //
@@ -19531,14 +19905,35 @@ type ReservedCapacityOptions struct {
 // DefaultTargetCapacityType to reserved-capacity in the
 // TargetCapacitySpecification .
 //
-// For more information about Interruptible Capacity Reservations, see [Launch instances into an Interruptible Capacity Reservation] in the
+// For more information about interruptible Capacity Reservations, see [Launch instances into an interruptible Capacity Reservation] in the
 // Amazon EC2 User Guide.
 //
-// [Launch instances into an Interruptible Capacity Reservation]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-launch-instances-interruptible-cr-walkthrough.html
+// [Launch instances into an interruptible Capacity Reservation]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-fleet-launch-instances-interruptible-cr-walkthrough.html
 type ReservedCapacityOptionsRequest struct {
 
+	// The strategy that determines the order in which EC2 Fleet launches instances
+	// across the reservation types that you specify. The only supported value is
+	// prioritized , which launches instances in the priority order that you specify in
+	// your launch template overrides. If you don't specify an allocation strategy,
+	// instances are launched in a random order.
+	AllocationStrategy ReservedCapacityAllocationStrategy
+
+	// The Capacity Reservations or Capacity Reservation Resource Groups to use for
+	// fulfilling the EC2 Fleet request. You can specify Capacity Reservation IDs or a
+	// Capacity Reservation Resource Group ARN, but not both.
+	CapacityReservationTarget *FleetCapacityReservationTargetRequest
+
 	// The types of Capacity Reservations to use for fulfilling the EC2 Fleet request.
+	// This is an ordered list: EC2 Fleet attempts to launch instances into each
+	// Capacity Reservation type in the order that you specify them before moving on to
+	// the next type.
 	ReservationTypes []FleetReservationType
+
+	// The fallback behavior for the EC2 Fleet when there is not enough reserved
+	// capacity available to meet the target capacity. This member takes a
+	// ReservedCapacityFallbackOptionsRequest structure, in which you set MarketTypes
+	// to the instance purchasing options to fall back to.
+	ReservedCapacityFallbackOptions *ReservedCapacityFallbackOptionsRequest
 
 	noSmithyDocumentSerde
 }
@@ -21265,6 +21660,16 @@ type SecondarySubnetIpv4CidrBlockAssociation struct {
 
 	// The reason for the current state of the CIDR block association.
 	StateReason *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes a value for a resource attribute that is a Base64-encoded binary data
+// object.
+type SecureBlobAttributeValue struct {
+
+	// The attribute value.
+	Value []byte
 
 	noSmithyDocumentSerde
 }
@@ -26186,6 +26591,9 @@ type Volume struct {
 	// The Amazon Resource Name (ARN) of the Outpost.
 	OutpostArn *string
 
+	// The ID of the Amazon Web Services account that owns the volume.
+	OwnerId *string
+
 	// The size of the volume, in GiBs.
 	Size *int32
 
@@ -26209,6 +26617,9 @@ type Volume struct {
 
 	// The throughput that the volume supports, in MiB/s.
 	Throughput *int32
+
+	// The Amazon Resource Name (ARN) of the volume.
+	VolumeArn *string
 
 	// The ID of the volume.
 	VolumeId *string
@@ -26897,8 +27308,8 @@ type VpcEndpoint struct {
 	// Reason for the failure.
 	FailureReason *string
 
-	// (Interface endpoint) Information about the security groups that are associated
-	// with the network interface.
+	// (Interface, Resource, ServiceNetwork, and Tunnel endpoints only) Information
+	// about the security groups that are associated with the network interface.
 	Groups []SecurityGroupIdentifier
 
 	// The IP address type for the endpoint.
@@ -26913,7 +27324,8 @@ type VpcEndpoint struct {
 	// The last error that occurred for endpoint.
 	LastError *LastError
 
-	// (Interface endpoint) The network interfaces for the endpoint.
+	// (Interface, Gateway Load Balancer endpoints, Resource, ServiceNetwork, and
+	// Tunnel endpoints only) The network interfaces for the endpoint.
 	NetworkInterfaceIds []string
 
 	// The ID of the Amazon Web Services account that owns the endpoint.
@@ -26950,7 +27362,8 @@ type VpcEndpoint struct {
 	// The state of the endpoint.
 	State State
 
-	// (Interface endpoint) The subnets for the endpoint.
+	// (Interface, Gateway Load Balancer endpoints, Resource, ServiceNetwork, and
+	// Tunnel endpoints only) The subnets for the endpoint.
 	SubnetIds []string
 
 	// The tags assigned to the endpoint.
@@ -26960,6 +27373,11 @@ type VpcEndpoint struct {
 	VpcEndpointId *string
 
 	// The type of endpoint.
+	//
+	// For more information about the types of VPC endpoints, see [VPC endpoints] in the Amazon Web
+	// Services PrivateLink User Guide.
+	//
+	// [VPC endpoints]: https://docs.aws.amazon.com/vpc/latest/privatelink/concepts.html#concepts-vpc-endpoints
 	VpcEndpointType VpcEndpointType
 
 	// The ID of the VPC to which the endpoint is associated.
