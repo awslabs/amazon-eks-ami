@@ -81,7 +81,7 @@ function reset::link() {
 systemctl start --no-block "$unit"
 wait::until ownership-pending
 pending_pid=$(systemctl show "$unit" -p MainPID --value)
-sleep 6
+sleep 8
 test "$(systemctl show "$unit" -p MainPID --value)" = "$pending_pid"
 test "$(systemctl show "$unit" -p NRestarts --value)" = 0
 assert::file-not-exists "$cache"
