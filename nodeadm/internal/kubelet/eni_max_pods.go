@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"math"
 
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common/types"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types"
 	"go.uber.org/zap"
 )
 

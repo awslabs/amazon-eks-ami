@@ -1270,6 +1270,26 @@ func (m *validateOpCreateCapacityReservationCancellationQuote) HandleInitialize(
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpCreateCapacityReservationDateChangeQuote struct {
+}
+
+func (*validateOpCreateCapacityReservationDateChangeQuote) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateCapacityReservationDateChangeQuote) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateCapacityReservationDateChangeQuoteInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateCapacityReservationDateChangeQuoteInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateCapacityReservationFleet struct {
 }
 
@@ -3125,6 +3145,26 @@ func (m *validateOpDeleteCarrierGateway) HandleInitialize(ctx context.Context, i
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpDeleteCarrierGatewayInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpDeleteClientVpnEndpointAuthorizationPolicy struct {
+}
+
+func (*validateOpDeleteClientVpnEndpointAuthorizationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDeleteClientVpnEndpointAuthorizationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DeleteClientVpnEndpointAuthorizationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDeleteClientVpnEndpointAuthorizationPolicyInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -6890,6 +6930,26 @@ func (m *validateOpGetCapacityReservationUsage) HandleInitialize(ctx context.Con
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetClientVpnEndpointAuthorizationPolicy struct {
+}
+
+func (*validateOpGetClientVpnEndpointAuthorizationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetClientVpnEndpointAuthorizationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetClientVpnEndpointAuthorizationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetClientVpnEndpointAuthorizationPolicyInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetCoipPoolUsage struct {
 }
 
@@ -8245,6 +8305,26 @@ func (m *validateOpModifyCapacityReservation) HandleInitialize(ctx context.Conte
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpModifyCapacityReservationInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpModifyClientVpnEndpointAuthorizationPolicy struct {
+}
+
+func (*validateOpModifyClientVpnEndpointAuthorizationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpModifyClientVpnEndpointAuthorizationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ModifyClientVpnEndpointAuthorizationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpModifyClientVpnEndpointAuthorizationPolicyInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -10310,6 +10390,26 @@ func (m *validateOpReplaceIamInstanceProfileAssociation) HandleInitialize(ctx co
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpReplaceImageInstanceTypeSpecification struct {
+}
+
+func (*validateOpReplaceImageInstanceTypeSpecification) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpReplaceImageInstanceTypeSpecification) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ReplaceImageInstanceTypeSpecificationInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpReplaceImageInstanceTypeSpecificationInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpReplaceNetworkAclAssociation struct {
 }
 
@@ -11190,6 +11290,26 @@ func (m *validateOpUpdateInterruptibleCapacityReservationAllocation) HandleIniti
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpValidateSecurityGroupQuotasForInterface struct {
+}
+
+func (*validateOpValidateSecurityGroupQuotasForInterface) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpValidateSecurityGroupQuotasForInterface) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ValidateSecurityGroupQuotasForInterfaceInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpValidateSecurityGroupQuotasForInterfaceInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpWithdrawByoipCidr struct {
 }
 
@@ -11460,6 +11580,10 @@ func addOpCreateCapacityReservationBySplittingValidationMiddleware(stack *middle
 
 func addOpCreateCapacityReservationCancellationQuoteValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateCapacityReservationCancellationQuote{}, middleware.After)
+}
+
+func addOpCreateCapacityReservationDateChangeQuoteValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateCapacityReservationDateChangeQuote{}, middleware.After)
 }
 
 func addOpCreateCapacityReservationFleetValidationMiddleware(stack *middleware.Stack) error {
@@ -11832,6 +11956,10 @@ func addOpDeleteCapacityManagerDataExportValidationMiddleware(stack *middleware.
 
 func addOpDeleteCarrierGatewayValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteCarrierGateway{}, middleware.After)
+}
+
+func addOpDeleteClientVpnEndpointAuthorizationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDeleteClientVpnEndpointAuthorizationPolicy{}, middleware.After)
 }
 
 func addOpDeleteClientVpnEndpointValidationMiddleware(stack *middleware.Stack) error {
@@ -12586,6 +12714,10 @@ func addOpGetCapacityReservationUsageValidationMiddleware(stack *middleware.Stac
 	return stack.Initialize.Add(&validateOpGetCapacityReservationUsage{}, middleware.After)
 }
 
+func addOpGetClientVpnEndpointAuthorizationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetClientVpnEndpointAuthorizationPolicy{}, middleware.After)
+}
+
 func addOpGetCoipPoolUsageValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetCoipPoolUsage{}, middleware.After)
 }
@@ -12856,6 +12988,10 @@ func addOpModifyCapacityReservationFleetValidationMiddleware(stack *middleware.S
 
 func addOpModifyCapacityReservationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpModifyCapacityReservation{}, middleware.After)
+}
+
+func addOpModifyClientVpnEndpointAuthorizationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpModifyClientVpnEndpointAuthorizationPolicy{}, middleware.After)
 }
 
 func addOpModifyClientVpnEndpointValidationMiddleware(stack *middleware.Stack) error {
@@ -13270,6 +13406,10 @@ func addOpReplaceIamInstanceProfileAssociationValidationMiddleware(stack *middle
 	return stack.Initialize.Add(&validateOpReplaceIamInstanceProfileAssociation{}, middleware.After)
 }
 
+func addOpReplaceImageInstanceTypeSpecificationValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpReplaceImageInstanceTypeSpecification{}, middleware.After)
+}
+
 func addOpReplaceNetworkAclAssociationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpReplaceNetworkAclAssociation{}, middleware.After)
 }
@@ -13444,6 +13584,10 @@ func addOpUpdateCapacityManagerOrganizationsAccessValidationMiddleware(stack *mi
 
 func addOpUpdateInterruptibleCapacityReservationAllocationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdateInterruptibleCapacityReservationAllocation{}, middleware.After)
+}
+
+func addOpValidateSecurityGroupQuotasForInterfaceValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpValidateSecurityGroupQuotasForInterface{}, middleware.After)
 }
 
 func addOpWithdrawByoipCidrValidationMiddleware(stack *middleware.Stack) error {
@@ -15577,6 +15721,24 @@ func validateOpCreateCapacityReservationCancellationQuoteInput(v *CreateCapacity
 	}
 }
 
+func validateOpCreateCapacityReservationDateChangeQuoteInput(v *CreateCapacityReservationDateChangeQuoteInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateCapacityReservationDateChangeQuoteInput"}
+	if v.CapacityReservationId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CapacityReservationId"))
+	}
+	if v.NewStartDate == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("NewStartDate"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpCreateCapacityReservationFleetInput(v *CreateCapacityReservationFleetInput) error {
 	if v == nil {
 		return nil
@@ -17253,6 +17415,21 @@ func validateOpDeleteCarrierGatewayInput(v *DeleteCarrierGatewayInput) error {
 	invalidParams := smithy.InvalidParamsError{Context: "DeleteCarrierGatewayInput"}
 	if v.CarrierGatewayId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("CarrierGatewayId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpDeleteClientVpnEndpointAuthorizationPolicyInput(v *DeleteClientVpnEndpointAuthorizationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DeleteClientVpnEndpointAuthorizationPolicyInput"}
+	if v.ClientVpnEndpointId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ClientVpnEndpointId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -20277,6 +20454,21 @@ func validateOpGetCapacityReservationUsageInput(v *GetCapacityReservationUsageIn
 	}
 }
 
+func validateOpGetClientVpnEndpointAuthorizationPolicyInput(v *GetClientVpnEndpointAuthorizationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetClientVpnEndpointAuthorizationPolicyInput"}
+	if v.ClientVpnEndpointId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ClientVpnEndpointId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetCoipPoolUsageInput(v *GetCoipPoolUsageInput) error {
 	if v == nil {
 		return nil
@@ -21380,6 +21572,21 @@ func validateOpModifyCapacityReservationInput(v *ModifyCapacityReservationInput)
 	invalidParams := smithy.InvalidParamsError{Context: "ModifyCapacityReservationInput"}
 	if v.CapacityReservationId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("CapacityReservationId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpModifyClientVpnEndpointAuthorizationPolicyInput(v *ModifyClientVpnEndpointAuthorizationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ModifyClientVpnEndpointAuthorizationPolicyInput"}
+	if v.ClientVpnEndpointId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ClientVpnEndpointId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -23127,6 +23334,21 @@ func validateOpReplaceIamInstanceProfileAssociationInput(v *ReplaceIamInstancePr
 	}
 }
 
+func validateOpReplaceImageInstanceTypeSpecificationInput(v *ReplaceImageInstanceTypeSpecificationInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ReplaceImageInstanceTypeSpecificationInput"}
+	if v.ImageId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ImageId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpReplaceNetworkAclAssociationInput(v *ReplaceNetworkAclAssociationInput) error {
 	if v == nil {
 		return nil
@@ -23887,8 +24109,20 @@ func validateOpUpdateInterruptibleCapacityReservationAllocationInput(v *UpdateIn
 	if v.CapacityReservationId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("CapacityReservationId"))
 	}
-	if v.TargetInstanceCount == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("TargetInstanceCount"))
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpValidateSecurityGroupQuotasForInterfaceInput(v *ValidateSecurityGroupQuotasForInterfaceInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ValidateSecurityGroupQuotasForInterfaceInput"}
+	if v.SecurityGroupIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("SecurityGroupIds"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

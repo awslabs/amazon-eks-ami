@@ -20,8 +20,8 @@ import (
 //
 // If you specify one or more instance IDs, Amazon EC2 returns the credit option (
 // standard or unlimited ) of those instances. If you specify an instance ID that
-// is not valid, such as an instance that is not a burstable performance instance,
-// an error is returned.
+// is not a burstable performance instance, Amazon EC2 returns the standard credit
+// option.
 //
 // Recently terminated instances might appear in the returned results. This
 // interval is usually less than one hour.
@@ -111,9 +111,6 @@ func (c *Client) addOperationDescribeInstanceCreditSpecificationsMiddlewares(sta
 		return err
 	}
 
-	if err = addComputeContentLength(stack); err != nil {
-		return err
-	}
 	if err = addResolveEndpointMiddleware(stack, options); err != nil {
 		return err
 	}
