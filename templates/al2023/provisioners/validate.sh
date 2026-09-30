@@ -209,9 +209,19 @@ fi
 EOF
   chmod 0755 "${fake}/lspci"
 
+  # `lspci -D -n -mm` lines. Fields: domain:bus:slot.fn "class" "vendor" "device" [-rREV]
+  # "subvendor" "subdevice". Vendor, class and device IDs match /usr/share/hwdata/pci.ids,
+  # except the Blackwell GPUs (2901, 2941), which are newer than it and come from the
+  # nvidia-open-supported-devices-*.txt lists.
+  # captured verbatim from a g4dn.xlarge: 1eb8 = TU104GL [Tesla T4]
   local t4='0000:00:1e.0 "0302" "10de" "1eb8" -ra1 "10de" "12a2"'
+  # captured verbatim from a p4d.24xlarge: 20b0 = GA100 [A100 SXM4 40GB]
   local a100='0000:10:1c.0 "0302" "10de" "20b0" -ra1 "10de" "134f"'
-  local nvswitch='0000:80:1a.0 "0680" "10de" "1af1" -ra1 "10de" "1676"'
+  # captured verbatim from a p4d.24xlarge: 1af1 = GA100 [A100 NVSwitch], class 0680
+  local nvswitch='0000:80:1a.0 "0680" "10de" "1af1" -ra1 "10de" "13b8"'
+  # hand-written, not captured: 2901 = B200, 2941 = GB200 (on a non-zero PCI domain, 0008, so the
+  # domain prefix gets exercised), 1021 = MT2910 Family [ConnectX-7] with class 0207 (Infiniband
+  # controller)
   local b200='0000:51:00.0 "0302" "10de" "2901" -ra1 "10de" "1999"'
   local gb200='0008:06:00.0 "0302" "10de" "2941" -ra1 "10de" "2046"'
   local cx7='0000:73:00.0 "0207" "15b3" "1021" "15b3" "0087"'
