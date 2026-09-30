@@ -210,6 +210,7 @@ sudo install -d -m 0755 /etc/eks
 sudo install -m 0755 "${WORKING_DIR}/gpu/resolve-nvidia-driver.sh" /etc/eks/resolve-nvidia-driver.sh
 sudo install -m 0755 "${WORKING_DIR}/gpu/setup-nvidia.sh" /etc/eks/setup-nvidia.sh
 sudo install -m 0755 "${WORKING_DIR}/gpu/install-nvidia-packages.sh" /etc/eks/install-nvidia-packages.sh
+sudo install -m 0755 "${WORKING_DIR}/gpu/nvidia-fabricmanager-condition.sh" /etc/eks/nvidia-fabricmanager-condition.sh
 
 ################################################################################
 ### Install systemd units ######################################################
@@ -223,6 +224,12 @@ sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-ldcache-update.service" /etc/sys
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-bin.mount" /etc/systemd/system/usr-bin.mount
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-lib64.mount" /etc/systemd/system/usr-lib64.mount
 sudo install -m 0644 "${WORKING_DIR}/gpu/usr-share.mount" /etc/systemd/system/usr-share.mount
+
+# the fabricmanager unit itself is extracted from the tree at first boot, but a drop-in can be
+# staged ahead of its unit. it gates the start on the host actually managing an NVSwitch fabric.
+sudo install -d -m 0755 /etc/systemd/system/nvidia-fabricmanager.service.d
+sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-fabricmanager-condition.conf" \
+  /etc/systemd/system/nvidia-fabricmanager.service.d/10-condition.conf
 
 # installed but not started at build-time b/c it has an ordering dependency on
 # nvidia-persistenced, which is only added at runtime

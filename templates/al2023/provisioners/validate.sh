@@ -177,6 +177,72 @@ validate_nvidia_supported_device_list() {
   fi
 }
 
+# The fabricmanager condition decides from lspci alone, so it can be exercised against canned
+# lspci output. Any exit from 1-254 makes systemd skip the unit, which is why a broken condition
+# must fail the build rather than ship: it would silently skip Fabric Manager on NVSwitch hosts.
+validate_nvidia_fabricmanager_condition() {
+  local condition=/etc/eks/nvidia-fabricmanager-condition.sh
+  local dropin=/etc/systemd/system/nvidia-fabricmanager.service.d/10-condition.conf
+
+  if [ ! -x "${condition}" ]; then
+    echo "${condition} is missing or not executable"
+    exit 1
+  fi
+  if ! grep -q "^ExecCondition=${condition}$" "${dropin}"; then
+    echo "${dropin} does not gate nvidia-fabricmanager.service on ${condition}"
+    exit 1
+  fi
+
+  local fake
+  fake=$(mktemp -d)
+  # fake lspci: the listing comes from $fake/devices, per-device details from $fake/<bdf>.
+  # an absent file makes that call fail, like lspci would.
+  cat > "${fake}/lspci" << 'EOF'
+#!/usr/bin/env bash
+dir=$(dirname "$0")
+if [[ "$*" == *-mm* ]]; then
+  cat "${dir}/devices" 2> /dev/null || exit 1
+else
+  while [[ "$1" != "-s" ]]; do shift; done
+  cat "${dir}/$2" 2> /dev/null || exit 1
+fi
+EOF
+  chmod 0755 "${fake}/lspci"
+
+  local t4='0000:00:1e.0 "0302" "10de" "1eb8" -ra1 "10de" "12a2"'
+  local a100='0000:10:1c.0 "0302" "10de" "20b0" -ra1 "10de" "134f"'
+  local nvswitch='0000:80:1a.0 "0680" "10de" "1af1" -ra1 "10de" "1676"'
+  local b200='0000:51:00.0 "0302" "10de" "2901" -ra1 "10de" "1999"'
+  local gb200='0008:06:00.0 "0302" "10de" "2941" -ra1 "10de" "2046"'
+  local cx7='0000:73:00.0 "0207" "15b3" "1021" "15b3" "0087"'
+
+  # name|expected exit|lspci listing (empty = lspci fails)|cx7 details (empty = lspci -s fails)
+  local cases=(
+    "single-gpu, no fabric|1|${t4}|"
+    "hgx a100, nvswitches on pci|0|${a100}"$'\n'"${nvswitch}|"
+    "hgx b200, sw_mng bridge|0|${b200}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data\n    [V2] Vendor specific: SW_MNG"
+    "hgx b200, bridge unreadable|0|${b200}"$'\n'"${cx7}|"
+    "cx7 without sw_mng|1|${t4}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data"
+    "gb200, fabric off-host|1|${gb200}"$'\n'"${cx7}|    [V2] Vendor specific: SW_MNG"
+    "lspci fails|0||"
+  )
+
+  local case name expected devices details actual
+  for case in "${cases[@]}"; do
+    IFS='|' read -r name expected devices details <<< "${case//$'\n'/\\n}"
+    rm -f "${fake}/devices" "${fake}/0000:73:00.0"
+    [ -n "${devices}" ] && printf '%b\n' "${devices}" > "${fake}/devices"
+    [ -n "${details}" ] && printf '%b\n' "${details}" > "${fake}/0000:73:00.0"
+    actual=0
+    PATH="${fake}:${PATH}" "${condition}" > /dev/null || actual=$?
+    if [ "${actual}" != "${expected}" ]; then
+      echo "${condition}: case '${name}' exited ${actual}, expected ${expected}"
+      exit 1
+    fi
+  done
+  rm -rf "${fake}"
+}
+
 if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
   for tree in "${NVIDIA_TREES[@]}"; do
     validate_nvidia_tree_version "${tree}"
@@ -227,6 +293,8 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
       exit 1
     fi
   done
+
+  validate_nvidia_fabricmanager_condition
 
   if [ ! -f "/etc/systemd/system/set-nvidia-clocks.service" ]; then
     echo "set-nvidia-clocks.service was not staged at build time"
