@@ -56,6 +56,17 @@ function skip() {
 # so awk sees  $1 = domain:bus:slot.function   $2 = class   $3 = vendor   $4 = device.
 # The optional -r (revision) and -p (prog-if) tokens, and any empty "" fields, only appear after
 # $4, so the fields read below never shift.
+# If lspci fails (pipefail catches that even though tr succeeds) or prints nothing, which can't
+# happen on a working instance, there's no data to decide from. Every check below would then
+# find nothing and fall through to skip, so bail out first and fail open. The two ways to be
+# wrong are not equal:
+#   - wrongly starting on a host with no NVSwitch fabric costs one failed unit, which is exactly
+#     the behavior before this condition existed
+#   - wrongly skipping on a host that has one leaves the NVSwitch fabric unconfigured. Per NVIDIA's
+#     Fabric Manager user guide, on HGX A100 (p4d) CUDA initialization then fails with
+#     cudaErrorSystemNotReady, and on HGX H100 and later (p5, p6-b200) the GPUs can't register
+#     with the fabric and lose NVLink peer-to-peer
+#     https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html
 if ! PCI_DEVICES="$(lspci -D -n -mm | tr -d '"')" || [[ -z "${PCI_DEVICES}" ]]; then
   start "unable to list PCI devices"
 fi
