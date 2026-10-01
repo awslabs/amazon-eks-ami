@@ -177,6 +177,99 @@ validate_nvidia_supported_device_list() {
   fi
 }
 
+# The fabricmanager condition decides from lspci and the driver's NVSwitch procfs entries alone,
+# so it can be exercised against canned inputs. Any exit from 1-254 makes systemd skip the unit,
+# which is why a broken condition must fail the build rather than ship: it would silently skip
+# Fabric Manager on NVSwitch hosts.
+validate_nvidia_fabricmanager_condition() {
+  local condition=/etc/eks/nvidia-fabricmanager-condition.sh
+  local dropin=/etc/systemd/system/nvidia-fabricmanager.service.d/10-condition.conf
+
+  if [ ! -x "${condition}" ]; then
+    echo "${condition} is missing or not executable"
+    exit 1
+  fi
+  if ! grep -q "^ExecCondition=${condition}$" "${dropin}"; then
+    echo "${dropin} does not gate nvidia-fabricmanager.service on ${condition}"
+    exit 1
+  fi
+  # systemd applies a drop-in only to the unit whose name exactly matches the drop-in directory.
+  # The unit itself isn't installed until first boot (setup copies it from the chosen tree), so
+  # check the name it will be installed under in every tree.
+  local tree
+  for tree in "${NVIDIA_TREES[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/usr/lib/systemd/system/nvidia-fabricmanager.service" ]; then
+      echo "tree ${tree} has no nvidia-fabricmanager.service for ${dropin} to apply to"
+      exit 1
+    fi
+  done
+
+  local fake
+  fake=$(mktemp -d)
+  # fake lspci: the listing comes from $fake/devices, per-device details from $fake/<bdf>.
+  # an absent file makes that call fail, like lspci would. $fake/nvswitch stands in for
+  # /proc/driver/nvidia-nvswitch/devices.
+  cat > "${fake}/lspci" << 'EOF'
+#!/usr/bin/env bash
+dir=$(dirname "$0")
+if [[ "$*" == *-mm* ]]; then
+  cat "${dir}/devices" 2> /dev/null || exit 1
+else
+  while [[ "$1" != "-s" ]]; do shift; done
+  cat "${dir}/$2" 2> /dev/null || exit 1
+fi
+EOF
+  chmod 0755 "${fake}/lspci"
+
+  # `lspci -D -n -mm` lines. Fields: domain:bus:slot.fn "class" "vendor" "device" [-rREV]
+  # "subvendor" "subdevice". Vendor, class and device IDs match /usr/share/hwdata/pci.ids,
+  # except the Blackwell GPUs (2901, 2941), which are newer than it and come from the
+  # nvidia-open-supported-devices-*.txt lists.
+  # captured verbatim from a g4dn.xlarge: 1eb8 = TU104GL [Tesla T4]
+  local t4='0000:00:1e.0 "0302" "10de" "1eb8" -ra1 "10de" "12a2"'
+  # captured verbatim from a p4d.24xlarge: 20b0 = GA100 [A100 SXM4 40GB]
+  local a100='0000:10:1c.0 "0302" "10de" "20b0" -ra1 "10de" "134f"'
+  # captured verbatim from a p4d.24xlarge: 1af1 = GA100 [A100 NVSwitch], class 0680
+  local nvswitch='0000:80:1a.0 "0680" "10de" "1af1" -ra1 "10de" "13b8"'
+  # hand-written, not captured: 2901 = B200, 2941 = GB200 (on a non-zero PCI domain, 0008, so the
+  # domain prefix gets exercised), 1021 = MT2910 Family [ConnectX-7] with class 0207 (Infiniband
+  # controller)
+  local b200='0000:51:00.0 "0302" "10de" "2901" -ra1 "10de" "1999"'
+  local gb200='0008:06:00.0 "0302" "10de" "2941" -ra1 "10de" "2046"'
+  local cx7='0000:73:00.0 "0207" "15b3" "1021" "15b3" "0087"'
+
+  # name|expected exit|lspci listing (empty = lspci fails)|cx7 details (empty = lspci -s fails)
+  # |NVSwitches registered in procfs (empty = none; the directory exists but is empty)
+  local cases=(
+    "single-gpu, no fabric|1|${t4}||"
+    "hgx a100, nvswitches on pci, driver not loaded yet|0|${a100}"$'\n'"${nvswitch}||"
+    "hgx a100, nvswitches registered by the driver|0|${a100}"$'\n'"${nvswitch}||0000:80:1a.0"
+    "nvswitch registered but not on lspci|0|${a100}||0000:80:1a.0"
+    "hgx b200, sw_mng bridge|0|${b200}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data\n    [V2] Vendor specific: SW_MNG|"
+    "hgx b200, bridge unreadable|0|${b200}"$'\n'"${cx7}||"
+    "cx7 without sw_mng|1|${t4}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data|"
+    "gb200, no local fabric|1|${gb200}||"
+    "lspci fails|0|||"
+  )
+
+  local case name expected devices details registered actual
+  for case in "${cases[@]}"; do
+    IFS='|' read -r name expected devices details registered <<< "${case//$'\n'/\\n}"
+    rm -rf "${fake}/devices" "${fake}/0000:73:00.0" "${fake}/nvswitch"
+    mkdir "${fake}/nvswitch"
+    [ -n "${devices}" ] && printf '%b\n' "${devices}" > "${fake}/devices"
+    [ -n "${details}" ] && printf '%b\n' "${details}" > "${fake}/0000:73:00.0"
+    [ -n "${registered}" ] && mkdir "${fake}/nvswitch/${registered}"
+    actual=0
+    NVSWITCH_PROCFS_DEVICES="${fake}/nvswitch" PATH="${fake}:${PATH}" "${condition}" > /dev/null || actual=$?
+    if [ "${actual}" != "${expected}" ]; then
+      echo "${condition}: case '${name}' exited ${actual}, expected ${expected}"
+      exit 1
+    fi
+  done
+  rm -rf "${fake}"
+}
+
 if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
   for tree in "${NVIDIA_TREES[@]}"; do
     validate_nvidia_tree_version "${tree}"
@@ -227,6 +320,8 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
       exit 1
     fi
   done
+
+  validate_nvidia_fabricmanager_condition
 
   if [ ! -f "/etc/systemd/system/set-nvidia-clocks.service" ]; then
     echo "set-nvidia-clocks.service was not staged at build time"
