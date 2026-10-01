@@ -3,16 +3,19 @@
 # ExecCondition for nvidia-fabricmanager.service.
 #
 # Fabric Manager configures the NVSwitch fabric on hosts that manage one. Everywhere else
-# (single-GPU and PCIe-only instances, and GB200/GB300 whose NVSwitches are managed off-host
-# by the rack's switch trays) it exits with NV_WARN_NOTHING_TO_DO and leaves a failed unit.
+# (single-GPU and PCIe-only instances, and systems like GB200/GB300 NVL72 whose NVSwitches sit
+# off-host in the rack's switch trays) it exits with NV_WARN_NOTHING_TO_DO and leaves a failed unit.
 #
-#   exit 0  this host manages NVSwitches, or the answer can't be determined: start
+#   exit 0  this host has an NVSwitch, or the answer can't be determined: start
 #   exit 1  there is nothing to manage: systemd marks the unit skipped rather than failed
+#
+# A false negative (skipping where Fabric Manager is needed) is far worse than a false positive
+# (one failed unit, the behavior before this condition existed), so every check below only
+# looks for evidence to start, and anything inconclusive starts.
 #
 # systemd treats every exit from 1 to 254 as "skip", so an unexpected error here would
 # silently skip Fabric Manager on a host that needs it. errexit and nounset are deliberately
-# left off so that only an explicit decision below can return 1, and every path that can't
-# reach a decision starts Fabric Manager, same as before this condition existed.
+# left off so that only the explicit decision at the end can return 1.
 
 set -o pipefail
 
@@ -27,14 +30,11 @@ readonly MELLANOX_VENDOR_ID="15b3"
 # kernel-open/nvidia/linux_nvswitch.c and the define in kernel-open/nvidia/nv-pci-table.c of
 # https://github.com/NVIDIA/open-gpu-kernel-modules
 readonly NVSWITCH_PCI_CLASS_CODE="0680"
-# GPUs whose NVSwitches are managed off-host by the rack's switch trays, so the guest never runs
-# Fabric Manager. Device IDs are from NVIDIA's supported-gpus.json, as captured in the
-# nvidia-open-supported-devices-*.txt lists alongside this script.
-readonly OFF_HOST_FABRIC_DEVICE_IDS=(
-  "2941" # GB200 (570 and later)
-  "31c2" # GB300 (580 and later)
-  "31c3" # GB300 (595 and later)
-)
+# When the nvidia driver's NVSwitch probe claims a device, it adds an entry for it here
+# (nvswitch_procfs_device_add in kernel-open/nvidia/procfs_nvswitch.c, same repo). It's the
+# check NVIDIA's gpu-driver-container uses to decide whether to start Fabric Manager.
+# Overridable only so validate.sh can exercise this check.
+readonly NVSWITCH_PROCFS_DEVICES="${NVSWITCH_PROCFS_DEVICES:-/proc/driver/nvidia-nvswitch/devices}"
 
 function start() {
   echo "fabricmanager-condition: ${1}, starting"
@@ -45,6 +45,13 @@ function skip() {
   echo "fabricmanager-condition: ${1}, skipping"
   exit 1
 }
+
+# HGX A100/H100/H200: the nvidia driver has registered at least one NVSwitch. nvidia-setup.service
+# loads the driver and is ordered before Fabric Manager, so on these hosts the directory should
+# be populated by the time this runs; the lspci check below covers the case where it isn't.
+if [[ -n "$(ls -A "${NVSWITCH_PROCFS_DEVICES}" 2> /dev/null)" ]]; then
+  start "found NVSwitch devices registered by the nvidia driver"
+fi
 
 # One line per PCI device, from `lspci -D -n -mm` with the quotes stripped. For example, three of
 # the lines on a p4d.24xlarge:
@@ -72,26 +79,12 @@ if ! PCI_DEVICES="$(lspci -D -n -mm | tr -d '"')" || [[ -z "${PCI_DEVICES}" ]]; 
 fi
 readonly PCI_DEVICES
 
-# The awk checks below all follow one pattern: `{ found = 1 }` runs for each matching line, and
+# The awk checks below follow one pattern: `{ found = 1 }` runs for each matching line, and
 # `END { exit !found }` makes awk exit 0 if any line matched and 1 if none did, so each check can
-# be used directly as an `if` condition. tolower() is defensive: lspci prints lowercase hex, but
-# the nvidia-open-supported-devices-*.txt lists these IDs come from use uppercase (0x31C2).
+# be used directly as an `if` condition. tolower() is defensive: lspci prints lowercase hex.
 
-function has_off_host_fabric_gpu() {
-  local device_id
-  for device_id in "${OFF_HOST_FABRIC_DEVICE_IDS[@]}"; do
-    # match an NVIDIA device with this device ID, e.g. for 2941 (GB200):
-    #   0008:06:00.0 0302 10de 2941 -ra1 10de 2046    <- match
-    #   0000:00:1e.0 0302 10de 1eb8 -ra1 10de 12a2    <- no match (a T4)
-    if awk -v vendor="${NVIDIA_VENDOR_ID}" -v device="${device_id}" \
-      'tolower($3) == vendor && tolower($4) == device { found = 1 } END { exit !found }' <<< "${PCI_DEVICES}"; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# HGX A100/H100/H200: the NVSwitches are PCI devices on the host
+# HGX A100/H100/H200, independent of whether the driver has loaded yet: the NVSwitches are PCI
+# devices on the host
 function has_nvswitch() {
   # match any NVIDIA device of class 0680, whatever its device ID:
   #   0000:80:1a.0 0680 10de 1af1 -ra1 10de 13b8    <- match (an A100 NVSwitch)
@@ -120,12 +113,6 @@ function has_nvswitch_management_bridge() {
   done
   return 1
 }
-
-# the off-host check goes first: those systems never need Fabric Manager in the guest, whatever
-# the NVSwitch checks below would find
-if has_off_host_fabric_gpu; then
-  skip "NVSwitch fabric is managed off-host"
-fi
 
 if has_nvswitch; then
   start "found NVSwitch devices"

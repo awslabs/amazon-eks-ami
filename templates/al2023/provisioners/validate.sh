@@ -177,9 +177,10 @@ validate_nvidia_supported_device_list() {
   fi
 }
 
-# The fabricmanager condition decides from lspci alone, so it can be exercised against canned
-# lspci output. Any exit from 1-254 makes systemd skip the unit, which is why a broken condition
-# must fail the build rather than ship: it would silently skip Fabric Manager on NVSwitch hosts.
+# The fabricmanager condition decides from lspci and the driver's NVSwitch procfs entries alone,
+# so it can be exercised against canned inputs. Any exit from 1-254 makes systemd skip the unit,
+# which is why a broken condition must fail the build rather than ship: it would silently skip
+# Fabric Manager on NVSwitch hosts.
 validate_nvidia_fabricmanager_condition() {
   local condition=/etc/eks/nvidia-fabricmanager-condition.sh
   local dropin=/etc/systemd/system/nvidia-fabricmanager.service.d/10-condition.conf
@@ -192,11 +193,22 @@ validate_nvidia_fabricmanager_condition() {
     echo "${dropin} does not gate nvidia-fabricmanager.service on ${condition}"
     exit 1
   fi
+  # systemd applies a drop-in only to the unit whose name exactly matches the drop-in directory.
+  # The unit itself isn't installed until first boot (setup copies it from the chosen tree), so
+  # check the name it will be installed under in every tree.
+  local tree
+  for tree in "${NVIDIA_TREES[@]}"; do
+    if [ ! -f "/opt/nvidia/${tree}/usr/lib/systemd/system/nvidia-fabricmanager.service" ]; then
+      echo "tree ${tree} has no nvidia-fabricmanager.service for ${dropin} to apply to"
+      exit 1
+    fi
+  done
 
   local fake
   fake=$(mktemp -d)
   # fake lspci: the listing comes from $fake/devices, per-device details from $fake/<bdf>.
-  # an absent file makes that call fail, like lspci would.
+  # an absent file makes that call fail, like lspci would. $fake/nvswitch stands in for
+  # /proc/driver/nvidia-nvswitch/devices.
   cat > "${fake}/lspci" << 'EOF'
 #!/usr/bin/env bash
 dir=$(dirname "$0")
@@ -227,24 +239,29 @@ EOF
   local cx7='0000:73:00.0 "0207" "15b3" "1021" "15b3" "0087"'
 
   # name|expected exit|lspci listing (empty = lspci fails)|cx7 details (empty = lspci -s fails)
+  # |NVSwitches registered in procfs (empty = none; the directory exists but is empty)
   local cases=(
-    "single-gpu, no fabric|1|${t4}|"
-    "hgx a100, nvswitches on pci|0|${a100}"$'\n'"${nvswitch}|"
-    "hgx b200, sw_mng bridge|0|${b200}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data\n    [V2] Vendor specific: SW_MNG"
-    "hgx b200, bridge unreadable|0|${b200}"$'\n'"${cx7}|"
-    "cx7 without sw_mng|1|${t4}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data"
-    "gb200, fabric off-host|1|${gb200}"$'\n'"${cx7}|    [V2] Vendor specific: SW_MNG"
-    "lspci fails|0||"
+    "single-gpu, no fabric|1|${t4}||"
+    "hgx a100, nvswitches on pci, driver not loaded yet|0|${a100}"$'\n'"${nvswitch}||"
+    "hgx a100, nvswitches registered by the driver|0|${a100}"$'\n'"${nvswitch}||0000:80:1a.0"
+    "nvswitch registered but not on lspci|0|${a100}||0000:80:1a.0"
+    "hgx b200, sw_mng bridge|0|${b200}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data\n    [V2] Vendor specific: SW_MNG|"
+    "hgx b200, bridge unreadable|0|${b200}"$'\n'"${cx7}||"
+    "cx7 without sw_mng|1|${t4}"$'\n'"${cx7}|Capabilities: [48] Vital Product Data|"
+    "gb200, no local fabric|1|${gb200}||"
+    "lspci fails|0|||"
   )
 
-  local case name expected devices details actual
+  local case name expected devices details registered actual
   for case in "${cases[@]}"; do
-    IFS='|' read -r name expected devices details <<< "${case//$'\n'/\\n}"
-    rm -f "${fake}/devices" "${fake}/0000:73:00.0"
+    IFS='|' read -r name expected devices details registered <<< "${case//$'\n'/\\n}"
+    rm -rf "${fake}/devices" "${fake}/0000:73:00.0" "${fake}/nvswitch"
+    mkdir "${fake}/nvswitch"
     [ -n "${devices}" ] && printf '%b\n' "${devices}" > "${fake}/devices"
     [ -n "${details}" ] && printf '%b\n' "${details}" > "${fake}/0000:73:00.0"
+    [ -n "${registered}" ] && mkdir "${fake}/nvswitch/${registered}"
     actual=0
-    PATH="${fake}:${PATH}" "${condition}" > /dev/null || actual=$?
+    NVSWITCH_PROCFS_DEVICES="${fake}/nvswitch" PATH="${fake}:${PATH}" "${condition}" > /dev/null || actual=$?
     if [ "${actual}" != "${expected}" ]; then
       echo "${condition}: case '${name}' exited ${actual}, expected ${expected}"
       exit 1
