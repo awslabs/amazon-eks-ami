@@ -1,7 +1,7 @@
 [Unit]
 Description=NVIDIA package install
-After=nvidia-driver-resolve.service usr-bin.mount usr-lib64.mount usr-share.mount
-Wants=usr-bin.mount usr-lib64.mount usr-share.mount
+After=nvidia-driver-resolve.service nvidia-usr-copy@bin.service nvidia-usr-copy@lib64.service nvidia-usr-copy@share.service
+Requires=nvidia-usr-copy@bin.service nvidia-usr-copy@lib64.service nvidia-usr-copy@share.service
 # this service should run before cloud-final in case user data scripts
 # interact with dnf or have assumptions about packages already being installed
 Before=cloud-final.service

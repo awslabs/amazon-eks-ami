@@ -1,0 +1,18 @@
+[Unit]
+Description=Copy NVIDIA driver files into /usr/%i
+DefaultDependencies=no
+After=nvidia-driver-resolve.service
+Wants=nvidia-driver-resolve.service
+ConditionPathExists=/opt/nvidia/current/.driver-flavor
+ConditionPathExists=!/opt/nvidia/current/.usr-%i-copied
+RefuseManualStart=yes
+RefuseManualStop=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/bash -c 'shopt -s dotglob; cp -a --reflink=auto /opt/nvidia/current/usr/%i/* /usr/%i/'
+ExecStartPost=/usr/bin/touch /opt/nvidia/current/.usr-%i-copied
+
+[Install]
+WantedBy=multi-user.target

@@ -221,9 +221,7 @@ sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-driver-resolve.service" /etc/sys
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-setup.service" /etc/systemd/system/nvidia-setup.service
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-package-install.service" /etc/systemd/system/nvidia-package-install.service
 sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-ldcache-update.service" /etc/systemd/system/nvidia-ldcache-update.service
-sudo install -m 0644 "${WORKING_DIR}/gpu/usr-bin.mount" /etc/systemd/system/usr-bin.mount
-sudo install -m 0644 "${WORKING_DIR}/gpu/usr-lib64.mount" /etc/systemd/system/usr-lib64.mount
-sudo install -m 0644 "${WORKING_DIR}/gpu/usr-share.mount" /etc/systemd/system/usr-share.mount
+sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-usr-copy@.service" /etc/systemd/system/nvidia-usr-copy@.service
 
 # the fabricmanager unit itself is extracted from the tree at first boot, but a drop-in can be
 # staged ahead of its unit. it gates the start on the host actually managing an NVSwitch fabric.
@@ -236,16 +234,13 @@ sudo install -m 0644 "${WORKING_DIR}/gpu/nvidia-fabricmanager-condition.conf" \
 sudo install -m 0644 "${WORKING_DIR}/gpu/set-nvidia-clocks.service" \
   /etc/systemd/system/set-nvidia-clocks.service
 
-# Overlay upperdir/workdir. Must exist before mount units activate.
-sudo mkdir -p /var/lib/eks/nvidia/{bin,lib64,share}/{upper,work}
-
 sudo systemctl enable nvidia-driver-resolve.service \
   nvidia-setup.service \
   nvidia-package-install.service \
   nvidia-ldcache-update.service \
-  usr-bin.mount \
-  usr-lib64.mount \
-  usr-share.mount
+  nvidia-usr-copy@bin.service \
+  nvidia-usr-copy@lib64.service \
+  nvidia-usr-copy@share.service
 
 if ! [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]; then
   # ISO partitions use the AL NVIDIA repo, which does not include module streams
