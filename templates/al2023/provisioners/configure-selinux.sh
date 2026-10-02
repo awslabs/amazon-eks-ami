@@ -27,8 +27,8 @@ validate_directory_selinux_contexts /etc/systemd/system
 sudo restorecon -R -v /etc/eks
 validate_directory_selinux_contexts /etc/eks
 
-# The NVIDIA driver trees surface at /usr through overlay mounts and at /etc through a boot-time
-# copy. These equivalencies give each tree path the label its /usr or /etc counterpart would get.
+# The NVIDIA driver trees are copied into /usr and /etc at boot, preserving labels. These
+# equivalencies give each tree path the label its /usr or /etc counterpart would get.
 if [ -d /opt/nvidia ]; then
   for NVIDIA_TREE in lts pb current; do
     sudo semanage fcontext -a -e /usr "/opt/nvidia/${NVIDIA_TREE}/usr"
