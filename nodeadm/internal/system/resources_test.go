@@ -38,6 +38,27 @@ func TestGetOnlineMemory(t *testing.T) {
 			},
 			expected: 0,
 		},
+		{
+			name: "block with no online file counts as online",
+			files: map[string]string{
+				"/sys/devices/system/memory/block_size_bytes": "8000000",
+				"/sys/devices/system/memory/memory0/online":   "1",
+				// memory1 is online by default and exposes no "online" file;
+				// mark the block directory present via another sysfs file.
+				"/sys/devices/system/memory/memory1/valid_zones": "Normal",
+			},
+			expected: 0x8000000 * 2,
+		},
+		{
+			name: "mixed: explicit offline excluded, missing-file counted online",
+			files: map[string]string{
+				"/sys/devices/system/memory/block_size_bytes":    "8000000",
+				"/sys/devices/system/memory/memory0/online":      "1",
+				"/sys/devices/system/memory/memory1/online":      "0",
+				"/sys/devices/system/memory/memory2/valid_zones": "Normal", // no online file -> online
+			},
+			expected: 0x8000000 * 2,
+		},
 	}
 
 	for _, tt := range tests {
