@@ -2,8 +2,10 @@ package kubelet
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/aws/smithy-go/ptr"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
@@ -144,4 +146,41 @@ func TestGenerateKubeletConfig(t *testing.T) {
 	assert.Equal(t, "10.0.0.1", k.flags["node-ip"])
 	assert.Equal(t, "external", k.flags["cloud-provider"])
 	assert.Equal(t, "aws:///us-west-2a/i-1234567890abcdef0", *cfg.ProviderID)
+}
+
+func TestResolverConfig(t *testing.T) {
+	tests := []struct {
+		name     string
+		osDistro api.OSDistro
+		expected *string
+	}{
+		{
+			name:     "al2027 uses the systemd-resolved uplink resolv.conf",
+			osDistro: api.OSDistroAL2027,
+			expected: ptr.String("/run/systemd/resolve/resolv.conf"),
+		},
+		{
+			name:     "al2023 keeps the kubelet default",
+			osDistro: api.OSDistroAL2023,
+		},
+		{
+			name: "unset distro keeps the kubelet default",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kubeletConfig := defaultKubeletSubConfig()
+			kubeletConfig.withResolverConfig(tt.osDistro)
+			assert.Equal(t, tt.expected, kubeletConfig.ResolverConfig)
+
+			data, err := json.Marshal(kubeletConfig)
+			assert.NoError(t, err)
+			if tt.expected == nil {
+				assert.NotContains(t, string(data), "resolvConf")
+			} else {
+				assert.Contains(t, string(data), `"resolvConf":"/run/systemd/resolve/resolv.conf"`)
+			}
+		})
+	}
 }

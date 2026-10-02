@@ -33,6 +33,11 @@ const (
 	kubeletConfigFile = "config.json"
 	kubeletConfigDir  = "config.json.d"
 	kubeletConfigPerm = 0644
+
+	// systemdResolvedUplinkResolvConf is maintained by systemd-resolved and
+	// always lists the real upstream DNS servers, never the 127.0.0.53 stub.
+	// see: https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html#/etc/resolv.conf
+	systemdResolvedUplinkResolvConf = "/run/systemd/resolve/resolv.conf"
 )
 
 // kubeletConfig is an internal-only representation of the kubelet configuration
@@ -62,6 +67,7 @@ type kubeletConfig struct {
 	ProviderID                      *string                          `json:"providerID,omitempty"`
 	ReadOnlyPort                    int                              `json:"readOnlyPort"`
 	RegisterWithTaints              []v1.Taint                       `json:"registerWithTaints,omitempty"`
+	ResolverConfig                  *string                          `json:"resolvConf,omitempty"`
 	SerializeImagePulls             bool                             `json:"serializeImagePulls"`
 	ServerTLSBootstrap              bool                             `json:"serverTLSBootstrap"`
 	ShutdownGracePeriod             *metav1.Duration                 `json:"shutdownGracePeriod,omitempty"`
@@ -145,6 +151,19 @@ func (ksc *kubeletConfig) withFallbackClusterDns(cluster *api.ClusterDetails) er
 	}
 	ksc.ClusterDNS = []string{clusterDns}
 	return nil
+}
+
+// On Amazon Linux 2027, point kubelet at systemd-resolved's uplink resolv.conf
+// so pods never inherit the 127.0.0.53 stub address. Inside a pod's network
+// namespace that address is the pod's own loopback, which makes CoreDNS forward
+// to itself and exit. This is the fix upstream documents for systemd-resolved:
+// https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/#known-issues
+// A resolvConf in the user's kubelet config (the 40-nodeadm.conf drop-in) or a
+// --resolv-conf flag still takes precedence.
+func (ksc *kubeletConfig) withResolverConfig(osDistro api.OSDistro) {
+	if osDistro == api.OSDistroAL2027 {
+		ksc.ResolverConfig = ptr.String(systemdResolvedUplinkResolvConf)
+	}
 }
 
 // To support worker nodes to continue to communicate and connect to local cluster even when the Outpost
@@ -317,6 +336,7 @@ func (k *kubelet) generateKubeletConfig(cfg *api.NodeConfig) (*kubeletConfig, er
 	kubeletConfig.withDefaultReservedResources(cfg, k.resources)
 	kubeletConfig.withImageServiceEndpoint(cfg, k.resources)
 	kubeletConfig.withRuntimeCgroups(k.flags)
+	kubeletConfig.withResolverConfig(cfg.Status.OSDistro)
 
 	nodeLabelFuncs := map[string]LabelProvider{}
 	if semver.Compare(cfg.Status.KubeletVersion, "v1.35.0") >= 0 {
