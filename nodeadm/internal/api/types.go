@@ -41,7 +41,16 @@ type NodeConfigStatus struct {
 	Instance       InstanceDetails `json:"instance,omitempty"`
 	Defaults       DefaultOptions  `json:"default,omitempty"`
 	KubeletVersion string          `json:"kubeletVersion,omitempty"`
+	OSDistro       OSDistro        `json:"osDistro,omitempty"`
 }
+
+// OSDistro identifies the host operating system nodeadm is running on.
+type OSDistro string
+
+const (
+	OSDistroAL2023 OSDistro = "al2023"
+	OSDistroAL2027 OSDistro = "al2027"
+)
 
 type InstanceDetails struct {
 	ID               string `json:"id,omitempty"`

@@ -162,6 +162,15 @@ func (c *initCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOpti
 // enrichConfig populates the internal .status portion of the NodeConfig, used
 // only for internal implementation details.
 func (*initCmd) enrichConfig(ctx context.Context, log *zap.Logger, cfg *api.NodeConfig, opts *cli.GlobalOptions) error {
+
+	log.Info("Detecting OS distro..")
+	osDistro, err := system.GetOSDistro(system.RealFileSystem{})
+	if err != nil {
+		return err
+	}
+	cfg.Status.OSDistro = osDistro
+	log.Info("Detected OS distro", zap.String("distro", string(osDistro)))
+
 	log.Info("Fetching kubelet version..")
 	kubeletVersion, err := kubelet.GetKubeletVersion()
 	if err != nil {
