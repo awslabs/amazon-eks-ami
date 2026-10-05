@@ -66,14 +66,6 @@ sudo dnf install -y \
   wget \
   mdadm \
   pigz
-
-# AL2027 namespaces kernel packages by minor version (e.g. kernel7.1), but each
-# keeps a virtual Provides for the unversioned name, so the plain names resolve
-# without hardcoding a version here.
-sudo dnf -y install \
-  kernel-devel \
-  kernel-headers
-
 # versionlock kernel packages so they remain consistent.
 sudo dnf versionlock add 'kernel*'
 
