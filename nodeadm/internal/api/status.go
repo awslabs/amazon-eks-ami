@@ -14,7 +14,7 @@ import (
 // Fetch information about the ec2 instance using IMDS data. This information is
 // stored into the internal config to avoid redundant calls to IMDS when looking
 // for instance metadata.
-func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2Client *ec2.Client, imdsClient imds.IMDSClient) (*InstanceDetails, error) {
+func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, osDistro OSDistro, ec2Client *ec2.Client, imdsClient imds.IMDSClient) (*InstanceDetails, error) {
 	instanceIdenitityDocument, err := imdsClient.GetInstanceIdentityDocument(ctx)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func GetInstanceDetails(ctx context.Context, featureGates map[Feature]bool, ec2C
 	}
 
 	var privateDNSName string
-	if !IsFeatureEnabled(InstanceIdNodeName, featureGates) {
+	if !UseInstanceIdNodeName(featureGates, osDistro) {
 		privateDNSName, err = getPrivateDNSName(ec2Client, instanceIdenitityDocument.InstanceID)
 		if err != nil {
 			return nil, err

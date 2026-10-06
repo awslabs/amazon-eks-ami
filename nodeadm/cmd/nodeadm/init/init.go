@@ -203,7 +203,7 @@ func (*initCmd) enrichConfig(ctx context.Context, log *zap.Logger, cfg *api.Node
 		// we'll give up after approximately 10 minutes
 		awsConfig.RetryMaxAttempts = 30
 	}
-	instanceDetails, err := api.GetInstanceDetails(ctx, cfg.Spec.FeatureGates, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
+	instanceDetails, err := api.GetInstanceDetails(ctx, cfg.Spec.FeatureGates, cfg.Status.OSDistro, ec2.NewFromConfig(awsConfig), imds.DefaultClient())
 	if err != nil {
 		return err
 	}

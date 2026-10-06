@@ -28,3 +28,20 @@ func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {
 	}
 	return false
 }
+
+// UseInstanceIdNodeName reports whether the node should be named after its EC2
+// instance ID rather than its private DNS name. It is the single source of
+// truth for that decision, used both when enriching status (to skip the EC2
+// private-DNS-name lookup) and when setting kubelet's hostname-override.
+//
+// Enabled when the InstanceIdNodeName gate is explicitly on (any OS), or when
+// the host is AL2027 and the user has not set the gate. AL2027 defaults to
+// instance-id naming because the private-DNS-name scheme depends on resolver
+// behavior AL2027 no longer provides by default. An explicit user setting always
+// wins, including turning it off on AL2027.
+func UseInstanceIdNodeName(featureGates map[Feature]bool, osDistro OSDistro) bool {
+	if enabled, set := featureGates[InstanceIdNodeName]; set {
+		return enabled
+	}
+	return osDistro == OSDistroAL2027
+}
