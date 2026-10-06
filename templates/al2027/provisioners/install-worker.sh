@@ -132,9 +132,6 @@ sudo systemctl enable ebs-initialize-bin@containerd
 
 sudo dnf install -y nerdctl
 
-# TODO: are these necessary? What do they do?
-sudo dnf install -y device-mapper-persistent-data lvm2
-
 ################################################################################
 ### Kubernetes #################################################################
 ################################################################################
