@@ -56,14 +56,10 @@ sudo dnf install -y \
   chrony \
   conntrack \
   nftables \
-  ec2-instance-connect \
   ethtool \
-  ipvsadm \
   jq \
   nfs-utils \
   socat \
-  unzip \
-  wget \
   mdadm \
   pigz
 # versionlock kernel packages so they remain consistent.
