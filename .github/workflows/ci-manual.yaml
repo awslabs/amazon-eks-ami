@@ -47,9 +47,15 @@ permissions:
   contents: read
   id-token: write
 
+# one run per PR; never cancel, the CI jobs tear down their clusters inline
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: awslabs-release-4-core
+    timeout-minutes: 5
     outputs:
       git_sha_short: ${{ steps.variables.outputs.git_sha_short }}
       workflow_run_url: ${{ steps.variables.outputs.workflow_run_url }}
@@ -60,7 +66,8 @@ jobs:
         echo "workflow_run_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
 
   notify-start:
-    runs-on: ubuntu-latest
+    runs-on: awslabs-release-4-core
+    timeout-minutes: 5
     needs:
       - setup
     steps:
@@ -91,7 +98,8 @@ jobs:
 
   notify-outcome:
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: awslabs-release-4-core
+    timeout-minutes: 5
     needs:
       - setup
       - ci

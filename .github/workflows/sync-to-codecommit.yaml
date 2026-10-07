@@ -2,13 +2,18 @@ name: '[Sync] Push to CodeCommit'
 
 on:
   schedule:
-    # twice an hour, at :00 and :30
-    - cron:  '0,30 * * * *'
+    # twice an hour, at :17 and :47
+    - cron:  '17,47 * * * *'
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   mirror:
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     # These permissions are needed to interact with GitHub's OIDC Token endpoint.
     permissions:
       id-token: write

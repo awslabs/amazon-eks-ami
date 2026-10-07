@@ -2,17 +2,22 @@ name: '[CI] Canary'
 on:
   schedule:
     # twice daily at 8pm and 8am PST
-    - cron: "0 3,15 * * *"
+    - cron: "11 3,15 * * *"
 
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   setup:
     # Don't run if this is on a fork
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       timestamp: ${{ steps.variables.outputs.timestamp }}
     steps:
