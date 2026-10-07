@@ -3,16 +3,20 @@ on:
   workflow_dispatch:
   schedule:
     # once a day
-    - cron: "0 0 * * *"
+    - cron: "13 0 * * *"
 permissions:
   id-token: write
   contents: write
   pull-requests: write
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 jobs:
   update-max-pods:
     # this workflow will always fail in forks; bail if this isn't running in the upstream
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # 6.3.0
         with:

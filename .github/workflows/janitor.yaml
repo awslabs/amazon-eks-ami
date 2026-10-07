@@ -2,16 +2,20 @@ name: "Janitor"
 on:
   workflow_dispatch:
   schedule:
-    # hourly at the top of the hour
-    - cron: "0 * * * *"
+    # hourly, off the top of the hour
+    - cron: "23 * * * *"
 permissions:
   id-token: write
   contents: read
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 jobs:
   kubetest2-sweeper:
     # disable in forks
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # 7.0.1
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # 6.3.0
@@ -25,6 +29,7 @@ jobs:
     # disable in forks
     if: github.repository == 'awslabs/amazon-eks-ami'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # 7.0.1
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # 6.3.0

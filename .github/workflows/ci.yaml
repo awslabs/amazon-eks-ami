@@ -38,7 +38,8 @@ on:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: awslabs-release-4-core
+    timeout-minutes: 5
     outputs:
       kubernetes_versions: ${{ steps.variables.outputs.kubernetes_versions }}
       ci_step_name_prefix: ${{ steps.variables.outputs.ci_step_name_prefix }}
@@ -61,7 +62,9 @@ jobs:
           echo "kubernetes_versions=$(jq -Rn --arg input '${{ inputs.k8s_versions }}' '($input | split(","))' | jq -c .)" >> $GITHUB_OUTPUT
         fi
   kubernetes-versions:
-    runs-on: ubuntu-latest
+    runs-on: awslabs-release-4-core
+    # observed 57-70 min, one 102 min; stays under the 150 min role session
+    timeout-minutes: 150
     name: ${{ matrix.k8s_version }} / ${{ matrix.os_distro }}
     needs:
       - setup

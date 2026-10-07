@@ -4,15 +4,19 @@ on:
   workflow_dispatch:
   schedule:
     # every Monday
-    - cron: '0 0 * * 1'
+    - cron: '19 0 * * 1'
 env:
   GOPROXY: https://proxy.golang.org
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 jobs:
   update-deps:
     if: ${{ github.repository == 'awslabs/amazon-eks-ami' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
