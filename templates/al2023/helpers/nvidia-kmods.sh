@@ -78,7 +78,7 @@ function build-grid-kmods() {
 
   local RUNFILE_NAME="NVIDIA-Linux-x86_64-${DRIVER_VERSION}-grid-aws.run"
   local RUNFILE_KEY
-  RUNFILE_KEY=$(aws s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
+  RUNFILE_KEY=$(aws_s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
     | grep -F "${RUNFILE_NAME}" \
     | sort -k1,2 \
     | tail -1 \
@@ -96,7 +96,7 @@ function build-grid-kmods() {
   mkdir -p "${GRID_DIR}"
 
   echo "Building GRID kernel modules for NVIDIA ${DRIVER_VERSION}"
-  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${RUNFILE_KEY}" "${RUNFILE_PATH}"
+  aws_s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${RUNFILE_KEY}" "${RUNFILE_PATH}"
   chmod +x "${RUNFILE_PATH}"
   "${RUNFILE_PATH}" --extract-only --target "${EXTRACT_DIR}"
 

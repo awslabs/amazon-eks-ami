@@ -28,6 +28,9 @@ validate_env_set KUBERNETES_VERSION
 validate_env_set RUNC_VERSION
 validate_env_set WORKING_DIR
 
+# shellcheck disable=SC1090
+source "${WORKING_DIR}/helpers/aws-clients.sh"
+
 ################################################################################
 ### Machine Architecture #######################################################
 ################################################################################
@@ -144,7 +147,7 @@ fi
 ###############################################################################
 sudo dnf install -y runc-${RUNC_VERSION}
 if [[ "$INSTALL_CONTAINERD_FROM_S3" == "true" ]]; then
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
+  aws_s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm ${WORKING_DIR}/containerd/
   sudo dnf install -y ${WORKING_DIR}/containerd/containerd-${CONTAINERD_VERSION}.${MACHINE}.rpm
 else
   sudo dnf install -y containerd-${CONTAINERD_VERSION}
@@ -187,10 +190,7 @@ for binary in "${BINARIES[@]}"; do
     "$binary.sha256"
   )
   for file in "${FILES[@]}"; do
-    if ! aws s3 cp --region $BINARY_BUCKET_REGION "$S3_PATH/$file" .; then
-      echo "Fetching ${file} from s3 failed, trying again with unauthenticated request."
-      aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION "$S3_PATH/$file" .
-    fi
+    aws_s3 cp --region $BINARY_BUCKET_REGION "$S3_PATH/$file" .
   done
 
   sudo sha256sum -c $binary.sha256
@@ -212,10 +212,7 @@ sudo systemctl enable ebs-initialize-bin@kubelet
 
 ECR_CREDENTIAL_PROVIDER_BINARY="ecr-credential-provider"
 
-if ! aws s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .; then
-  echo "Fetching ${ECR_CREDENTIAL_PROVIDER_BINARY} from s3 failed, trying again with unauthenticated request."
-  aws s3 cp --no-sign-request --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
-fi
+aws_s3 cp --region $BINARY_BUCKET_REGION $S3_PATH/$ECR_CREDENTIAL_PROVIDER_BINARY .
 
 sudo chmod +x $ECR_CREDENTIAL_PROVIDER_BINARY
 sudo mkdir -p /etc/eks/image-credential-provider
