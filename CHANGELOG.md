@@ -2,6 +2,700 @@
 
 <!--new-changelog-entry-placeholder-->
 
+# AMI Release v20261003
+<!-- Release notes generated using configuration in .github/release.yaml at c087c7fbebef99f2cfad29a7fb7b327c8c276d2b -->
+
+> [!IMPORTANT]
+> This release contains `kernel 6.12.110` in Amazon Linux 2023 AMIs which might cause kernel panic on certain instances for kubernetes versions 1.31 to 1.35. See [https://github.com/awslabs/amazon-eks-ami/issues/2845](https://github.com/awslabs/amazon-eks-ami/issues/2845)
+
+## What's Changed
+* fix(nvidia): only start fabric manager on hosts with an NVSwitch fabric by @aaithal in https://github.com/awslabs/amazon-eks-ami/pull/2840
+* fix(nvidia): replace /usr overlay mounts with reflink copies so dnf updates survive reboot by @kummatty in https://github.com/awslabs/amazon-eks-ami/pull/2841
+
+## New Contributors
+* @aaithal made their first contribution in https://github.com/awslabs/amazon-eks-ami/pull/2840
+
+**Full Changelog**: https://github.com/awslabs/amazon-eks-ami/compare/v20260930...v20261003
+
+---
+
+<h2>AMI Details</h2>
+
+<table>
+  <tr>
+    <th>AMI Type</th>
+    <th>Source AMI Name (K8s 1.36 – 1.37)</th>
+    <th>Source AMI Name (K8s 1.33 – 1.35)</th>
+    <th>Source AMI Name (K8s 1.31 – 1.32)</th>
+  </tr>
+  <tr>
+    <td>AL2023_ARM_64_NVIDIA</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.18-arm64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-arm64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-arm64</td>
+  </tr>
+  <tr>
+    <td>AL2023_ARM_64_STANDARD</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.18-arm64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-arm64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.1-arm64</td>
+  </tr>
+  <tr>
+    <td>AL2023_x86_64_NEURON</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.18-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.1-x86_64</td>
+  </tr>
+  <tr>
+    <td>AL2023_x86_64_NVIDIA</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.18-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.1-x86_64</td>
+  </tr>
+  <tr>
+    <td>AL2023_x86_64_STANDARD</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.18-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.12-x86_64</td>
+    <td>al2023-ami-minimal-2023.12.20260930.0-kernel-6.1-x86_64</td>
+  </tr>
+</table>
+
+<details>
+<summary><b>Kubernetes 1.37</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.37-v20261003</td>
+      <td rowspan="5">1.37.0-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.37.0/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.37-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.37-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.37-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.37-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel6.18</td>
+      <td colspan="5">6.18.51-120.163.amzn2023</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.36</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.36-v20261003</td>
+      <td rowspan="5">1.36.4-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.36.4/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.36-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.36-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.36-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.36-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel6.18</td>
+      <td colspan="5">6.18.51-120.163.amzn2023</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.35</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.35-v20261003</td>
+      <td rowspan="5">1.35.8-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.35.8/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.35-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.35-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.35-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.35-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel6.12</td>
+      <td colspan="5">6.12.110-135.202.amzn2023</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.34</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.34-v20261003</td>
+      <td rowspan="5">1.34.11-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.34.11/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.34-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.34-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.34-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.34-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel6.12</td>
+      <td colspan="5">6.12.110-135.202.amzn2023</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.33</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.33-v20261003</td>
+      <td rowspan="5">1.33.13-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.33.13/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.33-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.33-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.33-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.33-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel6.12</td>
+      <td colspan="5">6.12.110-135.202.amzn2023</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.32</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.32-v20261003</td>
+      <td rowspan="5">1.32.13-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.32.13/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.32-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.32-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.32-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.32-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td colspan="3">6.1.188-233.386.amzn2023</td>
+      <td colspan="1">—</td>
+      <td colspan="1">6.1.188-233.386.amzn2023</td>
+    </tr>
+    <tr>
+      <td>kernel6.12</td>
+      <td colspan="3">—</td>
+      <td colspan="1">6.12.110-135.202.amzn2023</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+<details>
+<summary><b>Kubernetes 1.31</b></summary>
+  <table>
+    <tr>
+      <th>AMI Names</th>
+      <th>Release version</th>
+      <th>Included artifacts</th>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-nvidia-1.31-v20261003</td>
+      <td rowspan="5">1.31.14-20261003</td>
+      <td rowspan="5">s3://amazon-eks/1.31.14/2026-09-27/</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-neuron-1.31-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-x86_64-standard-1.31-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-nvidia-1.31-v20261003</td>
+    </tr>
+    <tr>
+      <td>amazon-eks-node-al2023-arm64-standard-1.31-v20261003</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Package</th>
+      <th>AL2023_x86_64_NVIDIA</th>
+      <th>AL2023_x86_64_NEURON</th>
+      <th>AL2023_x86_64_STANDARD</th>
+      <th>AL2023_ARM_64_NVIDIA</th>
+      <th>AL2023_ARM_64_STANDARD</th>
+    </tr>
+    <tr>
+      <td>amazon-ssm-agent</td>
+      <td colspan="5">3.3.5226.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>aws-neuronx-dkms</td>
+      <td colspan="1">—</td>
+      <td colspan="1">2.30.2.0-dkms</td>
+      <td colspan="3">—</td>
+    </tr>
+    <tr>
+      <td>containerd</td>
+      <td colspan="5">2.2.7-1.amzn2023.0.1</td>
+    </tr>
+    <tr>
+      <td>efa</td>
+      <td colspan="5">3.3.0-1.amzn2023</td>
+    </tr>
+    <tr>
+      <td>ena</td>
+      <td colspan="5">2.17.2g</td>
+    </tr>
+    <tr>
+      <td>kernel</td>
+      <td colspan="3">6.1.188-233.386.amzn2023</td>
+      <td colspan="1">—</td>
+      <td colspan="1">6.1.188-233.386.amzn2023</td>
+    </tr>
+    <tr>
+      <td>kernel6.12</td>
+      <td colspan="3">—</td>
+      <td colspan="1">6.12.110-135.202.amzn2023</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-container-toolkit</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="2">—</td>
+      <td colspan="1">1.20.1-1</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (default)</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="2">—</td>
+      <td colspan="1">580.178.04</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>nvidia-kmod (latest)</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="2">—</td>
+      <td colspan="1">595.91.07</td>
+      <td colspan="1">—</td>
+    </tr>
+    <tr>
+      <td>runc</td>
+      <td colspan="5">1.3.6-1.amzn2023.0.1</td>
+    </tr>
+  </table>
+</details>
+
+
+---
+
+
 # AMI Release v20260930
 <!-- Release notes generated using configuration in .github/release.yaml at 118420a32bfcbad44b97f879ecc870eea369a7f0 -->
 
