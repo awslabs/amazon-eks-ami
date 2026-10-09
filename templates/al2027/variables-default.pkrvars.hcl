@@ -18,7 +18,8 @@ pause_container_image                    = "public.ecr.aws/eks-distro/kubernetes
 remote_folder                            = "/tmp"
 runc_version                             = "*"
 security_group_id                        = ""
-source_ami_filter_name                   = "al2027-preview-ami-minimal-2027.*-kernel-7.1-*"
+# TODO: Pin AL2027 Minor Kernel Version per K8s version Before AL2027 GA
+source_ami_filter_name                   = "al2027-preview-ami-minimal-2027.*-kernel-7.*"
 source_ami_id                            = ""
 source_ami_owners                        = "137112412989"
 
