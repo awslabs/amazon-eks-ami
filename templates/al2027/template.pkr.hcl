@@ -25,6 +25,11 @@ variable "ami_description" {
   type = string
 }
 
+# TODO: I may revisit this later to evaluate it from the variant name instead of defining yet another variable.
+variable "manifest_prefix" {
+  type = string
+}
+
 variable "ami_name" {
   type = string
 }
@@ -406,7 +411,7 @@ build {
   }
 
   provisioner "file" {
-    destination = "${var.ami_name}-version-info.json"
+    destination = "${var.manifest_prefix}-version-info.json"
     direction   = "download"
     source      = "${local.working_dir}/version-info.json"
   }
@@ -419,21 +424,12 @@ build {
     remote_folder = "${var.remote_folder}"
     script        = "${path.root}/provisioners/configure-selinux.sh"
   }
-
   post-processor "manifest" {
     custom_data = {
       source_ami_id   = "${build.SourceAMI}"
       source_ami_name = "${build.SourceAMIName}"
     }
-    output     = "manifest.json"
-    strip_path = true
-  }
-  post-processor "manifest" {
-    custom_data = {
-      source_ami_id   = "${build.SourceAMI}"
-      source_ami_name = "${build.SourceAMIName}"
-    }
-    output     = "${var.ami_name}-manifest.json"
+    output     = "${var.manifest_prefix}-manifest.json"
     strip_path = true
   }
 }
