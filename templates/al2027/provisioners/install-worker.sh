@@ -59,11 +59,17 @@ sudo dnf install -y \
   ethtool \
   jq \
   nfs-utils \
-  socat \
   mdadm \
   pigz
 # versionlock kernel packages so they remain consistent.
 sudo dnf versionlock add 'kernel*'
+
+# update-motd fetches repo metadata on every boot to suggest "dnf update", which
+# doesn't apply to immutable, versionlocked EKS nodes.
+sudo dnf remove -y update-motd dnf-plugin-release-notification
+# update-motd leaves /etc/motd as a dangling symlink. Replace it with a static banner.
+sudo rm -f /etc/motd
+echo "Amazon EKS optimized AL2027 node" | sudo tee /etc/motd > /dev/null
 
 ################################################################################
 ### EFA ########################################################################
