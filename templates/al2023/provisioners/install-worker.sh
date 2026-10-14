@@ -265,6 +265,16 @@ sudo sed -i \
   's/ - package-update-upgrade-install/# Removed so that nodes do not have version skew based on when the node was started.\n# - package-update-upgrade-install/' \
   /etc/cloud/cloud.cfg
 
+################################################################################
+### Disable update-motd ########################################################
+################################################################################
+
+# update-motd runs `dnf updateinfo` under a 30s timeout; with the dnf cache
+# cleared at build time it is killed mid-write and leaks ~30 MB temp files in
+# /var/cache/dnf on every run, eventually causing DiskPressure.
+# EKS nodes are replaced rather than patched, so the MOTD has little value.
+sudo systemctl mask update-motd.timer update-motd.service
+
 # the CNI results cache is not valid across reboots, and errant files can prevent cleanup of pod sandboxes
 # https://github.com/containerd/containerd/issues/8197
 # this was fixed in 1.2.x of libcni but containerd < 2.x are using libcni 1.1.x
