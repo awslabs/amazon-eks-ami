@@ -59,6 +59,36 @@ else
 fi
 
 ################################
+### pause image archive ########
+################################
+
+# prevent truncated archive of /etc/eks/pause.tar
+PAUSE_ARCHIVE=/etc/eks/pause.tar
+if [ ! -s "${PAUSE_ARCHIVE}" ]; then
+  echo "${PAUSE_ARCHIVE} is missing or empty."
+  exit 1
+fi
+
+if ! tar tf "${PAUSE_ARCHIVE}" > /dev/null; then
+  echo "${PAUSE_ARCHIVE} is not a complete tar archive."
+  exit 1
+fi
+
+# tar tf still succeeds when archive cut between entries
+# oci-layout is the last entry
+if ! tar tf "${PAUSE_ARCHIVE}" | grep -x "oci-layout" > /dev/null; then
+  echo "${PAUSE_ARCHIVE} is truncated or not a valid tar archive."
+  exit 1
+fi
+
+# truncate inside the trailing zero blocks bypass tar tf, but breaks imports
+if [ $(($(stat -c %s "${PAUSE_ARCHIVE}") % 512)) -ne 0 ]; then
+  echo "${PAUSE_ARCHIVE} is truncated (size is not a multiple of 512 bytes)."
+  exit 1
+fi
+echo "Pause image archive is valid."
+
+################################
 ### network ####################
 ################################
 
