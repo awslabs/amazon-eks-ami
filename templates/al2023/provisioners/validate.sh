@@ -75,13 +75,14 @@ if ! tar tf "${PAUSE_ARCHIVE}" > /dev/null; then
 fi
 
 # tar tf still succeeds when archive cut between entries
-# oci-layout is the last entry
+# oci-layout is the last entry, so check that it exists
 if ! tar tf "${PAUSE_ARCHIVE}" | grep -x "oci-layout" > /dev/null; then
   echo "${PAUSE_ARCHIVE} is truncated or not a valid tar archive."
   exit 1
 fi
 
-# truncate inside the trailing zero blocks bypass tar tf, but breaks imports
+# truncate inside the trailing end marker bypass tar tf
+# but it breaks during import
 if [ $(($(stat -c %s "${PAUSE_ARCHIVE}") % 512)) -ne 0 ]; then
   echo "${PAUSE_ARCHIVE} is truncated (size is not a multiple of 512 bytes)."
   exit 1
