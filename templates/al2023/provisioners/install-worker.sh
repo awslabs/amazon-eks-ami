@@ -269,11 +269,7 @@ sudo sed -i \
 ### Disable update-motd ########################################################
 ################################################################################
 
-# update-motd runs `dnf updateinfo` under a 30s timeout; with the dnf cache
-# cleared at build time it is killed mid-write and leaks ~30 MB temp files in
-# /var/cache/dnf on every run, eventually causing DiskPressure.
-# EKS nodes are replaced rather than patched, so the MOTD has little value.
-sudo systemctl mask update-motd.timer update-motd.service
+sudo systemctl disable update-motd.timer
 
 # the CNI results cache is not valid across reboots, and errant files can prevent cleanup of pod sandboxes
 # https://github.com/containerd/containerd/issues/8197
