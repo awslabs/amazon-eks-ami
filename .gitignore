@@ -6,3 +6,4 @@
 site/
 .git-commit
 *.wasm
+/build
