@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+#
+# usage: build-nvidia-drivers [-h | --help]
+#
+# Rebuilds the NVIDIA kernel modules of every driver tree in /opt/nvidia for the running kernel,
+# from the sources staged in <tree>/flavors/<flavor>/.sources. Used while building an EKS AMI with
+# Packer, and must run before the AMI first boots on an NVIDIA GPU instance.
+
+set -o pipefail
+set -o nounset
+set -o errexit
+
+echo >&2 "NOTE: build-nvidia-drivers is meant for the EKS AMI build, and other uses are discouraged."
+
+function print-help() {
+  cat << 'EOF'
+usage: build-nvidia-drivers [-h | --help]
+
+An administrator tool that rebuilds the NVIDIA kernel modules staged in /opt/nvidia for the
+running kernel. It is used while building an EKS AMI with Packer, and all other uses are
+discouraged. It must run before the AMI first boots on an NVIDIA GPU instance.
+EOF
+}
+
+if [ "$#" -gt 0 ]; then
+  case "${1}" in
+    -h | --help)
+      print-help
+      exit 0
+      ;;
+    *)
+      print-help >&2
+      exit 1
+      ;;
+  esac
+fi
+
+NVIDIA_TREE_ROOT="${NVIDIA_TREE_ROOT:-/opt/nvidia}"
+readonly NVIDIA_TREE_ROOT
+
+KERNEL_RELEASE="$(uname -r)"
+readonly KERNEL_RELEASE
+
+ARCH="$(uname -m)"
+readonly ARCH
+
+if [ "$(id --user)" -ne 0 ]; then
+  echo >&2 "ERROR: must be run as root"
+  exit 1
+fi
+
+# The first boot on a GPU instance resolves the trees into current and deletes the others.
+if [ -e "${NVIDIA_TREE_ROOT}/current" ]; then
+  echo >&2 "ERROR: build-nvidia-drivers does not support rebuilding the NVIDIA drivers on an instance that has booted with an NVIDIA GPU; use dnf to manage the drivers instead"
+  exit 1
+fi
+
+if ! compgen -G "${NVIDIA_TREE_ROOT}/*/.tree-*" > /dev/null; then
+  echo >&2 "ERROR: no NVIDIA driver's staged in ${NVIDIA_TREE_ROOT}"
+  exit 1
+fi
+
+if [ ! -d "/lib/modules/${KERNEL_RELEASE}/build" ]; then
+  echo >&2 "ERROR: no /lib/modules/${KERNEL_RELEASE}/build, install the kernel-devel package for ${KERNEL_RELEASE}"
+  exit 1
+fi
+
+# The GRID runfile is extracted inside the tree, so a run that stops mid-build must not leave the
+# extraction there.
+trap 'rm -rf "${NVIDIA_TREE_ROOT}"/*/flavors/grid/.build' EXIT
+
+# Build and harvests nvidia open flavor kernel modules
+function build-open-kmods() {
+  local TREE_DIR="${1}"
+  local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/open"
+
+  echo "Building open kernel modules for NVIDIA ${DRIVER_VERSION}"
+  remove-dkms-module nvidia "${DRIVER_VERSION}"
+  unpack-kmod-source "${FLAVOR_SUBTREE}"/.sources/kmod-nvidia-open-dkms-"${DRIVER_VERSION}"-*.rpm
+  dkms add -m nvidia -v "${DRIVER_VERSION}"
+  dkms build -m nvidia -v "${DRIVER_VERSION}"
+  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
+
+  # Built here, while this version's nvidia source is the only one in /usr/src.
+  build-gdrdrv "${TREE_DIR}" "${DRIVER_VERSION}"
+
+  remove-dkms-module nvidia "${DRIVER_VERSION}"
+}
+
+# Build and harvests nvidia proprietary flavor kernel modules
+function build-proprietary-kmods() {
+  local TREE_DIR="${1}"
+  local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/proprietary"
+
+  echo "Building proprietary kernel modules for NVIDIA ${DRIVER_VERSION}"
+  remove-dkms-module nvidia "${DRIVER_VERSION}"
+  unpack-kmod-source "${FLAVOR_SUBTREE}"/.sources/kmod-nvidia-latest-dkms-"${DRIVER_VERSION}"-*.rpm
+  dkms add -m nvidia -v "${DRIVER_VERSION}"
+  dkms build -m nvidia -v "${DRIVER_VERSION}"
+  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
+
+  remove-dkms-module nvidia "${DRIVER_VERSION}"
+}
+
+# Build and harvests gdrdrv kernel modules. Built only with the open nvidia flavor.
+function build-gdrdrv() {
+  local TREE_DIR="${1}"
+  local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/open"
+
+  # Staged only when the AMI build enabled gdrcopy.
+  local GDRCOPY_RPM
+  GDRCOPY_RPM=$(compgen -G "${FLAVOR_SUBTREE}/.sources/gdrcopy-kmod-*.rpm") || return 0
+  local GDRCOPY_VERSION
+  GDRCOPY_VERSION=$(rpm -qp --queryformat '%{VERSION}' "${GDRCOPY_RPM}")
+
+  echo "Building gdrdrv ${GDRCOPY_VERSION} against NVIDIA ${DRIVER_VERSION}"
+  remove-dkms-module gdrdrv "${GDRCOPY_VERSION}"
+  unpack-kmod-source "${GDRCOPY_RPM}"
+  dkms add -m gdrdrv -v "${GDRCOPY_VERSION}"
+  dkms build -m gdrdrv -v "${GDRCOPY_VERSION}"
+  harvest-dkms-modules gdrdrv "${GDRCOPY_VERSION}" "${FLAVOR_SUBTREE}"
+
+  remove-dkms-module gdrdrv "${GDRCOPY_VERSION}"
+}
+
+# Build and harvest nvidia grid flavor kernel modules
+function build-grid-kmods() {
+  local TREE_DIR="${1}"
+  local DRIVER_VERSION="${2}"
+  local FLAVOR_SUBTREE="${TREE_DIR}/flavors/grid"
+
+  if [ "${ARCH}" == "aarch64" ]; then
+    echo "No GRID runfile is published for ${ARCH}, skipping"
+    return 0
+  fi
+
+  local RUNFILE="${FLAVOR_SUBTREE}/.sources/NVIDIA-Linux-x86_64-${DRIVER_VERSION}-grid-aws.run"
+  # Scratch space for the extracted runfile, removed once the modules are harvested.
+  local EXTRACT_DIR="${FLAVOR_SUBTREE}/.build"
+  local KERNEL_OPEN_DIR="${EXTRACT_DIR}/kernel-open"
+
+  echo "Building GRID kernel modules for NVIDIA ${DRIVER_VERSION}"
+  # Left behind if an earlier run was killed before its exit trap could run.
+  rm -rf "${EXTRACT_DIR}"
+  sh "${RUNFILE}" --extract-only --target "${EXTRACT_DIR}"
+
+  make -C "${KERNEL_OPEN_DIR}" \
+    -j"$(nproc)" \
+    SYSSRC="/lib/modules/${KERNEL_RELEASE}/build" \
+    modules
+
+  # Harvest the modules to the tree
+  local DEST_DIR="${FLAVOR_SUBTREE}/lib/modules/${KERNEL_RELEASE}/extra"
+  local MODULE_PATH
+  install -d "${DEST_DIR}"
+  for MODULE_PATH in "${KERNEL_OPEN_DIR}"/*.ko; do
+    strip -g --strip-unneeded "${MODULE_PATH}"
+    install -m 0644 "${MODULE_PATH}" "${DEST_DIR}/"
+  done
+
+  rm -rf "${EXTRACT_DIR}"
+}
+
+# Unpack a staged kmod source rpm, which puts its source in /usr/src
+function unpack-kmod-source() {
+  local RPM="${1}"
+  rpm2cpio "${RPM}" | (cd / && cpio -idmu --quiet)
+}
+
+# Unregister a dkms module and delete its source. Also clears what an interrupted earlier run left.
+function remove-dkms-module() {
+  local MODULE_NAME="${1}"
+  local MODULE_VERSION="${2}"
+
+  if [ -n "$(dkms status -m "${MODULE_NAME}" -v "${MODULE_VERSION}")" ]; then
+    dkms remove -m "${MODULE_NAME}" -v "${MODULE_VERSION}" --all
+  fi
+  rm -rf "/usr/src/${MODULE_NAME}-${MODULE_VERSION}"
+}
+
+# Copy the modules a dkms.conf declares out of the dkms build tree and into a flavor
+# All dkms modules end up in /lib/modules/${KERNEL_RELEASE}/extra for AL2023
+# https://man.archlinux.org/man/extra/dkms/dkms.8.en#DEST_MODULE_LOCATION___=
+function harvest-dkms-modules() {
+  local PACKAGE_NAME="${1}"
+  local PACKAGE_VERSION="${2}"
+  local DEST_DIR="${3}/lib/modules/${KERNEL_RELEASE}/extra"
+  local DKMS_MODULE_DIR="/var/lib/dkms/${PACKAGE_NAME}/${PACKAGE_VERSION}/${KERNEL_RELEASE}/${ARCH}/module"
+
+  local DECLARED_MODULES
+  DECLARED_MODULES=$(dkms-declared-modules "${PACKAGE_NAME}" "${PACKAGE_VERSION}")
+  local MODULE_NAMES
+  mapfile -t MODULE_NAMES <<< "${DECLARED_MODULES}"
+
+  install -d "${DEST_DIR}"
+  local MODULE_NAME
+  for MODULE_NAME in "${MODULE_NAMES[@]}"; do
+    # The suffix varies with the kernel's module compression.
+    if ! compgen -G "${DKMS_MODULE_DIR}/${MODULE_NAME}.ko*" > /dev/null; then
+      echo >&2 "ERROR: ${PACKAGE_NAME} declares ${MODULE_NAME}, missing from ${DKMS_MODULE_DIR}"
+      return 1
+    fi
+    install -m 0644 "${DKMS_MODULE_DIR}/${MODULE_NAME}".ko* "${DEST_DIR}/"
+  done
+}
+
+# Print the module names a dkms.conf declares.
+# https://man.archlinux.org/man/extra/dkms/dkms.8.en#BUILT_MODULE_NAME___=
+function dkms-declared-modules() {
+  local PACKAGE_NAME="${1}"
+  local PACKAGE_VERSION="${2}"
+  local PACKAGE_DKMS_CONF="/usr/src/${PACKAGE_NAME}-${PACKAGE_VERSION}/dkms.conf"
+
+  (
+    # Exported for the conf's MAKE line, which expands them at source time.
+    export kernelver="${KERNEL_RELEASE}"
+    export dkms_tree="/var/lib/dkms"
+    declare -a BUILT_MODULE_NAME=()
+    # shellcheck disable=SC1090
+    if ! source "${PACKAGE_DKMS_CONF}" > /dev/null; then
+      echo >&2 "ERROR: cannot read ${PACKAGE_DKMS_CONF}"
+      exit 1
+    fi
+    if [ "${#BUILT_MODULE_NAME[@]}" -eq 0 ]; then
+      echo >&2 "ERROR: ${PACKAGE_DKMS_CONF} declares no modules"
+      exit 1
+    fi
+    printf '%s\n' "${BUILT_MODULE_NAME[@]}"
+  )
+}
+
+# Rebuild the kernel modules of every driver tree.
+function build-driver-trees() {
+  local TREE_DIR DRIVER_VERSION
+  for TREE_DIR in "${NVIDIA_TREE_ROOT}"/*/; do
+    TREE_DIR="${TREE_DIR%/}"
+    # Only tree directories carry a .tree-<name> marker.
+    compgen -G "${TREE_DIR}/.tree-*" > /dev/null || continue
+    DRIVER_VERSION=$(cat "${TREE_DIR}/.version")
+
+    build-open-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
+    build-proprietary-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
+    build-grid-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
+  done
+}
+
+build-driver-trees
