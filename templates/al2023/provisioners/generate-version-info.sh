@@ -22,7 +22,7 @@ if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
     RPMS=""
     # userspace rpms plus every flavor's kmod rpms (open, proprietary; grid ships
     # no rpm). All flavors are recorded so the consistency check guards each one.
-    for RPM in "$VERSION_PATH"/.rpms/*.rpm "$VERSION_PATH"/flavors/*/.rpms/*.rpm; do
+    for RPM in "$VERSION_PATH"/.rpms/*.rpm "$VERSION_PATH"/flavors/*/.sources/*.rpm; do
       [ -f "$RPM" ] && RPMS="$RPMS $RPM"
     done
     [ -n "$RPMS" ] || continue

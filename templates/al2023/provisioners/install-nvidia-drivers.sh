@@ -141,11 +141,12 @@ function create-driver-tree() {
   echo "${DRIVER_VERSION}" | sudo tee "${TREE_DIR}/.version" > /dev/null
   # A simple marker to act as conditional for systemd services
   sudo touch "${TREE_DIR}/.tree-${TREE}"
+
+  install-supported-device-list "${TREE}"
 }
 
-# Builds contents of a nvidia driver version tree.
-# Stores kernel modules as well as userspace package contents.
-function build-driver-tree() {
+# Stages userspace rpms and driver sources inside the tree.
+function stage-driver-tree() {
   local TREE="${1}"
   local TREE_DIR="${NVIDIA_TREE_ROOT}/${TREE}"
 
@@ -153,10 +154,12 @@ function build-driver-tree() {
   DRIVER_VERSION=$(cat "${TREE_DIR}/.version")
 
   extract-version-specific-rpms "${TREE}"
-  build-open-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
-  build-proprietary-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
-  build-grid-kmods "${TREE_DIR}" "${DRIVER_VERSION}"
-  install-supported-device-list "${TREE}"
+  stage-open-kmod-source "${TREE_DIR}" "${DRIVER_VERSION}"
+  stage-gdrdrv-kmod-source "${TREE_DIR}"
+  stage-proprietary-kmod-source "${TREE_DIR}" "${DRIVER_VERSION}"
+  stage-grid-kmod-source "${TREE_DIR}" "${DRIVER_VERSION}"
+  # The GRID vGPU userspace comes from the runfile staged above.
+  extract-grid-userspace "${TREE}"
 }
 
 ################################################################################
@@ -180,11 +183,19 @@ partition-nvidia-userspace-rpms lts pb
 install-version-shared-rpms
 
 ################################################################################
+### Stage the driver trees #####################################################
+################################################################################
+
+stage-driver-tree lts
+stage-driver-tree pb
+
+################################################################################
 ### Build the driver trees #####################################################
 ################################################################################
 
-build-driver-tree lts
-build-driver-tree pb
+# Builds the NVIDIA kernel modules from the staged trees.
+sudo install -m 0755 "${WORKING_DIR}/gpu/build-nvidia-drivers" /usr/sbin/build-nvidia-drivers
+sudo build-nvidia-drivers
 
 ################################################################################
 ### Set up rest of the host ####################################################
