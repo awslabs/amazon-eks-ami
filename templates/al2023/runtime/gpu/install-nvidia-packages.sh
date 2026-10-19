@@ -26,7 +26,7 @@ readonly TREE_VERSION
 readonly TREE_MAJOR_VERSION="${TREE_VERSION%%.*}"
 
 shopt -s nullglob # the GRID flavor has no specific RPMs to expand to
-readonly RPMS_TO_REGISTER=("${TREE}"/.rpms/*.rpm "${FLAVOR_SUBTREE}"/.rpms/*.rpm)
+readonly RPMS_TO_REGISTER=("${TREE}"/.rpms/*.rpm "${FLAVOR_SUBTREE}"/.sources/*.rpm)
 shopt -u nullglob
 if ((${#RPMS_TO_REGISTER[@]} > 0)); then
   rpm -i --justdb --noscripts --nodeps --nodigest --nosignature "${RPMS_TO_REGISTER[@]}"

@@ -155,3 +155,37 @@ function install-supported-device-list() {
 
   sudo install -m 0644 "${DEVICE_LIST}" /etc/eks/
 }
+
+# The rpm userspace has no package for the vGPU license server, so extract it from the tree's
+# staged GRID runfile.
+function extract-grid-userspace() {
+  local TREE="${1}"
+  local TREE_DIR="${NVIDIA_TREE_ROOT}/${TREE}"
+
+  if [ "${MACHINE}" == "aarch64" ]; then
+    echo "No GRID runfile is published for ${MACHINE}, skipping"
+    return 0
+  fi
+
+  local DRIVER_VERSION
+  DRIVER_VERSION=$(cat "${TREE_DIR}/.version")
+  local RUNFILE="${TREE_DIR}/flavors/grid/.sources/NVIDIA-Linux-x86_64-${DRIVER_VERSION}-grid-aws.run"
+  local EXTRACT_DIR="${WORKING_DIR}/nvidia-grid-${DRIVER_VERSION}"
+
+  sh "${RUNFILE}" --extract-only --target "${EXTRACT_DIR}"
+  harvest-grid-license-server "${EXTRACT_DIR}" "${TREE_DIR}"
+  sudo rm -rf "${EXTRACT_DIR}"
+}
+
+# Harvest the vGPU license server stack from an extracted GRID runfile.
+function harvest-grid-license-server() {
+  local EXTRACT_DIR="${1}"
+  local TREE_DIR="${2}"
+
+  echo "Harvesting the GRID vGPU userspace into ${TREE_DIR}"
+  sudo install -d "${TREE_DIR}/usr/bin" "${TREE_DIR}/usr/lib/systemd/system" "${TREE_DIR}/etc/nvidia"
+  sudo install -m 0755 "${EXTRACT_DIR}/nvidia-gridd" "${TREE_DIR}/usr/bin/"
+  sudo install -m 0644 "${EXTRACT_DIR}/init-scripts/systemd/nvidia-gridd.service" \
+    "${TREE_DIR}/usr/lib/systemd/system/"
+  sudo install -m 0644 "${EXTRACT_DIR}/gridd.conf.template" "${TREE_DIR}/etc/nvidia/"
+}
