@@ -451,6 +451,11 @@ build {
 
   provisioner "shell" {
     remote_folder = "${var.remote_folder}"
+    script        = "${path.root}/provisioners/distrust-ca-certificates.sh"
+  }
+
+  provisioner "shell" {
+    remote_folder = "${var.remote_folder}"
     script        = "${path.root}/provisioners/cleanup.sh"
   }
 
