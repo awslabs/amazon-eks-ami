@@ -95,6 +95,10 @@ echo "Pause image archive is valid."
 
 # SHA-256 fingerprints of the roots blocked by distrust-ca-certificates.sh
 DISTRUSTED_CA_FINGERPRINTS=(
+  # AAA Certificate Services
+  D7:A7:A0:FB:5D:7E:27:31:D7:71:E9:48:4E:BC:DE:F7:1D:5F:0C:3E:0A:29:48:78:2B:C8:3E:E0:EA:69:9E:F4
+  # emSign Root TLS CA - G3
+  7D:D7:8D:5F:4F:13:45:9A:83:DF:F9:AB:BB:A6:2E:DB:AF:6F:2D:10:2B:F2:57:FD:71:2F:4D:9F:27:46:ED:8D
   # emSign ECC Root CA - G3
   86:A1:EC:BA:08:9C:4A:8D:3B:BE:27:34:C6:12:BA:34:1D:81:3E:04:3C:F9:E8:A8:62:CD:5C:57:A3:6B:BE:6B
   # emSign ECC Root CA - C3
