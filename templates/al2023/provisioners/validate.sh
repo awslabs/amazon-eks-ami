@@ -90,6 +90,56 @@ fi
 echo "Pause image archive is valid."
 
 ################################
+### distrusted CAs #############
+################################
+
+# SHA-256 fingerprints of the roots blocked by distrust-ca-certificates.sh
+DISTRUSTED_CA_FINGERPRINTS=(
+  # emSign ECC Root CA - G3
+  86:A1:EC:BA:08:9C:4A:8D:3B:BE:27:34:C6:12:BA:34:1D:81:3E:04:3C:F9:E8:A8:62:CD:5C:57:A3:6B:BE:6B
+  # emSign ECC Root CA - C3
+  BC:4D:80:9B:15:18:9D:78:DB:3E:1D:8C:F4:F9:72:6A:79:5D:A1:64:3C:A5:F1:35:8E:1D:DB:0E:DC:0D:7E:B3
+  # emSign Root CA - C1
+  12:56:09:AA:30:1D:A0:A2:49:B9:7A:82:39:CB:6A:34:21:6F:44:DC:AC:9F:39:54:B1:42:92:F2:E8:C8:60:8F
+)
+
+# the blocklist entries must be staged, or the next update-ca-trust trusts the roots again
+for FINGERPRINT in "${DISTRUSTED_CA_FINGERPRINTS[@]}"; do
+  FOUND=false
+  for CERT in /etc/pki/ca-trust/source/blocklist/*; do
+    [ -f "${CERT}" ] || continue
+    if [ "$(openssl x509 -in "${CERT}" -noout -fingerprint -sha256 | cut -d= -f2)" == "${FINGERPRINT}" ]; then
+      FOUND=true
+      break
+    fi
+  done
+  if [ "${FOUND}" != "true" ]; then
+    echo "/etc/pki/ca-trust/source/blocklist has no certificate with fingerprint ${FINGERPRINT}"
+    exit 1
+  fi
+done
+
+# the extracted bundles are what most clients (OpenSSL, Go, curl) read
+CA_BUNDLE_DIR=$(mktemp -d)
+for BUNDLE in /etc/pki/ca-trust/extracted/pem/*.pem; do
+  rm -f "${CA_BUNDLE_DIR}"/*.pem
+  # one file per certificate
+  awk -v dir="${CA_BUNDLE_DIR}" '/-----BEGIN CERTIFICATE-----/ { n++ } n { print > (dir "/" n ".pem") }' "${BUNDLE}"
+  for CERT in "${CA_BUNDLE_DIR}"/*.pem; do
+    [ -e "${CERT}" ] || continue
+    FINGERPRINT=$(openssl x509 -in "${CERT}" -noout -fingerprint -sha256 | cut -d= -f2)
+    for DISTRUSTED in "${DISTRUSTED_CA_FINGERPRINTS[@]}"; do
+      if [ "${FINGERPRINT}" == "${DISTRUSTED}" ]; then
+        echo "${BUNDLE} still trusts $(openssl x509 -in "${CERT}" -noout -subject)"
+        exit 1
+      fi
+    done
+  done
+done
+rm -rf "${CA_BUNDLE_DIR}"
+echo "Distrusted CAs are absent from the extracted CA bundles."
+
+################################
 ### network ####################
 ################################
 

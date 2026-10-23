@@ -1,6 +1,6 @@
 module github.com/awslabs/amazon-eks-ami/nodeadm
 
-go 1.26.8
+go 1.26.10
 
 require (
 	cel.dev/cel-go v0.32.0
