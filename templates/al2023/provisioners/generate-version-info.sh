@@ -1,20 +1,23 @@
 #!/bin/sh
 
-# generates a JSON file containing version information for the software in this AMI
+# generates a JSON file containing version information for the software in this AMI,
+# and a JSON file containing the files and scripts of the rpms staged in each nvidia driver tree
 
 set -o errexit
 
-if [ "$#" -ne 1 ]; then
-  echo "usage: $0 OUTPUT_FILE"
+if [ "$#" -ne 2 ]; then
+  echo "usage: $0 OUTPUT_FILE NVIDIA_PACKAGE_CONTENTS_FILE"
   exit 1
 fi
 
 OUTPUT_FILE="$1"
+NVIDIA_PACKAGE_CONTENTS_FILE="$2"
 
 # packages (installed in the rpm database)
 sudo rpm --query --all --queryformat '\{"%{NAME}": "%{VERSION}-%{RELEASE}"\}\n' | jq --slurp --sort-keys 'add | {packages:(.)}' > $OUTPUT_FILE
 
-# nvidia drivers
+# nvidia drivers, the package contents file stays empty without them
+echo '{}' > $NVIDIA_PACKAGE_CONTENTS_FILE
 if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
   for VERSION_DIR in /opt/nvidia/*/; do
     VERSION_PATH="${VERSION_DIR%/}"
@@ -36,6 +39,22 @@ if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
       VERSION_JSON=$(echo "$VERSION_JSON" | jq --arg v "$NVIDIA_KMOD" '. + {"nvidia-kmod": $v}')
     fi
     echo "$(jq --arg version "$VERSION" --argjson pkgs "$VERSION_JSON" '.nvidia[$version] = $pkgs' $OUTPUT_FILE)" > $OUTPUT_FILE
+    # files and scripts of each rpm. kmod sources are left out, they're removed once the kmod is built
+    DRIVER_VERSION=$(cat "$VERSION_PATH/.version")
+    echo "$(jq --arg tree "$VERSION" --arg driver "$DRIVER_VERSION" '.[$tree] = {driver_version: $driver, packages: {}, kmods: {}}' $NVIDIA_PACKAGE_CONTENTS_FILE)" > $NVIDIA_PACKAGE_CONTENTS_FILE
+    for RPM in $RPMS; do
+      case "$RPM" in
+        */.sources/*) SECTION=kmods ;;
+        *) SECTION=packages ;;
+      esac
+      NAME=$(sudo rpm --query --package --queryformat '%{NAME}' "$RPM")
+      PACKAGE_VERSION=$(sudo rpm --query --package --queryformat '%{VERSION}' "$RPM")
+      SCRIPTS=$(sudo rpm --query --package --scripts --triggers --filetriggers "$RPM")
+      # the file list goes through stdin because it can be too long for an argument
+      echo "$(sudo rpm --query --package --queryformat '[%{FILENAMES}\n]' "$RPM" | grep -v '^/usr/src/' \
+        | jq --rawfile files /dev/stdin --arg tree "$VERSION" --arg section "$SECTION" --arg name "$NAME" --arg version "$PACKAGE_VERSION" --arg scripts "$SCRIPTS" \
+          '.[$tree][$section][$name] = {version: $version, files: ($files | split("\n") | map(select(length > 0)) | sort), scripts: $scripts}' $NVIDIA_PACKAGE_CONTENTS_FILE)" > $NVIDIA_PACKAGE_CONTENTS_FILE
+    done
   done
 fi
 
