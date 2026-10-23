@@ -94,6 +94,19 @@ variable "iam_instance_profile" {
   type = string
 }
 
+variable "temporary_iam_instance_profile_policy_document" {
+  description = "Optional inline policy for a temporary builder instance profile. Do not set together with iam_instance_profile."
+  type = object({
+    Version = string
+    Statement = list(object({
+      Effect   = string
+      Action   = list(string)
+      Resource = string
+    }))
+  })
+  default = null
+}
+
 variable "install_containerd_from_s3" {
   type = string
 }
@@ -244,6 +257,20 @@ source "amazon-ebs" "al2023" {
   custom_endpoint_ec2  = "${var.custom_endpoint_ec2}"
   encrypt_boot         = "${var.encrypted}"
   iam_instance_profile = "${var.iam_instance_profile}"
+  dynamic "temporary_iam_instance_profile_policy_document" {
+    for_each = var.temporary_iam_instance_profile_policy_document == null ? [] : [var.temporary_iam_instance_profile_policy_document]
+    content {
+      Version = temporary_iam_instance_profile_policy_document.value.Version
+      dynamic "Statement" {
+        for_each = temporary_iam_instance_profile_policy_document.value.Statement
+        content {
+          Effect   = Statement.value.Effect
+          Action   = Statement.value.Action
+          Resource = [Statement.value.Resource]
+        }
+      }
+    }
+  }
   instance_type        = "${var.instance_type}"
   kms_key_id           = "${var.kms_key_id}"
   launch_block_device_mappings {
