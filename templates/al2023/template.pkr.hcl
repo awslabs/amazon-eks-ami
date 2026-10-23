@@ -482,6 +482,19 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = ["ENABLE_ACCELERATOR=${var.enable_accelerator}"]
+    execute_command  = "chmod +x {{ .Path }}; {{ .Vars }} {{ .Path }} ${local.working_dir}/nvidia-tree-manifest.json"
+    remote_folder    = "${var.remote_folder}"
+    script           = "${path.root}/provisioners/generate-nvidia-tree-manifest.sh"
+  }
+
+  provisioner "file" {
+    destination = "${var.ami_name}-nvidia-tree-manifest.json"
+    direction   = "download"
+    source      = "${local.working_dir}/nvidia-tree-manifest.json"
+  }
+
+  provisioner "shell" {
     inline = ["sudo rm -rf ${local.working_dir}"]
   }
 
