@@ -45,15 +45,20 @@ maybe_raid() {
   local array_mount_point="${MNT_DIR}/0"
   mkdir -p "$(dirname "${md_config}")"
 
-  if [[ ! -s "${md_config}" ]] || ! mdadm --detail --scan 2> /dev/null | grep -q "ARRAY"; then
+  # Only create the array if it is not already running. The array lives on the
+  # instance store disks so reboot or root volume replacement keeps it.
+  # ${md_config} lives on the root volume, so it should not be used to decide.
+  local arrays
+  arrays="$(mdadm --detail --scan 2> /dev/null || true)"
+  if ! grep -qE "^ARRAY .*name=([^ ]+:)?${md_name}( |$)" <<< "${arrays}"; then
     mdadm --create --force --verbose \
       "${md_device}" \
       --level="${raid_level}" \
       --name="${md_name}" \
       --raid-devices="${#EPHEMERAL_DISKS[@]}" \
       "${EPHEMERAL_DISKS[@]}"
-    mdadm --detail --scan > "${md_config}"
   fi
+  mdadm --detail --scan > "${md_config}"
 
   ## Check if the device symlink has changed on reboot to include a homehost identifier
   local current_md_device
