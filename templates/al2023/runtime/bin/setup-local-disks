@@ -48,9 +48,15 @@ maybe_raid() {
   # Only create the array if it is not already running. The array lives on the
   # instance store disks so reboot or root volume replacement keeps it.
   # ${md_config} lives on the root volume, so it should not be used to decide.
-  local arrays
-  arrays="$(mdadm --detail --scan 2> /dev/null || true)"
-  if ! grep -qE "^ARRAY .*name=([^ ]+:)?${md_name}( |$)" <<< "${arrays}"; then
+  # Check the name stored in each array's metadata (MD_NAME). 
+  local md array_running=false
+  for md in /dev/md[0-9]*; do
+    if mdadm --detail --export "${md}" 2> /dev/null | grep -qE "^MD_NAME=([^:]+:)?${md_name}$"; then
+      array_running=true
+      break
+    fi
+  done
+  if [[ "${array_running}" == "false" ]]; then
     mdadm --create --force --verbose \
       "${md_device}" \
       --level="${raid_level}" \
