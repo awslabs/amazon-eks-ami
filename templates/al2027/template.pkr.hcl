@@ -257,6 +257,7 @@ source "amazon-ebs" "al2027" {
   source_ami_filter {
     filters = {
       architecture        = var.arch
+      is-public           = "true"
       name                = var.source_ami_filter_name
       root-device-type    = "ebs"
       state               = "available"
