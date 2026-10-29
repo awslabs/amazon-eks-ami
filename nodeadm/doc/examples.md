@@ -176,7 +176,7 @@ spec:
 
 ## Managing CNI-unmanaged (`no_manage`) secondary ENIs
 
-When the `OSManagedNoManageENIs` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `node.k8s.amazonaws.com/no_manage=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, such an ENI attached after boot is left down with no address: the VPC CNI ignores `no_manage` ENIs and `nodeadm` defers post-boot interfaces to the CNI.
+When the `ENILabels` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `node.k8s.amazonaws.com/no_manage=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, such an ENI attached after boot is left down with no address: the VPC CNI ignores `no_manage` ENIs and `nodeadm` defers post-boot interfaces to the CNI.
 
 Tag the ENI before attaching it. Ownership is resolved per interface:
 
@@ -194,7 +194,7 @@ apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   featureGates:
-    OSManagedNoManageENIs: true
+    ENILabels: true
 ```
 
 ---

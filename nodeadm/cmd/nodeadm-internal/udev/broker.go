@@ -31,19 +31,19 @@ const (
 var errOwnershipPending = errors.New("ENI ownership pending")
 
 type fsBroker struct {
-	cache              util.FSCache
-	markerPath         string
-	noManageMarkerPath string
-	newResolver        func(ctx context.Context) (cniOptOutResolver, error)
-	linkUp             func(interfaceName string) (bool, error)
-	waitRetry          func(context.Context, time.Duration) error
+	cache               util.FSCache
+	markerPath          string
+	eniLabelsMarkerPath string
+	newResolver         func(ctx context.Context) (cniOptOutResolver, error)
+	linkUp              func(interfaceName string) (bool, error)
+	waitRetry           func(context.Context, time.Duration) error
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
 	return &fsBroker{
-		cache:              util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
-		markerPath:         system.MarkerPath(),
-		noManageMarkerPath: system.OSManagedNoManageENIsMarkerPath(),
+		cache:               util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
+		markerPath:          system.MarkerPath(),
+		eniLabelsMarkerPath: system.ENILabelsMarkerPath(),
 		newResolver: func(ctx context.Context) (cniOptOutResolver, error) {
 			return newEC2TagResolver(ctx, instanceID)
 		},
@@ -87,11 +87,11 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return networkmanager.ManagerSystemd, nil
 	}
 
-	noManageEnabled, err := util.IsFilePathExists(b.noManageMarkerPath)
+	eniLabelsEnabled, err := util.IsFilePathExists(b.eniLabelsMarkerPath)
 	if err != nil {
 		return "", err
 	}
-	if !noManageEnabled {
+	if !eniLabelsEnabled {
 		return networkmanager.ManagerCNI, nil
 	}
 

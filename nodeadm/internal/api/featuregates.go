@@ -21,11 +21,11 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
 
-	// OSManagedNoManageENIs configures secondary ENIs tagged
-	// node.k8s.amazonaws.com/no_manage=true via systemd-networkd instead of
-	// leaving them to the VPC CNI, which ignores them. Requires
-	// ec2:DescribeNetworkInterfaces on the node instance role.
-	OSManagedNoManageENIs: DefaultFalse,
+	// ENILabels makes nodeadm aware of ENI labels. Secondary ENIs tagged
+	// node.k8s.amazonaws.com/no_manage=true are configured via
+	// systemd-networkd instead of being left to the VPC CNI, which ignores
+	// them. Requires ec2:DescribeNetworkInterfaces on the node instance role.
+	ENILabels: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {
