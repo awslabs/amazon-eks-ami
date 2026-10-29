@@ -45,11 +45,12 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 	}{
 		{name: "eni not yet visible"},
 		{name: "api error", err: apiErr},
-		{name: "opted out", enis: taggedENI(map[string]string{noManageTagKey: "true"}), want: networkmanager.ManagerSystemd},
-		{name: "case sensitive", enis: taggedENI(map[string]string{noManageTagKey: "True"}), want: networkmanager.ManagerCNI},
-		{name: "explicit false", enis: taggedENI(map[string]string{noManageTagKey: "false"}), want: networkmanager.ManagerCNI},
-		{name: "empty value", enis: taggedENI(map[string]string{noManageTagKey: ""}), want: networkmanager.ManagerCNI},
+		{name: "system managed", enis: taggedENI(map[string]string{systemManagedTagKey: "true"}), want: networkmanager.ManagerSystemd},
+		{name: "case sensitive", enis: taggedENI(map[string]string{systemManagedTagKey: "True"}), want: networkmanager.ManagerCNI},
+		{name: "explicit false", enis: taggedENI(map[string]string{systemManagedTagKey: "false"}), want: networkmanager.ManagerCNI},
+		{name: "empty value", enis: taggedENI(map[string]string{systemManagedTagKey: ""}), want: networkmanager.ManagerCNI},
 		{name: "unrelated tag", enis: taggedENI(map[string]string{"Name": "dataplane"})},
+		{name: "cni no_manage alone", enis: taggedENI(map[string]string{"node.k8s.amazonaws.com/no_manage": "true"})},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			client := &fakeDescribeNetworkInterfaces{out: &ec2.DescribeNetworkInterfacesOutput{NetworkInterfaces: tc.enis}, err: tc.err}

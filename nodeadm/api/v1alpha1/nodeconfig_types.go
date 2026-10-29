@@ -202,8 +202,8 @@ const (
 	FastImagePull Feature = "FastImagePull"
 
 	// ENILabels makes nodeadm aware of ENI labels. Secondary ENIs tagged
-	// node.k8s.amazonaws.com/no_manage=true are configured via
-	// systemd-networkd instead of being left to the VPC CNI, which ignores
-	// them. Requires ec2:DescribeNetworkInterfaces on the node instance role.
+	// alpha.node.eks.aws/system_managed=true are configured via
+	// systemd-networkd. Requires ec2:DescribeNetworkInterfaces on the node
+	// instance role.
 	ENILabels Feature = "ENILabels"
 )
