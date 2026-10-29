@@ -13,10 +13,8 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 )
 
-// noManageTagKey opts an ENI out of VPC CNI management.
-//
-// see: https://github.com/aws/amazon-vpc-cni-k8s/blob/5359e6b0ffaedae2bb831dceeea0337891c6f2ad/pkg/ipamd/ipamd.go#L129
-const noManageTagKey = "node.k8s.amazonaws.com/no_manage"
+// systemManagedTagKey marks an ENI to be configured by systemd-networkd.
+const systemManagedTagKey = "alpha.node.eks.aws/system_managed"
 
 type cniOptOutResolver interface {
 	// Resolve returns the manager of the ENI with the given MAC, or an error
@@ -61,10 +59,7 @@ func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error
 	}
 	for _, eni := range out.NetworkInterfaces {
 		for _, tag := range eni.TagSet {
-			// IPAMD compares the value case-sensitively.
-			//
-			// see: https://github.com/aws/amazon-vpc-cni-k8s/blob/5359e6b0ffaedae2bb831dceeea0337891c6f2ad/pkg/ipamd/ipamd.go#L272
-			if aws.ToString(tag.Key) == noManageTagKey {
+			if aws.ToString(tag.Key) == systemManagedTagKey {
 				if aws.ToString(tag.Value) == "true" {
 					return networkmanager.ManagerSystemd, nil
 				}

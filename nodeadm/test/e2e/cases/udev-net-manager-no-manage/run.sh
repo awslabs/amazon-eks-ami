@@ -18,7 +18,7 @@ eni_id=$(aws ec2 describe-instances --query 'Reservations[0].Instances[0].Networ
 cache=/etc/eks/nodeadm/udev-net-manager/$instance_id/$interface
 network=/run/systemd/network/70-eks-$interface.network
 unit=udev-net-manager@$interface.service
-no_manage_tag="Key=node.k8s.amazonaws.com/no_manage,Value=true"
+system_managed_tag="Key=alpha.node.eks.aws/system_managed,Value=true"
 
 nodeadm init --daemon="" --config-source file://config.yaml
 test -f /run/nodeadm/init
@@ -89,7 +89,7 @@ assert::file-not-exists "$network"
 timeout 3 systemctl stop "$unit"
 assert::file-not-exists "$cache"
 systemctl start --no-block "$unit"
-aws ec2 create-tags --resources "$eni_id" --tags "$no_manage_tag"
+aws ec2 create-tags --resources "$eni_id" --tags "$system_managed_tag"
 wait::until test -f "$network"
 wait::until systemctl is-active --quiet "$unit"
 assert::file-contains "$cache" '"mac":"0e:49:61:0f:c3:11"'
@@ -99,7 +99,7 @@ wait::until networkd-selected-config
 
 # an explicit negative tag is a CNI decision.
 reset::link
-aws ec2 create-tags --resources "$eni_id" --tags Key=node.k8s.amazonaws.com/no_manage,Value=false
+aws ec2 create-tags --resources "$eni_id" --tags Key=alpha.node.eks.aws/system_managed,Value=false
 systemctl start "$unit"
 assert::file-contains "$cache" "cni"
 assert::file-not-exists "$network"
@@ -108,7 +108,7 @@ assert::file-not-exists "$network"
 systemctl stop "$unit"
 systemctl reset-failed
 echo '{"mac":"02:00:00:00:00:09","manager":"cni"}' > "$cache"
-aws ec2 create-tags --resources "$eni_id" --tags "$no_manage_tag"
+aws ec2 create-tags --resources "$eni_id" --tags "$system_managed_tag"
 systemctl start "$unit"
 assert::file-contains "$cache" '"mac":"0e:49:61:0f:c3:11"'
 assert::file-contains "$cache" "io.systemd.Network"

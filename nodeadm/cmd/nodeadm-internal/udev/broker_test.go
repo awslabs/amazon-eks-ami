@@ -83,7 +83,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 			want:         networkmanager.ManagerCNI,
 		},
 		{
-			name:         "feature on and ENI opted out of CNI resolves to systemd",
+			name:         "feature on and system managed ENI resolves to systemd",
 			markerExists: true,
 			flagExists:   true,
 			resolver:     &fakeResolver{manager: networkmanager.ManagerSystemd},
