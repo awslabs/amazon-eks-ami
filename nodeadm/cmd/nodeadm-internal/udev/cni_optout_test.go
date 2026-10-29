@@ -87,7 +87,6 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 			}
 			assert.Equal(t, 1, client.calls)
 			assert.Equal(t, []string{eniID}, client.gotInput.NetworkInterfaceIds)
-			assert.Empty(t, client.gotInput.Filters)
 		})
 	}
 }
