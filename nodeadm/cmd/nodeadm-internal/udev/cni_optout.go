@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 
+	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 )
@@ -21,27 +20,19 @@ type cniOptOutResolver interface {
 	Resolve(ctx context.Context, mac string) (string, error)
 }
 
-type describeNetworkInterfacesAPI interface {
-	DescribeNetworkInterfaces(ctx context.Context, params *ec2.DescribeNetworkInterfacesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeNetworkInterfacesOutput, error)
-}
-
 type ec2TagResolver struct {
 	imds   imds.IMDSClient
-	client describeNetworkInterfacesAPI
+	client ec2.DescribeNetworkInterfacesAPIClient
 }
 
 func newEC2TagResolver(ctx context.Context) (*ec2TagResolver, error) {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
-			o.Client = imds.New(true /* treat 404's as retryable */)
-		}),
-	)
+	client, err := ec2extra.NewClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+		return nil, err
 	}
 	return &ec2TagResolver{
 		imds:   imds.DefaultClient(),
-		client: ec2.NewFromConfig(cfg),
+		client: client,
 	}, nil
 }
 
@@ -50,21 +41,16 @@ func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("%w: failed to get network interface id for mac %s: %w", errOwnershipPending, mac, err)
 	}
-	out, err := r.client.DescribeNetworkInterfaces(ctx, &ec2.DescribeNetworkInterfacesInput{
-		NetworkInterfaceIds: []string{eniID},
-	})
+	tags, err := ec2extra.GetNetworkInterfaceTags(ctx, r.client, eniID)
 	if err != nil {
-		return "", fmt.Errorf("%w: failed to describe network interface %s: %w", errOwnershipPending, eniID, err)
+		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
 	}
-	for _, eni := range out.NetworkInterfaces {
-		for _, tag := range eni.TagSet {
-			if aws.ToString(tag.Key) == systemManagedTagKey {
-				if aws.ToString(tag.Value) == "true" {
-					return networkmanager.ManagerSystemd, nil
-				}
-				return networkmanager.ManagerCNI, nil
-			}
-		}
+	value, ok := tags[systemManagedTagKey]
+	if !ok {
+		return "", fmt.Errorf("%w: tags not yet visible for network interface %s", errOwnershipPending, eniID)
 	}
-	return "", fmt.Errorf("%w: tags not yet visible for network interface %s", errOwnershipPending, eniID)
+	if value == "true" {
+		return networkmanager.ManagerSystemd, nil
+	}
+	return networkmanager.ManagerCNI, nil
 }
