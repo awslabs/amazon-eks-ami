@@ -211,11 +211,21 @@ func (r Resources) GetOnlineMemory() (int64, error) {
 		onlinePath := filepath.Join(memoryPath, file.Name(), "online")
 		// #nosec G304 // This path will be a sysfs subpath.
 		onlineContents, err := r.fs.ReadFile(onlinePath)
+		if os.IsNotExist(err) {
+			// A memory block that is online by default may not expose a
+			// per-block "online" file; that file only appears for
+			// hot-pluggable blocks. A present block with no "online" file is
+			// online. This mirrors how parseOnlineCPUs treats a missing cpu
+			// "online" file as "all online".
+			onlineMemory += 1
+			continue
+		}
 		if err != nil {
 			return 0, fmt.Errorf("failed to read online path for memory '%s': %w", onlinePath, err)
 		}
 
-		if strings.TrimSpace(string(onlineContents)) == "1" {
+		// Only an explicit "0" marks a block offline; anything else is online.
+		if strings.TrimSpace(string(onlineContents)) != "0" {
 			onlineMemory += 1
 		}
 	}
