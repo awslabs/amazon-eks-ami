@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
@@ -27,11 +26,11 @@ type describeNetworkInterfacesAPI interface {
 }
 
 type ec2TagResolver struct {
-	client     describeNetworkInterfacesAPI
-	instanceID string
+	imds   imds.IMDSClient
+	client describeNetworkInterfacesAPI
 }
 
-func newEC2TagResolver(ctx context.Context, instanceID string) (*ec2TagResolver, error) {
+func newEC2TagResolver(ctx context.Context) (*ec2TagResolver, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithEC2IMDSRegion(func(o *config.UseEC2IMDSRegion) {
 			o.Client = imds.New(true /* treat 404's as retryable */)
@@ -41,21 +40,21 @@ func newEC2TagResolver(ctx context.Context, instanceID string) (*ec2TagResolver,
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 	return &ec2TagResolver{
-		client:     ec2.NewFromConfig(cfg),
-		instanceID: instanceID,
+		imds:   imds.DefaultClient(),
+		client: ec2.NewFromConfig(cfg),
 	}, nil
 }
 
 func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error) {
+	eniID, err := getInterfaceID(ctx, r.imds, mac)
+	if err != nil {
+		return "", fmt.Errorf("%w: failed to get network interface id for mac %s: %w", errOwnershipPending, mac, err)
+	}
 	out, err := r.client.DescribeNetworkInterfaces(ctx, &ec2.DescribeNetworkInterfacesInput{
-		Filters: []ec2types.Filter{
-			{Name: aws.String("mac-address"), Values: []string{mac}},
-			// MACs are not unique account-wide.
-			{Name: aws.String("attachment.instance-id"), Values: []string{r.instanceID}},
-		},
+		NetworkInterfaceIds: []string{eniID},
 	})
 	if err != nil {
-		return "", fmt.Errorf("%w: failed to describe network interface for mac %s: %w", errOwnershipPending, mac, err)
+		return "", fmt.Errorf("%w: failed to describe network interface %s: %w", errOwnershipPending, eniID, err)
 	}
 	for _, eni := range out.NetworkInterfaces {
 		for _, tag := range eni.TagSet {
@@ -67,5 +66,5 @@ func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error
 			}
 		}
 	}
-	return "", fmt.Errorf("%w: tags not yet visible for mac %s", errOwnershipPending, mac)
+	return "", fmt.Errorf("%w: tags not yet visible for network interface %s", errOwnershipPending, eniID)
 }
