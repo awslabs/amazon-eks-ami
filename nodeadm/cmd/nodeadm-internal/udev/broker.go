@@ -45,7 +45,7 @@ func NewFSBroker(instanceID string) *fsBroker {
 		markerPath:          system.MarkerPath(),
 		eniLabelsMarkerPath: system.ENILabelsMarkerPath(),
 		newResolver: func(ctx context.Context) (cniOptOutResolver, error) {
-			return newEC2TagResolver(ctx, instanceID)
+			return newEC2TagResolver(ctx)
 		},
 		linkUp:    isLinkUp,
 		waitRetry: waitForOwnershipRetry,

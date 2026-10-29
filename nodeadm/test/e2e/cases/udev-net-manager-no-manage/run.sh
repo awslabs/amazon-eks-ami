@@ -61,6 +61,10 @@ function ownership-pending() {
   journalctl -u "$unit" --no-pager | grep -q "tags not yet visible"
 }
 
+function ownership-waiting() {
+  journalctl -u "$unit" --no-pager | grep -q "waiting to resolve interface ownership"
+}
+
 function networkd-selected-config() {
   networkctl status "$interface" --no-pager | grep -F "$network"
 }
@@ -141,7 +145,7 @@ unit=udev-net-manager@nm-event.service
 ip link add nm-event address 02:00:00:00:00:08 type dummy
 udevadm trigger --action=add /sys/class/net/nm-event
 udevadm settle
-wait::until ownership-pending
+wait::until ownership-waiting
 assert::file-not-exists "/etc/eks/nodeadm/udev-net-manager/$instance_id/nm-event"
 ip link delete nm-event
 udevadm settle

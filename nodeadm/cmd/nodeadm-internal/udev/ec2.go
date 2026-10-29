@@ -30,6 +30,10 @@ func getNetworkCard(ctx context.Context, imdsClient imds.IMDSClient, mac string)
 	return strconv.Atoi(networkCard)
 }
 
+func getInterfaceID(ctx context.Context, imdsClient imds.IMDSClient, mac string) (string, error) {
+	return imdsClient.GetProperty(ctx, imds.InterfaceID(mac))
+}
+
 func isNotFoundErr(err error) bool {
 	// TODO: implement a more robust check. example data:
 	// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
