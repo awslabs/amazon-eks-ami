@@ -15,7 +15,7 @@ const markerPath = "/run/nodeadm/init"
 const kubeletStartedMarkerPath = "/run/eks/kubelet/started"
 
 // read by udev-net-manager, which has no NodeConfig.
-const osManagedNoManageENIsMarkerPath = "/run/nodeadm/os-managed-no-manage-enis"
+const eniLabelsMarkerPath = "/run/nodeadm/eni-labels"
 
 // / Creates a marker file to indicate that nodeadm's run phase has been started.
 func NewMarkerAspect() SystemAspect {
@@ -32,8 +32,8 @@ func KubeletStartedMarkerPath() string {
 	return kubeletStartedMarkerPath
 }
 
-func OSManagedNoManageENIsMarkerPath() string {
-	return osManagedNoManageENIsMarkerPath
+func ENILabelsMarkerPath() string {
+	return eniLabelsMarkerPath
 }
 
 func (a *markerAspect) Name() string {
@@ -53,8 +53,8 @@ func (a *markerAspect) Setup(cfg *api.NodeConfig) error {
 	}
 
 	// written before the run marker so the broker never sees the gate as off.
-	if api.IsFeatureEnabled(api.OSManagedNoManageENIs, cfg.Spec.FeatureGates) {
-		if err := util.WriteFileWithDir(osManagedNoManageENIsMarkerPath, nil, 0644); err != nil {
+	if api.IsFeatureEnabled(api.ENILabels, cfg.Spec.FeatureGates) {
+		if err := util.WriteFileWithDir(eniLabelsMarkerPath, nil, 0644); err != nil {
 			return err
 		}
 	}

@@ -171,5 +171,5 @@ const (
 
 	FastImagePull Feature = "FastImagePull"
 
-	OSManagedNoManageENIs Feature = "OSManagedNoManageENIs"
+	ENILabels Feature = "ENILabels"
 )

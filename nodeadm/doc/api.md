@@ -74,7 +74,7 @@ _Appears in:_
 - [NodeConfigSpec](#nodeconfigspec)
 
 .Validation:
-- Enum: [InstanceIdNodeName FastImagePull OSManagedNoManageENIs]
+- Enum: [InstanceIdNodeName FastImagePull ENILabels]
 
 #### InstanceOptions
 
