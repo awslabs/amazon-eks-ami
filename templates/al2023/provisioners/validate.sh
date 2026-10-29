@@ -408,6 +408,11 @@ if [[ "$ENABLE_ACCELERATOR" == "nvidia" ]]; then
 
   validate_nvidia_fabricmanager_condition
 
+  if ! grep -q "^Restart=on-failure$" /etc/systemd/system/nvidia-fabricmanager.service.d/20-restart.conf; then
+    echo "nvidia-fabricmanager.service is not restarted on failure"
+    exit 1
+  fi
+
   if [ ! -f "/etc/systemd/system/set-nvidia-clocks.service" ]; then
     echo "set-nvidia-clocks.service was not staged at build time"
     exit 1
