@@ -430,6 +430,7 @@ func Convert_api_StorageOptions_To_v1alpha1_StorageOptions(in *api.StorageOption
 func autoConvert_v1alpha1_VolumeMount_To_api_VolumeMount(in *v1alpha1.VolumeMount, out *api.VolumeMount, s conversion.Scope) error {
 	out.Device = in.Device
 	out.MountTarget = in.MountTarget
+	out.BindTargets = *(*[]string)(unsafe.Pointer(&in.BindTargets))
 	out.FsType = in.FsType
 	return nil
 }
@@ -442,6 +443,7 @@ func Convert_v1alpha1_VolumeMount_To_api_VolumeMount(in *v1alpha1.VolumeMount, o
 func autoConvert_api_VolumeMount_To_v1alpha1_VolumeMount(in *api.VolumeMount, out *v1alpha1.VolumeMount, s conversion.Scope) error {
 	out.Device = in.Device
 	out.MountTarget = in.MountTarget
+	out.BindTargets = *(*[]string)(unsafe.Pointer(&in.BindTargets))
 	out.FsType = in.FsType
 	return nil
 }

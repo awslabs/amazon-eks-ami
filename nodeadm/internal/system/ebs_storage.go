@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
@@ -28,13 +29,8 @@ func (a *ebsStorageAspect) Setup(cfg *api.NodeConfig) error {
 		return nil
 	}
 
-	// Validate no duplicate mount targets across all volumes
-	seenTargets := make(map[string]string)
-	for _, vol := range cfg.Spec.Instance.Storage.Volumes {
-		if existingDevice, exists := seenTargets[vol.MountTarget]; exists {
-			return fmt.Errorf("duplicate mount target %s: configured for both %s and %s", vol.MountTarget, existingDevice, vol.Device)
-		}
-		seenTargets[vol.MountTarget] = vol.Device
+	if err := validateVolumes(cfg.Spec.Instance.Storage.Volumes); err != nil {
+		return err
 	}
 
 	for _, vol := range cfg.Spec.Instance.Storage.Volumes {
@@ -86,6 +82,146 @@ func (a *ebsStorageAspect) setupVolume(vol api.VolumeMount) error {
 	if err := a.setupMountTarget(log, devUUID, vol.MountTarget, fsType); err != nil {
 		return fmt.Errorf("failed to setup mount target %s: %w", vol.MountTarget, err)
 	}
+
+	for _, target := range vol.BindTargets {
+		if err := a.setupBindTarget(log, filepath.Clean(vol.MountTarget), filepath.Clean(target)); err != nil {
+			return fmt.Errorf("failed to setup bind target %s: %w", target, err)
+		}
+	}
+	return nil
+}
+
+// validateVolumes rejects configurations in which a directory is claimed more
+// than once, whether as a mount target or as a bind target.
+func validateVolumes(volumes []api.VolumeMount) error {
+	seenTargets := make(map[string]string)
+	claim := func(target string, device string) error {
+		if existingDevice, exists := seenTargets[target]; exists {
+			return fmt.Errorf("duplicate mount target %s: configured for both %s and %s", target, existingDevice, device)
+		}
+		seenTargets[target] = device
+		return nil
+	}
+
+	for _, vol := range volumes {
+		mountTarget := filepath.Clean(vol.MountTarget)
+		if err := claim(mountTarget, vol.Device); err != nil {
+			return err
+		}
+
+		seenSources := make(map[string]string)
+		for _, target := range vol.BindTargets {
+			if !filepath.IsAbs(target) || filepath.Clean(target) == "/" {
+				return fmt.Errorf("bind target %q of %s must be an absolute path other than /", target, vol.Device)
+			}
+			target = filepath.Clean(target)
+			if isWithin(target, mountTarget) || isWithin(mountTarget, target) {
+				return fmt.Errorf("bind target %s of %s overlaps its mount target %s", target, vol.Device, mountTarget)
+			}
+			if err := claim(target, vol.Device); err != nil {
+				return err
+			}
+			source := bindSource(mountTarget, target)
+			if existingTarget, exists := seenSources[source]; exists {
+				return fmt.Errorf("bind targets %s and %s of %s would share %s", existingTarget, target, vol.Device, source)
+			}
+			seenSources[source] = target
+		}
+	}
+	return nil
+}
+
+// bindSource returns the directory on the volume that backs a bind target.
+func bindSource(mountTarget string, target string) string {
+	return filepath.Join(mountTarget, filepath.Base(target))
+}
+
+// isWithin reports whether path is dir or a descendant of it.
+func isWithin(path string, dir string) bool {
+	return path == dir || strings.HasPrefix(path, strings.TrimSuffix(dir, "/")+"/")
+}
+
+// setupBindTarget bind mounts target onto its subdirectory of the volume
+// mounted at mountTarget, the same way setup-local-disks shares an instance
+// store array between several directories.
+func (a *ebsStorageAspect) setupBindTarget(log *zap.Logger, mountTarget string, target string) error {
+	mountUnitName, err := systemdEscapePath(target)
+	if err != nil {
+		return fmt.Errorf("failed to escape path %s: %w", target, err)
+	}
+	volumeUnitName, err := systemdEscapePath(mountTarget)
+	if err != nil {
+		return fmt.Errorf("failed to escape path %s: %w", mountTarget, err)
+	}
+
+	// Check if the mount unit is already active (idempotent on reboot)
+	if isUnitActive(mountUnitName) {
+		log.Info("Bind mount unit already active, skipping", zap.String("target", target))
+		return nil
+	}
+
+	// Stop the dependent service only if it is running, and start it again
+	// only in that case, so daemons are not started ahead of nodeadm.
+	service := dependentService(target)
+	wasActive := service != "" && isUnitActive(service)
+	if wasActive {
+		log.Info("Stopping dependent service", zap.String("service", service))
+		if err := runCommand("systemctl", "stop", service); err != nil {
+			return fmt.Errorf("failed to stop %s: %w", service, err)
+		}
+	}
+
+	source := bindSource(mountTarget, target)
+	if err := os.MkdirAll(target, 0755); err != nil {
+		return fmt.Errorf("failed to create bind target %s: %w", target, err)
+	}
+	if err := os.MkdirAll(source, 0755); err != nil {
+		return fmt.Errorf("failed to create bind source %s: %w", source, err)
+	}
+
+	// Always copy, even an empty directory, so the source keeps the
+	// target's ownership and mode.
+	log.Info("Copying existing data to EBS volume", zap.String("target", target), zap.String("source", source))
+	if err := runCommand("cp", "-a", target+"/.", source+"/"); err != nil {
+		return fmt.Errorf("failed to copy data: %w", err)
+	}
+
+	unitPath := fmt.Sprintf("/etc/systemd/system/%s", mountUnitName)
+	unitContent := fmt.Sprintf(`[Unit]
+Description=Bind mount %s onto EBS volume at %s
+Requires=%s
+After=%s
+
+[Mount]
+What=%s
+Where=%s
+Type=none
+Options=bind
+
+[Install]
+WantedBy=multi-user.target
+`, target, mountTarget, volumeUnitName, volumeUnitName, source, target)
+
+	log.Info("Creating systemd bind mount unit", zap.String("unit", mountUnitName))
+	if err := os.WriteFile(unitPath, []byte(unitContent), 0644); err != nil {
+		return fmt.Errorf("failed to write mount unit: %w", err)
+	}
+
+	if err := runCommand("systemctl", "daemon-reload"); err != nil {
+		return fmt.Errorf("failed to reload systemd: %w", err)
+	}
+	if err := runCommand("systemctl", "enable", mountUnitName, "--now"); err != nil {
+		return fmt.Errorf("failed to enable mount unit %s: %w", mountUnitName, err)
+	}
+
+	if wasActive {
+		log.Info("Starting dependent service", zap.String("service", service))
+		if err := runCommand("systemctl", "start", service); err != nil {
+			return fmt.Errorf("failed to start %s: %w", service, err)
+		}
+	}
+
+	log.Info("EBS bind mount complete", zap.String("target", target), zap.String("source", source))
 	return nil
 }
 

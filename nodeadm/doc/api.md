@@ -190,4 +190,5 @@ _Appears in:_
 | --- | --- |
 | `device` _string_ | Device is the block device path (e.g., "/dev/xvdb"). |
 | `mountTarget` _string_ | MountTarget is the directory to mount this volume on. |
+| `bindTargets` _string array_ | BindTargets are directories to bind mount onto this volume, so that they<br />share its capacity the way `localStorage` shares instance storage. Each<br />target is backed by a subdirectory of MountTarget named after the<br />target's last path element, e.g. `/var/lib/containerd` is backed by<br />`<MountTarget>/containerd`. Existing contents of a target are copied to<br />the volume before it is bind mounted. |
 | `fsType` _string_ | FsType is the filesystem type to format the volume with.<br />Defaults to "xfs" if unspecified. |

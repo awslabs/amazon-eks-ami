@@ -123,9 +123,10 @@ type StorageOptions struct {
 
 // VolumeMount specifies an EBS volume device and where it should be mounted.
 type VolumeMount struct {
-	Device      string `json:"device"`
-	MountTarget string `json:"mountTarget"`
-	FsType      string `json:"fsType,omitempty"`
+	Device      string   `json:"device"`
+	MountTarget string   `json:"mountTarget"`
+	BindTargets []string `json:"bindTargets,omitempty"`
+	FsType      string   `json:"fsType,omitempty"`
 }
 
 type NetworkOptions struct {

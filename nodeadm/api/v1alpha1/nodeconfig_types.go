@@ -111,6 +111,15 @@ type VolumeMount struct {
 	// MountTarget is the directory to mount this volume on.
 	MountTarget string `json:"mountTarget"`
 
+	// BindTargets are directories to bind mount onto this volume, so that they
+	// share its capacity the way `localStorage` shares instance storage. Each
+	// target is backed by a subdirectory of MountTarget named after the
+	// target's last path element, e.g. `/var/lib/containerd` is backed by
+	// `<MountTarget>/containerd`. Existing contents of a target are copied to
+	// the volume before it is bind mounted.
+	// +optional
+	BindTargets []string `json:"bindTargets,omitempty"`
+
 	// FsType is the filesystem type to format the volume with.
 	// Defaults to "xfs" if unspecified.
 	// +optional

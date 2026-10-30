@@ -175,6 +175,17 @@ spec:
                           description: VolumeMount specifies an EBS volume device
                             and where it should be mounted.
                           properties:
+                            bindTargets:
+                              description: |-
+                                BindTargets are directories to bind mount onto this volume, so that they
+                                share its capacity the way `localStorage` shares instance storage. Each
+                                target is backed by a subdirectory of MountTarget named after the
+                                target's last path element, e.g. `/var/lib/containerd` is backed by
+                                `<MountTarget>/containerd`. Existing contents of a target are copied to
+                                the volume before it is bind mounted.
+                              items:
+                                type: string
+                              type: array
                             device:
                               description: Device is the block device path (e.g.,
                                 "/dev/xvdb").
