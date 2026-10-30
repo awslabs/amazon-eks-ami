@@ -470,7 +470,7 @@ build {
 
   provisioner "shell" {
     environment_vars = ["ENABLE_ACCELERATOR=${var.enable_accelerator}"]
-    execute_command  = "chmod +x {{ .Path }}; {{ .Vars }} {{ .Path }} ${local.working_dir}/version-info.json"
+    execute_command  = "chmod +x {{ .Path }}; {{ .Vars }} {{ .Path }} ${local.working_dir}/version-info.json ${local.working_dir}/nvidia-package-contents.json"
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/generate-version-info.sh"
   }
@@ -479,6 +479,12 @@ build {
     destination = "${var.ami_name}-version-info.json"
     direction   = "download"
     source      = "${local.working_dir}/version-info.json"
+  }
+
+  provisioner "file" {
+    destination = "${var.ami_name}-nvidia-package-contents.json"
+    direction   = "download"
+    source      = "${local.working_dir}/nvidia-package-contents.json"
   }
 
   provisioner "shell" {

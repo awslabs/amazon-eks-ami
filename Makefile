@@ -125,6 +125,7 @@ lint-docs: ## Lint the docs
 clean:
 	rm *-manifest.json
 	rm *-version-info.json
+	rm *-nvidia-package-contents.json
 
 .PHONY: help
 help: ## Display help
