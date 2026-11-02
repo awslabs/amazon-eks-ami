@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # generates a JSON file containing version information for the software in this AMI,
-# and a JSON file containing the files and scripts of the rpms staged in each nvidia driver tree
+# and a JSON file containing the files not copied during boot and the scripts of the rpms staged in
+# each nvidia driver tree
 
 set -o errexit
 
@@ -39,7 +40,8 @@ if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
       VERSION_JSON=$(echo "$VERSION_JSON" | jq --arg v "$NVIDIA_KMOD" '. + {"nvidia-kmod": $v}')
     fi
     echo "$(jq --arg version "$VERSION" --argjson pkgs "$VERSION_JSON" '.nvidia[$version] = $pkgs' $OUTPUT_FILE)" > $OUTPUT_FILE
-    # files and scripts of each rpm. kmod sources are left out, they're removed once the kmod is built
+    # files and scripts of each rpm. files in the dirs copied during boot (see nvidia-usr-copy@.service)
+    # and kmod sources (removed once the kmod is built) are left out
     DRIVER_VERSION=$(cat "$VERSION_PATH/.version")
     echo "$(jq --arg tree "$VERSION" --arg driver "$DRIVER_VERSION" '.[$tree] = {driver_version: $driver, packages: {}, kmods: {}}' $NVIDIA_PACKAGE_CONTENTS_FILE)" > $NVIDIA_PACKAGE_CONTENTS_FILE
     for RPM in $RPMS; do
@@ -51,7 +53,7 @@ if [ "${ENABLE_ACCELERATOR:-}" = "nvidia" ]; then
       PACKAGE_VERSION=$(sudo rpm --query --package --queryformat '%{VERSION}' "$RPM")
       SCRIPTS=$(sudo rpm --query --package --scripts --triggers --filetriggers "$RPM")
       # the file list goes through stdin because it can be too long for an argument
-      echo "$(sudo rpm --query --package --queryformat '[%{FILENAMES}\n]' "$RPM" | grep -v '^/usr/src/' \
+      echo "$(sudo rpm --query --package --queryformat '[%{FILENAMES}\n]' "$RPM" | grep -Ev '^/usr/(bin|lib64|share|src)(/|$)' \
         | jq --rawfile files /dev/stdin --arg tree "$VERSION" --arg section "$SECTION" --arg name "$NAME" --arg version "$PACKAGE_VERSION" --arg scripts "$SCRIPTS" \
           '.[$tree][$section][$name] = {version: $version, files: ($files | split("\n") | map(select(length > 0)) | sort), scripts: $scripts}' $NVIDIA_PACKAGE_CONTENTS_FILE)" > $NVIDIA_PACKAGE_CONTENTS_FILE
     done
