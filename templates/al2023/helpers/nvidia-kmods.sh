@@ -42,7 +42,7 @@ function stage-grid-kmod-source() {
 
   local RUNFILE_NAME="NVIDIA-Linux-x86_64-${DRIVER_VERSION}-grid-aws.run"
   local RUNFILE_KEY
-  RUNFILE_KEY=$(aws s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
+  RUNFILE_KEY=$(aws_s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
     | grep -F "${RUNFILE_NAME}" \
     | sort -k1,2 \
     | tail -1 \
@@ -55,7 +55,7 @@ function stage-grid-kmod-source() {
 
   local DOWNLOAD_DIR="${WORKING_DIR}/nvidia-grid-runfile"
   mkdir -p "${DOWNLOAD_DIR}"
-  aws s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${RUNFILE_KEY}" "${DOWNLOAD_DIR}/${RUNFILE_NAME}"
+  aws_s3 cp "s3://${EC2_GRID_DRIVER_S3_BUCKET%%/*}/${RUNFILE_KEY}" "${DOWNLOAD_DIR}/${RUNFILE_NAME}"
 
   sudo install -d "${TREE_DIR}/flavors/grid/.sources"
   sudo install -m 0644 "${DOWNLOAD_DIR}/${RUNFILE_NAME}" "${TREE_DIR}/flavors/grid/.sources/"

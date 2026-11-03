@@ -7,6 +7,9 @@ if [ "$ENABLE_EFA" != "true" ]; then
   exit 0
 fi
 
+# shellcheck disable=SC1090
+source "${WORKING_DIR}/helpers/aws-clients.sh"
+
 ##########################################################################################
 ### Setup installer ######################################################################
 ### https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa-start.html#efa-start-enable ##
@@ -32,9 +35,9 @@ sudo dnf swap -y gnupg2-minimal gnupg2-full
 ### Download installer ###################################################################
 ##########################################################################################
 if [ ${PARTITION} == "aws-iso-e" ]; then
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE} .
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
-  aws s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
+  aws_s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE} .
+  aws_s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/aws-efa-installer.key . && gpg --import aws-efa-installer.key
+  aws_s3 cp --region ${BINARY_BUCKET_REGION} s3://${BINARY_BUCKET_NAME}/rpms/${EFA_PACKAGE}.sig .
 else
   curl -O "${EFA_URL}/${EFA_PACKAGE}"
   curl -O "${EFA_URL}/aws-efa-installer.key" && gpg --import aws-efa-installer.key
