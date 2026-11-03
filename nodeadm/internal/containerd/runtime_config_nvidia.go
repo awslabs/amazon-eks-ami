@@ -1,20 +1,16 @@
 package containerd
 
 import (
-	"os"
-
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/api"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 )
 
-const (
-	nvidiaRuntimeName       = "nvidia"
-	nvidiaRuntimeBinaryPath = "/usr/bin/nvidia-container-runtime"
-)
+const nvidiaRuntimeName = "nvidia"
 
 func NewNvidiaRuntimeConfigMixin() *nvidiaRuntimeConfigMixin {
 	return &nvidiaRuntimeConfigMixin{
-		runtimeBinaryPath: nvidiaRuntimeBinaryPath,
+		runtimeBinaryPath: util.NvidiaContainerRuntimeBinaryPath,
 	}
 }
 
@@ -24,8 +20,8 @@ type nvidiaRuntimeConfigMixin struct {
 
 func (m *nvidiaRuntimeConfigMixin) Matches(*api.NodeConfig) bool {
 	// TODO: use nodeconfig data to discern if necessary.
-	_, err := os.Stat(m.runtimeBinaryPath)
-	return err == nil
+	exists, _ := util.IsFilePathExists(m.runtimeBinaryPath)
+	return exists
 }
 
 func (m *nvidiaRuntimeConfigMixin) Apply(opts *runtimeConfig) {

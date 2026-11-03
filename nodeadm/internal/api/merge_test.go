@@ -81,6 +81,37 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		{
+			name: "merge nvidia container runtime config",
+			baseSpec: NodeConfigSpec{
+				NvidiaContainerRuntime: NvidiaContainerRuntimeOptions{
+					Config: NvidiaContainerRuntimeConfig(`
+accept-nvidia-visible-devices-as-volume-mounts = true
+
+[nvidia-container-runtime]
+log-level = "info"`),
+				},
+			},
+			patchSpec: NodeConfigSpec{
+				NvidiaContainerRuntime: NvidiaContainerRuntimeOptions{
+					Config: NvidiaContainerRuntimeConfig(`
+accept-nvidia-visible-devices-envvar-when-unprivileged = false
+
+[nvidia-container-runtime]
+log-level = "debug"`),
+				},
+			},
+			expectedSpec: NodeConfigSpec{
+				NvidiaContainerRuntime: NvidiaContainerRuntimeOptions{
+					Config: NvidiaContainerRuntimeConfig(tomlNormalize(`
+accept-nvidia-visible-devices-as-volume-mounts = true
+accept-nvidia-visible-devices-envvar-when-unprivileged = false
+
+[nvidia-container-runtime]
+log-level = "debug"`)),
+				},
+			},
+		},
+		{
 			name: "customer overrides orchestrator defaults",
 			baseSpec: NodeConfigSpec{
 				Cluster: ClusterDetails{

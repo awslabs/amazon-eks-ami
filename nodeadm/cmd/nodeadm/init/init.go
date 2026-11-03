@@ -17,6 +17,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/containerd"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/daemon"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/kubelet"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/nvidiacontainerruntime"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 )
 
@@ -121,6 +122,7 @@ func (c *initCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOpti
 		configAspects := []system.SystemAspect{
 			system.NewInstanceEnvironmentAspect(),
 			system.NewResolveAspect(),
+			nvidiacontainerruntime.NewConfigAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, configAspects); err != nil {
 			return err

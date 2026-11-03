@@ -165,7 +165,19 @@ _Appears in:_
 | `containerd` _[ContainerdOptions](#containerdoptions)_ |  |
 | `instance` _[InstanceOptions](#instanceoptions)_ |  |
 | `kubelet` _[KubeletOptions](#kubeletoptions)_ |  |
+| `nvidiaContainerRuntime` _[NvidiaContainerRuntimeOptions](#nvidiacontainerruntimeoptions)_ | NvidiaContainerRuntime configures the NVIDIA container runtime, if it is installed. |
 | `featureGates` _object (keys:[Feature](#feature), values:boolean)_ | FeatureGates holds key-value pairs to enable or disable application features. |
+
+#### NvidiaContainerRuntimeOptions
+
+NvidiaContainerRuntimeOptions are additional parameters passed to the NVIDIA container runtime.
+
+_Appears in:_
+- [NodeConfigSpec](#nodeconfigspec)
+
+| Field | Description |
+| --- | --- |
+| `config` _string_ | Config is an inline [NVIDIA Container Toolkit configuration TOML](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#managing-config-toml)<br />that will be merged into `/etc/nvidia-container-runtime/config.toml`.<br />It is ignored on nodes without the NVIDIA container runtime. |
 
 #### StorageOptions
 
