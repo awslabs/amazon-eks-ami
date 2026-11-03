@@ -11,5 +11,6 @@
     "network": {},
     "storage": {}
   },
-  "kubelet": {}
+  "kubelet": {},
+  "nvidiaContainerRuntime": {}
 }

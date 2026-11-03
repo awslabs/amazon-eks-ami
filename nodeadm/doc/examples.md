@@ -218,6 +218,27 @@ This can be supplied in user data alongside the rest of your `NodeConfig`, or as
 
 ---
 
+## Configuring the NVIDIA container runtime
+
+On AMIs with the NVIDIA container runtime installed, additional [NVIDIA Container Toolkit configuration](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#managing-config-toml) can be supplied in your `NodeConfig`. The values in your inline TOML document are merged into `/etc/nvidia-container-runtime/config.toml`, overwriting the values already in that file. `nodeadm` ignores this setting, with a warning, on AMIs without the NVIDIA container runtime.
+
+The following configuration object:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster: ...
+  nvidiaContainerRuntime:
+    config: |
+      accept-nvidia-visible-devices-as-volume-mounts = true
+      accept-nvidia-visible-devices-envvar-when-unprivileged = false
+```
+
+Can be used with device plugins that set `deviceListStrategy` to `volume-mounts`.
+
+---
+
 ## Defining a Max Pods Expression
 
 Under certain circumstances, the desired max pods value for a given node or instance type can diverge from the

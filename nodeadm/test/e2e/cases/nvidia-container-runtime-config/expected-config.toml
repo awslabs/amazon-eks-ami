@@ -1,0 +1,12 @@
+accept-nvidia-visible-devices-as-volume-mounts = true
+accept-nvidia-visible-devices-envvar-when-unprivileged = false
+supported-driver-capabilities = 'compat32,compute,display,graphics,ngx,utility,video'
+
+[nvidia-container-cli]
+ldconfig = '@/sbin/ldconfig'
+load-kmods = true
+
+[nvidia-container-runtime]
+log-level = 'debug'
+mode = 'auto'
+runtimes = ['runc', 'crun']

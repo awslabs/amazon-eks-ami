@@ -218,6 +218,17 @@ spec:
                       kubeReserved will always be calculated on its result.
                     type: string
                 type: object
+              nvidiaContainerRuntime:
+                description: NvidiaContainerRuntime configures the NVIDIA container
+                  runtime, if it is installed.
+                properties:
+                  config:
+                    description: |-
+                      Config is an inline [NVIDIA Container Toolkit configuration TOML](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#managing-config-toml)
+                      that will be merged into `/etc/nvidia-container-runtime/config.toml`.
+                      It is ignored on nodes without the NVIDIA container runtime.
+                    type: string
+                type: object
             type: object
         type: object
     served: true

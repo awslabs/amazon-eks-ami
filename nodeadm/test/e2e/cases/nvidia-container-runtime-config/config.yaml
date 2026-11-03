@@ -1,0 +1,16 @@
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster:
+    name: my-cluster
+    apiServerEndpoint: https://example.com
+    certificateAuthority: Y2VydGlmaWNhdGVBdXRob3JpdHk=
+    cidr: 10.100.0.0/16
+  nvidiaContainerRuntime:
+    config: |
+      accept-nvidia-visible-devices-as-volume-mounts = true
+      accept-nvidia-visible-devices-envvar-when-unprivileged = false
+
+      [nvidia-container-runtime]
+      log-level = "debug"

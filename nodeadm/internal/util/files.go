@@ -7,6 +7,10 @@ import (
 	"path"
 )
 
+// NvidiaContainerRuntimeBinaryPath is where the NVIDIA container runtime is
+// installed on AMIs that ship it.
+const NvidiaContainerRuntimeBinaryPath = "/usr/bin/nvidia-container-runtime"
+
 // Wraps os.WriteFile to automatically create parent directories such that the
 // caller does not need to ensure the existence of the file's directory
 func WriteFileWithDir(filePath string, data []byte, perm fs.FileMode) error {

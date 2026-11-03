@@ -33,8 +33,8 @@ type nodeConfigTransformer struct{}
 
 func (t nodeConfigTransformer) Transformer(typ reflect.Type) func(dst, src reflect.Value) error {
 	switch typ {
-	case reflect.TypeOf(ContainerdConfig("")):
-		return t.mergeContainerdConfig
+	case reflect.TypeOf(ContainerdConfig("")), reflect.TypeOf(NvidiaContainerRuntimeConfig("")):
+		return t.mergeTOMLDocument
 	case reflect.TypeOf(KubeletFlags{}):
 		return t.mergeKubeletFlags
 	case reflect.TypeOf(InlineDocument{}):
@@ -58,13 +58,13 @@ func (t nodeConfigTransformer) mergeKubeletFlags(dst, src reflect.Value) error {
 	return nil
 }
 
-func (t nodeConfigTransformer) mergeContainerdConfig(dst, src reflect.Value) error {
+func (t nodeConfigTransformer) mergeTOMLDocument(dst, src reflect.Value) error {
 	if dst.CanSet() {
 		if dst.Len() <= 0 {
 			// if the destination is empty just use the source data
 			dst.Set(src)
 		} else if src.Len() > 0 {
-			// containerd config is an inline string in TOML format
+			// the config is an inline string in TOML format
 			configBytes, err := util.Merge(
 				[]byte(dst.String()), []byte(src.String()),
 				toml.Marshal, toml.Unmarshal,

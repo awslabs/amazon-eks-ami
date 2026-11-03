@@ -30,11 +30,12 @@ type NodeConfigList struct {
 }
 
 type NodeConfigSpec struct {
-	Cluster      ClusterDetails    `json:"cluster,omitempty"`
-	Containerd   ContainerdOptions `json:"containerd,omitempty"`
-	Instance     InstanceOptions   `json:"instance,omitempty"`
-	Kubelet      KubeletOptions    `json:"kubelet,omitempty"`
-	FeatureGates map[Feature]bool  `json:"featureGates,omitempty"`
+	Cluster                ClusterDetails                `json:"cluster,omitempty"`
+	Containerd             ContainerdOptions             `json:"containerd,omitempty"`
+	Instance               InstanceOptions               `json:"instance,omitempty"`
+	Kubelet                KubeletOptions                `json:"kubelet,omitempty"`
+	NvidiaContainerRuntime NvidiaContainerRuntimeOptions `json:"nvidiaContainerRuntime,omitempty"`
+	FeatureGates           map[Feature]bool              `json:"featureGates,omitempty"`
 }
 
 type NodeConfigStatus struct {
@@ -99,6 +100,11 @@ type ContainerdConfig string
 type ContainerdOptions struct {
 	Config          ContainerdConfig `json:"config,omitempty"`
 	BaseRuntimeSpec InlineDocument   `json:"baseRuntimeSpec,omitempty"`
+}
+
+type NvidiaContainerRuntimeConfig string
+type NvidiaContainerRuntimeOptions struct {
+	Config NvidiaContainerRuntimeConfig `json:"config,omitempty"`
 }
 
 type IPFamily string

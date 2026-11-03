@@ -33,6 +33,8 @@ type NodeConfigSpec struct {
 	Containerd ContainerdOptions `json:"containerd,omitempty"`
 	Instance   InstanceOptions   `json:"instance,omitempty"`
 	Kubelet    KubeletOptions    `json:"kubelet,omitempty"`
+	// NvidiaContainerRuntime configures the NVIDIA container runtime, if it is installed.
+	NvidiaContainerRuntime NvidiaContainerRuntimeOptions `json:"nvidiaContainerRuntime,omitempty"`
 	// FeatureGates holds key-value pairs to enable or disable application features.
 	FeatureGates map[Feature]bool `json:"featureGates,omitempty"`
 }
@@ -86,6 +88,14 @@ type ContainerdOptions struct {
 	// The provided spec will be merged with the default spec; so that a partial spec may be provided.
 	// For more information, see: https://github.com/opencontainers/runtime-spec
 	BaseRuntimeSpec map[string]runtime.RawExtension `json:"baseRuntimeSpec,omitempty"`
+}
+
+// NvidiaContainerRuntimeOptions are additional parameters passed to the NVIDIA container runtime.
+type NvidiaContainerRuntimeOptions struct {
+	// Config is an inline [NVIDIA Container Toolkit configuration TOML](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#managing-config-toml)
+	// that will be merged into `/etc/nvidia-container-runtime/config.toml`.
+	// It is ignored on nodes without the NVIDIA container runtime.
+	Config string `json:"config,omitempty"`
 }
 
 // InstanceOptions determines how the node's operating system and devices are configured.
