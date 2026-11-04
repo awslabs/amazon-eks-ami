@@ -34,6 +34,8 @@ readonly MACHINE
 readonly NVIDIA_TREE_ROOT="/opt/nvidia"
 
 # shellcheck disable=SC1090
+source "${WORKING_DIR}/helpers/aws-clients.sh"
+# shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/nvidia-kmods.sh"
 # shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/nvidia-userspace.sh"
@@ -109,7 +111,7 @@ function resolve-tree-version() {
     return 1
   fi
 
-  LATEST_GRID_DRIVER_VERSION=$(aws s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
+  LATEST_GRID_DRIVER_VERSION=$(aws_s3 ls --recursive "s3://${EC2_GRID_DRIVER_S3_BUCKET}/" \
     | grep -Eo "(NVIDIA-Linux-x86_64-)${MAJOR_VERSION}\.[0-9]+\.[0-9]+(-grid-aws\.run)" \
     | cut -d'-' -f4 \
     | sort -V \
