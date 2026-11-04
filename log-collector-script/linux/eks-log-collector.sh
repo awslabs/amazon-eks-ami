@@ -395,6 +395,13 @@ get_iptables_info() {
     ip6tables-save > "${COLLECT_DIR}"/networking/ip6tables-save.txt
   fi
 
+  if ! command -v nft > /dev/null 2>&1; then
+    echo "nft not installed" | tee "${COLLECT_DIR}"/networking/nftables.txt
+  else
+    try "collect nftables information"
+    timeout 75 nft -a -n list ruleset > "${COLLECT_DIR}"/networking/nftables.txt 2>&1 || warning "Unable to collect nftables rules."
+  fi
+
   if ! command -v ipvsadm > /dev/null 2>&1; then
     echo "ipvsadm not installed" | tee "${COLLECT_DIR}"/networking/ipvsadm.txt
   else
