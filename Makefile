@@ -35,6 +35,16 @@ endif
 ifeq ($(os_distro), al2027)
 	AMI_VARIANT := $(AMI_VARIANT)-al2027
 endif
+# Pod isolation builds on a larger instance than the default. Set before the
+# defaults below so those `?=` assignments become no-ops; the non-pod-isolation
+# defaults are left exactly as they were.
+ifeq ($(enable_pod_isolation), true)
+ifeq ($(arch), arm64)
+	instance_type ?= m8g.4xlarge
+else
+	instance_type ?= m8i.4xlarge
+endif
+endif
 
 ifeq ($(arch), arm64)
 	instance_type ?= m6g.xlarge
@@ -51,6 +61,13 @@ ifeq ($(os_distro), al2027)
 $(error enable_accelerator is not supported for os_distro=al2027)
 endif
 	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
+endif
+
+# Pod isolation is a separate image rather than a flag on the default one: it
+# patches containerd's discard_unpacked_layers for every runtime on the node,
+# so the name has to say so.
+ifeq ($(enable_pod_isolation), true)
+	AMI_VARIANT := $(AMI_VARIANT)-pod-isolation
 endif
 
 ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)

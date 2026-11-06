@@ -1,0 +1,48 @@
+---
+# NodeConfig drop-in installed to /etc/eks/nodeadm.d/10-pod-isolation.yaml.
+#
+# nodeadm regenerates the containerd and kubelet configs from templates on every
+# boot, so this is the only place either can be configured from the AMI. Both
+# fields merge rather than replace, so a cluster that also sets them in user data
+# keeps its own values.
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  containerd:
+    config: |
+      # runc stays the default runtime; a pod reaches these by naming the class.
+      [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.isolated-sandbox]
+      runtime_type = "io.containerd.nitro-sandbox.v2"
+      sandboxer = "shim"
+      # Host devices are meaningless inside the guest VM.
+      privileged_without_host_devices = true
+
+      [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.confidential-sandbox]
+      runtime_type = "io.containerd.nitro-sandbox.v2"
+      sandboxer = "shim"
+      privileged_without_host_devices = true
+
+      # The shim reads compressed layer blobs from the content store, so they
+      # must be retained. AL2023's base config discards them after unpacking.
+      # Must live under cri.v1.images; containerd ignores it elsewhere.
+      [plugins.'io.containerd.cri.v1.images']
+      discard_unpacked_layers = false
+  kubelet:
+    config:
+      # Point kubelet at the CRI proxy. Setting any kubelet config here is also
+      # what makes nodeadm pass --config-dir to kubelet, so this cannot ship as a
+      # bare config.json.d file.
+      containerRuntimeEndpoint: "unix:///run/nitro-sandbox/cri-proxy.sock"
+    flags:
+      # Advertise the node as able to run sandboxed pods. Every node from this
+      # image can: cri-proxy and both runtime handlers are installed
+      # unconditionally, so there is nothing to opt into at boot.
+      #
+      # This label is what admission puts in a sandboxed pod's node selector, so
+      # without it such a pod is rejected with a NodeAffinity predicate failure
+      # even though the node reports sandbox capacity.
+      #
+      # nodeadm appends kubelet flags rather than replacing them, and pflag merges
+      # the values of repeated --node-labels, so a cluster setting its own labels
+      # in user data keeps them.
+      - "--node-labels=eks.amazonaws.com/nitro-sandbox=true"
