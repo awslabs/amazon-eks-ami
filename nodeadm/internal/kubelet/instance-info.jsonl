@@ -1,9 +1,3 @@
-{"instanceType":"a1.2xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":8,"physicalMemoryMib":16384}
-{"instanceType":"a1.4xlarge","defaultMaxENIs":8,"ipv4AddressesPerInterface":30,"vcpus":16,"physicalMemoryMib":32768}
-{"instanceType":"a1.large","defaultMaxENIs":3,"ipv4AddressesPerInterface":10,"vcpus":2,"physicalMemoryMib":4096}
-{"instanceType":"a1.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":4,"vcpus":1,"physicalMemoryMib":2048}
-{"instanceType":"a1.metal","defaultMaxENIs":8,"ipv4AddressesPerInterface":30,"vcpus":16,"physicalMemoryMib":32768}
-{"instanceType":"a1.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":4,"physicalMemoryMib":8192}
 {"instanceType":"bmn-sf1.metal","defaultMaxENIs":15,"ipv4AddressesPerInterface":50,"vcpus":0,"physicalMemoryMib":0}
 {"instanceType":"c1.medium","defaultMaxENIs":2,"ipv4AddressesPerInterface":6,"vcpus":2,"physicalMemoryMib":1740}
 {"instanceType":"c1.xlarge","defaultMaxENIs":4,"ipv4AddressesPerInterface":15,"vcpus":8,"physicalMemoryMib":7168}
