@@ -1737,6 +1737,25 @@ func (CapacityTenancy) Values() []CapacityTenancy {
 	}
 }
 
+type CapacityUnit string
+
+// Enum values for CapacityUnit
+const (
+	CapacityUnitVcpus     CapacityUnit = "vcpus"
+	CapacityUnitInstances CapacityUnit = "instances"
+)
+
+// Values returns all known values for CapacityUnit. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityUnit) Values() []CapacityUnit {
+	return []CapacityUnit{
+		"vcpus",
+		"instances",
+	}
+}
+
 type CarrierGatewayState string
 
 // Enum values for CarrierGatewayState
@@ -5830,6 +5849,15 @@ const (
 	InstanceTypeR9gd48xlarge       InstanceType = "r9gd.48xlarge"
 	InstanceTypeR9gdMetal48xl      InstanceType = "r9gd.metal-48xl"
 	InstanceTypeM9gMedium          InstanceType = "m9g.medium"
+	InstanceTypeT8iNano            InstanceType = "t8i.nano"
+	InstanceTypeT8iMicro           InstanceType = "t8i.micro"
+	InstanceTypeT8iSmall           InstanceType = "t8i.small"
+	InstanceTypeT8iMedium          InstanceType = "t8i.medium"
+	InstanceTypeI8gMetal48xl       InstanceType = "i8g.metal-48xl"
+	InstanceTypeR8gb48xlarge       InstanceType = "r8gb.48xlarge"
+	InstanceTypeR8gbMetal48xl      InstanceType = "r8gb.metal-48xl"
+	InstanceTypeM9gdMedium         InstanceType = "m9gd.medium"
+	InstanceTypeTrn2u48xlarge      InstanceType = "trn2u.48xlarge"
 )
 
 // Values returns all known values for InstanceType. Note that this can be
@@ -7266,6 +7294,15 @@ func (InstanceType) Values() []InstanceType {
 		"r9gd.48xlarge",
 		"r9gd.metal-48xl",
 		"m9g.medium",
+		"t8i.nano",
+		"t8i.micro",
+		"t8i.small",
+		"t8i.medium",
+		"i8g.metal-48xl",
+		"r8gb.48xlarge",
+		"r8gb.metal-48xl",
+		"m9gd.medium",
+		"trn2u.48xlarge",
 	}
 }
 
@@ -9350,6 +9387,16 @@ const (
 	MetricSpotTotalCountVcpu                    Metric = "spot-total-count-vcpu"
 	MetricSpotInterruptionRateInst              Metric = "spot-interruption-rate-inst"
 	MetricSpotInterruptionRateVcpu              Metric = "spot-interruption-rate-vcpu"
+	MetricCapacityTotalRequestedVcpu            Metric = "capacity-total-requested-vcpu"
+	MetricCapacityTotalFulfilledVcpu            Metric = "capacity-total-fulfilled-vcpu"
+	MetricSpotCapacityTotalRequestedVcpu        Metric = "spot-capacity-total-requested-vcpu"
+	MetricSpotCapacityTotalFulfilledVcpu        Metric = "spot-capacity-total-fulfilled-vcpu"
+	MetricCapacityRequestFulfillmentRate        Metric = "capacity-request-fulfillment-rate"
+	MetricAvgInstAzCountPerRequestedVcpu        Metric = "avg-inst-az-count-per-requested-vcpu"
+	MetricInstAzFulfillmentRate                 Metric = "inst-az-fulfillment-rate"
+	MetricSpotCapacityRequestFulfillmentRate    Metric = "spot-capacity-request-fulfillment-rate"
+	MetricSpotAvgInstAzCountPerRequestedVcpu    Metric = "spot-avg-inst-az-count-per-requested-vcpu"
+	MetricSpotInstAzFulfillmentRate             Metric = "spot-inst-az-fulfillment-rate"
 )
 
 // Values returns all known values for Metric. Note that this can be expanded in
@@ -9407,6 +9454,16 @@ func (Metric) Values() []Metric {
 		"spot-total-count-vcpu",
 		"spot-interruption-rate-inst",
 		"spot-interruption-rate-vcpu",
+		"capacity-total-requested-vcpu",
+		"capacity-total-fulfilled-vcpu",
+		"spot-capacity-total-requested-vcpu",
+		"spot-capacity-total-fulfilled-vcpu",
+		"capacity-request-fulfillment-rate",
+		"avg-inst-az-count-per-requested-vcpu",
+		"inst-az-fulfillment-rate",
+		"spot-capacity-request-fulfillment-rate",
+		"spot-avg-inst-az-count-per-requested-vcpu",
+		"spot-inst-az-fulfillment-rate",
 	}
 }
 
@@ -11739,6 +11796,31 @@ func (ServiceType) Values() []ServiceType {
 	}
 }
 
+type SeverityLabel string
+
+// Enum values for SeverityLabel
+const (
+	SeverityLabelInformational SeverityLabel = "informational"
+	SeverityLabelLow           SeverityLabel = "low"
+	SeverityLabelMedium        SeverityLabel = "medium"
+	SeverityLabelHigh          SeverityLabel = "high"
+	SeverityLabelCritical      SeverityLabel = "critical"
+)
+
+// Values returns all known values for SeverityLabel. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SeverityLabel) Values() []SeverityLabel {
+	return []SeverityLabel{
+		"informational",
+		"low",
+		"medium",
+		"high",
+		"critical",
+	}
+}
+
 type ShutdownBehavior string
 
 // Enum values for ShutdownBehavior
@@ -12265,6 +12347,48 @@ func (SummaryStatus) Values() []SummaryStatus {
 	}
 }
 
+type SupportabilityMarketType string
+
+// Enum values for SupportabilityMarketType
+const (
+	SupportabilityMarketTypeOnDemand SupportabilityMarketType = "on-demand"
+	SupportabilityMarketTypeSpot     SupportabilityMarketType = "spot"
+)
+
+// Values returns all known values for SupportabilityMarketType. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SupportabilityMarketType) Values() []SupportabilityMarketType {
+	return []SupportabilityMarketType{
+		"on-demand",
+		"spot",
+	}
+}
+
+type SupportabilityScore string
+
+// Enum values for SupportabilityScore
+const (
+	SupportabilityScoreHigh        SupportabilityScore = "high"
+	SupportabilityScoreMedium      SupportabilityScore = "medium"
+	SupportabilityScoreLow         SupportabilityScore = "low"
+	SupportabilityScoreUnsupported SupportabilityScore = "unsupported"
+)
+
+// Values returns all known values for SupportabilityScore. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (SupportabilityScore) Values() []SupportabilityScore {
+	return []SupportabilityScore{
+		"high",
+		"medium",
+		"low",
+		"unsupported",
+	}
+}
+
 type SupportedAdditionalProcessorFeature string
 
 // Enum values for SupportedAdditionalProcessorFeature
@@ -12659,6 +12783,70 @@ func (TransitGatewayAssociationState) Values() []TransitGatewayAssociationState 
 	}
 }
 
+type TransitGatewayAttachmentNatGatewaySupportState string
+
+// Enum values for TransitGatewayAttachmentNatGatewaySupportState
+const (
+	TransitGatewayAttachmentNatGatewaySupportStateEnabled   TransitGatewayAttachmentNatGatewaySupportState = "enabled"
+	TransitGatewayAttachmentNatGatewaySupportStateDisabled  TransitGatewayAttachmentNatGatewaySupportState = "disabled"
+	TransitGatewayAttachmentNatGatewaySupportStateEnabling  TransitGatewayAttachmentNatGatewaySupportState = "enabling"
+	TransitGatewayAttachmentNatGatewaySupportStateDisabling TransitGatewayAttachmentNatGatewaySupportState = "disabling"
+)
+
+// Values returns all known values for
+// TransitGatewayAttachmentNatGatewaySupportState. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransitGatewayAttachmentNatGatewaySupportState) Values() []TransitGatewayAttachmentNatGatewaySupportState {
+	return []TransitGatewayAttachmentNatGatewaySupportState{
+		"enabled",
+		"disabled",
+		"enabling",
+		"disabling",
+	}
+}
+
+type TransitGatewayAttachmentNatGatewaySupportValue string
+
+// Enum values for TransitGatewayAttachmentNatGatewaySupportValue
+const (
+	TransitGatewayAttachmentNatGatewaySupportValueEnable  TransitGatewayAttachmentNatGatewaySupportValue = "enable"
+	TransitGatewayAttachmentNatGatewaySupportValueDisable TransitGatewayAttachmentNatGatewaySupportValue = "disable"
+)
+
+// Values returns all known values for
+// TransitGatewayAttachmentNatGatewaySupportValue. Note that this can be expanded
+// in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransitGatewayAttachmentNatGatewaySupportValue) Values() []TransitGatewayAttachmentNatGatewaySupportValue {
+	return []TransitGatewayAttachmentNatGatewaySupportValue{
+		"enable",
+		"disable",
+	}
+}
+
+type TransitGatewayAttachmentNatSystemRouteSupportValue string
+
+// Enum values for TransitGatewayAttachmentNatSystemRouteSupportValue
+const (
+	TransitGatewayAttachmentNatSystemRouteSupportValueEnable  TransitGatewayAttachmentNatSystemRouteSupportValue = "enable"
+	TransitGatewayAttachmentNatSystemRouteSupportValueDisable TransitGatewayAttachmentNatSystemRouteSupportValue = "disable"
+)
+
+// Values returns all known values for
+// TransitGatewayAttachmentNatSystemRouteSupportValue. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransitGatewayAttachmentNatSystemRouteSupportValue) Values() []TransitGatewayAttachmentNatSystemRouteSupportValue {
+	return []TransitGatewayAttachmentNatSystemRouteSupportValue{
+		"enable",
+		"disable",
+	}
+}
+
 type TransitGatewayAttachmentResourceType string
 
 // Enum values for TransitGatewayAttachmentResourceType
@@ -12909,6 +13097,29 @@ func (TransitGatewayMulticastDomainState) Values() []TransitGatewayMulticastDoma
 	}
 }
 
+type TransitGatewayNatRuleState string
+
+// Enum values for TransitGatewayNatRuleState
+const (
+	TransitGatewayNatRuleStatePending     TransitGatewayNatRuleState = "pending"
+	TransitGatewayNatRuleStateActivated   TransitGatewayNatRuleState = "activated"
+	TransitGatewayNatRuleStateDeactivated TransitGatewayNatRuleState = "deactivated"
+	TransitGatewayNatRuleStateDeleting    TransitGatewayNatRuleState = "deleting"
+)
+
+// Values returns all known values for TransitGatewayNatRuleState. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransitGatewayNatRuleState) Values() []TransitGatewayNatRuleState {
+	return []TransitGatewayNatRuleState{
+		"pending",
+		"activated",
+		"deactivated",
+		"deleting",
+	}
+}
+
 type TransitGatewayPolicyTableEntryState string
 
 // Enum values for TransitGatewayPolicyTableEntryState
@@ -13104,6 +13315,7 @@ type TransitGatewayRouteType string
 const (
 	TransitGatewayRouteTypeStatic     TransitGatewayRouteType = "static"
 	TransitGatewayRouteTypePropagated TransitGatewayRouteType = "propagated"
+	TransitGatewayRouteTypeSystem     TransitGatewayRouteType = "system"
 )
 
 // Values returns all known values for TransitGatewayRouteType. Note that this can
@@ -13114,6 +13326,7 @@ func (TransitGatewayRouteType) Values() []TransitGatewayRouteType {
 	return []TransitGatewayRouteType{
 		"static",
 		"propagated",
+		"system",
 	}
 }
 
