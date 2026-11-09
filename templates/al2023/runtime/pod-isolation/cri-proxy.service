@@ -1,0 +1,21 @@
+[Unit]
+Description=CRI Proxy for nitro-sandbox
+Documentation=https://github.com/awslabs/amazon-eks-ami
+After=containerd.service
+Requires=containerd.service
+# kubelet dials this proxy instead of containerd, so it has to be listening
+# before kubelet makes its first CRI call.
+Before=kubelet.service
+
+[Service]
+ExecStart=/usr/bin/containerd-shim-nitro-sandbox-v2 cri-proxy \
+  --listen /run/nitro-sandbox/cri-proxy.sock \
+  --containerd /run/containerd/containerd.sock
+# Creates /run/nitro-sandbox so the socket has a directory on a fresh boot.
+RuntimeDirectory=nitro-sandbox
+RuntimeDirectoryPreserve=yes
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

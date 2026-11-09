@@ -86,6 +86,10 @@ variable "enable_nvidia_gdrcopy_driver" {
   type = string
 }
 
+variable "enable_pod_isolation" {
+  type = string
+}
+
 variable "encrypted" {
   type = string
 }
@@ -143,6 +147,10 @@ variable "nvidia_repository_url" {
 }
 
 variable "pause_container_image" {
+  type = string
+}
+
+variable "pod_isolation_firecracker_version" {
   type = string
 }
 
@@ -252,6 +260,10 @@ source "amazon-ebs" "al2023" {
     volume_size           = "${var.launch_block_device_mappings_volume_size}"
     volume_type           = "${var.volume_type}"
   }
+  # Build the pod isolation image on an enclave-enabled instance, so the build
+  # runs on the same kind of host the image targets. False for every other build,
+  # which is also the builder's default, so nothing else changes.
+  enable_nitro_enclave = var.enable_pod_isolation == "true"
   metadata_options {
     http_tokens = "required"
   }
@@ -305,7 +317,8 @@ build {
       "mkdir -p ${local.working_dir}/log-collector-script",
       "mkdir -p ${local.working_dir}/nodeadm",
       "mkdir -p ${local.working_dir}/gpu",
-      "mkdir -p ${local.working_dir}/helpers"
+      "mkdir -p ${local.working_dir}/helpers",
+      "mkdir -p ${local.working_dir}/pod-isolation"
       ]
   }
 
@@ -322,6 +335,11 @@ build {
   provisioner "file" {
     destination = "${local.working_dir}/helpers"
     source      = "${path.root}/helpers/"
+  }
+
+  provisioner "file" {
+    destination = "${local.working_dir}/pod-isolation"
+    source      = "${path.root}/runtime/pod-isolation/"
   }
 
   provisioner "file" {
@@ -447,6 +465,22 @@ build {
       ]
     remote_folder    = "${var.remote_folder}"
     script           = "${path.root}/provisioners/install-efa.sh"
+  }
+
+  # Pod isolation sits in the same slot as the accelerator drivers: after the
+  # worker and nodeadm are in place, before cleanup and validation.
+  provisioner "shell" {
+    environment_vars = [
+      "BINARY_BUCKET_NAME=${var.binary_bucket_name}",
+      "BINARY_BUCKET_REGION=${var.binary_bucket_region}",
+      "ENABLE_POD_ISOLATION=${var.enable_pod_isolation}",
+      "KUBERNETES_BUILD_DATE=${var.kubernetes_build_date}",
+      "KUBERNETES_VERSION=${var.kubernetes_version}",
+      "POD_ISOLATION_FIRECRACKER_VERSION=${var.pod_isolation_firecracker_version}",
+      "WORKING_DIR=${local.working_dir}"
+      ]
+    remote_folder    = "${var.remote_folder}"
+    script           = "${path.root}/provisioners/install-pod-isolation.sh"
   }
 
   provisioner "shell" {

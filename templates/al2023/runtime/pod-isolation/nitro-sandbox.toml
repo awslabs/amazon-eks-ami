@@ -1,0 +1,24 @@
+# Configuration for containerd-shim-nitro-sandbox-v2, read by both the shim and
+# the CRI proxy. Installed to /etc/containerd/nitro-sandbox.toml.
+
+# The guest boots from an Enclave Image Format file, whose kernel command line is
+# baked in at build time, so no boot_args are set below. The shim attaches the
+# guest disk as "rootfs.ext4" from the directory holding this file.
+kernel_path = "/var/lib/nitro-sandbox-images/latest.eif"
+
+# Host-schedule enclave vCPUs instead of dedicating whole physical cores from the
+# NE CPU pool. Without this the driver only donates whole cores, floored at 2
+# vCPUs per sandbox, so a 2-core instance type can host one sandbox at a time
+# regardless of the capacity advertised to the scheduler.
+cpu_overcommit = true
+
+# Concurrent sandbox slot target. The device plugin advertises the lower of this
+# and what the host allows, and the shim grows the host-wide pool toward it.
+pcie_slots = 110
+
+# Jailer chroot base, per-VM drive images and sockets.
+data_base_dir = "/var/lib/nitro-sandbox"
+
+# Give the overlay disk a partition table and formatted filesystems, which the
+# guest requires.
+format_overlay = true

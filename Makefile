@@ -53,6 +53,13 @@ endif
 	AMI_VARIANT := $(AMI_VARIANT)-$(enable_accelerator)
 endif
 
+# Pod isolation is a separate image rather than a flag on the default one: it
+# patches containerd's discard_unpacked_layers for every runtime on the node,
+# so the name has to say so.
+ifeq ($(enable_pod_isolation), true)
+	AMI_VARIANT := $(AMI_VARIANT)-pod-isolation
+endif
+
 ami_name ?= $(AMI_VARIANT)-node-$(K8S_VERSION_MINOR)-$(AMI_VERSION)
 
 ifeq ($(aws_region), cn-northwest-1)

@@ -22,6 +22,11 @@ nvidia_grid_runfile_bucket_name          = "ec2-linux-nvidia-drivers"
 enable_nvidia_gdrcopy_driver             = "true"
 nvidia_gdrcopy_driver_version            = "2.5.2"
 pause_container_image                    = "public.ecr.aws/eks-distro/kubernetes/pause:3.10"
+enable_pod_isolation                     = "false"
+# Firecracker release (https://github.com/firecracker-microvm/firecracker/releases)
+# that Firecracker and the jailer are installed from: "latest", or a version such
+# as "v1.18.0". Must be at least v1.18.0.
+pod_isolation_firecracker_version        = "latest"
 remote_folder                            = "/tmp"
 runc_version                             = "*"
 security_group_id                        = ""
