@@ -23,16 +23,10 @@ enable_nvidia_gdrcopy_driver             = "true"
 nvidia_gdrcopy_driver_version            = "2.5.2"
 pause_container_image                    = "public.ecr.aws/eks-distro/kubernetes/pause:3.10"
 enable_pod_isolation                     = "false"
-# Nitro Sandbox memory pool, reserved at boot with the nitro_enclaves.mempool
-# kernel parameter. Each sandbox takes its full memory from it while running.
-pod_isolation_enclave_mempool            = "95%-1G"
 # Firecracker release (https://github.com/firecracker-microvm/firecracker/releases)
-# that Firecracker and the jailer are installed from.
-pod_isolation_firecracker_version        = "v1.18.0"
-# Oldest stock kernel carrying the Nitro sandbox extensions, as a dnf version
-# constraint. Asserted during the build: an older base image fails rather than
-# producing an AMI whose nodes register and then refuse every sandboxed pod.
-pod_isolation_min_kernel                 = "1:6.18.51"
+# that Firecracker and the jailer are installed from: "latest", or a version such
+# as "v1.18.0". Must be at least v1.18.0.
+pod_isolation_firecracker_version        = "latest"
 remote_folder                            = "/tmp"
 runc_version                             = "*"
 security_group_id                        = ""

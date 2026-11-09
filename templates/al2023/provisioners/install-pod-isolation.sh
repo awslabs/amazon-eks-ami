@@ -29,6 +29,16 @@ esac
 ### Configuration ##############################################################
 ################################################################################
 
+# The first stock Amazon Linux kernel with the Nitro sandbox extensions, as a dnf
+# version constraint.
+readonly MIN_KERNEL="1:6.18.51"
+
+# The Nitro Sandbox memory pool, as a nitro_enclaves.mempool= kernel argument.
+readonly ENCLAVE_MEMPOOL="95%-1G"
+
+# The first Firecracker release that can drive a Nitro Sandbox.
+readonly MIN_FIRECRACKER_VERSION="v1.18.0"
+
 # The runtime and guest image come from the same bundle as the other node
 # components (see install-worker.sh), as <artifact>/linux/<arch>/ under it.
 readonly BUNDLE_S3_URI="s3://${BINARY_BUCKET_NAME}/${KUBERNETES_VERSION}/${KUBERNETES_BUILD_DATE}"
@@ -118,7 +128,7 @@ sudo dnf install -y erofs-utils
 ### Host kernel ################################################################
 ################################################################################
 # The sandbox extensions to the nitro_enclaves driver are in the stock Amazon
-# Linux kernel from ${POD_ISOLATION_MIN_KERNEL} onwards, so no kernel is
+# Linux kernel from ${MIN_KERNEL} onwards, so no kernel is
 # installed from elsewhere. Earlier kernels carry the driver but not the
 # extensions: the sidecar ioctls are missing, the node advertises no sandbox
 # capacity, and nothing can be scheduled. Standalone enclaves work there;
@@ -128,7 +138,7 @@ sudo dnf install -y erofs-utils
 # nothing to do. Asserting it here rather than assuming it means an older base
 # image fails the build instead of producing an AMI that registers fine and then
 # refuses every sandboxed pod.
-sudo dnf install -y "kernel6.18 >= ${POD_ISOLATION_MIN_KERNEL}"
+sudo dnf install -y "kernel6.18 >= ${MIN_KERNEL}"
 
 ################################################################################
 ### Boot arguments #############################################################
@@ -139,17 +149,37 @@ sudo dnf install -y "kernel6.18 >= ${POD_ISOLATION_MIN_KERNEL}"
 # without it registers fine and then refuses every sandboxed pod. Each sandbox
 # takes its full memory from the pool when it starts and returns it only when it
 # terminates.
-set-kernel-arg "nitro_enclaves.mempool=${POD_ISOLATION_ENCLAVE_MEMPOOL}"
+set-kernel-arg "nitro_enclaves.mempool=${ENCLAVE_MEMPOOL}"
 
 ################################################################################
 ### Runtime ####################################################################
 ################################################################################
 
+# The Firecracker release to install: POD_ISOLATION_FIRECRACKER_VERSION, or the
+# newest release when that is "latest". Either way it must be at least
+# MIN_FIRECRACKER_VERSION.
+resolve_firecracker_version() {
+  local version="${POD_ISOLATION_FIRECRACKER_VERSION}"
+
+  if [ "${version}" = "latest" ]; then
+    # releases/latest redirects to releases/tag/<version>.
+    version=$(curl --fail --silent --show-error --location --retry 3 --output /dev/null \
+      --write-out '%{url_effective}' https://github.com/firecracker-microvm/firecracker/releases/latest)
+    version="${version##*/}"
+  fi
+  if [ -z "${version}" ] || [ "$(printf '%s\n%s\n' "${MIN_FIRECRACKER_VERSION}" "${version}" | sort -V | head -n 1)" != "${MIN_FIRECRACKER_VERSION}" ]; then
+    echo "ERROR: Firecracker ${version:-<none>} is older than ${MIN_FIRECRACKER_VERSION}" >&2
+    return 1
+  fi
+  echo "${version}"
+}
+
 # The VMM each isolated pod runs inside, and the jailer that confines it, from
 # the upstream Firecracker release. The tarball is checked against the
 # .sha256.txt published beside it before anything is extracted.
 install_firecracker() {
-  local version="${POD_ISOLATION_FIRECRACKER_VERSION}"
+  local version
+  version=$(resolve_firecracker_version)
   local name="firecracker-${version}-${ARCH}.tgz"
   local url="https://github.com/firecracker-microvm/firecracker/releases/download/${version}/${name}"
   local dir="${WORKING_DIR}/firecracker"

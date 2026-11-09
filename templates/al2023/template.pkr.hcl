@@ -150,15 +150,7 @@ variable "pause_container_image" {
   type = string
 }
 
-variable "pod_isolation_enclave_mempool" {
-  type = string
-}
-
 variable "pod_isolation_firecracker_version" {
-  type = string
-}
-
-variable "pod_isolation_min_kernel" {
   type = string
 }
 
@@ -484,9 +476,7 @@ build {
       "ENABLE_POD_ISOLATION=${var.enable_pod_isolation}",
       "KUBERNETES_BUILD_DATE=${var.kubernetes_build_date}",
       "KUBERNETES_VERSION=${var.kubernetes_version}",
-      "POD_ISOLATION_ENCLAVE_MEMPOOL=${var.pod_isolation_enclave_mempool}",
       "POD_ISOLATION_FIRECRACKER_VERSION=${var.pod_isolation_firecracker_version}",
-      "POD_ISOLATION_MIN_KERNEL=${var.pod_isolation_min_kernel}",
       "WORKING_DIR=${local.working_dir}"
       ]
     remote_folder    = "${var.remote_folder}"
