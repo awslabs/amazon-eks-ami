@@ -260,10 +260,6 @@ source "amazon-ebs" "al2023" {
     volume_size           = "${var.launch_block_device_mappings_volume_size}"
     volume_type           = "${var.volume_type}"
   }
-  # Build the pod isolation image on an enclave-enabled instance, so the build
-  # runs on the same kind of host the image targets. False for every other build,
-  # which is also the builder's default, so nothing else changes.
-  enable_nitro_enclave = var.enable_pod_isolation == "true"
   metadata_options {
     http_tokens = "required"
   }
