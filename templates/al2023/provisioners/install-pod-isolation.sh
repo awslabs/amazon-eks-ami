@@ -109,15 +109,10 @@ fetch_from() {
 ################################################################################
 ### Packages ###################################################################
 ################################################################################
-# The shim shells out to these, and a missing one surfaces as ENOENT from the
-# exec, which reads like a missing file rather than a missing package:
-#
-#   iproute-tc    `tc`, for the per-pod DNS and bandwidth rate limits applied to
-#                 a sandbox's TAP device. The base image has `iproute` but not
-#                 this subpackage.
-#   erofs-utils   `mkfs.erofs`, to build the erofs image the guest mounts for a
-#                 container's root filesystem.
-sudo dnf install -y iproute-tc erofs-utils
+# The shim execs `mkfs.erofs` to build the erofs image the guest mounts for a
+# container's root filesystem. Without it, container start fails with ENOENT,
+# which reads like a missing file rather than a missing package.
+sudo dnf install -y erofs-utils
 
 ################################################################################
 ### Host kernel ################################################################
@@ -138,10 +133,12 @@ sudo dnf install -y "kernel6.18 >= ${POD_ISOLATION_MIN_KERNEL}"
 ################################################################################
 ### Boot arguments #############################################################
 ################################################################################
-# The enclave memory pool is carved out of host RAM at boot and nowhere else, so
-# it has to be a kernel argument. It is mandatory: the shim checks it before
-# starting every sandbox, so a node without it registers fine and then refuses
-# every sandboxed pod. The memory is unavailable to ordinary pods.
+# The Nitro Sandbox memory pool must be reserved at boot with the
+# nitro_enclaves.mempool kernel parameter; a sandbox fails to start if the pool is
+# not reserved. The shim checks it before starting every sandbox, so a node
+# without it registers fine and then refuses every sandboxed pod. Each sandbox
+# takes its full memory from the pool when it starts and returns it only when it
+# terminates.
 set-kernel-arg "nitro_enclaves.mempool=${POD_ISOLATION_ENCLAVE_MEMPOOL}"
 
 ################################################################################

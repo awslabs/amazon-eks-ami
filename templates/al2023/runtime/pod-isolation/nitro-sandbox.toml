@@ -2,15 +2,9 @@
 # the CRI proxy. Installed to /etc/containerd/nitro-sandbox.toml.
 
 # The guest boots from an Enclave Image Format file, whose kernel command line is
-# baked in at build time, so no boot_args are set below. rootfs_path is a symlink
-# to the disk image, because the shim attaches the disk as "rootfs.ext4" from the
-# directory holding the kernel it was given.
+# baked in at build time, so no boot_args are set below. The shim attaches the
+# guest disk as "rootfs.ext4" from the directory holding this file.
 kernel_path = "/var/lib/nitro-sandbox-images/latest.eif"
-rootfs_path = "/var/lib/nitro-sandbox-images/rootfs.ext4"
-
-# Run each pod in a Nitro Enclave sidecar. Without this, Firecracker uses the
-# bare-metal KVM backend and requires /dev/kvm.
-nitro_sandbox = true
 
 # Host-schedule enclave vCPUs instead of dedicating whole physical cores from the
 # NE CPU pool. Without this the driver only donates whole cores, floored at 2

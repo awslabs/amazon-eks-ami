@@ -23,9 +23,8 @@ enable_nvidia_gdrcopy_driver             = "true"
 nvidia_gdrcopy_driver_version            = "2.5.2"
 pause_container_image                    = "public.ecr.aws/eks-distro/kubernetes/pause:3.10"
 enable_pod_isolation                     = "false"
-# Host RAM reserved for the Nitro Enclave memory pool, as a
-# nitro_enclaves.mempool= kernel argument. Caps total sandbox memory per node and
-# is unavailable to ordinary pods.
+# Nitro Sandbox memory pool, reserved at boot with the nitro_enclaves.mempool
+# kernel parameter. Each sandbox takes its full memory from it while running.
 pod_isolation_enclave_mempool            = "95%-1G"
 # Firecracker release (https://github.com/firecracker-microvm/firecracker/releases)
 # that Firecracker and the jailer are installed from.

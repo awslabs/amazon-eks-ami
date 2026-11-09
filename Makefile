@@ -35,16 +35,6 @@ endif
 ifeq ($(os_distro), al2027)
 	AMI_VARIANT := $(AMI_VARIANT)-al2027
 endif
-# Pod isolation builds on a larger instance than the default. Set before the
-# defaults below so those `?=` assignments become no-ops; the non-pod-isolation
-# defaults are left exactly as they were.
-ifeq ($(enable_pod_isolation), true)
-ifeq ($(arch), arm64)
-	instance_type ?= m8g.4xlarge
-else
-	instance_type ?= m8i.4xlarge
-endif
-endif
 
 ifeq ($(arch), arm64)
 	instance_type ?= m6g.xlarge
