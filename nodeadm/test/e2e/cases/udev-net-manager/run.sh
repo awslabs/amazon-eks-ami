@@ -21,8 +21,8 @@ assert::files-equal /run/systemd/network/70-eks-$interface.network 70-eks.networ
 assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "io.systemd.Network"
 nodeadm-internal udev-net-manager --action remove --interface $interface
 
-# Faking that kubelet has started
-mkdir -p /run/eks/kubelet/ && touch /run/eks/kubelet/started
+# Faking that nodeadm run phase has started
+mkdir -p /run/nodeadm/ && touch /run/nodeadm/init
 
 # the cache should make it such that still works as expected.
 nodeadm-internal udev-net-manager --action add --interface $interface
@@ -32,6 +32,17 @@ nodeadm-internal udev-net-manager --action remove --interface $interface
 # wiping the cache and pretending to have booted cloud-init to get an interface
 # that is managed by the CNI.
 rm -rf /etc/eks/nodeadm/udev-net-manager
+
+nodeadm-internal udev-net-manager --action add --interface $interface
+assert::file-not-exists /run/systemd/network/70-eks-$interface.network
+assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "cni"
+nodeadm-internal udev-net-manager --action remove --interface $interface
+
+# only the kubelet marker exists, e.g. user data started kubelet before the
+# nodeadm run phase. the interface should still be managed by the CNI.
+rm -f /run/nodeadm/init
+rm -rf /etc/eks/nodeadm/udev-net-manager
+mkdir -p /run/eks/kubelet/ && touch /run/eks/kubelet/started
 
 nodeadm-internal udev-net-manager --action add --interface $interface
 assert::file-not-exists /run/systemd/network/70-eks-$interface.network

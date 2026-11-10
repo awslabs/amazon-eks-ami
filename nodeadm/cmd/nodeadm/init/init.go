@@ -2,8 +2,6 @@ package init
 
 import (
 	"context"
-	"errors"
-	"os"
 	"slices"
 	"time"
 
@@ -142,11 +140,9 @@ func (c *initCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOpti
 	}
 
 	if !slices.Contains(c.skipPhases, runPhase) {
-		if _, err := os.Stat("/run/cloud-init/result.json"); errors.Is(err, os.ErrNotExist) {
-			log.Warn("cloud-init result file /run/cloud-init/result.json does not exist. Do not manually call nodeadm from user data")
-		}
 		log.Info("Setting up system run aspects...")
 		runAspects := []system.SystemAspect{
+			system.NewMarkerAspect(),
 			system.NewEBSStorageAspect(),
 			system.NewLocalDiskAspect(),
 		}
