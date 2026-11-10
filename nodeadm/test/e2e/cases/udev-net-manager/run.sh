@@ -21,8 +21,8 @@ assert::files-equal /run/systemd/network/70-eks-$interface.network 70-eks.networ
 assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "io.systemd.Network"
 nodeadm-internal udev-net-manager --action remove --interface $interface
 
-# Faking that nodeadm run phase has started
-mkdir -p /run/nodeadm/ && touch /run/nodeadm/init
+# Faking that kubelet has started
+mkdir -p /run/eks/kubelet/ && touch /run/eks/kubelet/started
 
 # the cache should make it such that still works as expected.
 nodeadm-internal udev-net-manager --action add --interface $interface

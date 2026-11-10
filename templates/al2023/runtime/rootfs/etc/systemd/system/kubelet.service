@@ -7,6 +7,8 @@ Wants=containerd.service
 [Service]
 Slice=runtime.slice
 EnvironmentFile=/etc/eks/kubelet/environment
+ExecStartPre=/usr/bin/mkdir -p /run/eks/kubelet
+ExecStartPre=/usr/bin/touch /run/eks/kubelet/started
 ExecStartPre=/sbin/iptables -P FORWARD ACCEPT -w 5
 ExecStart=/usr/bin/kubelet $NODEADM_KUBELET_ARGS
 

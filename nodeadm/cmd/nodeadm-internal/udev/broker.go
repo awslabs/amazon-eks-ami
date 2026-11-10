@@ -26,10 +26,10 @@ func NewFSBroker(instanceID string) *fsBroker {
 }
 
 func (b *fsBroker) determineManager(_ string) (string, error) {
-	// This path is created when the second phase of nodeadm runs.
-	// For users who incorrectly call nodeadm init in user data, this ensures
-	// that systemd won't accidentally try to manage interfaces added by the
-	// VPC CNI.
+	// The marker is created by kubelet.service before kubelet starts. The CNI
+	// can only attach interfaces once kubelet is running, so anything attached
+	// after the marker exists belongs to the CNI. This holds no matter how
+	// kubelet was started.
 	if _, err := os.Stat(system.MarkerPath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return networkmanager.ManagerSystemd, nil
