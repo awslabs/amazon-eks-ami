@@ -37,3 +37,14 @@ nodeadm-internal udev-net-manager --action add --interface $interface
 assert::file-not-exists /run/systemd/network/70-eks-$interface.network
 assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "cni"
 nodeadm-internal udev-net-manager --action remove --interface $interface
+
+# only the kubelet marker exists, e.g. user data started kubelet before the
+# nodeadm run phase. the interface should still be managed by the CNI.
+rm -f /run/nodeadm/init
+rm -rf /etc/eks/nodeadm/udev-net-manager
+mkdir -p /run/eks/kubelet/ && touch /run/eks/kubelet/started
+
+nodeadm-internal udev-net-manager --action add --interface $interface
+assert::file-not-exists /run/systemd/network/70-eks-$interface.network
+assert::file-contains /etc/eks/nodeadm/udev-net-manager/i-1234567890abcdef0/$interface "cni"
+nodeadm-internal udev-net-manager --action remove --interface $interface
