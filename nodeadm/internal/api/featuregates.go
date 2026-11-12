@@ -21,11 +21,11 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
 
-	// ENILabels makes nodeadm aware of ENI labels. Secondary ENIs tagged
+	// ENITags makes nodeadm aware of ENI tags. Secondary ENIs tagged
 	// alpha.node.eks.aws/system_managed=true are configured via
 	// systemd-networkd. Requires ec2:DescribeNetworkInterfaces on the node
 	// instance role.
-	ENILabels: DefaultFalse,
+	ENITags: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {

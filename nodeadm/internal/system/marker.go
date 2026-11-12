@@ -11,7 +11,7 @@ import (
 const markerPath = "/run/nodeadm/init"
 
 // read by udev-net-manager, which has no NodeConfig.
-const eniLabelsMarkerPath = "/run/nodeadm/eni-labels"
+const eniTagsMarkerPath = "/run/nodeadm/eni-tags"
 
 // / Creates a marker file to indicate that nodeadm's run phase has been started.
 func NewMarkerAspect() SystemAspect {
@@ -24,8 +24,8 @@ func MarkerPath() string {
 	return markerPath
 }
 
-func ENILabelsMarkerPath() string {
-	return eniLabelsMarkerPath
+func ENITagsMarkerPath() string {
+	return eniTagsMarkerPath
 }
 
 func (a *markerAspect) Name() string {
@@ -38,8 +38,8 @@ func (a *markerAspect) Setup(cfg *api.NodeConfig) error {
 	}
 
 	// written before the run marker so the broker never sees the gate as off.
-	if api.IsFeatureEnabled(api.ENILabels, cfg.Spec.FeatureGates) {
-		if err := util.WriteFileWithDir(eniLabelsMarkerPath, nil, 0644); err != nil {
+	if api.IsFeatureEnabled(api.ENITags, cfg.Spec.FeatureGates) {
+		if err := util.WriteFileWithDir(eniTagsMarkerPath, nil, 0644); err != nil {
 			return err
 		}
 	}

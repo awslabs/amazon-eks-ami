@@ -174,9 +174,9 @@ spec:
 
 ---
 
-## Managing secondary ENIs with ENI labels
+## Managing secondary ENIs with ENI tags
 
-When the `ENILabels` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `alpha.node.eks.aws/system_managed=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, an ENI attached after boot is left to the VPC CNI.
+When the `ENITags` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `alpha.node.eks.aws/system_managed=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, an ENI attached after boot is left to the VPC CNI.
 
 The VPC CNI does not read `alpha.node.eks.aws/system_managed`. Also tag the ENI `node.k8s.amazonaws.com/no_manage=true` so the CNI does not configure it as well.
 
@@ -196,7 +196,7 @@ apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   featureGates:
-    ENILabels: true
+    ENITags: true
 ```
 
 ---

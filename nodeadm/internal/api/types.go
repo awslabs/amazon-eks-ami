@@ -171,5 +171,5 @@ const (
 
 	FastImagePull Feature = "FastImagePull"
 
-	ENILabels Feature = "ENILabels"
+	ENITags Feature = "ENITags"
 )

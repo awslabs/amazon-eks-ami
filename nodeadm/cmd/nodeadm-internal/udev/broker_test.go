@@ -41,12 +41,12 @@ func newTestBroker(t *testing.T, markerExists, flagExists bool, newResolver reso
 	t.Helper()
 	dir := t.TempDir()
 	b := &fsBroker{
-		cache:               util.NewFSCache(filepath.Join(dir, "cache")),
-		markerPath:          filepath.Join(dir, "init"),
-		eniLabelsMarkerPath: filepath.Join(dir, "eni-labels"),
-		newResolver:         newResolver,
-		linkUp:              linkDown,
-		waitRetry:           waitForOwnershipRetry,
+		cache:             util.NewFSCache(filepath.Join(dir, "cache")),
+		markerPath:        filepath.Join(dir, "init"),
+		eniTagsMarkerPath: filepath.Join(dir, "eni-tags"),
+		newResolver:       newResolver,
+		linkUp:            linkDown,
+		waitRetry:         waitForOwnershipRetry,
 	}
 	touch := func(path string, create bool) {
 		if !create {
@@ -57,7 +57,7 @@ func newTestBroker(t *testing.T, markerExists, flagExists bool, newResolver reso
 		}
 	}
 	touch(b.markerPath, markerExists)
-	touch(b.eniLabelsMarkerPath, flagExists)
+	touch(b.eniTagsMarkerPath, flagExists)
 	return b
 }
 
