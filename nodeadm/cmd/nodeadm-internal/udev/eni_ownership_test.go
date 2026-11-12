@@ -52,14 +52,13 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 		want string
 	}{
 		{name: "eni not yet in imds", imdsErr: imdsErr},
-		{name: "eni not yet visible"},
 		{name: "api error", err: apiErr},
 		{name: "system managed", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "true"}), want: networkmanager.ManagerSystemd},
 		{name: "case sensitive", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "True"}), want: networkmanager.ManagerCNI},
 		{name: "explicit false", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "false"}), want: networkmanager.ManagerCNI},
 		{name: "empty value", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: ""}), want: networkmanager.ManagerCNI},
-		{name: "unrelated tag", enis: taggedENI(map[string]string{"Name": "dataplane"})},
-		{name: "cni no_manage alone", enis: taggedENI(map[string]string{"node.k8s.amazonaws.com/no_manage": "true"})},
+		{name: "unrelated tag", enis: taggedENI(map[string]string{"Name": "dataplane"}), want: networkmanager.ManagerCNI},
+		{name: "cni no_manage alone", enis: taggedENI(map[string]string{"node.k8s.amazonaws.com/no_manage": "true"}), want: networkmanager.ManagerCNI},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			imdsClient := &imds.FakeIMDSClient{

@@ -57,10 +57,6 @@ function wait::until() {
   done
 }
 
-function ownership-pending() {
-  journalctl -u "$unit" --no-pager | grep -q "tags not yet visible"
-}
-
 function ownership-waiting() {
   journalctl -u "$unit" --no-pager | grep -q "waiting to resolve interface ownership"
 }
@@ -80,22 +76,14 @@ function reset::link() {
   ip link set "$interface" down
 }
 
-# the ENI is visible before its tag: stay pending in the same process without
-# caching, and resolve once the tag shows up.
-systemctl start --no-block "$unit"
-wait::until ownership-pending
-pending_pid=$(systemctl show "$unit" -p MainPID --value)
-sleep 8
-test "$(systemctl show "$unit" -p MainPID --value)" = "$pending_pid"
-test "$(systemctl show "$unit" -p NRestarts --value)" = 0
-assert::file-not-exists "$cache"
+# an ENI without the tag is a CNI decision.
+systemctl start "$unit"
+assert::file-contains "$cache" "cni"
 assert::file-not-exists "$network"
-timeout 3 systemctl stop "$unit"
-assert::file-not-exists "$cache"
-systemctl start --no-block "$unit"
+
+reset::link
 aws ec2 create-tags --resources "$eni_id" --tags "$system_managed_tag"
-wait::until test -f "$network"
-wait::until systemctl is-active --quiet "$unit"
+systemctl start "$unit"
 assert::file-contains "$cache" '"mac":"0e:49:61:0f:c3:11"'
 assert::file-contains "$cache" "io.systemd.Network"
 assert::file-contains "$network" "RouteMetric=512"
