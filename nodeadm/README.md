@@ -14,6 +14,8 @@ nodeadm init
 > **Note**
 > This happens automatically, via a `systemd` service, on AL2023-based EKS AMI's.
 
+Your user data should not run `nodeadm init` or start or restart `kubelet`. Configure `kubelet` through `NodeConfig` instead. See the [examples](doc/examples.md#configuring-kubelet) for details.
+
 ---
 
 ## Configuration

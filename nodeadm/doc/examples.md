@@ -119,6 +119,29 @@ spec:
 The resulting configuration used by `nodeadm` will contain the `RLIMIT_NOFILE` values from the drop-in file (`65536`), overriding the values set in user data.
 
 ---
+
+## Configuring `kubelet`
+
+Additional `kubelet` configuration can be supplied in your `NodeConfig`. `spec.kubelet.config` is merged into the default [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/), and `spec.kubelet.flags` are appended to the default command-line arguments. See the [API reference](api.md#kubeletoptions) for details.
+
+```yaml
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  cluster: ...
+  kubelet:
+    config:
+      shutdownGracePeriod: 30s
+    flags:
+      - --node-labels=example.com/role=worker
+```
+
+This can be supplied in user data alongside the rest of your `NodeConfig`, or as a [drop-in file](#overriding-configuration-with-drop-in-files) under `/etc/eks/nodeadm.d/`.
+
+⚠️ **Note**: Your user data should not run `nodeadm init` or start or restart `kubelet` (for example, with `systemctl restart kubelet`). On EKS AMIs, `nodeadm-run.service` runs after your user data, sets up the node (for example, by mounting local instance storage), and then starts `kubelet`. Starting `kubelet` from user data makes it run before that setup is complete.
+
+---
 ## Using instance ID as node name
 
 When the `InstanceIdNodeName` feature gate is enabled, `nodeadm` will use the EC2 instance's ID (e.g. `i-abcdefg1234`) as the name of the `Node` object created by `kubelet`, instead of the EC2 instance's private DNS Name (e.g. `ip-192-168-1-1.ec2.internal`).
