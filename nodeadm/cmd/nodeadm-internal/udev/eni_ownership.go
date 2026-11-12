@@ -6,13 +6,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 
+	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	ec2extra "github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/ec2"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 )
-
-// systemManagedTagKey marks an ENI to be configured by systemd-networkd.
-const systemManagedTagKey = "alpha.node.eks.aws/system_managed"
 
 type ownershipResolver interface {
 	// Resolve returns the manager of the ENI with the given MAC, or an error
@@ -45,7 +43,7 @@ func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
 	}
-	value, ok := tags[systemManagedTagKey]
+	value, ok := tags[v1alpha1.ENITagSystemManaged]
 	if !ok {
 		return "", fmt.Errorf("%w: tags not yet visible for network interface %s", errOwnershipPending, eniID)
 	}

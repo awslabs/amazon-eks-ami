@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/api/v1alpha1"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
 	"github.com/stretchr/testify/assert"
@@ -53,10 +54,10 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 		{name: "eni not yet in imds", imdsErr: imdsErr},
 		{name: "eni not yet visible"},
 		{name: "api error", err: apiErr},
-		{name: "system managed", enis: taggedENI(map[string]string{systemManagedTagKey: "true"}), want: networkmanager.ManagerSystemd},
-		{name: "case sensitive", enis: taggedENI(map[string]string{systemManagedTagKey: "True"}), want: networkmanager.ManagerCNI},
-		{name: "explicit false", enis: taggedENI(map[string]string{systemManagedTagKey: "false"}), want: networkmanager.ManagerCNI},
-		{name: "empty value", enis: taggedENI(map[string]string{systemManagedTagKey: ""}), want: networkmanager.ManagerCNI},
+		{name: "system managed", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "true"}), want: networkmanager.ManagerSystemd},
+		{name: "case sensitive", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "True"}), want: networkmanager.ManagerCNI},
+		{name: "explicit false", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: "false"}), want: networkmanager.ManagerCNI},
+		{name: "empty value", enis: taggedENI(map[string]string{v1alpha1.ENITagSystemManaged: ""}), want: networkmanager.ManagerCNI},
 		{name: "unrelated tag", enis: taggedENI(map[string]string{"Name": "dataplane"})},
 		{name: "cni no_manage alone", enis: taggedENI(map[string]string{"node.k8s.amazonaws.com/no_manage": "true"})},
 	} {
