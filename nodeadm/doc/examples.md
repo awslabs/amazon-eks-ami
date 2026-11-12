@@ -176,20 +176,15 @@ spec:
 
 ## Managing secondary ENIs with ENI tags
 
-When the `ENITags` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `alpha.node.eks.aws/system_managed=true` via `systemd-networkd`, using the same DHCP, MTU and policy routing configuration as boot-time interfaces. Without it, an ENI attached after boot is left to the VPC CNI.
+When the `ENITags` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `alpha.node.eks.aws/system_managed=true` via `systemd-networkd`. ENIs without that tag, or with any other value, are left to the CNI.
 
-The VPC CNI does not read `alpha.node.eks.aws/system_managed`. Also tag the ENI `node.k8s.amazonaws.com/no_manage=true` so the CNI does not configure it as well.
-
-Tag the ENI before attaching it. Ownership is resolved per interface:
-
-- An interface that is already up keeps its current manager.
-- An ENI tagged `true` is configured by `systemd-networkd`; any other value delegates it to the CNI.
-- An ENI without the `system_managed` tag is left to the CNI. While the ENI is not visible yet, the lookup is retried a bounded number of times; if it still fails, the interface is left untouched.
-- Decisions are cached per interface and MAC address for the lifetime of the instance. Retagging an interface in place is not supported.
-
-**Note**: the node instance role must grant `ec2:DescribeNetworkInterfaces`, and the node must reach the regional EC2 endpoint directly, through a VPC endpoint, or through its configured proxy. That permission is part of `AmazonEKS_CNI_Policy`, but with IRSA or EKS Pod Identity it is usually attached to the `aws-node` role rather than the node role. No EC2 call is made when the feature is disabled (the default).
+⚠️ **Note**: This feature can significantly increase the number of `ec2:DescribeNetworkInterfaces` calls, and may not be suitable for all environments.
 
 ### To enable this feature:
+1. Grant `ec2:DescribeNetworkInterfaces` to the node instance role.
+2. Configure the CNIs running on the node not to manage these ENIs. For example, the VPC CNI skips ENIs tagged `node.k8s.amazonaws.com/no_manage=true`.
+3. Tag the ENI when you create it, for example with `TagSpecifications` in `CreateNetworkInterface`. Only the tags visible when the ENI is attached are taken into account, and tags added later may not be visible yet due to EC2's eventual consistency.
+4. Enable the feature gate in your user data:
 ```
 ---
 apiVersion: node.eks.aws/v1alpha1
@@ -198,6 +193,8 @@ spec:
   featureGates:
     ENITags: true
 ```
+
+⚠️ **Note**: Changing the tags of an ENI and attaching it again to the same instance is not supported.
 
 ---
 
