@@ -122,12 +122,9 @@ The resulting configuration used by `nodeadm` will contain the `RLIMIT_NOFILE` v
 
 ## Configuring `kubelet`
 
-On EKS AMIs, `nodeadm-run.service` runs after cloud-init has finished running your user data. It sets up the node, for example by mounting local instance storage, and then starts `kubelet`.
+Additional `kubelet` configuration can be supplied in your `NodeConfig`. `spec.kubelet.config` is merged into the default [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/), and `spec.kubelet.flags` are appended to the default command-line arguments. See the [API reference](api.md#kubeletoptions) for details.
 
-⚠️ **Note**: Your user data should not run `nodeadm init` or start or restart `kubelet` (for example, with `systemctl restart kubelet`). Doing so starts `kubelet` before `nodeadm` has finished setting up the node.
-
-To change how `kubelet` runs, set `kubelet.config` or `kubelet.flags` in your `NodeConfig` instead. `nodeadm` applies these values before it starts `kubelet`:
-```
+```yaml
 ---
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
@@ -140,9 +137,9 @@ spec:
       - --node-labels=example.com/role=worker
 ```
 
-`kubelet.config` is merged into the default [`KubeletConfiguration`](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/), and `kubelet.flags` are appended to the default command-line arguments. See the [API reference](api.md#kubeletoptions) for details.
-
 This can be supplied in user data alongside the rest of your `NodeConfig`, or as a [drop-in file](#overriding-configuration-with-drop-in-files) under `/etc/eks/nodeadm.d/`.
+
+⚠️ **Note**: Your user data should not run `nodeadm init` or start or restart `kubelet` (for example, with `systemctl restart kubelet`). On EKS AMIs, `nodeadm-run.service` runs after your user data, sets up the node (for example, by mounting local instance storage), and then starts `kubelet`. Starting `kubelet` from user data makes it run before that setup is complete.
 
 ---
 ## Using instance ID as node name
