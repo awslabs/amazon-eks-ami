@@ -65,8 +65,11 @@ function networkd-selected-config() {
   networkctl status "$interface" --no-pager | grep -F "$network"
 }
 
-function unit-inactive() {
-  test "$(systemctl show "$unit" -p ActiveState --value)" = inactive
+function unit-stopped() {
+  case "$(systemctl show "$unit" -p ActiveState --value)" in
+    inactive | failed) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 function reset::link() {
@@ -138,5 +141,5 @@ wait::until unit-activating
 assert::file-not-exists "/etc/eks/nodeadm/udev-net-manager/$instance_id/nm-event"
 ip link delete nm-event
 udevadm settle
-wait::until unit-inactive
+wait::until unit-stopped
 assert::file-not-exists "/etc/eks/nodeadm/udev-net-manager/$instance_id/nm-event"
