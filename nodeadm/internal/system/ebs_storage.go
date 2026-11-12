@@ -110,6 +110,7 @@ func (a *ebsStorageAspect) setupMountTarget(log *zap.Logger, devUUID string, tar
 	}
 
 	// Ensure target directory exists
+	// #nosec G301 // mount targets and any missing parents must stay traversable by non-root users
 	if err := os.MkdirAll(target, 0755); err != nil {
 		return fmt.Errorf("failed to create mount target %s: %w", target, err)
 	}
@@ -119,7 +120,7 @@ func (a *ebsStorageAspect) setupMountTarget(log *zap.Logger, devUUID string, tar
 	if dirHasContent(target) {
 		log.Info("Copying existing data to EBS volume", zap.String("target", target))
 		tmpMount := "/mnt/ebs-setup"
-		if err := os.MkdirAll(tmpMount, 0755); err != nil {
+		if err := os.MkdirAll(tmpMount, 0700); err != nil {
 			return fmt.Errorf("failed to create temp mount dir: %w", err)
 		}
 		if err := runCommand("mount", "UUID="+devUUID, tmpMount); err != nil {
@@ -150,6 +151,7 @@ WantedBy=multi-user.target
 `, target, devUUID, target, fsType)
 
 	log.Info("Creating systemd mount unit", zap.String("unit", mountUnitName))
+	// #nosec G306 // systemd unit files are world-readable by convention and hold no secrets
 	if err := os.WriteFile(unitPath, []byte(unitContent), 0644); err != nil {
 		return fmt.Errorf("failed to write mount unit: %w", err)
 	}
@@ -175,6 +177,7 @@ WantedBy=multi-user.target
 }
 
 func getFilesystemType(device string) (string, error) {
+	// #nosec G204 // arguments come from NodeConfig and no shell is involved
 	out, err := exec.Command("lsblk", device, "-o", "fstype", "--noheadings").Output()
 	if err != nil {
 		return "", err
@@ -183,6 +186,7 @@ func getFilesystemType(device string) (string, error) {
 }
 
 func getDeviceUUID(device string) (string, error) {
+	// #nosec G204 // arguments come from NodeConfig and no shell is involved
 	out, err := exec.Command("blkid", "-s", "UUID", "-o", "value", device).Output()
 	if err != nil {
 		return "", err
@@ -195,6 +199,7 @@ func getDeviceUUID(device string) (string, error) {
 }
 
 func systemdEscapePath(path string) (string, error) {
+	// #nosec G204 // arguments come from NodeConfig and no shell is involved
 	out, err := exec.Command("systemd-escape", "--path", "--suffix=mount", path).Output()
 	if err != nil {
 		return "", err
@@ -203,6 +208,7 @@ func systemdEscapePath(path string) (string, error) {
 }
 
 func isUnitActive(unitName string) bool {
+	// #nosec G204 // arguments come from NodeConfig and no shell is involved
 	out, _ := exec.Command("systemctl", "is-active", unitName).Output()
 	return strings.TrimSpace(string(out)) == "active"
 }
@@ -211,10 +217,13 @@ func formatDevice(device string, fsType string) error {
 	var cmd *exec.Cmd
 	switch fsType {
 	case "xfs":
+		// #nosec G204 // arguments come from NodeConfig and no shell is involved
 		cmd = exec.Command("mkfs.xfs", device)
 	case "ext4":
+		// #nosec G204 // arguments come from NodeConfig and no shell is involved
 		cmd = exec.Command("mkfs.ext4", device)
 	default:
+		// #nosec G204 // arguments come from NodeConfig and no shell is involved
 		cmd = exec.Command("mkfs", "-t", fsType, device)
 	}
 	cmd.Stdout = os.Stdout
@@ -242,6 +251,7 @@ func dirHasContent(path string) bool {
 }
 
 func runCommand(name string, args ...string) error {
+	// #nosec G204 // callers pass fixed command names; arguments come from NodeConfig and no shell is involved
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -249,6 +259,7 @@ func runCommand(name string, args ...string) error {
 }
 
 func validateEBSDevice(device string) error {
+	// #nosec G204 // arguments come from NodeConfig and no shell is involved
 	out, err := exec.Command("lsblk", device, "-o", "MODEL", "--noheadings").Output()
 	if err != nil {
 		return fmt.Errorf("failed to check device model for %s: %w", device, err)
