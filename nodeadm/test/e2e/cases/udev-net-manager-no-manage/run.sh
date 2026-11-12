@@ -22,7 +22,7 @@ system_managed_tag="Key=alpha.node.eks.aws/system_managed,Value=true"
 
 nodeadm init --daemon="" --config-source file://config.yaml
 test -f /run/nodeadm/init
-test -f /run/nodeadm/eni-labels
+test -f /run/nodeadm/eni-tags
 
 # run the production unit, only the executable path and AWS endpoints differ.
 ln -s /usr/local/bin/nodeadm-internal /usr/bin/nodeadm-internal
@@ -127,7 +127,7 @@ assert::file-not-exists "$network"
 
 # with the gate off the CNI decision needs no EC2 access.
 reset::link
-rm /run/nodeadm/eni-labels
+rm /run/nodeadm/eni-tags
 AWS_ENDPOINT_URL=http://localhost:5001 timeout 5 nodeadm-internal udev-net-manager --action add --interface "$interface"
 assert::file-contains "$cache" "cni"
 assert::file-not-exists "$network"
@@ -140,7 +140,7 @@ cat << 'EOF' > /etc/udev/rules.d/89-test-ena.rules
 SUBSYSTEM=="net", KERNEL=="nm-event", ENV{ID_NET_DRIVER}="ena"
 EOF
 udevadm control --reload
-touch /run/nodeadm/eni-labels
+touch /run/nodeadm/eni-tags
 unit=udev-net-manager@nm-event.service
 ip link add nm-event address 02:00:00:00:00:08 type dummy
 udevadm trigger --action=add /sys/class/net/nm-event
