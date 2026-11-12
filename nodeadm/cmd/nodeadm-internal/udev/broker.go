@@ -34,7 +34,7 @@ type fsBroker struct {
 	cache             util.FSCache
 	markerPath        string
 	eniTagsMarkerPath string
-	newResolver       func(ctx context.Context) (cniOptOutResolver, error)
+	newResolver       func(ctx context.Context) (ownershipResolver, error)
 	linkUp            func(interfaceName string) (bool, error)
 	waitRetry         func(context.Context, time.Duration) error
 }
@@ -44,7 +44,7 @@ func NewFSBroker(instanceID string) *fsBroker {
 		cache:             util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
 		markerPath:        system.MarkerPath(),
 		eniTagsMarkerPath: system.ENITagsMarkerPath(),
-		newResolver: func(ctx context.Context) (cniOptOutResolver, error) {
+		newResolver: func(ctx context.Context) (ownershipResolver, error) {
 			return newEC2TagResolver(ctx)
 		},
 		linkUp:    isLinkUp,
