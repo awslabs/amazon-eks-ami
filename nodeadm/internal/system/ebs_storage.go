@@ -177,7 +177,7 @@ WantedBy=multi-user.target
 }
 
 func getFilesystemType(device string) (string, error) {
-	// #nosec G204 // arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
 	out, err := exec.Command("lsblk", device, "-o", "fstype", "--noheadings").Output()
 	if err != nil {
 		return "", err
@@ -186,7 +186,7 @@ func getFilesystemType(device string) (string, error) {
 }
 
 func getDeviceUUID(device string) (string, error) {
-	// #nosec G204 // arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
 	out, err := exec.Command("blkid", "-s", "UUID", "-o", "value", device).Output()
 	if err != nil {
 		return "", err
@@ -199,7 +199,7 @@ func getDeviceUUID(device string) (string, error) {
 }
 
 func systemdEscapePath(path string) (string, error) {
-	// #nosec G204 // arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // mount target from NodeConfig is passed as one argument; systemd-escape only escapes it
 	out, err := exec.Command("systemd-escape", "--path", "--suffix=mount", path).Output()
 	if err != nil {
 		return "", err
@@ -208,7 +208,7 @@ func systemdEscapePath(path string) (string, error) {
 }
 
 func isUnitActive(unitName string) bool {
-	// #nosec G204 // arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // unit name is the systemd-escape output for the mount target
 	out, _ := exec.Command("systemctl", "is-active", unitName).Output()
 	return strings.TrimSpace(string(out)) == "active"
 }
@@ -217,13 +217,13 @@ func formatDevice(device string, fsType string) error {
 	var cmd *exec.Cmd
 	switch fsType {
 	case "xfs":
-		// #nosec G204 // arguments come from NodeConfig and no shell is involved
+		// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
 		cmd = exec.Command("mkfs.xfs", device)
 	case "ext4":
-		// #nosec G204 // arguments come from NodeConfig and no shell is involved
+		// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
 		cmd = exec.Command("mkfs.ext4", device)
 	default:
-		// #nosec G204 // arguments come from NodeConfig and no shell is involved
+		// #nosec G204 // device has passed the EBS checks; fsType comes from NodeConfig and is passed as one argument with no shell
 		cmd = exec.Command("mkfs", "-t", fsType, device)
 	}
 	cmd.Stdout = os.Stdout
@@ -251,7 +251,7 @@ func dirHasContent(path string) bool {
 }
 
 func runCommand(name string, args ...string) error {
-	// #nosec G204 // callers pass fixed command names; arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // callers pass fixed commands (systemctl, mount, cp, umount); arguments are constants, the blkid UUID, the escaped unit name, or the NodeConfig mount target
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -259,7 +259,7 @@ func runCommand(name string, args ...string) error {
 }
 
 func validateEBSDevice(device string) error {
-	// #nosec G204 // arguments come from NodeConfig and no shell is involved
+	// #nosec G204 // device is a NodeConfig path already checked with os.Stat; exec passes it as one argument with no shell
 	out, err := exec.Command("lsblk", device, "-o", "MODEL", "--noheadings").Output()
 	if err != nil {
 		return fmt.Errorf("failed to check device model for %s: %w", device, err)
