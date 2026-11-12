@@ -2,6 +2,9 @@ package networkmanager
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -16,10 +19,19 @@ type CacheEntry struct {
 	Manager string `json:"manager"`
 }
 
-func DecodeCacheEntry(value string) (CacheEntry, error) {
-	var entry CacheEntry
-	err := json.Unmarshal([]byte(value), &entry)
-	return entry, err
+// ReadCacheEntry reports found=false only when the interface has no entry.
+func ReadCacheEntry(cache util.FSCache, name string) (entry CacheEntry, found bool, err error) {
+	value, err := cache.Read(name)
+	if errors.Is(err, fs.ErrNotExist) {
+		return CacheEntry{}, false, nil
+	}
+	if err != nil {
+		return CacheEntry{}, false, err
+	}
+	if err := json.Unmarshal([]byte(value), &entry); err != nil {
+		return CacheEntry{}, false, fmt.Errorf("failed to decode cache entry for %s: %w", name, err)
+	}
+	return entry, true, nil
 }
 
 func WriteCacheEntry(cache util.FSCache, name, mac, manager string) error {
@@ -39,18 +51,20 @@ func ManagedInterfaces(cache util.FSCache, interfaceMAC func(string) (string, er
 	}
 	var managed []string
 	for _, name := range names {
-		value, err := cache.Read(name)
+		entry, found, err := ReadCacheEntry(cache, name)
 		if err != nil {
 			return nil, err
 		}
-		entry, err := DecodeCacheEntry(value)
-		if err != nil || entry.Manager != ManagerSystemd {
+		if !found || entry.Manager != ManagerSystemd {
 			continue
 		}
 		mac, err := interfaceMAC(name)
-		if err != nil {
-			zap.L().Info("skipping cached interface because of an error reading its address", zap.String("interface", name), zap.Error(err))
+		if errors.Is(err, fs.ErrNotExist) {
+			zap.L().Info("skipping cached interface that no longer exists", zap.String("interface", name))
 			continue
+		}
+		if err != nil {
+			return nil, err
 		}
 		if entry.MAC != mac {
 			zap.L().Info("ignoring cached ownership for a replaced interface", zap.String("interface", name), zap.String("mac", mac), zap.String("cachedMAC", entry.MAC))

@@ -207,10 +207,9 @@ func Test_fsBroker_replacementENI(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, want, manager)
 			assert.Equal(t, 1, resolver.calls)
-			value, err := b.cache.Read("ens6")
+			entry, found, err := networkmanager.ReadCacheEntry(b.cache, "ens6")
 			assert.NoError(t, err)
-			entry, err := networkmanager.DecodeCacheEntry(value)
-			assert.NoError(t, err)
+			assert.True(t, found)
 			assert.Equal(t, networkmanager.CacheEntry{MAC: "new-mac", Manager: want}, entry)
 		})
 	}
@@ -224,4 +223,15 @@ func Test_fsBroker_sameENIAcrossBoot(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, manager, got)
 	}
+}
+
+func Test_fsBroker_corruptCacheEntry(t *testing.T) {
+	b := newTestBroker(t, true, true, unbuildableResolver)
+	assert.NoError(t, b.cache.Write("ens6", "garbage"))
+	got, err := b.ManagerFor(context.Background(), "ens6", "mac")
+	assert.Error(t, err)
+	assert.Empty(t, got)
+	value, err := b.cache.Read("ens6")
+	assert.NoError(t, err)
+	assert.Equal(t, "garbage", value)
 }

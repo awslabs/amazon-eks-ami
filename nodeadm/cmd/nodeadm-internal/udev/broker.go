@@ -106,10 +106,12 @@ func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (s
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.
-	if value, err := b.cache.Read(interfaceName); err == nil {
-		if entry, err := networkmanager.DecodeCacheEntry(value); err == nil && entry.MAC == mac {
-			return entry.Manager, nil
-		}
+	entry, found, err := networkmanager.ReadCacheEntry(b.cache, interfaceName)
+	if err != nil {
+		return "", err
+	}
+	if found && entry.MAC == mac {
+		return entry.Manager, nil
 	}
 
 	manager, err := b.determineManager(ctx, interfaceName, mac)
