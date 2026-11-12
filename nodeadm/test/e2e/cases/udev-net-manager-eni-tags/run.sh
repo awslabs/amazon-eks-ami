@@ -57,8 +57,8 @@ function wait::until() {
   done
 }
 
-function ownership-waiting() {
-  journalctl -u "$unit" --no-pager | grep -q "waiting to resolve interface ownership"
+function unit-activating() {
+  test "$(systemctl show "$unit" -p ActiveState --value)" = activating
 }
 
 function networkd-selected-config() {
@@ -120,7 +120,8 @@ AWS_ENDPOINT_URL=http://localhost:5001 timeout 5 nodeadm-internal udev-net-manag
 assert::file-contains "$cache" "cni"
 assert::file-not-exists "$network"
 
-# the production udev rules start a pending unit on add and stop it on remove.
+# the production udev rules start the unit on add and stop it on remove, even
+# while the lookup is still retrying.
 # only the driver property comes from the fixture, real ENA supplies it.
 mkdir -p /etc/udev/rules.d
 cp /90-eks.rules /etc/udev/rules.d/90-eks.rules
@@ -133,7 +134,7 @@ unit=udev-net-manager@nm-event.service
 ip link add nm-event address 02:00:00:00:00:08 type dummy
 udevadm trigger --action=add /sys/class/net/nm-event
 udevadm settle
-wait::until ownership-waiting
+wait::until unit-activating
 assert::file-not-exists "/etc/eks/nodeadm/udev-net-manager/$instance_id/nm-event"
 ip link delete nm-event
 udevadm settle
