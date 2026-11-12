@@ -122,6 +122,7 @@ func (c *initCmd) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalOpti
 		configAspects := []system.SystemAspect{
 			system.NewInstanceEnvironmentAspect(),
 			system.NewResolveAspect(),
+			system.NewFeatureMarkerAspect(),
 			nvidiacontainerruntime.NewConfigAspect(),
 		}
 		if err := c.setupAspects(log, nodeConfig, configAspects); err != nil {
