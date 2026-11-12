@@ -23,13 +23,13 @@ func (f *fakeResolver) Resolve(ctx context.Context, mac string) (string, error) 
 	return f.manager, f.err
 }
 
-type resolverBuilder func(ctx context.Context) (cniOptOutResolver, error)
+type resolverBuilder func(ctx context.Context) (ownershipResolver, error)
 
-func staticResolver(r cniOptOutResolver) resolverBuilder {
-	return func(context.Context) (cniOptOutResolver, error) { return r, nil }
+func staticResolver(r ownershipResolver) resolverBuilder {
+	return func(context.Context) (ownershipResolver, error) { return r, nil }
 }
 
-func unbuildableResolver(context.Context) (cniOptOutResolver, error) {
+func unbuildableResolver(context.Context) (ownershipResolver, error) {
 	return nil, errors.New("resolver must not be built in this case")
 }
 
@@ -111,7 +111,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := tc.resolver
 			resolverBuilt := false
-			b := newTestBroker(t, tc.markerExists, tc.flagExists, func(ctx context.Context) (cniOptOutResolver, error) {
+			b := newTestBroker(t, tc.markerExists, tc.flagExists, func(ctx context.Context) (ownershipResolver, error) {
 				resolverBuilt = true
 				if res == nil {
 					return unbuildableResolver(ctx)

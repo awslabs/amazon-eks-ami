@@ -14,7 +14,7 @@ import (
 // systemManagedTagKey marks an ENI to be configured by systemd-networkd.
 const systemManagedTagKey = "alpha.node.eks.aws/system_managed"
 
-type cniOptOutResolver interface {
+type ownershipResolver interface {
 	// Resolve returns the manager of the ENI with the given MAC, or an error
 	// wrapping errOwnershipPending while the ENI or its tags are not visible.
 	Resolve(ctx context.Context, mac string) (string, error)
