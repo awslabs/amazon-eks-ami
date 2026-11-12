@@ -12,6 +12,9 @@ import (
 
 const defaultFsType = "xfs"
 
+// ebsSetupMountDir is where a new volume is mounted while existing data is copied onto it.
+const ebsSetupMountDir = "/mnt/ebs-setup"
+
 func NewEBSStorageAspect() SystemAspect {
 	return &ebsStorageAspect{}
 }
@@ -106,7 +109,8 @@ func (a *ebsStorageAspect) setupMountTarget(log *zap.Logger, devUUID string, tar
 	service := dependentService(target)
 	if service != "" {
 		log.Info("Stopping dependent service", zap.String("service", service))
-		_ = runCommand("systemctl", "stop", service)
+		// #nosec G204 // service is containerd.service or kubelet.service from dependentService
+		_ = run(exec.Command("systemctl", "stop", service))
 	}
 
 	// Ensure target directory exists
@@ -119,19 +123,21 @@ func (a *ebsStorageAspect) setupMountTarget(log *zap.Logger, devUUID string, tar
 	// mount temporarily to copy data, then unmount
 	if dirHasContent(target) {
 		log.Info("Copying existing data to EBS volume", zap.String("target", target))
-		tmpMount := "/mnt/ebs-setup"
-		if err := os.MkdirAll(tmpMount, 0700); err != nil {
+		if err := os.MkdirAll(ebsSetupMountDir, 0700); err != nil {
 			return fmt.Errorf("failed to create temp mount dir: %w", err)
 		}
-		if err := runCommand("mount", "UUID="+devUUID, tmpMount); err != nil {
+		// #nosec G204 // program is fixed; the UUID and mount directory are passed as single arguments with no shell
+		if err := run(exec.Command("mount", "UUID="+devUUID, ebsSetupMountDir)); err != nil {
 			return fmt.Errorf("failed to temp mount: %w", err)
 		}
-		if err := runCommand("cp", "-a", target+"/.", tmpMount+"/"); err != nil {
-			_ = runCommand("umount", tmpMount)
-			return fmt.Errorf("failed to copy data: %w", err)
+		// #nosec G204 // program is fixed; target is passed as a single argument with no shell
+		copyErr := run(exec.Command("cp", "-a", target+"/.", ebsSetupMountDir+"/"))
+		unmountErr := run(exec.Command("umount", ebsSetupMountDir))
+		if copyErr != nil {
+			return fmt.Errorf("failed to copy data: %w", copyErr)
 		}
-		if err := runCommand("umount", tmpMount); err != nil {
-			return fmt.Errorf("failed to unmount temp: %w", err)
+		if unmountErr != nil {
+			return fmt.Errorf("failed to unmount temp: %w", unmountErr)
 		}
 	}
 
@@ -157,17 +163,19 @@ WantedBy=multi-user.target
 	}
 
 	// Enable and start the mount
-	if err := runCommand("systemctl", "daemon-reload"); err != nil {
+	if err := run(exec.Command("systemctl", "daemon-reload")); err != nil {
 		return fmt.Errorf("failed to reload systemd: %w", err)
 	}
-	if err := runCommand("systemctl", "enable", mountUnitName, "--now"); err != nil {
+	// #nosec G204 // unit name is the systemd-escape output for the mount target
+	if err := run(exec.Command("systemctl", "enable", mountUnitName, "--now")); err != nil {
 		return fmt.Errorf("failed to enable mount unit %s: %w", mountUnitName, err)
 	}
 
 	// Restart the dependent service
 	if service != "" {
 		log.Info("Starting dependent service", zap.String("service", service))
-		if err := runCommand("systemctl", "start", service); err != nil {
+		// #nosec G204 // service is containerd.service or kubelet.service from dependentService
+		if err := run(exec.Command("systemctl", "start", service)); err != nil {
 			return fmt.Errorf("failed to start %s: %w", service, err)
 		}
 	}
@@ -177,7 +185,7 @@ WantedBy=multi-user.target
 }
 
 func getFilesystemType(device string) (string, error) {
-	// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
+	// #nosec G204 // program is fixed; device is passed as a single argument with no shell
 	out, err := exec.Command("lsblk", device, "-o", "fstype", "--noheadings").Output()
 	if err != nil {
 		return "", err
@@ -186,7 +194,7 @@ func getFilesystemType(device string) (string, error) {
 }
 
 func getDeviceUUID(device string) (string, error) {
-	// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
+	// #nosec G204 // program is fixed; device is passed as a single argument with no shell
 	out, err := exec.Command("blkid", "-s", "UUID", "-o", "value", device).Output()
 	if err != nil {
 		return "", err
@@ -199,7 +207,7 @@ func getDeviceUUID(device string) (string, error) {
 }
 
 func systemdEscapePath(path string) (string, error) {
-	// #nosec G204 // mount target from NodeConfig is passed as one argument; systemd-escape only escapes it
+	// #nosec G204 // program is fixed; path is passed as a single argument with no shell, and systemd-escape only escapes it
 	out, err := exec.Command("systemd-escape", "--path", "--suffix=mount", path).Output()
 	if err != nil {
 		return "", err
@@ -208,7 +216,7 @@ func systemdEscapePath(path string) (string, error) {
 }
 
 func isUnitActive(unitName string) bool {
-	// #nosec G204 // unit name is the systemd-escape output for the mount target
+	// #nosec G204 // program and subcommand are fixed; unitName is passed as a single argument with no shell
 	out, _ := exec.Command("systemctl", "is-active", unitName).Output()
 	return strings.TrimSpace(string(out)) == "active"
 }
@@ -217,18 +225,16 @@ func formatDevice(device string, fsType string) error {
 	var cmd *exec.Cmd
 	switch fsType {
 	case "xfs":
-		// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
+		// #nosec G204 // program is fixed; device is passed as a single argument with no shell
 		cmd = exec.Command("mkfs.xfs", device)
 	case "ext4":
-		// #nosec G204 // device has already passed the existence and EBS model checks; exec passes it as one argument with no shell
+		// #nosec G204 // program is fixed; device is passed as a single argument with no shell
 		cmd = exec.Command("mkfs.ext4", device)
 	default:
-		// #nosec G204 // device has passed the EBS checks; fsType comes from NodeConfig and is passed as one argument with no shell
+		// #nosec G204 // program is fixed; fsType and device are passed as single arguments with no shell
 		cmd = exec.Command("mkfs", "-t", fsType, device)
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return run(cmd)
 }
 
 func dependentService(path string) string {
@@ -250,16 +256,15 @@ func dirHasContent(path string) bool {
 	return len(entries) > 0
 }
 
-func runCommand(name string, args ...string) error {
-	// #nosec G204 // callers pass fixed commands (systemctl, mount, cp, umount); arguments are constants, the blkid UUID, the escaped unit name, or the NodeConfig mount target
-	cmd := exec.Command(name, args...)
+// run streams cmd's output to nodeadm's stdout and stderr and waits for it to finish.
+func run(cmd *exec.Cmd) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
 func validateEBSDevice(device string) error {
-	// #nosec G204 // device is a NodeConfig path already checked with os.Stat; exec passes it as one argument with no shell
+	// #nosec G204 // program is fixed; device is passed as a single argument with no shell
 	out, err := exec.Command("lsblk", device, "-o", "MODEL", "--noheadings").Output()
 	if err != nil {
 		return fmt.Errorf("failed to check device model for %s: %w", device, err)
