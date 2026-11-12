@@ -13,6 +13,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
@@ -57,7 +58,11 @@ func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalO
 }
 
 func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
-	var err error
+	// read before the IMDS lookups below, which can retry for a while.
+	state, err := readNodeState(system.MarkerPath(), kubeletStartedMarkerPath, system.ENITagsMarkerPath())
+	if err != nil {
+		return err
+	}
 
 	if c.selfMac, err = networkmanager.InterfaceMAC(c.iface); err != nil {
 		return err
@@ -78,7 +83,7 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	// TODO: in the future we should communicate with another broker that checks
 	// with the CNI (IPAMD) to get info on whether a given interface should be
 	// managed or not.
-	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(ctx, c.iface, c.selfMac)
+	manager, err := NewFSBroker(identity.InstanceID, state).ManagerFor(ctx, c.iface, c.selfMac)
 	if err != nil {
 		return fmt.Errorf("failed to determine manager: %w", err)
 	}

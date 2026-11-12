@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
-	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 	"go.uber.org/zap"
 )
@@ -20,18 +19,16 @@ type NetworkInterfaceBroker interface {
 const ownershipLookupTimeout = 2 * time.Minute
 
 type fsBroker struct {
-	cache             util.FSCache
-	markerPath        string
-	eniTagsMarkerPath string
-	newResolver       func(ctx context.Context) (ownershipResolver, error)
-	linkUp            func(interfaceName string) (bool, error)
+	cache       util.FSCache
+	state       nodeState
+	newResolver func(ctx context.Context) (ownershipResolver, error)
+	linkUp      func(interfaceName string) (bool, error)
 }
 
-func NewFSBroker(instanceID string) *fsBroker {
+func NewFSBroker(instanceID string, state nodeState) *fsBroker {
 	return &fsBroker{
-		cache:             util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
-		markerPath:        system.MarkerPath(),
-		eniTagsMarkerPath: system.ENITagsMarkerPath(),
+		cache: util.NewFSCache(filepath.Join(networkmanager.CacheDir, instanceID)),
+		state: state,
 		newResolver: func(ctx context.Context) (ownershipResolver, error) {
 			return newEC2TagResolver(ctx)
 		},
@@ -43,18 +40,31 @@ func NewFSBroker(instanceID string) *fsBroker {
 // templates/*/runtime/rootfs/etc/systemd/system/kubelet.service.
 const kubeletStartedMarkerPath = "/run/eks/kubelet/started"
 
-// initialized reports whether the second phase of nodeadm ran or
-// kubelet.service started kubelet. For users who incorrectly call nodeadm init
-// or who start kubelet from user data, this ensures that systemd won't
-// accidentally try to manage interfaces added by the VPC CNI.
-func (b *fsBroker) initialized() (bool, error) {
-	for _, marker := range []string{b.markerPath, kubeletStartedMarkerPath} {
+// nodeState is the node as seen by the markers when the ENI was attached.
+type nodeState struct {
+	// the second phase of nodeadm ran or kubelet.service started kubelet. For
+	// users who incorrectly call nodeadm init or who start kubelet from user
+	// data, this ensures that systemd won't accidentally try to manage
+	// interfaces added by the VPC CNI.
+	initialized bool
+	eniTags     bool
+}
+
+func readNodeState(runMarker, kubeletMarker, eniTagsMarker string) (nodeState, error) {
+	var state nodeState
+	for _, marker := range []string{runMarker, kubeletMarker} {
 		exists, err := util.IsFilePathExists(marker)
-		if err != nil || exists {
-			return exists, err
+		if err != nil {
+			return nodeState{}, err
 		}
+		state.initialized = state.initialized || exists
 	}
-	return false, nil
+	eniTags, err := util.IsFilePathExists(eniTagsMarker)
+	if err != nil {
+		return nodeState{}, err
+	}
+	state.eniTags = eniTags
+	return state, nil
 }
 
 func isLinkUp(interfaceName string) (bool, error) {
@@ -66,19 +76,10 @@ func isLinkUp(interfaceName string) (bool, error) {
 }
 
 func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac string) (string, error) {
-	initialized, err := b.initialized()
-	if err != nil {
-		return "", err
-	}
-	if !initialized {
+	if !b.state.initialized {
 		return networkmanager.ManagerSystemd, nil
 	}
-
-	eniTagsEnabled, err := util.IsFilePathExists(b.eniTagsMarkerPath)
-	if err != nil {
-		return "", err
-	}
-	if !eniTagsEnabled {
+	if !b.state.eniTags {
 		return networkmanager.ManagerCNI, nil
 	}
 
