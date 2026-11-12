@@ -2,9 +2,6 @@ package udev
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"math/rand/v2"
 	"net"
 	"path/filepath"
 	"time"
@@ -19,16 +16,8 @@ type NetworkInterfaceBroker interface {
 	ManagerFor(ctx context.Context, interfaceName, mac string) (string, error)
 }
 
-const (
-	// covers region/credential discovery and the describe call, including the
-	// SDK's own retries.
-	ownershipLookupTimeout = 10 * time.Second
-
-	initialOwnershipRetryDelay = 5 * time.Second
-	maxOwnershipRetryDelay     = time.Minute
-)
-
-var errOwnershipPending = errors.New("ENI ownership pending")
+// bounds the resolver, including the IMDS and EC2 retries.
+const ownershipLookupTimeout = 2 * time.Minute
 
 type fsBroker struct {
 	cache             util.FSCache
@@ -36,7 +25,6 @@ type fsBroker struct {
 	eniTagsMarkerPath string
 	newResolver       func(ctx context.Context) (ownershipResolver, error)
 	linkUp            func(interfaceName string) (bool, error)
-	waitRetry         func(context.Context, time.Duration) error
 }
 
 func NewFSBroker(instanceID string) *fsBroker {
@@ -47,8 +35,7 @@ func NewFSBroker(instanceID string) *fsBroker {
 		newResolver: func(ctx context.Context) (ownershipResolver, error) {
 			return newEC2TagResolver(ctx)
 		},
-		linkUp:    isLinkUp,
-		waitRetry: waitForOwnershipRetry,
+		linkUp: isLinkUp,
 	}
 }
 
@@ -109,12 +96,12 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 
 	resolver, err := b.newResolver(ctx)
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
+		return "", err
 	}
 	return resolver.Resolve(ctx, mac)
 }
 
-func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac string) (string, error) {
+func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
 	// we check whether there is a manager already cached for this interface,
 	// because we dont want to reconfigure interfaces from a previous boot for
 	// the same EC2 instance.
@@ -133,39 +120,4 @@ func (b *fsBroker) managerForAttempt(ctx context.Context, interfaceName, mac str
 		zap.L().Warn("failed writing manager back to cache", zap.Error(err), zap.String("interface", interfaceName), zap.String("manager", manager))
 	}
 	return manager, nil
-}
-
-func (b *fsBroker) ManagerFor(ctx context.Context, interfaceName, mac string) (string, error) {
-	backoff := initialOwnershipRetryDelay
-	for {
-		manager, err := b.managerForAttempt(ctx, interfaceName, mac)
-		if err == nil {
-			return manager, nil
-		}
-		// only EC2/credential failures and incomplete visibility poll here,
-		// filesystem and link errors follow the systemd restart policy.
-		if !errors.Is(err, errOwnershipPending) {
-			return "", err
-		}
-		delay := jitter(backoff)
-		zap.L().Warn("waiting to resolve interface ownership", zap.String("interface", interfaceName), zap.String("mac", mac), zap.Duration("retryIn", delay), zap.Error(err))
-		if err := b.waitRetry(ctx, delay); err != nil {
-			return "", err
-		}
-		backoff = min(2*backoff, maxOwnershipRetryDelay)
-	}
-}
-
-// jitter extends d by a random amount of up to half its length.
-func jitter(d time.Duration) time.Duration {
-	return d + rand.N(d/2)
-}
-
-func waitForOwnershipRetry(ctx context.Context, delay time.Duration) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(delay):
-		return nil
-	}
 }

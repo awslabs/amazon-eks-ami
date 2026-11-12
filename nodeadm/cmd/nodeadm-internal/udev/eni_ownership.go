@@ -13,8 +13,7 @@ import (
 )
 
 type ownershipResolver interface {
-	// Resolve returns the manager of the ENI with the given MAC, or an error
-	// wrapping errOwnershipPending while the ENI is not visible.
+	// Resolve returns the manager of the ENI with the given MAC.
 	Resolve(ctx context.Context, mac string) (string, error)
 }
 
@@ -29,7 +28,8 @@ func newEC2TagResolver(ctx context.Context) (*ec2TagResolver, error) {
 		return nil, err
 	}
 	return &ec2TagResolver{
-		imds:   imds.DefaultClient(),
+		// a new ENI's interface-id can 404 until IMDS catches up.
+		imds:   imds.NewClient(imds.New(true)),
 		client: client,
 	}, nil
 }
@@ -37,11 +37,11 @@ func newEC2TagResolver(ctx context.Context) (*ec2TagResolver, error) {
 func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error) {
 	eniID, err := getInterfaceID(ctx, r.imds, mac)
 	if err != nil {
-		return "", fmt.Errorf("%w: failed to get network interface id for mac %s: %w", errOwnershipPending, mac, err)
+		return "", fmt.Errorf("failed to get network interface id for mac %s: %w", mac, err)
 	}
 	tags, err := ec2extra.GetNetworkInterfaceTags(ctx, r.client, eniID)
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
+		return "", err
 	}
 	if tags[v1alpha1.ENITagSystemManaged] == "true" {
 		return networkmanager.ManagerSystemd, nil

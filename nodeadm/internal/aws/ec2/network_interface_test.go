@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
@@ -15,10 +16,12 @@ type fakeDescribeNetworkInterfaces struct {
 	out      *ec2.DescribeNetworkInterfacesOutput
 	err      error
 	gotInput *ec2.DescribeNetworkInterfacesInput
+	gotOpts  []func(*ec2.Options)
 }
 
 func (f *fakeDescribeNetworkInterfaces) DescribeNetworkInterfaces(ctx context.Context, params *ec2.DescribeNetworkInterfacesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeNetworkInterfacesOutput, error) {
 	f.gotInput = params
+	f.gotOpts = optFns
 	return f.out, f.err
 }
 
@@ -55,5 +58,27 @@ func TestGetNetworkInterfaceTags(t *testing.T) {
 			assert.Equal(t, []string{eniID}, client.gotInput.NetworkInterfaceIds)
 			assert.Empty(t, client.gotInput.Filters)
 		})
+	}
+}
+
+func TestGetNetworkInterfaceTags_retryer(t *testing.T) {
+	client := &fakeDescribeNetworkInterfaces{out: &ec2.DescribeNetworkInterfacesOutput{}}
+	_, err := GetNetworkInterfaceTags(context.Background(), client, "eni-0123456789abcdef0")
+	assert.NoError(t, err)
+
+	opts := ec2.Options{Retryer: retry.NewStandard()}
+	for _, fn := range client.gotOpts {
+		fn(&opts)
+	}
+	assert.Equal(t, maxDescribeAttempts, opts.Retryer.MaxAttempts())
+	assert.True(t, opts.Retryer.IsErrorRetryable(&smithy.GenericAPIError{Code: errCodeENINotFound}))
+	for _, code := range []string{"AuthFailure", "UnauthorizedOperation", "InvalidNetworkInterfaceID.Malformed"} {
+		assert.False(t, opts.Retryer.IsErrorRetryable(&smithy.GenericAPIError{Code: code}), code)
+	}
+	assert.True(t, opts.Retryer.IsErrorRetryable(&smithy.GenericAPIError{Code: "RequestLimitExceeded"}))
+	for attempt := 1; attempt < maxDescribeAttempts; attempt++ {
+		delay, err := opts.Retryer.RetryDelay(attempt, &smithy.GenericAPIError{Code: errCodeENINotFound})
+		assert.NoError(t, err)
+		assert.LessOrEqual(t, delay, maxDescribeBackoffDelay)
 	}
 }

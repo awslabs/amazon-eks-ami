@@ -48,7 +48,7 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 		imdsErr error
 		enis    []ec2types.NetworkInterface
 		err     error
-		// empty means pending
+		// empty means an error
 		want string
 	}{
 		{name: "eni not yet in imds", imdsErr: imdsErr},
@@ -71,7 +71,7 @@ func Test_ec2TagResolver_Resolve(t *testing.T) {
 			r := &ec2TagResolver{imds: imdsClient, client: client}
 			got, err := r.Resolve(context.Background(), mac)
 			if tc.want == "" {
-				assert.ErrorIs(t, err, errOwnershipPending)
+				assert.Error(t, err)
 				for _, cause := range []error{tc.imdsErr, tc.err} {
 					if cause != nil {
 						assert.ErrorIs(t, err, cause)
