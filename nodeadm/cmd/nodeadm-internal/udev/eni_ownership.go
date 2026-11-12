@@ -14,7 +14,7 @@ import (
 
 type ownershipResolver interface {
 	// Resolve returns the manager of the ENI with the given MAC, or an error
-	// wrapping errOwnershipPending while the ENI or its tags are not visible.
+	// wrapping errOwnershipPending while the ENI is not visible.
 	Resolve(ctx context.Context, mac string) (string, error)
 }
 
@@ -43,11 +43,7 @@ func (r *ec2TagResolver) Resolve(ctx context.Context, mac string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("%w: %w", errOwnershipPending, err)
 	}
-	value, ok := tags[v1alpha1.ENITagSystemManaged]
-	if !ok {
-		return "", fmt.Errorf("%w: tags not yet visible for network interface %s", errOwnershipPending, eniID)
-	}
-	if value == "true" {
+	if tags[v1alpha1.ENITagSystemManaged] == "true" {
 		return networkmanager.ManagerSystemd, nil
 	}
 	return networkmanager.ManagerCNI, nil
