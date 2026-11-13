@@ -210,7 +210,8 @@ func (ksc *kubeletConfig) withOutpostSetup(cfg *api.NodeConfig) error {
 		}
 		output := strings.Join(ipHostMappings, "\n") + "\n"
 		// append to /etc/hosts file with shuffled mappings of "IP address to API server domain name"
-		f, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, kubeletConfigPerm)
+		// perm is unused without os.O_CREATE, so the existing file mode is kept
+		f, err := os.OpenFile("/etc/hosts", os.O_APPEND|os.O_WRONLY, 0)
 		if err != nil {
 			return err
 		}
