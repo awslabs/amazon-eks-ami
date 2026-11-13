@@ -197,6 +197,30 @@ spec:
 
 ---
 
+## Managing secondary ENIs with ENI tags
+
+When the `ENITags` feature gate is enabled, `nodeadm` configures secondary ENIs tagged `alpha.node.eks.aws/system_managed=true` via `systemd-networkd`. ENIs without that tag, or with any other value, are left to the CNI.
+
+⚠️ **Note**: This feature can significantly increase the number of `ec2:DescribeNetworkInterfaces` calls, and may not be suitable for all environments.
+
+### To enable this feature:
+1. Grant `ec2:DescribeNetworkInterfaces` to the node instance role.
+2. Configure the CNIs running on the node not to manage these ENIs. For example, the VPC CNI skips ENIs tagged `node.k8s.amazonaws.com/no_manage=true`.
+3. Tag the ENI when you create it, for example with `TagSpecifications` in `CreateNetworkInterface`. Only the tags visible when the ENI is attached are taken into account, and tags added later may not be visible yet due to EC2's eventual consistency.
+4. Enable the feature gate in your user data:
+```
+---
+apiVersion: node.eks.aws/v1alpha1
+kind: NodeConfig
+spec:
+  featureGates:
+    ENITags: true
+```
+
+⚠️ **Note**: Changing the tags of an ENI and attaching it again to the same instance is not supported.
+
+---
+
 ## Configuring `containerd`
 
 Additional `containerd` configuration can be supplied in your `NodeConfig`. The values in your inline TOML document will overwrite any default value set by `nodeadm`.

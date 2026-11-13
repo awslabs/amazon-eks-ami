@@ -170,4 +170,6 @@ const (
 	InstanceIdNodeName Feature = "InstanceIdNodeName"
 
 	FastImagePull Feature = "FastImagePull"
+
+	ENITags Feature = "ENITags"
 )

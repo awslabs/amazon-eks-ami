@@ -188,7 +188,7 @@ const (
 )
 
 // Feature specifies which feature gate should be toggled
-// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull}
+// +kubebuilder:validation:Enum={InstanceIdNodeName,FastImagePull,ENITags}
 type Feature string
 
 const (
@@ -200,4 +200,10 @@ const (
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull Feature = "FastImagePull"
+
+	// ENITags makes nodeadm aware of ENI tags. Secondary ENIs tagged
+	// alpha.node.eks.aws/system_managed=true are configured via
+	// systemd-networkd. Requires ec2:DescribeNetworkInterfaces on the node
+	// instance role.
+	ENITags Feature = "ENITags"
 )

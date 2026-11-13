@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/integrii/flaggy"
@@ -14,6 +13,7 @@ import (
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/aws/imds"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/cli"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/networkmanager"
+	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/system"
 	"github.com/awslabs/amazon-eks-ami/nodeadm/internal/util"
 )
 
@@ -58,9 +58,13 @@ func (c *netManager) Run(ctx context.Context, log *zap.Logger, opts *cli.GlobalO
 }
 
 func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
-	var err error
+	// read before the IMDS lookups below, which can retry for a while.
+	state, err := readNodeState(system.MarkerPath(), kubeletStartedMarkerPath, system.ENITagsMarkerPath())
+	if err != nil {
+		return err
+	}
 
-	if c.selfMac, err = getInterfaceMAC(c.iface); err != nil {
+	if c.selfMac, err = networkmanager.InterfaceMAC(c.iface); err != nil {
 		return err
 	}
 	log.Info("found self interface mac", zap.String("address", c.selfMac))
@@ -79,9 +83,9 @@ func (c *netManager) addAction(ctx context.Context, log *zap.Logger) error {
 	// TODO: in the future we should communicate with another broker that checks
 	// with the CNI (IPAMD) to get info on whether a given interface should be
 	// managed or not.
-	manager, err := NewFSBroker(identity.InstanceID).ManagerFor(c.iface)
+	manager, err := NewFSBroker(identity.InstanceID, state).ManagerFor(ctx, c.iface, c.selfMac)
 	if err != nil {
-		return fmt.Errorf("failed to determine manager: %v", err)
+		return fmt.Errorf("failed to determine manager: %w", err)
 	}
 	log.Info("resolved net manager", zap.String("name", manager))
 
@@ -165,14 +169,4 @@ func (c *netManager) manageLink(ctx context.Context) error {
 	}
 
 	return util.WriteFileWithDir(eksNetworkPath(c.iface), networkConfig, 0644)
-}
-
-func getInterfaceMAC(iface string) (string, error) {
-	// see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/bin/setup-policy-routes.sh#L34
-	// #nosec G304 // read only operation on sysfs path
-	macData, err := os.ReadFile(path.Join("/sys/class/net", iface, "address"))
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(macData)), nil
 }
