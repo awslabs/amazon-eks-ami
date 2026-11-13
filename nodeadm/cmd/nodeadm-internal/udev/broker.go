@@ -25,16 +25,12 @@ func NewFSBroker(instanceID string) *fsBroker {
 	}
 }
 
-// Created by kubelet.service ExecStartPre. Keep in sync with
-// templates/*/runtime/rootfs/etc/systemd/system/kubelet.service.
-const kubeletStartedMarkerPath = "/run/eks/kubelet/started"
-
 func (b *fsBroker) determineManager(_ string) (string, error) {
 	// These paths are created when the second phase of nodeadm runs, or when
 	// kubelet.service starts kubelet. For users who incorrectly call nodeadm
 	// init or who start kubelet from user data, this ensures that systemd
 	// won't accidentally try to manage interfaces added by the VPC CNI.
-	for _, marker := range []string{system.MarkerPath(), kubeletStartedMarkerPath} {
+	for _, marker := range []string{system.MarkerPath(), system.KubeletStartedMarkerPath()} {
 		if _, err := os.Stat(marker); err == nil {
 			return networkmanager.ManagerCNI, nil
 		} else if !errors.Is(err, os.ErrNotExist) {
