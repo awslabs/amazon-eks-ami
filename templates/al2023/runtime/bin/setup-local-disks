@@ -50,6 +50,7 @@ maybe_raid() {
   # ${md_config} lives on the root volume, so it should not be used to decide.
   # Check the name stored in each array's metadata (MD_NAME).
   local md array_running=false
+  local array_created=false
   for md in /dev/md[0-9]*; do
     if mdadm --detail --export "${md}" 2> /dev/null | grep -qE "^MD_NAME=([^:]+:)?${md_name}$"; then
       array_running=true
@@ -63,6 +64,7 @@ maybe_raid() {
       --name="${md_name}" \
       --raid-devices="${#EPHEMERAL_DISKS[@]}" \
       "${EPHEMERAL_DISKS[@]}"
+    array_created=true
   fi
   mdadm --detail --scan > "${md_config}"
 
@@ -73,14 +75,15 @@ maybe_raid() {
     md_device="${current_md_device}"
   fi
 
-  # Format the array if not already formatted.
-  if [[ -z "$(lsblk "${md_device}" -o fstype --noheadings)" ]]; then
+  # Format the array if this run created it or it has no filesystem. A new array
+  # holds whatever bytes were on the disks, and blkid can read those as a signature.
+  if [[ "${array_created}" == "true" || -z "$(lsblk "${md_device}" -o fstype --noheadings)" ]]; then
     ## By default, mkfs tries to use the stripe unit of the array (512k),
     ## for the log stripe unit, but the max log stripe unit is 256k.
     ## So instead, we use 32k (8 blocks) to avoid a warning of breaching the max.
     ## mkfs.xfs defaults to 32k after logging the warning since the default log buffer size is 32k.
     ## Instances are delivered with disks fully trimmed, so TRIM is skipped at creation time.
-    mkfs.xfs -K -l su=8b "${md_device}"
+    mkfs.xfs -f -K -l su=8b "${md_device}"
   fi
 
   ## Create the mount directory
