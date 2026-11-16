@@ -490,6 +490,26 @@ func (m *validateOpAssociateNatGatewayAddress) HandleInitialize(ctx context.Cont
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpAssociateNetworkingFlexCostAllocationPolicy struct {
+}
+
+func (*validateOpAssociateNetworkingFlexCostAllocationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAssociateNetworkingFlexCostAllocationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AssociateNetworkingFlexCostAllocationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAssociateNetworkingFlexCostAllocationPolicyInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpAssociateRouteServer struct {
 }
 
@@ -2050,6 +2070,26 @@ func (m *validateOpCreateManagedPrefixList) HandleInitialize(ctx context.Context
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpCreateMetricCategory struct {
+}
+
+func (*validateOpCreateMetricCategory) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateMetricCategory) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateMetricCategoryInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateMetricCategoryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateNetworkAclEntry struct {
 }
 
@@ -2085,6 +2125,26 @@ func (m *validateOpCreateNetworkAcl) HandleInitialize(ctx context.Context, in mi
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpCreateNetworkAclInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpCreateNetworkingFlexCostAllocationPolicy struct {
+}
+
+func (*validateOpCreateNetworkingFlexCostAllocationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateNetworkingFlexCostAllocationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateNetworkingFlexCostAllocationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateNetworkingFlexCostAllocationPolicyInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -3810,6 +3870,26 @@ func (m *validateOpDeleteManagedPrefixList) HandleInitialize(ctx context.Context
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpDeleteMetricCategory struct {
+}
+
+func (*validateOpDeleteMetricCategory) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDeleteMetricCategory) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DeleteMetricCategoryInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDeleteMetricCategoryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpDeleteNatGateway struct {
 }
 
@@ -3865,6 +3945,26 @@ func (m *validateOpDeleteNetworkAcl) HandleInitialize(ctx context.Context, in mi
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpDeleteNetworkAclInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpDeleteNetworkingFlexCostAllocationPolicies struct {
+}
+
+func (*validateOpDeleteNetworkingFlexCostAllocationPolicies) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDeleteNetworkingFlexCostAllocationPolicies) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DeleteNetworkingFlexCostAllocationPoliciesInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDeleteNetworkingFlexCostAllocationPoliciesInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -6170,6 +6270,26 @@ func (m *validateOpDisassociateNatGatewayAddress) HandleInitialize(ctx context.C
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpDisassociateNetworkingFlexCostAllocationPolicy struct {
+}
+
+func (*validateOpDisassociateNetworkingFlexCostAllocationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDisassociateNetworkingFlexCostAllocationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DisassociateNetworkingFlexCostAllocationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDisassociateNetworkingFlexCostAllocationPolicyInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpDisassociateRouteServer struct {
 }
 
@@ -6910,6 +7030,26 @@ func (m *validateOpGetCapacityManagerMetricDimensions) HandleInitialize(ctx cont
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetCapacityManagerSupportabilityScores struct {
+}
+
+func (*validateOpGetCapacityManagerSupportabilityScores) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetCapacityManagerSupportabilityScores) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetCapacityManagerSupportabilityScoresInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetCapacityManagerSupportabilityScoresInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetCapacityReservationUsage struct {
 }
 
@@ -7125,6 +7265,26 @@ func (m *validateOpGetImageAncestry) HandleInitialize(ctx context.Context, in mi
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpGetImageAncestryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpGetImageFindings struct {
+}
+
+func (*validateOpGetImageFindings) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetImageFindings) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetImageFindingsInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetImageFindingsInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -7630,6 +7790,26 @@ func (m *validateOpGetManagedPrefixListEntries) HandleInitialize(ctx context.Con
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetNetworkingFlexCostAllocationPolicyVersions struct {
+}
+
+func (*validateOpGetNetworkingFlexCostAllocationPolicyVersions) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetNetworkingFlexCostAllocationPolicyVersions) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetNetworkingFlexCostAllocationPolicyVersionsInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetNetworkingFlexCostAllocationPolicyVersionsInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetNetworkInsightsAccessScopeAnalysisFindings struct {
 }
 
@@ -7825,6 +8005,26 @@ func (m *validateOpGetSubnetCidrReservations) HandleInitialize(ctx context.Conte
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpGetSubnetCidrReservationsInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpGetTransitGatewayAttachmentNatConfiguration struct {
+}
+
+func (*validateOpGetTransitGatewayAttachmentNatConfiguration) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetTransitGatewayAttachmentNatConfiguration) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetTransitGatewayAttachmentNatConfigurationInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetTransitGatewayAttachmentNatConfigurationInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -8990,6 +9190,46 @@ func (m *validateOpModifyManagedResourceVisibility) HandleInitialize(ctx context
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpModifyMetricCategory struct {
+}
+
+func (*validateOpModifyMetricCategory) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpModifyMetricCategory) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ModifyMetricCategoryInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpModifyMetricCategoryInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpModifyNetworkingFlexCostAllocationPolicy struct {
+}
+
+func (*validateOpModifyNetworkingFlexCostAllocationPolicy) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpModifyNetworkingFlexCostAllocationPolicy) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ModifyNetworkingFlexCostAllocationPolicyInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpModifyNetworkingFlexCostAllocationPolicyInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpModifyNetworkInterfaceAttribute struct {
 }
 
@@ -9245,6 +9485,26 @@ func (m *validateOpModifyTrafficMirrorSession) HandleInitialize(ctx context.Cont
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpModifyTrafficMirrorSessionInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpModifyTransitGatewayAttachmentNatConfiguration struct {
+}
+
+func (*validateOpModifyTransitGatewayAttachmentNatConfiguration) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpModifyTransitGatewayAttachmentNatConfiguration) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ModifyTransitGatewayAttachmentNatConfigurationInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpModifyTransitGatewayAttachmentNatConfigurationInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -11426,6 +11686,10 @@ func addOpAssociateNatGatewayAddressValidationMiddleware(stack *middleware.Stack
 	return stack.Initialize.Add(&validateOpAssociateNatGatewayAddress{}, middleware.After)
 }
 
+func addOpAssociateNetworkingFlexCostAllocationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAssociateNetworkingFlexCostAllocationPolicy{}, middleware.After)
+}
+
 func addOpAssociateRouteServerValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpAssociateRouteServer{}, middleware.After)
 }
@@ -11738,12 +12002,20 @@ func addOpCreateManagedPrefixListValidationMiddleware(stack *middleware.Stack) e
 	return stack.Initialize.Add(&validateOpCreateManagedPrefixList{}, middleware.After)
 }
 
+func addOpCreateMetricCategoryValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateMetricCategory{}, middleware.After)
+}
+
 func addOpCreateNetworkAclEntryValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateNetworkAclEntry{}, middleware.After)
 }
 
 func addOpCreateNetworkAclValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateNetworkAcl{}, middleware.After)
+}
+
+func addOpCreateNetworkingFlexCostAllocationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateNetworkingFlexCostAllocationPolicy{}, middleware.After)
 }
 
 func addOpCreateNetworkInsightsAccessScopeValidationMiddleware(stack *middleware.Stack) error {
@@ -12090,6 +12362,10 @@ func addOpDeleteManagedPrefixListValidationMiddleware(stack *middleware.Stack) e
 	return stack.Initialize.Add(&validateOpDeleteManagedPrefixList{}, middleware.After)
 }
 
+func addOpDeleteMetricCategoryValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDeleteMetricCategory{}, middleware.After)
+}
+
 func addOpDeleteNatGatewayValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteNatGateway{}, middleware.After)
 }
@@ -12100,6 +12376,10 @@ func addOpDeleteNetworkAclEntryValidationMiddleware(stack *middleware.Stack) err
 
 func addOpDeleteNetworkAclValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDeleteNetworkAcl{}, middleware.After)
+}
+
+func addOpDeleteNetworkingFlexCostAllocationPoliciesValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDeleteNetworkingFlexCostAllocationPolicies{}, middleware.After)
 }
 
 func addOpDeleteNetworkInsightsAccessScopeAnalysisValidationMiddleware(stack *middleware.Stack) error {
@@ -12562,6 +12842,10 @@ func addOpDisassociateNatGatewayAddressValidationMiddleware(stack *middleware.St
 	return stack.Initialize.Add(&validateOpDisassociateNatGatewayAddress{}, middleware.After)
 }
 
+func addOpDisassociateNetworkingFlexCostAllocationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDisassociateNetworkingFlexCostAllocationPolicy{}, middleware.After)
+}
+
 func addOpDisassociateRouteServerValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDisassociateRouteServer{}, middleware.After)
 }
@@ -12710,6 +12994,10 @@ func addOpGetCapacityManagerMetricDimensionsValidationMiddleware(stack *middlewa
 	return stack.Initialize.Add(&validateOpGetCapacityManagerMetricDimensions{}, middleware.After)
 }
 
+func addOpGetCapacityManagerSupportabilityScoresValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetCapacityManagerSupportabilityScores{}, middleware.After)
+}
+
 func addOpGetCapacityReservationUsageValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetCapacityReservationUsage{}, middleware.After)
 }
@@ -12752,6 +13040,10 @@ func addOpGetHostReservationPurchasePreviewValidationMiddleware(stack *middlewar
 
 func addOpGetImageAncestryValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetImageAncestry{}, middleware.After)
+}
+
+func addOpGetImageFindingsValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetImageFindings{}, middleware.After)
 }
 
 func addOpGetInstanceTpmEkPubValidationMiddleware(stack *middleware.Stack) error {
@@ -12854,6 +13146,10 @@ func addOpGetManagedPrefixListEntriesValidationMiddleware(stack *middleware.Stac
 	return stack.Initialize.Add(&validateOpGetManagedPrefixListEntries{}, middleware.After)
 }
 
+func addOpGetNetworkingFlexCostAllocationPolicyVersionsValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetNetworkingFlexCostAllocationPolicyVersions{}, middleware.After)
+}
+
 func addOpGetNetworkInsightsAccessScopeAnalysisFindingsValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetNetworkInsightsAccessScopeAnalysisFindings{}, middleware.After)
 }
@@ -12892,6 +13188,10 @@ func addOpGetSpotPlacementScoresValidationMiddleware(stack *middleware.Stack) er
 
 func addOpGetSubnetCidrReservationsValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetSubnetCidrReservations{}, middleware.After)
+}
+
+func addOpGetTransitGatewayAttachmentNatConfigurationValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetTransitGatewayAttachmentNatConfiguration{}, middleware.After)
 }
 
 func addOpGetTransitGatewayAttachmentPropagationsValidationMiddleware(stack *middleware.Stack) error {
@@ -13126,6 +13426,14 @@ func addOpModifyManagedResourceVisibilityValidationMiddleware(stack *middleware.
 	return stack.Initialize.Add(&validateOpModifyManagedResourceVisibility{}, middleware.After)
 }
 
+func addOpModifyMetricCategoryValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpModifyMetricCategory{}, middleware.After)
+}
+
+func addOpModifyNetworkingFlexCostAllocationPolicyValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpModifyNetworkingFlexCostAllocationPolicy{}, middleware.After)
+}
+
 func addOpModifyNetworkInterfaceAttributeValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpModifyNetworkInterfaceAttribute{}, middleware.After)
 }
@@ -13176,6 +13484,10 @@ func addOpModifyTrafficMirrorFilterRuleValidationMiddleware(stack *middleware.St
 
 func addOpModifyTrafficMirrorSessionValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpModifyTrafficMirrorSession{}, middleware.After)
+}
+
+func addOpModifyTransitGatewayAttachmentNatConfigurationValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpModifyTransitGatewayAttachmentNatConfiguration{}, middleware.After)
 }
 
 func addOpModifyTransitGatewayValidationMiddleware(stack *middleware.Stack) error {
@@ -13966,6 +14278,81 @@ func validateFleetLaunchTemplateOverridesRequest(v *types.FleetLaunchTemplateOve
 	}
 }
 
+func validateFlexCostAllocationCidrMapping(v *types.FlexCostAllocationCidrMapping) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "FlexCostAllocationCidrMapping"}
+	if v.CidrRange == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CidrRange"))
+	}
+	if v.CidrLabel == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CidrLabel"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateFlexCostAllocationCidrMappingList(v []types.FlexCostAllocationCidrMapping) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "FlexCostAllocationCidrMappingList"}
+	for i := range v {
+		if err := validateFlexCostAllocationCidrMapping(&v[i]); err != nil {
+			invalidParams.AddNested(fmt.Sprintf("[%d]", i), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateFlexCostAllocationCidrRangeSpecifications(v *types.FlexCostAllocationCidrRangeSpecifications) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "FlexCostAllocationCidrRangeSpecifications"}
+	if v.PrefixesType == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PrefixesType"))
+	}
+	if v.Prefixes == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Prefixes"))
+	} else if v.Prefixes != nil {
+		if err := validateFlexCostAllocationCidrMappingList(v.Prefixes); err != nil {
+			invalidParams.AddNested("Prefixes", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateFlexCostAllocationNetworkResourceScope(v *types.FlexCostAllocationNetworkResourceScope) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "FlexCostAllocationNetworkResourceScope"}
+	if len(v.ResourceType) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("ResourceType"))
+	}
+	if v.ResourceIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ResourceIds"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateInstanceCreditSpecificationListRequest(v []types.InstanceCreditSpecificationRequest) error {
 	if v == nil {
 		return nil
@@ -13990,6 +14377,29 @@ func validateInstanceCreditSpecificationRequest(v *types.InstanceCreditSpecifica
 	invalidParams := smithy.InvalidParamsError{Context: "InstanceCreditSpecificationRequest"}
 	if v.InstanceId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("InstanceId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateInstanceFlexCostAllocationPolicyDocument(v *types.InstanceFlexCostAllocationPolicyDocument) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "InstanceFlexCostAllocationPolicyDocument"}
+	if v.ReportingGranularity == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ReportingGranularity"))
+	}
+	if v.Dimensions == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Dimensions"))
+	}
+	if v.CidrRangeSpecifications != nil {
+		if err := validateFlexCostAllocationCidrRangeSpecifications(v.CidrRangeSpecifications); err != nil {
+			invalidParams.AddNested("CidrRangeSpecifications", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -14247,6 +14657,52 @@ func validateMemoryMiBRequest(v *types.MemoryMiBRequest) error {
 	invalidParams := smithy.InvalidParamsError{Context: "MemoryMiBRequest"}
 	if v.Min == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("Min"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateNatFlexCostAllocationPolicyDocument(v *types.NatFlexCostAllocationPolicyDocument) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "NatFlexCostAllocationPolicyDocument"}
+	if v.ReportingGranularity == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ReportingGranularity"))
+	}
+	if v.Dimensions == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Dimensions"))
+	}
+	if v.CidrRangeSpecifications != nil {
+		if err := validateFlexCostAllocationCidrRangeSpecifications(v.CidrRangeSpecifications); err != nil {
+			invalidParams.AddNested("CidrRangeSpecifications", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validatePcxFlexCostAllocationPolicyDocument(v *types.PcxFlexCostAllocationPolicyDocument) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PcxFlexCostAllocationPolicyDocument"}
+	if v.ReportingGranularity == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ReportingGranularity"))
+	}
+	if v.Dimensions == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Dimensions"))
+	}
+	if v.CidrRangeSpecifications != nil {
+		if err := validateFlexCostAllocationCidrRangeSpecifications(v.CidrRangeSpecifications); err != nil {
+			invalidParams.AddNested("CidrRangeSpecifications", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -15046,6 +15502,26 @@ func validateOpAssociateNatGatewayAddressInput(v *AssociateNatGatewayAddressInpu
 	}
 }
 
+func validateOpAssociateNetworkingFlexCostAllocationPolicyInput(v *AssociateNetworkingFlexCostAllocationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AssociateNetworkingFlexCostAllocationPolicyInput"}
+	if v.FcaPolicyId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("FcaPolicyId"))
+	}
+	if v.NetworkResourceScope != nil {
+		if err := validateFlexCostAllocationNetworkResourceScope(v.NetworkResourceScope); err != nil {
+			invalidParams.AddNested("NetworkResourceScope", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpAssociateRouteServerInput(v *AssociateRouteServerInput) error {
 	if v == nil {
 		return nil
@@ -15744,6 +16220,11 @@ func validateOpCreateCapacityReservationFleetInput(v *CreateCapacityReservationF
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "CreateCapacityReservationFleetInput"}
+	if v.InstanceRequirements != nil {
+		if err := validateInstanceRequirementsRequest(v.InstanceRequirements); err != nil {
+			invalidParams.AddNested("InstanceRequirements", err.(smithy.InvalidParamsError))
+		}
+	}
 	if v.TotalTargetCapacity == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("TotalTargetCapacity"))
 	}
@@ -16434,6 +16915,21 @@ func validateOpCreateManagedPrefixListInput(v *CreateManagedPrefixListInput) err
 	}
 }
 
+func validateOpCreateMetricCategoryInput(v *CreateMetricCategoryInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateMetricCategoryInput"}
+	if v.Metrics == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Metrics"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpCreateNetworkAclEntryInput(v *CreateNetworkAclEntryInput) error {
 	if v == nil {
 		return nil
@@ -16468,6 +16964,36 @@ func validateOpCreateNetworkAclInput(v *CreateNetworkAclInput) error {
 	invalidParams := smithy.InvalidParamsError{Context: "CreateNetworkAclInput"}
 	if v.VpcId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("VpcId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpCreateNetworkingFlexCostAllocationPolicyInput(v *CreateNetworkingFlexCostAllocationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateNetworkingFlexCostAllocationPolicyInput"}
+	if len(v.NetworkResourceType) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("NetworkResourceType"))
+	}
+	if v.NatFcaPolicyDocument != nil {
+		if err := validateNatFlexCostAllocationPolicyDocument(v.NatFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("NatFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
+	}
+	if v.InstanceFcaPolicyDocument != nil {
+		if err := validateInstanceFlexCostAllocationPolicyDocument(v.InstanceFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("InstanceFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
+	}
+	if v.PcxFcaPolicyDocument != nil {
+		if err := validatePcxFlexCostAllocationPolicyDocument(v.PcxFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("PcxFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -17930,6 +18456,21 @@ func validateOpDeleteManagedPrefixListInput(v *DeleteManagedPrefixListInput) err
 	}
 }
 
+func validateOpDeleteMetricCategoryInput(v *DeleteMetricCategoryInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DeleteMetricCategoryInput"}
+	if v.MetricCategoryId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("MetricCategoryId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpDeleteNatGatewayInput(v *DeleteNatGatewayInput) error {
 	if v == nil {
 		return nil
@@ -17973,6 +18514,21 @@ func validateOpDeleteNetworkAclInput(v *DeleteNetworkAclInput) error {
 	invalidParams := smithy.InvalidParamsError{Context: "DeleteNetworkAclInput"}
 	if v.NetworkAclId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("NetworkAclId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpDeleteNetworkingFlexCostAllocationPoliciesInput(v *DeleteNetworkingFlexCostAllocationPoliciesInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DeleteNetworkingFlexCostAllocationPoliciesInput"}
+	if v.FcaPolicyIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("FcaPolicyIds"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -19800,6 +20356,21 @@ func validateOpDisassociateNatGatewayAddressInput(v *DisassociateNatGatewayAddre
 	}
 }
 
+func validateOpDisassociateNetworkingFlexCostAllocationPolicyInput(v *DisassociateNetworkingFlexCostAllocationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DisassociateNetworkingFlexCostAllocationPolicyInput"}
+	if v.FcaPolicyAssociationIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("FcaPolicyAssociationIds"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpDisassociateRouteServerInput(v *DisassociateRouteServerInput) error {
 	if v == nil {
 		return nil
@@ -20439,6 +21010,35 @@ func validateOpGetCapacityManagerMetricDimensionsInput(v *GetCapacityManagerMetr
 	}
 }
 
+func validateOpGetCapacityManagerSupportabilityScoresInput(v *GetCapacityManagerSupportabilityScoresInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetCapacityManagerSupportabilityScoresInput"}
+	if len(v.MarketType) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("MarketType"))
+	}
+	if v.CapacityAmount == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CapacityAmount"))
+	}
+	if len(v.CapacityUnit) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("CapacityUnit"))
+	}
+	if v.CapacityAvailabilityZoneIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CapacityAvailabilityZoneIds"))
+	}
+	if v.InstanceRequirementsWithMetadata != nil {
+		if err := validateInstanceRequirementsWithMetadataRequest(v.InstanceRequirementsWithMetadata); err != nil {
+			invalidParams.AddNested("InstanceRequirementsWithMetadata", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetCapacityReservationUsageInput(v *GetCapacityReservationUsageInput) error {
 	if v == nil {
 		return nil
@@ -20607,6 +21207,21 @@ func validateOpGetImageAncestryInput(v *GetImageAncestryInput) error {
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "GetImageAncestryInput"}
+	if v.ImageId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ImageId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpGetImageFindingsInput(v *GetImageFindingsInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetImageFindingsInput"}
 	if v.ImageId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("ImageId"))
 	}
@@ -21026,6 +21641,21 @@ func validateOpGetManagedPrefixListEntriesInput(v *GetManagedPrefixListEntriesIn
 	}
 }
 
+func validateOpGetNetworkingFlexCostAllocationPolicyVersionsInput(v *GetNetworkingFlexCostAllocationPolicyVersionsInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetNetworkingFlexCostAllocationPolicyVersionsInput"}
+	if v.FcaPolicyId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("FcaPolicyId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetNetworkInsightsAccessScopeAnalysisFindingsInput(v *GetNetworkInsightsAccessScopeAnalysisFindingsInput) error {
 	if v == nil {
 		return nil
@@ -21178,6 +21808,21 @@ func validateOpGetSubnetCidrReservationsInput(v *GetSubnetCidrReservationsInput)
 	invalidParams := smithy.InvalidParamsError{Context: "GetSubnetCidrReservationsInput"}
 	if v.SubnetId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("SubnetId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpGetTransitGatewayAttachmentNatConfigurationInput(v *GetTransitGatewayAttachmentNatConfigurationInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetTransitGatewayAttachmentNatConfigurationInput"}
+	if v.TransitGatewayAttachmentId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("TransitGatewayAttachmentId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -22167,6 +22812,54 @@ func validateOpModifyManagedResourceVisibilityInput(v *ModifyManagedResourceVisi
 	}
 }
 
+func validateOpModifyMetricCategoryInput(v *ModifyMetricCategoryInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ModifyMetricCategoryInput"}
+	if v.MetricCategoryId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("MetricCategoryId"))
+	}
+	if v.Metrics == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Metrics"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpModifyNetworkingFlexCostAllocationPolicyInput(v *ModifyNetworkingFlexCostAllocationPolicyInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ModifyNetworkingFlexCostAllocationPolicyInput"}
+	if v.FcaPolicyId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("FcaPolicyId"))
+	}
+	if v.NatFcaPolicyDocument != nil {
+		if err := validateNatFlexCostAllocationPolicyDocument(v.NatFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("NatFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
+	}
+	if v.InstanceFcaPolicyDocument != nil {
+		if err := validateInstanceFlexCostAllocationPolicyDocument(v.InstanceFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("InstanceFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
+	}
+	if v.PcxFcaPolicyDocument != nil {
+		if err := validatePcxFlexCostAllocationPolicyDocument(v.PcxFcaPolicyDocument); err != nil {
+			invalidParams.AddNested("PcxFcaPolicyDocument", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpModifyNetworkInterfaceAttributeInput(v *ModifyNetworkInterfaceAttributeInput) error {
 	if v == nil {
 		return nil
@@ -22367,6 +23060,21 @@ func validateOpModifyTrafficMirrorSessionInput(v *ModifyTrafficMirrorSessionInpu
 	invalidParams := smithy.InvalidParamsError{Context: "ModifyTrafficMirrorSessionInput"}
 	if v.TrafficMirrorSessionId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("TrafficMirrorSessionId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpModifyTransitGatewayAttachmentNatConfigurationInput(v *ModifyTransitGatewayAttachmentNatConfigurationInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ModifyTransitGatewayAttachmentNatConfigurationInput"}
+	if v.TransitGatewayAttachmentId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("TransitGatewayAttachmentId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

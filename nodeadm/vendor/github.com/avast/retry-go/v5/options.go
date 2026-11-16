@@ -3,6 +3,7 @@ package retry
 import (
 	"context"
 	"math"
+	"math/bits"
 	"math/rand"
 	"time"
 )
@@ -44,6 +45,7 @@ type retrierCore struct {
 	context                       context.Context
 	timer                         Timer
 	wrapContextErrorWithLastError bool
+	throttle                      ThrottleManager
 
 	maxBackOffN uint // pre-computed for BackOffDelay, immutable after New()
 }
@@ -81,7 +83,7 @@ type RetrierWithData[T any] struct {
 // Option represents an option for retry.
 type Option func(*retrierCore)
 
-func newRetrieerCore(opts ...Option) *retrierCore {
+func newRetrierCore(opts ...Option) *retrierCore {
 	core := &retrierCore{
 		attempts:         uint(10),
 		attemptsForError: make(map[error]uint),
@@ -99,27 +101,30 @@ func newRetrieerCore(opts ...Option) *retrierCore {
 		opt(core)
 	}
 
-	const maxBackOffN uint = 62
-	core.maxBackOffN = maxBackOffN
+	core.maxBackOffN = maxShiftsBeforeInt64Overflow(time.Nanosecond)
 	if core.delay < 0 {
 		core.delay = 0
 	} else if core.delay > 0 {
-		core.maxBackOffN = maxBackOffN - uint(math.Floor(math.Log2(float64(core.delay))))
+		core.maxBackOffN = maxShiftsBeforeInt64Overflow(core.delay)
 	}
 
 	return core
 }
 
+func maxShiftsBeforeInt64Overflow(d time.Duration) uint {
+	return uint(bits.Len64(math.MaxInt64)) - uint(bits.Len64(uint64(d)))
+}
+
 // New creates a new Retrier with the given options.
 // The returned Retrier can be safely reused across multiple retry operations.
 func New(opts ...Option) *Retrier {
-	return &Retrier{retrierCore: newRetrieerCore(opts...)}
+	return &Retrier{retrierCore: newRetrierCore(opts...)}
 }
 
 // NewWithData creates a new RetrierWithData[T] with the given options.
 // The returned retrier can be safely reused across multiple retry operations.
 func NewWithData[T any](opts ...Option) *RetrierWithData[T] {
-	return &RetrierWithData[T]{retrierCore: newRetrieerCore(opts...)}
+	return &RetrierWithData[T]{retrierCore: newRetrierCore(opts...)}
 }
 
 func emptyOption(r *retrierCore) {}
@@ -238,8 +243,13 @@ func CombineDelay(delays ...DelayTypeFunc) DelayTypeFunc {
 // Formula: sleep = random_between(0, min(cap, base * 2^attempt))
 // It uses config.Delay as the base delay and config.MaxDelay as the cap.
 func FullJitterBackoffDelay(n uint, err error, config DelayContext) time.Duration {
+	baseDelay := config.Delay()
+	if baseDelay <= 0 {
+		return 0
+	}
+
 	// Calculate the exponential backoff ceiling for the current attempt
-	backoffCeiling := float64(config.Delay()) * math.Pow(2, float64(n))
+	backoffCeiling := float64(baseDelay) * math.Pow(2, float64(n))
 	currentCap := float64(config.MaxDelay())
 
 	// If MaxDelay is set and backoffCeiling exceeds it, cap at MaxDelay
@@ -247,32 +257,29 @@ func FullJitterBackoffDelay(n uint, err error, config DelayContext) time.Duratio
 		backoffCeiling = currentCap
 	}
 
-	// Ensure backoffCeiling is at least 0
-	if backoffCeiling < 0 {
-		backoffCeiling = 0
-	}
-
-	// Add jitter: random value between 0 and backoffCeiling
-	// rand.Int63n panics if argument is <= 0
-	if backoffCeiling <= 0 {
-		return 0 // No delay if ceiling is zero or negative
-	}
-
-	jitter := rand.Int63n(int64(backoffCeiling)) // #nosec G404 -- Using math/rand is acceptable for non-security critical jitter.
+	jitter := rand.Int63n(saturatingInt64(backoffCeiling))
 	return time.Duration(jitter)
+}
+
+func saturatingInt64(positive float64) int64 {
+	if positive >= float64(math.MaxInt64) {
+		return math.MaxInt64
+	}
+	return int64(positive)
 }
 
 // OnRetry function callback are called each retry
 //
 // log each retry example:
 //
-//	retry.New().Do(
-//		func() error {
-//			return errors.New("some error")
-//		},
+//	retry.New(
 //		retry.OnRetry(func(n uint, err error) {
 //			log.Printf("#%d: %s\n", n, err)
 //		}),
+//	).Do(
+//		func() error {
+//			return errors.New("some error")
+//		},
 //	)
 func OnRetry(onRetry OnRetryFunc) Option {
 	if onRetry == nil {
@@ -288,16 +295,17 @@ func OnRetry(onRetry OnRetryFunc) Option {
 //
 // skip retry if special error example:
 //
-//	retry.New().Do(
-//		func() error {
-//			return errors.New("special error")
-//		},
+//	retry.New(
 //		retry.RetryIf(func(err error) bool {
 //			if err.Error() == "special error" {
 //				return false
 //			}
 //			return true
-//		})
+//		}),
+//	).Do(
+//		func() error {
+//			return errors.New("special error")
+//		},
 //	)
 //
 // By default RetryIf stops execution if the error is wrapped using `retry.Unrecoverable`,
@@ -306,7 +314,7 @@ func OnRetry(onRetry OnRetryFunc) Option {
 //	retry.New().Do(
 //		func() error {
 //			return retry.Unrecoverable(errors.New("special error"))
-//		}
+//		},
 //	)
 func RetryIf(retryIf RetryIfFunc) Option {
 	if retryIf == nil {
@@ -325,11 +333,12 @@ func RetryIf(retryIf RetryIfFunc) Option {
 //	ctx, cancel := context.WithCancel(context.Background())
 //	cancel()
 //
-//	retry.New().Do(
+//	retry.New(
+//		retry.Context(ctx),
+//	).Do(
 //		func() error {
 //			...
 //		},
-//		retry.Context(ctx),
 //	)
 func Context(ctx context.Context) Option {
 	return func(r *retrierCore) {
@@ -350,9 +359,10 @@ func Context(ctx context.Context) Option {
 //	    return time.After(d)
 //	}
 //
-//	retry.New().Do(
+//	retry.New(
+//	    retry.WithTimer(&MyTimer{}),
+//	).Do(
 //	    func() error { ... },
-//		   retry.WithTimer(&MyTimer{})
 //	)
 func WithTimer(t Timer) Option {
 	return func(r *retrierCore) {
@@ -369,16 +379,41 @@ func WithTimer(t Timer) Option {
 //	ctx, cancel := context.WithCancel(context.Background())
 //	defer cancel()
 //
-//	retry.New().Do(
-//		func() error {
-//			...
-//		},
+//	retry.New(
 //		retry.Context(ctx),
 //		retry.Attempts(0),
 //		retry.WrapContextErrorWithLastError(true),
+//	).Do(
+//		func() error {
+//			...
+//		},
 //	)
 func WrapContextErrorWithLastError(wrapContextErrorWithLastError bool) Option {
 	return func(r *retrierCore) {
 		r.wrapContextErrorWithLastError = wrapContextErrorWithLastError
+	}
+}
+
+// WithThrottle limits retries with the given ThrottleManager.
+// Before each retry that would actually happen, manager.AllowRetry is called;
+// if it returns false, retrying stops immediately with an error matching
+// ErrThrottled.
+// manager.OnSuccess is called when the retryable function succeeds.
+// Option order does not matter; passing nil disables throttling.
+func WithThrottle(manager ThrottleManager) Option {
+	return func(r *retrierCore) {
+		r.throttle = manager
+	}
+}
+
+// WithFixedTokenBucketThrottle is a shortcut for
+// WithThrottle(NewFixedTokenBucketThrottle(config)).
+// Every New call builds a fresh bucket shared by that Retrier's Do calls,
+// so reusing this Option for several Retriers does not share a bucket.
+// To share one, create it with NewFixedTokenBucketThrottle and pass it to
+// WithThrottle.
+func WithFixedTokenBucketThrottle(config FixedTokenBucketThrottleConfig) Option {
+	return func(r *retrierCore) {
+		WithThrottle(NewFixedTokenBucketThrottle(config))(r)
 	}
 }
