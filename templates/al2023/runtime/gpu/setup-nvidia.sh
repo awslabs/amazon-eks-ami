@@ -35,6 +35,39 @@ if [[ ! -d "${TREE}/etc" ]]; then
   exit 1
 fi
 
+# the proprietary flavor ships its modules as unlinked parts in objects/, which are linked into its
+# extra/ on the first boot. the other flavors ship linked modules in extra/
+readonly EXTRA_DIR="${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/extra"
+readonly PARTS_DIR="${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/objects"
+
+# links each module from the parts its <module>.parts lists, as kbuild does: the parts are combined
+# into one object, which is then joined with the module's descriptor. the descriptor refers to the
+# module's entry points by name, so the strip in between keeps them.
+function link-module-parts() {
+  local output_dir=$1
+  local module_lds="${LIB_MODULES_DIR}/${KERNEL_VERSION}/build/scripts/module.lds"
+  local common_object=()
+  local parts_file module_name parts
+
+  # built only by kernels 6.12 and later, where every module is linked with it
+  if [[ -f "${PARTS_DIR}/.module-common.o" ]]; then
+    common_object=(.module-common.o)
+  fi
+
+  for parts_file in "${PARTS_DIR}"/*.parts; do
+    module_name=$(basename "${parts_file}" .parts)
+    mapfile -t parts < "${parts_file}"
+    (
+      cd "${PARTS_DIR}"
+      ld -r -o "${output_dir}/${module_name}.o" "${parts[@]}"
+      strip -g --strip-unneeded --keep-symbol init_module --keep-symbol cleanup_module "${output_dir}/${module_name}.o"
+      ld -r -T "${module_lds}" --build-id -o "${output_dir}/${module_name}.ko" \
+        "${output_dir}/${module_name}.o" "${module_name}.mod.o" "${common_object[@]}"
+    )
+    rm -f "${output_dir}/${module_name}.o"
+  done
+}
+
 VERSION="$(cat "${TREE}/.version")"
 readonly VERSION
 
@@ -46,8 +79,13 @@ cp -a -n --reflink=auto "${TREE}"/etc/* /etc/
 
 readonly LOADED_SENTINEL="${TREE}/.loaded"
 if [[ ! -f "${LOADED_SENTINEL}" ]]; then
+  if [[ "${FLAVOR}" == "proprietary" ]]; then
+    mkdir -p "${EXTRA_DIR}"
+    link-module-parts "${EXTRA_DIR}"
+  fi
+
   mkdir -p "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra"
-  cp -a --reflink=auto "${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/extra/." "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
+  cp -a --reflink=auto "${EXTRA_DIR}/." "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
   restorecon -R "${LIB_MODULES_DIR}/${KERNEL_VERSION}/extra/"
 
   readonly FIRMWARE_STAGE="${TREE}/${FIRMWARE_DIR}/nvidia"
@@ -60,7 +98,6 @@ if [[ ! -f "${LOADED_SENTINEL}" ]]; then
 fi
 
 # modprobes do not persist reboots; invocations should be unguarded.
-readonly EXTRA_DIR="${FLAVOR_SUBTREE}/lib/modules/${KERNEL_VERSION}/extra"
 # the nvidia module is probed first b/c other mods (e.g. gdrdrv) may not
 # declare a dependency on it
 modprobe nvidia
