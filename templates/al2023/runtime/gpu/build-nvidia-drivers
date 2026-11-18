@@ -4,7 +4,8 @@
 #
 # Rebuilds the NVIDIA kernel modules of every driver tree in /opt/nvidia for the running kernel,
 # from the sources staged in <tree>/flavors/<flavor>/.sources. Used while building an EKS AMI with
-# Packer, and must run before the AMI first boots on an NVIDIA GPU instance.
+# Packer, and must run before the AMI first boots on an NVIDIA GPU instance. The proprietary
+# flavor's modules are kept as unlinked parts, which the instance links on its first boot.
 
 set -o pipefail
 set -o nounset
@@ -88,20 +89,76 @@ function build-open-kmods() {
   remove-dkms-module nvidia "${DRIVER_VERSION}"
 }
 
-# Build and harvests nvidia proprietary flavor kernel modules
+# Build nvidia proprietary flavor kernel modules, and harvest their parts unlinked. A linked
+# proprietary module joins NVIDIA's closed binary to its kernel glue, so the AMI ships only the
+# parts, and the instance links them on its first boot.
 function build-proprietary-kmods() {
   local TREE_DIR="${1}"
   local DRIVER_VERSION="${2}"
   local FLAVOR_SUBTREE="${TREE_DIR}/flavors/proprietary"
+  local SOURCE_DIR="/usr/src/nvidia-${DRIVER_VERSION}"
 
   echo "Building proprietary kernel modules for NVIDIA ${DRIVER_VERSION}"
   remove-dkms-module nvidia "${DRIVER_VERSION}"
   unpack-kmod-source "${FLAVOR_SUBTREE}"/.sources/kmod-nvidia-latest-dkms-"${DRIVER_VERSION}"-*.rpm
-  dkms add -m nvidia -v "${DRIVER_VERSION}"
-  dkms build -m nvidia -v "${DRIVER_VERSION}"
-  harvest-dkms-modules nvidia "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
 
+  # Built with make rather than dkms, because dkms deletes its build directory once the modules are
+  # built, and the parts with it.
+  make -C "${SOURCE_DIR}" \
+    -j"$(nproc)" \
+    KERNEL_UNAME="${KERNEL_RELEASE}" \
+    modules
+
+  harvest-proprietary-parts "${SOURCE_DIR}" "${DRIVER_VERSION}" "${FLAVOR_SUBTREE}"
+
+  # Also deletes the build's combined objects and linked modules.
   remove-dkms-module nvidia "${DRIVER_VERSION}"
+}
+
+# Copy the parts of each module a dkms.conf declares, as Kbuild lists them in the module's
+# <module>.mod, and the module's descriptor out of the build directory. Kernels up to 6.12 list the
+# parts by absolute paths into the build directory, which is deleted before the first boot, so the
+# parts are listed again in a <module>.parts file, relative to the flavor's objects directory.
+function harvest-proprietary-parts() {
+  local SOURCE_DIR="${1}"
+  local DRIVER_VERSION="${2}"
+  local PARTS_DIR="${3}/lib/modules/${KERNEL_RELEASE}/objects"
+
+  local DECLARED_MODULES
+  DECLARED_MODULES=$(dkms-declared-modules nvidia "${DRIVER_VERSION}")
+  local MODULE_NAMES
+  mapfile -t MODULE_NAMES <<< "${DECLARED_MODULES}"
+
+  rm -rf "${PARTS_DIR}"
+  install -d "${PARTS_DIR}"
+
+  # The parts are listed relative to the build directory, so they are read from there.
+  pushd "${SOURCE_DIR}" > /dev/null
+
+  local MODULE_NAME PART
+  for MODULE_NAME in "${MODULE_NAMES[@]}"; do
+    : > "${PARTS_DIR}/${MODULE_NAME}.parts"
+    while read -r PART; do
+      # Kernels up to 6.12 list a part as /usr/src/nvidia-<version>/nvidia/nv.o and later ones as
+      # ./nvidia/nv.o, and both become nvidia/nv.o. realpath also resolves a part that is a symlink,
+      # as Kbuild makes for NVIDIA's closed binaries, to the file it points to.
+      PART=$(realpath --relative-to=. "${PART}")
+      install -D -m 0644 "${PART}" "${PARTS_DIR}/${PART}"
+      # NVIDIA ships its closed binaries as *.o_binary, and they are kept as NVIDIA ships them.
+      if [[ "${PART}" != *.o_binary ]]; then
+        strip -g --strip-unneeded "${PARTS_DIR}/${PART}"
+      fi
+      echo "${PART}" >> "${PARTS_DIR}/${MODULE_NAME}.parts"
+    done < "${MODULE_NAME}.mod"
+    install -m 0644 "${MODULE_NAME}.mod.o" "${PARTS_DIR}/"
+  done
+
+  popd > /dev/null
+
+  # Built only by kernels 6.12 and later, where every module is linked with it.
+  if [ -f "${SOURCE_DIR}/.module-common.o" ]; then
+    install -m 0644 "${SOURCE_DIR}/.module-common.o" "${PARTS_DIR}/"
+  fi
 }
 
 # Build and harvests gdrdrv kernel modules. Built only with the open nvidia flavor.
