@@ -171,11 +171,17 @@ type AccountVpcEncryptionControl struct {
 // [Enforce VPC encryption in transit]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-encryption-controls.html
 type AccountVpcEncryptionControlExclusions struct {
 
+	// The exclusion configuration for Amazon API Gateway V2.
+	ApiGatewayV2 VpcEncryptionControlExclusionState
+
 	// The exclusion configuration for egress-only internet gateway resource.
 	EgressOnlyInternetGateway VpcEncryptionControlExclusionState
 
 	// The exclusion configuration for Elastic File System service.
 	ElasticFileSystem VpcEncryptionControlExclusionState
+
+	// The exclusion configuration for AWS Global Accelerator.
+	GlobalAccelerator VpcEncryptionControlExclusionState
 
 	// The exclusion configuration for internet gateway resource.
 	InternetGateway VpcEncryptionControlExclusionState
@@ -694,6 +700,39 @@ type AnalysisSecurityGroupRule struct {
 
 	// The security group ID.
 	SecurityGroupId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an entry in a transit gateway policy table.
+type AnalysisTransitGatewayPolicyTableEntry struct {
+
+	// The destination CIDR block. If this value is not present, the entry matches any
+	// destination address.
+	DestinationCidr *string
+
+	// The destination port range. If this value is not present, the entry matches any
+	// destination port.
+	DestinationPortRange *PortRange
+
+	// The protocol number. A value of -1 means that the entry matches all protocols.
+	Protocol *string
+
+	// The rule number for the policy table entry. Entries are evaluated in ascending
+	// order of rule number.
+	RuleNumber *int32
+
+	// The source CIDR block. If this value is not present, the entry matches any
+	// source address.
+	SourceCidr *string
+
+	// The source port range. If this value is not present, the entry matches any
+	// source port.
+	SourcePortRange *PortRange
+
+	// The ID of the transit gateway route table to which the entry routes matching
+	// traffic.
+	TargetRouteTableId *string
 
 	noSmithyDocumentSerde
 }
@@ -2149,6 +2188,26 @@ type CapacityManagerMonitoredTagKey struct {
 	noSmithyDocumentSerde
 }
 
+//	The supportability score for a single instance type and Availability Zone
+//
+// combination.
+type CapacityManagerSupportabilityScore struct {
+
+	//  The ID of the Availability Zone.
+	AvailabilityZoneId *string
+
+	//  The instance type.
+	InstanceType *string
+
+	//  How well the combination can support the requested capacity right now. high
+	// means that the combination holds several times the requested amount. medium
+	// means that it can cover the request with little to spare. low means that it
+	// holds less than the requested amount.
+	Score SupportabilityScore
+
+	noSmithyDocumentSerde
+}
+
 //	A key-value pair representing a tag associated with a capacity resource in
 //
 // Capacity Manager.
@@ -2534,6 +2593,12 @@ type CapacityReservationFleet struct {
 	// [Allocation strategy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/crfleet-concepts.html#allocation-strategy
 	AllocationStrategy *string
 
+	// Reserved for internal use.
+	AvailabilityZone *string
+
+	// Reserved for internal use.
+	AvailabilityZoneId *string
+
 	// The ARN of the Capacity Reservation Fleet.
 	CapacityReservationFleetArn *string
 
@@ -2556,6 +2621,9 @@ type CapacityReservationFleet struct {
 	// Instances do not need to explicitly target a Capacity Reservation Fleet to use
 	// its reserved capacity.
 	InstanceMatchCriteria FleetInstanceMatchCriteria
+
+	// Reserved for internal use.
+	InstanceRequirements *InstanceRequirementsRequest
 
 	// Information about the instance types for which to reserve the capacity.
 	InstanceTypeSpecifications []FleetCapacityReservation
@@ -6336,6 +6404,12 @@ type Explanation struct {
 	// The transit gateway attachment.
 	TransitGatewayAttachment *AnalysisComponent
 
+	// The transit gateway policy table.
+	TransitGatewayPolicyTable *AnalysisComponent
+
+	// The transit gateway policy table entry.
+	TransitGatewayPolicyTableEntry *AnalysisTransitGatewayPolicyTableEntry
+
 	// The transit gateway route table.
 	TransitGatewayRouteTable *AnalysisComponent
 
@@ -7580,6 +7654,232 @@ type FleetSpotMaintenanceStrategiesRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Maps a CIDR range to a label for cost allocation reporting.
+type FlexCostAllocationCidrMapping struct {
+
+	// The label to assign to the CIDR range. The label can be up to 64 characters
+	// long. It can contain letters, numbers, hyphens ( - ), and underscores ( _ ), and
+	// must start with a letter or a number. This parameter is required.
+	//
+	// This member is required.
+	CidrLabel *string
+
+	// The CIDR range. This parameter is required.
+	//
+	// This member is required.
+	CidrRange *string
+
+	noSmithyDocumentSerde
+}
+
+// Specifies the CIDR ranges and labels to use for cost allocation when the
+// reporting granularity is cidr .
+type FlexCostAllocationCidrRangeSpecifications struct {
+
+	// The CIDR range to label mappings. You can specify from 1 to 100 mappings. This
+	// parameter is required.
+	//
+	// This member is required.
+	Prefixes []FlexCostAllocationCidrMapping
+
+	// The type of prefixes to use. This parameter is required. Valid values are
+	// source-prefixes and destination-prefixes .
+	//
+	// This member is required.
+	PrefixesType *string
+
+	noSmithyDocumentSerde
+}
+
+// Specifies a scope of network resources for a scope-based policy association.
+type FlexCostAllocationNetworkResourceScope struct {
+
+	// The IDs of the resources owned by you that define the scope. You can specify
+	// from 1 to 20 IDs. This parameter is required.
+	//
+	// This member is required.
+	ResourceIds []string
+
+	// The type of scope. This parameter is required. Valid values are account , vpc ,
+	// and subnet .
+	//
+	// This member is required.
+	ResourceType FlexCostAllocationNetworkResourceScopeType
+
+	noSmithyDocumentSerde
+}
+
+// Describes a policy, association, or network resource that a Networking Flexible
+// Cost Allocation operation failed to process.
+type FlexCostAllocationOperationFailure struct {
+
+	// The code that identifies the type of failure. Possible values are:
+	//
+	//   - ResourceNotFound - ( DeleteNetworkingFlexCostAllocationPolicies ) The policy
+	//   doesn't exist or isn't owned by your account.
+	//
+	//   - InvalidResourceState - ( DeleteNetworkingFlexCostAllocationPolicies ) The
+	//   policy has active associations.
+	//
+	//   - InvalidResource - ( AssociateNetworkingFlexCostAllocationPolicy ) The
+	//   resource ID is malformed, the resource type doesn't match the policy, or the
+	//   scope is an account other than yours. (
+	//   DisassociateNetworkingFlexCostAllocationPolicy ) The association doesn't exist
+	//   or was already removed.
+	//
+	//   - ResourceAlreadyAssociated - ( AssociateNetworkingFlexCostAllocationPolicy )
+	//   The resource already has an active association.
+	//
+	//   - InternalError - An internal error occurred. Retry the request.
+	FailureCode *string
+
+	// The reason for the failure.
+	FailureReason *string
+
+	// The ID of the resource that could not be processed.
+	ResourceId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an association between a flex cost allocation policy and a network
+// resource.
+type FlexCostAllocationPolicyAssociationDescription struct {
+
+	// The date and time when the association was created.
+	AssociatedAt *time.Time
+
+	// The mode of the association. Valid values:
+	//
+	//   - direct - The policy is associated with specific resources by resource ID.
+	//
+	//   - scope - The policy is associated with a scope of resources in an account,
+	//   Amazon VPC, or subnet.
+	AssociationMode FlexCostAllocationAssociationMode
+
+	// The date and time when the association is expected to apply to network traffic.
+	ExpectedEffectiveAt *time.Time
+
+	// The ID of the policy association.
+	FcaPolicyAssociationId *string
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The entity that manages the association. Valid values are:
+	//
+	//   - account - The account that owns the association created it.
+	//
+	//   - declarative-policy - An Amazon Web Services Organizations declarative policy
+	//   created the association. You can't remove the association.
+	ManagedBy ManagedBy
+
+	// The ID of the associated network resource.
+	NetworkResourceId *string
+
+	// The ID of the account that owns the association.
+	OwnerAccount *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes a flex cost allocation policy.
+type FlexCostAllocationPolicyDescription struct {
+
+	// The description of the policy.
+	Description *string
+
+	// The Amazon Resource Name (ARN) of the policy.
+	FcaPolicyArn *string
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The policy document that defines cost allocation for EC2 instances.
+	InstanceFcaPolicyDocument *InstanceFlexCostAllocationPolicyDocument
+
+	// The number of the latest version of the policy.
+	LatestVersion *int32
+
+	// The entity that manages the policy. Valid values are:
+	//
+	//   - account - The account that owns the policy created it.
+	//
+	//   - declarative-policy - An Amazon Web Services Organizations declarative policy
+	//   created the policy. You can't modify or delete the policy.
+	ManagedBy ManagedBy
+
+	// The policy document that defines cost allocation for NAT gateways.
+	NatFcaPolicyDocument *NatFlexCostAllocationPolicyDocument
+
+	// The type of network resource that the policy applies to.
+	NetworkResourceType FlexCostAllocationNetworkResourceType
+
+	// The ID of the account that owns the policy.
+	OwnerAccount *string
+
+	// The policy document that defines cost allocation for Amazon VPC peering
+	// connections.
+	PcxFcaPolicyDocument *PcxFlexCostAllocationPolicyDocument
+
+	// The date and time when the policy was created.
+	PolicyCreatedAt *time.Time
+
+	// Indicates whether showback reporting is enabled for the policy.
+	ShowBackEnabled *bool
+
+	// The tags assigned to the policy.
+	Tags []Tag
+
+	// The date and time when the policy was last updated.
+	UpdatedAt *time.Time
+
+	// The date and time when the latest version of the policy is expected to apply to
+	// network traffic. The policy configuration in this response is from the latest
+	// version.
+	VersionExpectedEffectiveAt *time.Time
+
+	noSmithyDocumentSerde
+}
+
+// Describes a version of a flex cost allocation policy.
+type FlexCostAllocationPolicyVersion struct {
+
+	// The date and time when this version of the policy was created.
+	CreatedAt *time.Time
+
+	// The description of this version of the policy.
+	Description *string
+
+	// The date and time when this version of the policy is expected to apply to
+	// network traffic.
+	ExpectedEffectiveAt *time.Time
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The policy document that defines cost allocation for EC2 instances.
+	InstanceFcaPolicyDocument *InstanceFlexCostAllocationPolicyDocument
+
+	// The policy document that defines cost allocation for NAT gateways.
+	NatFcaPolicyDocument *NatFlexCostAllocationPolicyDocument
+
+	// The type of network resource that the policy applies to.
+	NetworkResourceType FlexCostAllocationNetworkResourceType
+
+	// The policy document that defines cost allocation for Amazon VPC peering
+	// connections.
+	PcxFcaPolicyDocument *PcxFlexCostAllocationPolicyDocument
+
+	// Indicates whether showback reporting is enabled for this version of the policy.
+	ShowBackEnabled *bool
+
+	// The version number.
+	Version *int32
+
+	noSmithyDocumentSerde
+}
+
 // Describes a flow log.
 type FlowLog struct {
 
@@ -8457,6 +8757,14 @@ type Image struct {
 	// or an instance store volume.
 	RootDeviceType DeviceType
 
+	// The Amazon Inspector scan results for the AMI. This information is present only
+	// for AMIs that Amazon Inspector has scanned.
+	//
+	// When you share an AMI with other accounts, organizations, or organizational
+	// units (OUs), or make it public, its scan results are available to the accounts
+	// that can use the AMI.
+	ScanResults *ScanResults
+
 	// The ID of the source AMI from which the AMI was created.
 	SourceImageId *string
 
@@ -8598,6 +8906,12 @@ type ImageCriterion struct {
 	// Maximum: 50 values
 	MarketplaceProductCodes []string
 
+	// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+	// The criteria can limit the highest finding severity, the number of days since
+	// Amazon Inspector last scanned the AMI, and the number of days since Amazon
+	// Inspector reported a fix as available.
+	ScanResultCondition *ScanResultCondition
+
 	noSmithyDocumentSerde
 }
 
@@ -8683,6 +8997,12 @@ type ImageCriterionRequest struct {
 	// Maximum: 50 values
 	MarketplaceProductCodes []string
 
+	// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+	// The criteria can limit the highest finding severity, the number of days since
+	// Amazon Inspector last scanned the AMI, and the number of days since Amazon
+	// Inspector reported a fix as available.
+	ScanResultCondition *ScanResultConditionRequest
+
 	noSmithyDocumentSerde
 }
 
@@ -8709,6 +9029,57 @@ type ImageDiskContainer struct {
 
 	// The S3 bucket for the disk image.
 	UserBucket *UserBucket
+
+	noSmithyDocumentSerde
+}
+
+// Describes an Amazon Inspector vulnerability finding for an AMI.
+type ImageFinding struct {
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), when Amazon Inspector first observed the finding.
+	FirstObservedAt *time.Time
+
+	// Specifies whether a fix is available for the finding. This value is true when
+	// Amazon Inspector reports a full or partial fix for the finding.
+	FixAvailable *bool
+
+	// The file paths in the AMI that are affected by the finding. Amazon EC2 returns
+	// up to 10 file paths for each finding.
+	Paths []string
+
+	// The Amazon Inspector score for the finding.
+	Score *float64
+
+	// The severity of the finding.
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	SeverityLabel SeverityLabel
+
+	// The ID of the Amazon EBS snapshot of the AMI in which the finding was detected.
+	SnapshotId *string
+
+	// The title of the finding.
+	Title *string
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), when Amazon Inspector last updated the finding.
+	UpdatedAt *time.Time
 
 	noSmithyDocumentSerde
 }
@@ -8855,7 +9226,8 @@ type ImageUsageReportEntry struct {
 	// The ID of the report.
 	ReportId *string
 
-	// The type of resource ( ec2:Instance or ec2:LaunchTemplate ).
+	// The type of resource ( ec2:Instance | ec2:LaunchTemplate |
+	// imagebuilder:ImageRecipe | imagebuilder:ContainerRecipe ).
 	ResourceType *string
 
 	// The number of times resources of this type reference this image in the account.
@@ -8870,7 +9242,8 @@ type ImageUsageResourceType struct {
 
 	// The resource type.
 	//
-	// Valid values: ec2:Instance | ec2:LaunchTemplate
+	// Valid values: ec2:Instance | ec2:LaunchTemplate | imagebuilder:ImageRecipe |
+	// imagebuilder:ContainerRecipe
 	ResourceType *string
 
 	// The options that affect the scope of the report. Valid only when ResourceType
@@ -8916,7 +9289,8 @@ type ImageUsageResourceTypeRequest struct {
 
 	// The resource type.
 	//
-	// Valid values: ec2:Instance | ec2:LaunchTemplate
+	// Valid values: ec2:Instance | ec2:LaunchTemplate | imagebuilder:ImageRecipe |
+	// imagebuilder:ContainerRecipe
 	ResourceType *string
 
 	// The options that affect the scope of the report. Valid only when ResourceType
@@ -9876,6 +10250,29 @@ type InstanceFamilyCreditSpecification struct {
 
 	// The instance family.
 	InstanceFamily UnlimitedSupportedInstanceFamily
+
+	noSmithyDocumentSerde
+}
+
+// Describes the cost allocation policy document for EC2 instances.
+type InstanceFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. The only valid value
+	// is data-transfer .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
 
 	noSmithyDocumentSerde
 }
@@ -11489,7 +11886,7 @@ type InstanceStateChange struct {
 }
 
 // Describes the status of an instance, including system status, instance status,
-// attached EBS status, and application status.
+// attached EBS status, application status, and performance status.
 type InstanceStatus struct {
 
 	// Reports the application-level health status for the instance.
@@ -11524,6 +11921,11 @@ type InstanceStatus struct {
 
 	// The Amazon Resource Name (ARN) of the Outpost.
 	OutpostArn *string
+
+	// Reports the performance-related health status for the instance. This
+	// information is returned only when performance status checks are enabled for the
+	// instance.
+	PerformanceStatus *PerformanceStatusSummary
 
 	// Reports impaired functionality that stems from issues related to the systems
 	// that support an instance, such as hardware failures and network connectivity
@@ -12448,7 +12850,7 @@ type IpamInternetRegistryAssociation struct {
 	// association.
 	OwnerId *string
 
-	// The Regional Internet Registry. Possible values:
+	// The internet registry. Possible values:
 	//
 	//   - ripe - RIPE NCC (Europe, the Middle East, and Central Asia).
 	//
@@ -12457,12 +12859,14 @@ type IpamInternetRegistryAssociation struct {
 	//   - arin - ARIN (North America).
 	//
 	//   - lacnic - LACNIC (Latin America and the Caribbean).
+	//
+	//   - nicbr - NIC.br (Brazil).
 	Rir Rir
 
-	// The state of the internet registry association. Valid values: pending-activation
-	// | pending-enable | create-in-progress | create-failed | enable-in-progress |
-	// enable-complete | enable-failed | delete-in-progress | delete-complete |
-	// delete-failed .
+	// The state of the internet registry association. Valid values: pending-enable |
+	// create-in-progress | create-failed | enable-in-progress | enable-complete |
+	// enable-failed | disable-in-progress | disable-complete | disable-failed |
+	// delete-in-progress | delete-complete | delete-failed .
 	State IpamInternetRegistryAssociationState
 
 	// A message describing the current state of the internet registry association,
@@ -13803,7 +14207,7 @@ type IpamRoutingPolicyRegistration struct {
 
 	// The state of the routing policy registration. Valid values: pending-activate |
 	// activate-failed | create-in-progress | create-complete | update-in-progress |
-	// update-complete | delete-in-progress | delete-complete .
+	// update-complete | delete-in-progress | delete-complete | disable-complete .
 	State IpamRoutingPolicyRegistrationState
 
 	noSmithyDocumentSerde
@@ -15440,6 +15844,9 @@ type LaunchTemplatesMonitoring struct {
 	// is enabled.
 	Enabled *bool
 
+	// The IDs of the metric categories to associate with the instance.
+	MetricCategoryIds []string
+
 	noSmithyDocumentSerde
 }
 
@@ -15449,6 +15856,10 @@ type LaunchTemplatesMonitoringRequest struct {
 	// Specify true to enable detailed monitoring. Otherwise, basic monitoring is
 	// enabled.
 	Enabled *bool
+
+	// The IDs of the metric categories to associate with the instance. To specify
+	// metric categories, you must also enable detailed monitoring.
+	MetricCategoryIds []string
 
 	noSmithyDocumentSerde
 }
@@ -16269,6 +16680,22 @@ type MemoryMiBRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Describes a metric category. A metric category is a set of additional metrics
+// that you can associate with an instance that has detailed monitoring enabled.
+type MetricCategory struct {
+
+	// The ID of the metric category.
+	MetricCategoryId *string
+
+	// The names of the metrics in the metric category.
+	Metrics []string
+
+	// Any tags assigned to the metric category.
+	Tags []Tag
+
+	noSmithyDocumentSerde
+}
+
 //	Contains a single data point from a capacity metrics query, including the
 //
 // dimension values, timestamp, and metric values for that specific combination.
@@ -16783,6 +17210,9 @@ type ModifyVpnTunnelOptionsSpecification struct {
 // Describes the monitoring of an instance.
 type Monitoring struct {
 
+	// The IDs of the metric categories that are associated with the instance.
+	MetricCategoryIds []string
+
 	// Indicates whether detailed monitoring is enabled. Otherwise, basic monitoring
 	// is enabled.
 	State MonitoringState
@@ -16800,6 +17230,29 @@ type MovingAddressStatus struct {
 
 	// The Elastic IP address.
 	PublicIp *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the cost allocation policy document for NAT gateways.
+type NatFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. Valid values are
+	// data-transfer and data-processing .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
 
 	noSmithyDocumentSerde
 }
@@ -18143,6 +18596,9 @@ type PathComponent struct {
 	// The transit gateway.
 	TransitGateway *AnalysisComponent
 
+	// The entry in a transit gateway policy table.
+	TransitGatewayPolicyTableEntry *AnalysisTransitGatewayPolicyTableEntry
+
 	// The route in a transit gateway route table.
 	TransitGatewayRouteTableRoute *TransitGatewayRouteTableRoute
 
@@ -18240,6 +18696,30 @@ type PciId struct {
 
 	// The ID of the vendor.
 	VendorId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the cost allocation policy document for Amazon VPC peering
+// connections.
+type PcxFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. The only valid value
+	// is data-transfer .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , peering-id , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
 
 	noSmithyDocumentSerde
 }
@@ -18408,6 +18888,22 @@ type PerformanceFactorReferenceRequest struct {
 	// [RequestSpotFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestSpotFleet
 	// [ModifyFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyFleet
 	InstanceFamily *string
+
+	noSmithyDocumentSerde
+}
+
+// Provides a summary of the performance status check results for an instance.
+type PerformanceStatusSummary struct {
+
+	// The date and time when the performance status became impaired.
+	ImpairedSince *time.Time
+
+	// The recommended action to remediate the impaired instance, if one is available.
+	// This value is returned only when the instance is impaired.
+	Remediation *string
+
+	// The current status.
+	Status SummaryStatus
 
 	noSmithyDocumentSerde
 }
@@ -21018,6 +21514,10 @@ type RunInstancesMonitoringEnabled struct {
 	// This member is required.
 	Enabled *bool
 
+	// The IDs of the metric categories to associate with the instance. To specify
+	// metric categories, you must also enable detailed monitoring.
+	MetricCategoryIds []string
+
 	noSmithyDocumentSerde
 }
 
@@ -21068,6 +21568,284 @@ type S3Storage struct {
 
 	// The signature of the JSON document.
 	UploadPolicySignature *string
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+// The criteria can limit the highest finding severity. They can also limit, for
+// each severity, the days since Amazon Inspector reported a fix as available.
+//
+// The severity limit applies to all findings, whether or not a fix is available.
+// The day limits for each severity apply only to findings that have a fix
+// available. A scanned AMI that has no fix-available finding of a given severity
+// meets that severity's day limit. AMIs that Amazon Inspector has not scanned are
+// not allowed when you specify this condition.
+type ScanResultCondition struct {
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a critical severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no critical severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceCriticalFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a high severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no high severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceHighFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for an informational severity finding on the AMI. For example, a value of 7
+	// does not allow an AMI if Amazon Inspector reported such a fix more than 7 days
+	// ago.
+	//
+	// A scanned AMI that has no informational severity finding with a fix available
+	// meets this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceInformationalFixAvailable *int32
+
+	// The maximum number of days that have elapsed since Amazon Inspector last
+	// scanned the AMI. For example, a value of 7 allows AMIs that were scanned within
+	// the last 7 days. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLastFindingScan *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a low severity finding on the AMI. For example, a value of 7 does not allow
+	// an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no low severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLowFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a medium severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no medium severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceMediumFixAvailable *int32
+
+	// The maximum severity that an AMI's Amazon Inspector findings can have for the
+	// AMI to be allowed. Findings count whether or not a fix is available. For
+	// example, a value of medium allows AMIs whose highest severity is informational ,
+	// low , or medium .
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// A scanned AMI that has no findings meets this limit.
+	//
+	// AMIs that Amazon Inspector has not scanned are not allowed when you specify
+	// this condition.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	MaximumSeverityLabel SeverityLabel
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+// The criteria can limit the highest finding severity. They can also limit, for
+// each severity, the days since Amazon Inspector reported a fix as available.
+//
+// The severity limit applies to all findings, whether or not a fix is available.
+// The day limits for each severity apply only to findings that have a fix
+// available. A scanned AMI that has no fix-available finding of a given severity
+// meets that severity's day limit. AMIs that Amazon Inspector has not scanned are
+// not allowed when you specify this condition.
+type ScanResultConditionRequest struct {
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a critical severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no critical severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceCriticalFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a high severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no high severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceHighFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for an informational severity finding on the AMI. For example, a value of 7
+	// does not allow an AMI if Amazon Inspector reported such a fix more than 7 days
+	// ago.
+	//
+	// A scanned AMI that has no informational severity finding with a fix available
+	// meets this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceInformationalFixAvailable *int32
+
+	// The maximum number of days that have elapsed since Amazon Inspector last
+	// scanned the AMI. For example, a value of 7 allows AMIs that were scanned within
+	// the last 7 days. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLastFindingScan *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a low severity finding on the AMI. For example, a value of 7 does not allow
+	// an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no low severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLowFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a medium severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no medium severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceMediumFixAvailable *int32
+
+	// The maximum severity that an AMI's Amazon Inspector findings can have for the
+	// AMI to be allowed. Findings count whether or not a fix is available. For
+	// example, a value of medium allows AMIs whose highest severity is informational ,
+	// low , or medium .
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// A scanned AMI that has no findings meets this limit.
+	//
+	// AMIs that Amazon Inspector has not scanned are not allowed when you specify
+	// this condition.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	MaximumSeverityLabel SeverityLabel
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan results for an AMI. This information is present only
+// for AMIs that Amazon Inspector has scanned.
+//
+// When you share an AMI with other accounts, organizations, or organizational
+// units (OUs), or make it public, its scan results are available to the accounts
+// that can use the AMI.
+//
+// The fix-available dates are specific to the AMI. Each date reflects when a fix
+// became available for a finding on that AMI, not when the vendor released the
+// fix. As a result, a date can be later than the vendor's release date, and AMIs
+// with the same vulnerability can have different dates.
+type ScanResults struct {
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a critical severity finding on the AMI. This value is present
+	// only if the AMI has at least one critical severity finding with a fix
+	// available. Amazon Inspector recomputes this value on each scan.
+	CriticalFixAvailableSince *time.Time
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), of the most recent Amazon Inspector scan of the AMI.
+	FindingScanDate *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a high severity finding on the AMI. This value is present only if
+	// the AMI has at least one high severity finding with a fix available. Amazon
+	// Inspector recomputes this value on each scan.
+	HighFixAvailableSince *time.Time
+
+	// The highest severity among the AMI's Amazon Inspector findings, whether or not
+	// a fix is available.
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// This value is present only if the AMI has at least one finding.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	HighestFindingSeverityLabel SeverityLabel
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for an informational severity finding on the AMI. This value is
+	// present only if the AMI has at least one informational severity finding with a
+	// fix available. Amazon Inspector recomputes this value on each scan.
+	InformationalFixAvailableSince *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a low severity finding on the AMI. This value is present only if
+	// the AMI has at least one low severity finding with a fix available. Amazon
+	// Inspector recomputes this value on each scan.
+	LowFixAvailableSince *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a medium severity finding on the AMI. This value is present only
+	// if the AMI has at least one medium severity finding with a fix available.
+	// Amazon Inspector recomputes this value on each scan.
+	MediumFixAvailableSince *time.Time
 
 	noSmithyDocumentSerde
 }
@@ -24476,6 +25254,10 @@ type TransitGatewayAttachment struct {
 	// The creation time.
 	CreationTime *time.Time
 
+	// The state of NAT gateway support for the attachment. Only the owner of the
+	// transit gateway receives this parameter.
+	NatGatewaySupport TransitGatewayAttachmentNatGatewaySupportState
+
 	// The ID of the resource.
 	ResourceId *string
 
@@ -24980,6 +25762,57 @@ type TransitGatewayMulticastRegisteredGroupSources struct {
 
 	// The ID of the transit gateway multicast domain.
 	TransitGatewayMulticastDomainId *string
+
+	noSmithyDocumentSerde
+}
+
+// Contains information about a NAT gateway rule for a transit gateway attachment,
+// including the rule number, the source CIDR block, the translated CIDR block, and
+// the state of the rule.
+type TransitGatewayNatRule struct {
+
+	// The IPv4 CIDR block of the source addresses to translate.
+	MatchSourceCidr *string
+
+	// The IPv4 CIDR block that the transit gateway translates the source addresses to.
+	NatCidr *string
+
+	// The rule number.
+	RuleNumber *int32
+
+	// The state of the NAT gateway rule. The possible values are:
+	//
+	//   - pending - The transit gateway is applying a change to the rule.
+	//
+	//   - activated - The rule is in effect because NAT gateway support is enabled for
+	//   the attachment.
+	//
+	//   - deactivated - The rule isn't in effect because NAT gateway support is
+	//   disabled for the attachment.
+	State TransitGatewayNatRuleState
+
+	noSmithyDocumentSerde
+}
+
+// Describes a NAT gateway rule to apply to a transit gateway attachment. A NAT
+// gateway rule translates source addresses in the MatchSourceCidr range to the
+// corresponding addresses in the NatCidr range.
+type TransitGatewayNatRuleRequest struct {
+
+	// The IPv4 CIDR block of the source addresses to translate. The CIDR block can't
+	// overlap the multicast range ( 224.0.0.0/4 ) or the link-local range (
+	// 169.254.0.0/16 ).
+	MatchSourceCidr *string
+
+	// The IPv4 CIDR block to translate the source addresses to. The CIDR block must
+	// be in a private (RFC 1918) or shared address space (RFC 6598) range, and must
+	// have the same prefix length as MatchSourceCidr . The CIDR blocks in the rules
+	// for an attachment can't overlap each other.
+	NatCidr *string
+
+	// The rule number. Valid values are 1 to 32766. Each rule number must be unique
+	// within the request.
+	RuleNumber *int32
 
 	noSmithyDocumentSerde
 }
@@ -27187,6 +28020,10 @@ type VpcEncryptionControlConfiguration struct {
 	// This member is required.
 	Mode VpcEncryptionControlMode
 
+	// Specifies whether to exclude Amazon API Gateway V2 traffic from encryption
+	// enforcement.
+	ApiGatewayV2Exclusion VpcEncryptionControlExclusionStateInput
+
 	// Specifies whether to exclude egress-only internet gateway traffic from
 	// encryption enforcement.
 	EgressOnlyInternetGatewayExclusion VpcEncryptionControlExclusionStateInput
@@ -27194,6 +28031,10 @@ type VpcEncryptionControlConfiguration struct {
 	// Specifies whether to exclude Elastic File System traffic from encryption
 	// enforcement.
 	ElasticFileSystemExclusion VpcEncryptionControlExclusionStateInput
+
+	// Specifies whether to exclude AWS Global Accelerator traffic from encryption
+	// enforcement.
+	GlobalAcceleratorExclusion VpcEncryptionControlExclusionStateInput
 
 	// Specifies whether to exclude internet gateway traffic from encryption
 	// enforcement.
@@ -27244,11 +28085,17 @@ type VpcEncryptionControlExclusion struct {
 // [Enforce VPC encryption in transit]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-encryption-controls.html
 type VpcEncryptionControlExclusions struct {
 
+	// The exclusion configuration for Amazon API Gateway V2 traffic.
+	ApiGatewayV2 *VpcEncryptionControlExclusion
+
 	// The exclusion configuration for egress-only internet gateway traffic.
 	EgressOnlyInternetGateway *VpcEncryptionControlExclusion
 
 	// The exclusion configuration for Elastic File System traffic.
 	ElasticFileSystem *VpcEncryptionControlExclusion
+
+	// The exclusion configuration for AWS Global Accelerator traffic.
+	GlobalAccelerator *VpcEncryptionControlExclusion
 
 	// The exclusion configuration for internet gateway traffic.
 	InternetGateway *VpcEncryptionControlExclusion
