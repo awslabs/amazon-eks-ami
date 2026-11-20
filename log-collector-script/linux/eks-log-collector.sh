@@ -429,7 +429,7 @@ get_nftables_info() {
   fi
 
   try "collect nftables information"
-  local tables family name
+  local tables family name outfile
   if ! tables=$(timeout 75 nft list tables 2> /dev/null); then
     echo "Unable to list nftables tables" > "${COLLECT_DIR}"/networking/nftables.txt
     ok
@@ -439,7 +439,13 @@ get_nftables_info() {
   # Lines look like "table ip filter" or "table ip6 nat"
   while read -r _ family name _; do
     [[ -z "${family}" || -z "${name}" ]] && continue
-    timeout 75 nft list table "${family}" "${name}" > "${COLLECT_DIR}/networking/nftables-${family}-${name}.txt" 2>&1
+    outfile="${COLLECT_DIR}/networking/nftables-${family}-${name}.txt"
+    timeout 75 nft list table "${family}" "${name}" > "${outfile}" 2>&1
+    # timeout exits 124 when it kills the command. The file is then empty or cut
+    # off part-way, which looks like real data, so say so in the file itself.
+    if [[ $? -eq 124 ]]; then
+      printf '\n*** nft list table %s %s timed out after 75s; output above may be incomplete ***\n' "${family}" "${name}" >> "${outfile}"
+    fi
   done <<< "${tables}"
 
   ok
