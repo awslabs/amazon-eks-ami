@@ -88,6 +88,30 @@ func (b *fsBroker) determineManager(ctx context.Context, interfaceName, mac stri
 		return networkmanager.ManagerCNI, nil
 	}
 
+	manager, err := b.resolveOwnership(ctx, mac)
+	if err != nil {
+		zap.L().Warn("failed resolving ENI ownership, leaving it to the CNI", zap.Error(err), zap.String("interface", interfaceName))
+		return networkmanager.ManagerCNI, nil
+	}
+	if manager != networkmanager.ManagerSystemd {
+		return manager, nil
+	}
+
+	// a CNI that attaches the ENI and then polls for it may have brought the
+	// link up while ownership was being resolved.
+	up, err = b.linkUp(interfaceName)
+	if err != nil {
+		zap.L().Warn("failed rechecking link state, leaving it to the CNI", zap.Error(err), zap.String("interface", interfaceName))
+		return networkmanager.ManagerCNI, nil
+	}
+	if up {
+		zap.L().Warn("link came up while resolving ENI ownership, leaving it to the CNI", zap.String("interface", interfaceName))
+		return networkmanager.ManagerCNI, nil
+	}
+	return networkmanager.ManagerSystemd, nil
+}
+
+func (b *fsBroker) resolveOwnership(ctx context.Context, mac string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, ownershipLookupTimeout)
 	defer cancel()
 

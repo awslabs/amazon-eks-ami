@@ -34,6 +34,16 @@ func unbuildableResolver(context.Context) (ownershipResolver, error) {
 
 func linkDown(string) (bool, error) { return false, nil }
 
+// linkStates answers successive link checks with states, repeating the last one.
+func linkStates(states ...bool) func(string) (bool, error) {
+	calls := 0
+	return func(string) (bool, error) {
+		up := states[min(calls, len(states)-1)]
+		calls++
+		return up, nil
+	}
+}
+
 // newTestBroker roots a broker's cache at a temp dir.
 func newTestBroker(t *testing.T, initialized, eniTags bool, newResolver resolverBuilder) *fsBroker {
 	t.Helper()
@@ -74,9 +84,10 @@ func Test_fsBroker_determineManager(t *testing.T) {
 		name        string
 		initialized bool
 		eniTags     bool
+		link        []bool
 		resolver    *fakeResolver
 		want        string
-		wantErr     bool
+		wantBuilt   bool
 		wantCalls   int
 	}{
 		{
@@ -96,6 +107,7 @@ func Test_fsBroker_determineManager(t *testing.T) {
 			eniTags:     true,
 			resolver:    &fakeResolver{manager: networkmanager.ManagerSystemd},
 			want:        networkmanager.ManagerSystemd,
+			wantBuilt:   true,
 			wantCalls:   1,
 		},
 		{
@@ -104,14 +116,33 @@ func Test_fsBroker_determineManager(t *testing.T) {
 			eniTags:     true,
 			resolver:    &fakeResolver{manager: networkmanager.ManagerCNI},
 			want:        networkmanager.ManagerCNI,
+			wantBuilt:   true,
 			wantCalls:   1,
 		},
 		{
-			name:        "feature on but resolver errors propagates",
+			name:        "link already up resolves to cni without EC2 call",
+			initialized: true,
+			eniTags:     true,
+			link:        []bool{true},
+			want:        networkmanager.ManagerCNI,
+		},
+		{
+			name:        "resolver error falls back to cni",
 			initialized: true,
 			eniTags:     true,
 			resolver:    &fakeResolver{err: errors.New("boom")},
-			wantErr:     true,
+			want:        networkmanager.ManagerCNI,
+			wantBuilt:   true,
+			wantCalls:   1,
+		},
+		{
+			name:        "link up after resolving to systemd resolves to cni",
+			initialized: true,
+			eniTags:     true,
+			link:        []bool{false, true},
+			resolver:    &fakeResolver{manager: networkmanager.ManagerSystemd},
+			want:        networkmanager.ManagerCNI,
+			wantBuilt:   true,
 			wantCalls:   1,
 		},
 	}
@@ -126,17 +157,15 @@ func Test_fsBroker_determineManager(t *testing.T) {
 				}
 				return res, nil
 			})
+			if tc.link != nil {
+				b.linkUp = linkStates(tc.link...)
+			}
 
 			got, err := b.determineManager(context.TODO(), "ens6", "0a:1b:2c:3d:4e:5f")
-			if tc.wantErr {
-				assert.Error(t, err)
-				assert.Empty(t, got)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tc.want, got)
-			}
-			// guards the feature-off short-circuit that guarantees zero EC2 calls.
-			assert.Equal(t, tc.initialized && tc.eniTags, resolverBuilt)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+			// guards the short-circuits that guarantee zero EC2 calls.
+			assert.Equal(t, tc.wantBuilt, resolverBuilt)
 			if tc.resolver != nil {
 				assert.Equal(t, tc.wantCalls, tc.resolver.calls)
 			}
@@ -149,9 +178,8 @@ func Test_fsBroker_ManagerFor_caching(t *testing.T) {
 		name     string
 		resolver *fakeResolver
 		want     string
-		wantErr  bool
-		// resolver invocations across two ManagerFor calls: 1 means the second
-		// call was served from cache, 2 means the decision was re-resolved.
+		// resolver invocations across two ManagerFor calls; 1 means the second
+		// call was served from cache.
 		wantCalls int
 		wantKeys  []string
 	}{
@@ -163,11 +191,11 @@ func Test_fsBroker_ManagerFor_caching(t *testing.T) {
 			wantKeys:  []string{"ens6"},
 		},
 		{
-			name:      "error is not cached and is re-resolved",
+			name:      "resolver error falls back to cni and is cached",
 			resolver:  &fakeResolver{err: errors.New("boom")},
-			wantErr:   true,
-			wantCalls: 2,
-			wantKeys:  nil,
+			want:      networkmanager.ManagerCNI,
+			wantCalls: 1,
+			wantKeys:  []string{"ens6"},
 		},
 	}
 	for _, tc := range tests {
@@ -176,13 +204,8 @@ func Test_fsBroker_ManagerFor_caching(t *testing.T) {
 
 			for i := 0; i < 2; i++ {
 				got, err := b.ManagerFor(context.TODO(), "ens6", "mac")
-				if tc.wantErr {
-					assert.Error(t, err)
-					assert.Empty(t, got)
-				} else {
-					assert.NoError(t, err)
-					assert.Equal(t, tc.want, got)
-				}
+				assert.NoError(t, err)
+				assert.Equal(t, tc.want, got)
 			}
 
 			assert.Equal(t, tc.wantCalls, tc.resolver.calls)
