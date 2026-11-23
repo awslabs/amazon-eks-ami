@@ -169,12 +169,33 @@ fi
 NVIDIA_DRIVER_MODULES=(nvidia nvidia-drm nvidia-modeset nvidia-uvm)
 KERNEL_RELEASE=$(uname -r)
 
+# The proprietary flavor ships its modules as unlinked parts, which the instance links on its first
+# boot.
+validate_nvidia_module_parts() {
+  local flavor_dir=$1
+  local parts_dir="${flavor_dir}/lib/modules/${KERNEL_RELEASE}/objects"
+  local module_name
+
+  for module_name in "${NVIDIA_DRIVER_MODULES[@]}"; do
+    if [ ! -f "${parts_dir}/${module_name}.parts" ] || [ ! -f "${parts_dir}/${module_name}.mod.o" ]; then
+      echo "${parts_dir} is missing the parts of ${module_name}"
+      exit 1
+    fi
+  done
+}
+
 validate_nvidia_boot_modules() {
   local tree=$1
   local flavor=$2
-  local extra_dir="/opt/nvidia/${tree}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+  local flavor_dir="/opt/nvidia/${tree}/flavors/${flavor}"
+  local extra_dir="${flavor_dir}/lib/modules/${KERNEL_RELEASE}/extra"
   local expected=("${NVIDIA_DRIVER_MODULES[@]}")
   local module_name
+
+  if [ "${flavor}" = "proprietary" ]; then
+    validate_nvidia_module_parts "${flavor_dir}"
+    return 0
+  fi
 
   # gdrdrv is only harvested on the open flavor, and only when the build enabled it.
   if [ "${flavor}" = "open" ] && [ "${ENABLE_NVIDIA_GDRCOPY_DRIVER}" = "true" ]; then
@@ -217,7 +238,7 @@ NVIDIA_KMOD_FLAVORS=(open proprietary grid)
 validate_nvidia_tree_version() {
   local tree=$1
   local tree_dir="/opt/nvidia/${tree}"
-  local driver_version flavor extra_dir modules module_version
+  local driver_version flavor extra_dir modules module_version parts_dir module_source
 
   driver_version=$(cat "${tree_dir}/.version")
 
@@ -227,17 +248,27 @@ validate_nvidia_tree_version() {
       continue
     fi
 
-    extra_dir="${tree_dir}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
-    # The suffix varies with the kernel's module compression.
-    modules=("${extra_dir}"/nvidia.ko*)
-    if [ ! -e "${modules[0]}" ]; then
-      echo "${extra_dir} has no nvidia.ko"
-      exit 1
+    if [ "${flavor}" == "proprietary" ]; then
+      # Unlinked, so the version is read from the module info its parts carry.
+      parts_dir="${tree_dir}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/objects"
+      module_source="${parts_dir}/nvidia.parts"
+      module_version=$(while read -r part; do
+        readelf -p .modinfo "${parts_dir}/${part}" 2> /dev/null | sed -n 's/^.*\] *version=//p'
+      done < "${module_source}" | sort -u)
+    else
+      extra_dir="${tree_dir}/flavors/${flavor}/lib/modules/${KERNEL_RELEASE}/extra"
+      # The suffix varies with the kernel's module compression.
+      modules=("${extra_dir}"/nvidia.ko*)
+      if [ ! -e "${modules[0]}" ]; then
+        echo "${extra_dir} has no nvidia.ko"
+        exit 1
+      fi
+      module_source="${modules[0]}"
+      module_version=$(modinfo -F version "${module_source}")
     fi
 
-    module_version=$(modinfo -F version "${modules[0]}")
     if [ "${module_version}" != "${driver_version}" ]; then
-      echo "${modules[0]} reports version ${module_version}, expected ${driver_version}"
+      echo "${module_source} reports version ${module_version}, expected ${driver_version}"
       exit 1
     fi
   done
