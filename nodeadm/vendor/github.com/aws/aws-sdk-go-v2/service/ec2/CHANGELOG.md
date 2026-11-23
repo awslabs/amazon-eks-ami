@@ -1,3 +1,88 @@
+# v1.350.0 (2026-11-20)
+
+* **Feature**: This release adds documentation for the T9g instance family to the EC2 ModifyDefaultCreditSpecification and GetDefaultCreditSpecification APIs, adds the disable-complete state for IPAM routing policy registrations, and adds Network Firewall automated Internet firewall API changes.
+
+# v1.349.0 (2026-11-17)
+
+* **Feature**: Adds multipath resilience for inter-Region VPC peering connections and Transit Gateway peering attachments. Adds support for quantum-resistant key exchanges to Site-to-Site VPN. Allows querying multiple instance types in a single DescribeCapacityBlockOfferings request.
+
+# v1.348.0 (2026-11-16)
+
+* **Feature**: Adds a new Transit Gateway Attachment type called Network Function. Launches associated KMS Keys for EBS Snapshots - associated KMS keys enable customers to share and copy snapshots encrypted with AWS Managed Keys across AWS accounts.
+
+# v1.347.0 (2026-11-13)
+
+* **Feature**: Adds support for Networking Flexible Cost Allocation APIs, enabling Network Admin, Architect, and Engineers to break down shared networking costs by the resources that generated the traffic.
+
+# v1.346.0 (2026-11-12)
+
+* **Feature**: This release adds support for multiple features, including EC2 Image Builder image recipes and container recipes in AMI usage reports, Amazon EC2 Detailed Monitoring adds opt-in metrics, and Global Accelerator and API Gateway V2 as resource exclusions for VPC Encryption Control.
+
+# v1.345.0 (2026-11-11)
+
+* **Feature**: Adds support for AWS Cloud WAN Flow Logs. The CreateFlowLogs API now accepts CoreNetwork, CoreNetworkEdge, and CoreNetworkAttachment resource types, enabling customers to capture information about IP traffic traversing their Cloud WAN core networks.
+
+# v1.344.3 (2026-11-10)
+
+* **Dependency Update**: Update to smithy-go v1.28.9.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.344.2 (2026-11-06)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.344.1 (2026-11-05)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.344.0 (2026-11-04)
+
+* **Feature**: Add the Unsupported SupportabilityScore to GetCapacityManagerSupportabilityScores.
+* **Dependency Update**: Update to smithy-go v1.28.8.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.343.0 (2026-10-28)
+
+* **Feature**: Amazon EC2 Capacity Manager adds supportability checks and capacity fulfillment metrics. Use GetCapacityManagerSupportabilityScores to score how well instance types and Availability Zones can support a capacity request, and GetCapacityManagerMetricData to retrieve fulfillment metrics.
+
+# v1.342.0 (2026-10-27)
+
+* **Feature**: EC2 AMIs can now show vulnerability data and be targeted directly for scanning.
+* **Dependency Update**: Update to smithy-go v1.28.7.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.341.0 (2026-10-22)
+
+* **Feature**: AWS Transit Gateway now provides managed one-to-one NAT directly on its attachments, through integration with Regional Private NAT Gateway. Use ModifyTransitGatewayAttachmentNatConfiguration to enable NAT and configure NAT rules, and GetTransitGatewayAttachmentNatConfiguration to view them.
+* **Bug Fix**: Update smithy-go to v1.28.6
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.340.0 (2026-10-21)
+
+* **Feature**: Adds new response fields to DescribeInstanceStatus and Network Insights analysis results.
+
+# v1.339.0 (2026-10-14)
+
+* **Feature**: Adds T8i instance sizes to the InstanceType enum. T8i instances are low-cost burstable instances powered by custom sixth generation Intel Xeon 6 processors, available exclusively on AWS, and built on the latest sixth generation AWS Nitro cards
+
+# v1.338.4 (2026-10-09.2)
+
+* **Dependency Update**: Update to smithy-go v1.28.5.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.338.3 (2026-10-08)
+
+* **Dependency Update**: Update to smithy-go v1.28.4.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.338.2 (2026-10-06)
+
+* No change notes available for this release.
+
+# v1.338.1 (2026-10-01)
+
+* **Documentation**: This release launches the AMI tag sharing feature, which lets AMI owners share tags alongside their AMIs, eliminating the need to build and maintain custom tag replication workflows.
+
 # v1.338.0 (2026-09-29)
 
 * **Feature**: Adds the LaunchStatus field to CapacityReservation in the DescribeCapacityReservations response. This field indicates whether you can currently launch instances into an UltraServer.

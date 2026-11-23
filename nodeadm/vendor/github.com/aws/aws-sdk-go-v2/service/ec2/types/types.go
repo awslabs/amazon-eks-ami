@@ -171,11 +171,17 @@ type AccountVpcEncryptionControl struct {
 // [Enforce VPC encryption in transit]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-encryption-controls.html
 type AccountVpcEncryptionControlExclusions struct {
 
+	// The exclusion configuration for Amazon API Gateway V2.
+	ApiGatewayV2 VpcEncryptionControlExclusionState
+
 	// The exclusion configuration for egress-only internet gateway resource.
 	EgressOnlyInternetGateway VpcEncryptionControlExclusionState
 
 	// The exclusion configuration for Elastic File System service.
 	ElasticFileSystem VpcEncryptionControlExclusionState
+
+	// The exclusion configuration for Amazon Web Services Global Accelerator.
+	GlobalAccelerator VpcEncryptionControlExclusionState
 
 	// The exclusion configuration for internet gateway resource.
 	InternetGateway VpcEncryptionControlExclusionState
@@ -218,12 +224,27 @@ type ActiveInstance struct {
 	noSmithyDocumentSerde
 }
 
+// Describes an additional key exchange round negotiated for an active VPN tunnel.
+type ActiveVpnTunnelAdditionalKeyExchange struct {
+
+	// The additional key exchange round number.
+	AdditionalKeyExchangeRound *int32
+
+	// The key exchange method number negotiated for this round.
+	KeyExchangeMethod *int32
+
+	noSmithyDocumentSerde
+}
+
 // Contains information about the current security configuration of an active VPN
 // tunnel.
 type ActiveVpnTunnelStatus struct {
 
 	// The version of the Internet Key Exchange (IKE) protocol being used.
 	IkeVersion *string
+
+	// The additional key exchanges negotiated in Phase 1 IKE negotiations.
+	Phase1AdditionalKeyExchanges []ActiveVpnTunnelAdditionalKeyExchange
 
 	// The Diffie-Hellman group number being used in Phase 1 IKE negotiations.
 	Phase1DHGroup *int32
@@ -233,6 +254,9 @@ type ActiveVpnTunnelStatus struct {
 
 	// The integrity algorithm negotiated in Phase 1 IKE negotiations.
 	Phase1IntegrityAlgorithm *string
+
+	// The additional key exchanges negotiated in Phase 2 IKE negotiations.
+	Phase2AdditionalKeyExchanges []ActiveVpnTunnelAdditionalKeyExchange
 
 	// The Diffie-Hellman group number being used in Phase 2 IKE negotiations.
 	Phase2DHGroup *int32
@@ -254,6 +278,9 @@ type ActiveVpnTunnelStatus struct {
 
 // Describes a principal.
 type AddedPrincipal struct {
+
+	// The type of permission granted to the principal.
+	PermissionType PermissionType
 
 	// The Amazon Resource Name (ARN) of the principal.
 	Principal *string
@@ -360,6 +387,26 @@ type AdditionalDetail struct {
 	noSmithyDocumentSerde
 }
 
+// The key exchange method number that is permitted for an additional key exchange
+// round.
+type AdditionalKeyExchangeMethodsListValue struct {
+
+	// The key exchange method number.
+	Value *int32
+
+	noSmithyDocumentSerde
+}
+
+// Specifies a key exchange method number that is permitted for an additional key
+// exchange round.
+type AdditionalKeyExchangeMethodsRequestListValue struct {
+
+	// The key exchange method number.
+	Value *int32
+
+	noSmithyDocumentSerde
+}
+
 // An entry for a prefix list.
 type AddPrefixListEntry struct {
 
@@ -422,8 +469,6 @@ type Address struct {
 	PublicIpv4Pool *string
 
 	// The service that manages the elastic IP address.
-	//
-	// The only option supported today is alb .
 	ServiceManaged ServiceManaged
 
 	// The ID of the subnet where the IP address is allocated.
@@ -485,6 +530,9 @@ type AddressTransfer struct {
 
 // Describes a principal.
 type AllowedPrincipal struct {
+
+	// The type of permission granted to the principal.
+	PermissionType PermissionType
 
 	// The Amazon Resource Name (ARN) of the principal.
 	Principal *string
@@ -694,6 +742,39 @@ type AnalysisSecurityGroupRule struct {
 
 	// The security group ID.
 	SecurityGroupId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an entry in a transit gateway policy table.
+type AnalysisTransitGatewayPolicyTableEntry struct {
+
+	// The destination CIDR block. If this value is not present, the entry matches any
+	// destination address.
+	DestinationCidr *string
+
+	// The destination port range. If this value is not present, the entry matches any
+	// destination port.
+	DestinationPortRange *PortRange
+
+	// The protocol number. A value of -1 means that the entry matches all protocols.
+	Protocol *string
+
+	// The rule number for the policy table entry. Entries are evaluated in ascending
+	// order of rule number.
+	RuleNumber *int32
+
+	// The source CIDR block. If this value is not present, the entry matches any
+	// source address.
+	SourceCidr *string
+
+	// The source port range. If this value is not present, the entry matches any
+	// source port.
+	SourcePortRange *PortRange
+
+	// The ID of the transit gateway route table to which the entry routes matching
+	// traffic.
+	TargetRouteTableId *string
 
 	noSmithyDocumentSerde
 }
@@ -997,6 +1078,18 @@ type AssignedPrivateIpAddress struct {
 
 	// The private IP address assigned to the network interface.
 	PrivateIpAddress *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an KMS key that is associated with an Amazon EBS snapshot, in
+// addition to the key the snapshot is encrypted under. An associated key provides
+// a second way to access the snapshot's data for cross-account sharing and
+// copying.
+type AssociatedKmsKey struct {
+
+	// The Amazon Resource Name (ARN) of the associated KMS key.
+	KmsKeyId *string
 
 	noSmithyDocumentSerde
 }
@@ -1896,6 +1989,16 @@ type CapacityBlockExtensionOffering struct {
 	noSmithyDocumentSerde
 }
 
+// Instance type preference for a Capacity Block search. Specifies one or more
+// instance types to evaluate when searching for available Capacity Blocks.
+type CapacityBlockInstanceTypePreference struct {
+
+	// The instance type to consider in the Capacity Block search.
+	InstanceType *string
+
+	noSmithyDocumentSerde
+}
+
 // The recommended Capacity Block that fits your search requirements.
 type CapacityBlockOffering struct {
 
@@ -1914,6 +2017,11 @@ type CapacityBlockOffering struct {
 
 	// The ID of the Capacity Block offering.
 	CapacityBlockOfferingId *string
+
+	// The individual segments that compose the Capacity Block offering. Each segment
+	// describes a distinct block of capacity with its own Availability Zone, instance
+	// type, schedule, and pricing.
+	CapacityBlockOfferingSegments []CapacityBlockOfferingSegment
 
 	// The currency of the payment for the Capacity Block.
 	CurrencyCode *string
@@ -1943,6 +2051,47 @@ type CapacityBlockOffering struct {
 	UpfrontFee *string
 
 	// The type of zone where the Capacity Block offering is available.
+	ZoneType *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an individual segment within a Capacity Block offering. Each segment
+// represents a distinct block of capacity with its own Availability Zone, instance
+// type, duration, pricing, and schedule.
+type CapacityBlockOfferingSegment struct {
+
+	// The Availability Zone of the Capacity Block offering segment.
+	AvailabilityZone *string
+
+	// The ID of the Availability Zone for the Capacity Block offering segment.
+	AvailabilityZoneId *string
+
+	// The number of hours for the duration of the Capacity Block offering segment.
+	CapacityBlockDurationHours *int32
+
+	// The number of minutes for the duration of the Capacity Block offering segment.
+	CapacityBlockDurationMinutes *int32
+
+	// The currency of the payment for the Capacity Block offering segment.
+	CurrencyCode *string
+
+	// The end date of the Capacity Block offering segment.
+	EndDate *time.Time
+
+	// The number of instances in the Capacity Block offering segment.
+	InstanceCount *int32
+
+	// The instance type of the Capacity Block offering segment.
+	InstanceType *string
+
+	// The start date of the Capacity Block offering segment.
+	StartDate *time.Time
+
+	// The total price to be paid up front for the Capacity Block offering segment.
+	UpfrontFee *string
+
+	// The type of zone where the Capacity Block offering segment is available.
 	ZoneType *string
 
 	noSmithyDocumentSerde
@@ -2145,6 +2294,26 @@ type CapacityManagerMonitoredTagKey struct {
 
 	//  The tag key being monitored.
 	TagKey *string
+
+	noSmithyDocumentSerde
+}
+
+//	The supportability score for a single instance type and Availability Zone
+//
+// combination.
+type CapacityManagerSupportabilityScore struct {
+
+	//  The ID of the Availability Zone.
+	AvailabilityZoneId *string
+
+	//  The instance type.
+	InstanceType *string
+
+	//  How well the combination can support the requested capacity right now. high
+	// means that the combination holds several times the requested amount. medium
+	// means that it can cover the request with little to spare. low means that it
+	// holds less than the requested amount.
+	Score SupportabilityScore
 
 	noSmithyDocumentSerde
 }
@@ -2534,6 +2703,12 @@ type CapacityReservationFleet struct {
 	// [Allocation strategy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/crfleet-concepts.html#allocation-strategy
 	AllocationStrategy *string
 
+	// Reserved for internal use.
+	AvailabilityZone *string
+
+	// Reserved for internal use.
+	AvailabilityZoneId *string
+
 	// The ARN of the Capacity Reservation Fleet.
 	CapacityReservationFleetArn *string
 
@@ -2556,6 +2731,9 @@ type CapacityReservationFleet struct {
 	// Instances do not need to explicitly target a Capacity Reservation Fleet to use
 	// its reserved capacity.
 	InstanceMatchCriteria FleetInstanceMatchCriteria
+
+	// Reserved for internal use.
+	InstanceRequirements *InstanceRequirementsRequest
 
 	// Information about the instance types for which to reserve the capacity.
 	InstanceTypeSpecifications []FleetCapacityReservation
@@ -4039,6 +4217,33 @@ type CreateFleetInstance struct {
 	noSmithyDocumentSerde
 }
 
+// The VPC peering connection options to apply to the requester VPC when you
+// create a VPC peering connection.
+type CreatePeeringConnectionOptionsRequest struct {
+
+	// Specifies whether you allow multipath resilience for the requester VPC.
+	// Multipath resilience is supported only for inter-Region VPC peering connections
+	// between supported Regions. It takes effect only when both the requester and the
+	// accepter allow it. Accepting the VPC peering connection request also allows
+	// multipath resilience for the accepter VPC. If you don't specify this parameter,
+	// the default is false .
+	AllowMultipathResilience *bool
+
+	// The multipath resilience mode. You can specify this parameter only if
+	// AllowMultipathResilience is true .
+	//
+	// The following value is valid:
+	//
+	//   - always-on – Replicates traffic across multiple network paths while multipath
+	//   resilience is in effect.
+	//
+	// If AllowMultipathResilience is true and you don't specify a mode, the default
+	// is always-on .
+	MultipathResilienceMode MultipathResilienceMode
+
+	noSmithyDocumentSerde
+}
+
 // The options for a Connect attachment.
 type CreateTransitGatewayConnectRequestOptions struct {
 
@@ -4072,8 +4277,27 @@ type CreateTransitGatewayMulticastDomainRequestOptions struct {
 // gateway peering request.
 type CreateTransitGatewayPeeringAttachmentRequestOptions struct {
 
+	// Specifies whether you allow multipath resilience for the requester side of the
+	// transit gateway peering attachment. Multipath resilience is supported only for
+	// inter-Region transit gateway peering attachments between supported Regions. It
+	// takes effect only when both the requester and the accepter allow it. If you
+	// don't specify this parameter, the default is false .
+	AllowMultipathResilience *bool
+
 	// Indicates whether dynamic routing is enabled or disabled.
 	DynamicRouting DynamicRoutingValue
+
+	// The multipath resilience mode. You can specify this parameter only if
+	// AllowMultipathResilience is true .
+	//
+	// The following value is valid:
+	//
+	//   - always-on – Replicates traffic across multiple network paths while multipath
+	//   resilience is in effect.
+	//
+	// If AllowMultipathResilience is true and you don't specify a mode, the default
+	// is always-on .
+	MultipathResilienceMode TransitGatewayPeeringAttachmentMultipathResilienceMode
 
 	noSmithyDocumentSerde
 }
@@ -6336,6 +6560,12 @@ type Explanation struct {
 	// The transit gateway attachment.
 	TransitGatewayAttachment *AnalysisComponent
 
+	// The transit gateway policy table.
+	TransitGatewayPolicyTable *AnalysisComponent
+
+	// The transit gateway policy table entry.
+	TransitGatewayPolicyTableEntry *AnalysisTransitGatewayPolicyTableEntry
+
 	// The transit gateway route table.
 	TransitGatewayRouteTable *AnalysisComponent
 
@@ -7580,6 +7810,232 @@ type FleetSpotMaintenanceStrategiesRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Maps a CIDR range to a label for cost allocation reporting.
+type FlexCostAllocationCidrMapping struct {
+
+	// The label to assign to the CIDR range. The label can be up to 64 characters
+	// long. It can contain letters, numbers, hyphens ( - ), and underscores ( _ ), and
+	// must start with a letter or a number. This parameter is required.
+	//
+	// This member is required.
+	CidrLabel *string
+
+	// The CIDR range. This parameter is required.
+	//
+	// This member is required.
+	CidrRange *string
+
+	noSmithyDocumentSerde
+}
+
+// Specifies the CIDR ranges and labels to use for cost allocation when the
+// reporting granularity is cidr .
+type FlexCostAllocationCidrRangeSpecifications struct {
+
+	// The CIDR range to label mappings. You can specify from 1 to 100 mappings. This
+	// parameter is required.
+	//
+	// This member is required.
+	Prefixes []FlexCostAllocationCidrMapping
+
+	// The type of prefixes to use. This parameter is required. Valid values are
+	// source-prefixes and destination-prefixes .
+	//
+	// This member is required.
+	PrefixesType *string
+
+	noSmithyDocumentSerde
+}
+
+// Specifies a scope of network resources for a scope-based policy association.
+type FlexCostAllocationNetworkResourceScope struct {
+
+	// The IDs of the resources owned by you that define the scope. You can specify
+	// from 1 to 20 IDs. This parameter is required.
+	//
+	// This member is required.
+	ResourceIds []string
+
+	// The type of scope. This parameter is required. Valid values are account , vpc ,
+	// and subnet .
+	//
+	// This member is required.
+	ResourceType FlexCostAllocationNetworkResourceScopeType
+
+	noSmithyDocumentSerde
+}
+
+// Describes a policy, association, or network resource that a Networking Flexible
+// Cost Allocation operation failed to process.
+type FlexCostAllocationOperationFailure struct {
+
+	// The code that identifies the type of failure. Possible values are:
+	//
+	//   - ResourceNotFound - ( DeleteNetworkingFlexCostAllocationPolicies ) The policy
+	//   doesn't exist or isn't owned by your account.
+	//
+	//   - InvalidResourceState - ( DeleteNetworkingFlexCostAllocationPolicies ) The
+	//   policy has active associations.
+	//
+	//   - InvalidResource - ( AssociateNetworkingFlexCostAllocationPolicy ) The
+	//   resource ID is malformed, the resource type doesn't match the policy, or the
+	//   scope is an account other than yours. (
+	//   DisassociateNetworkingFlexCostAllocationPolicy ) The association doesn't exist
+	//   or was already removed.
+	//
+	//   - ResourceAlreadyAssociated - ( AssociateNetworkingFlexCostAllocationPolicy )
+	//   The resource already has an active association.
+	//
+	//   - InternalError - An internal error occurred. Retry the request.
+	FailureCode *string
+
+	// The reason for the failure.
+	FailureReason *string
+
+	// The ID of the resource that could not be processed.
+	ResourceId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an association between a flex cost allocation policy and a network
+// resource.
+type FlexCostAllocationPolicyAssociationDescription struct {
+
+	// The date and time when the association was created.
+	AssociatedAt *time.Time
+
+	// The mode of the association. Valid values:
+	//
+	//   - direct - The policy is associated with specific resources by resource ID.
+	//
+	//   - scope - The policy is associated with a scope of resources in an account,
+	//   Amazon VPC, or subnet.
+	AssociationMode FlexCostAllocationAssociationMode
+
+	// The date and time when the association is expected to apply to network traffic.
+	ExpectedEffectiveAt *time.Time
+
+	// The ID of the policy association.
+	FcaPolicyAssociationId *string
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The entity that manages the association. Valid values are:
+	//
+	//   - account - The account that owns the association created it.
+	//
+	//   - declarative-policy - An Amazon Web Services Organizations declarative policy
+	//   created the association. You can't remove the association.
+	ManagedBy ManagedBy
+
+	// The ID of the associated network resource.
+	NetworkResourceId *string
+
+	// The ID of the account that owns the association.
+	OwnerAccount *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes a flex cost allocation policy.
+type FlexCostAllocationPolicyDescription struct {
+
+	// The description of the policy.
+	Description *string
+
+	// The Amazon Resource Name (ARN) of the policy.
+	FcaPolicyArn *string
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The policy document that defines cost allocation for EC2 instances.
+	InstanceFcaPolicyDocument *InstanceFlexCostAllocationPolicyDocument
+
+	// The number of the latest version of the policy.
+	LatestVersion *int32
+
+	// The entity that manages the policy. Valid values are:
+	//
+	//   - account - The account that owns the policy created it.
+	//
+	//   - declarative-policy - An Amazon Web Services Organizations declarative policy
+	//   created the policy. You can't modify or delete the policy.
+	ManagedBy ManagedBy
+
+	// The policy document that defines cost allocation for NAT gateways.
+	NatFcaPolicyDocument *NatFlexCostAllocationPolicyDocument
+
+	// The type of network resource that the policy applies to.
+	NetworkResourceType FlexCostAllocationNetworkResourceType
+
+	// The ID of the account that owns the policy.
+	OwnerAccount *string
+
+	// The policy document that defines cost allocation for Amazon VPC peering
+	// connections.
+	PcxFcaPolicyDocument *PcxFlexCostAllocationPolicyDocument
+
+	// The date and time when the policy was created.
+	PolicyCreatedAt *time.Time
+
+	// Indicates whether showback reporting is enabled for the policy.
+	ShowBackEnabled *bool
+
+	// The tags assigned to the policy.
+	Tags []Tag
+
+	// The date and time when the policy was last updated.
+	UpdatedAt *time.Time
+
+	// The date and time when the latest version of the policy is expected to apply to
+	// network traffic. The policy configuration in this response is from the latest
+	// version.
+	VersionExpectedEffectiveAt *time.Time
+
+	noSmithyDocumentSerde
+}
+
+// Describes a version of a flex cost allocation policy.
+type FlexCostAllocationPolicyVersion struct {
+
+	// The date and time when this version of the policy was created.
+	CreatedAt *time.Time
+
+	// The description of this version of the policy.
+	Description *string
+
+	// The date and time when this version of the policy is expected to apply to
+	// network traffic.
+	ExpectedEffectiveAt *time.Time
+
+	// The ID of the policy.
+	FcaPolicyId *string
+
+	// The policy document that defines cost allocation for EC2 instances.
+	InstanceFcaPolicyDocument *InstanceFlexCostAllocationPolicyDocument
+
+	// The policy document that defines cost allocation for NAT gateways.
+	NatFcaPolicyDocument *NatFlexCostAllocationPolicyDocument
+
+	// The type of network resource that the policy applies to.
+	NetworkResourceType FlexCostAllocationNetworkResourceType
+
+	// The policy document that defines cost allocation for Amazon VPC peering
+	// connections.
+	PcxFcaPolicyDocument *PcxFlexCostAllocationPolicyDocument
+
+	// Indicates whether showback reporting is enabled for this version of the policy.
+	ShowBackEnabled *bool
+
+	// The version number.
+	Version *int32
+
+	noSmithyDocumentSerde
+}
+
 // Describes a flow log.
 type FlowLog struct {
 
@@ -8307,6 +8763,21 @@ type IdFormat struct {
 	noSmithyDocumentSerde
 }
 
+// Describes the Automated Internet Firewall that inspects traffic for an internet
+// gateway or egress-only internet gateway route.
+type IgwFirewall struct {
+
+	// The ARN of the firewall that inspects traffic for this route.
+	FirewallArn *string
+
+	// The status of the firewall that inspects traffic for this route. Uses the same
+	// values as NetworkFirewallAssociation$firewallOnboardingStatus : active ,
+	// disabling , or pending .
+	Status FirewallOnboardingStatus
+
+	noSmithyDocumentSerde
+}
+
 // The internet key exchange (IKE) version permitted for the VPN tunnel.
 type IKEVersionsListValue struct {
 
@@ -8457,6 +8928,14 @@ type Image struct {
 	// or an instance store volume.
 	RootDeviceType DeviceType
 
+	// The Amazon Inspector scan results for the AMI. This information is present only
+	// for AMIs that Amazon Inspector has scanned.
+	//
+	// When you share an AMI with other accounts, organizations, or organizational
+	// units (OUs), or make it public, its scan results are available to the accounts
+	// that can use the AMI.
+	ScanResults *ScanResults
+
 	// The ID of the source AMI from which the AMI was created.
 	SourceImageId *string
 
@@ -8598,6 +9077,12 @@ type ImageCriterion struct {
 	// Maximum: 50 values
 	MarketplaceProductCodes []string
 
+	// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+	// The criteria can limit the highest finding severity, the number of days since
+	// Amazon Inspector last scanned the AMI, and the number of days since Amazon
+	// Inspector reported a fix as available.
+	ScanResultCondition *ScanResultCondition
+
 	noSmithyDocumentSerde
 }
 
@@ -8683,6 +9168,12 @@ type ImageCriterionRequest struct {
 	// Maximum: 50 values
 	MarketplaceProductCodes []string
 
+	// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+	// The criteria can limit the highest finding severity, the number of days since
+	// Amazon Inspector last scanned the AMI, and the number of days since Amazon
+	// Inspector reported a fix as available.
+	ScanResultCondition *ScanResultConditionRequest
+
 	noSmithyDocumentSerde
 }
 
@@ -8709,6 +9200,57 @@ type ImageDiskContainer struct {
 
 	// The S3 bucket for the disk image.
 	UserBucket *UserBucket
+
+	noSmithyDocumentSerde
+}
+
+// Describes an Amazon Inspector vulnerability finding for an AMI.
+type ImageFinding struct {
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), when Amazon Inspector first observed the finding.
+	FirstObservedAt *time.Time
+
+	// Specifies whether a fix is available for the finding. This value is true when
+	// Amazon Inspector reports a full or partial fix for the finding.
+	FixAvailable *bool
+
+	// The file paths in the AMI that are affected by the finding. Amazon EC2 returns
+	// up to 10 file paths for each finding.
+	Paths []string
+
+	// The Amazon Inspector score for the finding.
+	Score *float64
+
+	// The severity of the finding.
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	SeverityLabel SeverityLabel
+
+	// The ID of the Amazon EBS snapshot of the AMI in which the finding was detected.
+	SnapshotId *string
+
+	// The title of the finding.
+	Title *string
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), when Amazon Inspector last updated the finding.
+	UpdatedAt *time.Time
 
 	noSmithyDocumentSerde
 }
@@ -8855,7 +9397,8 @@ type ImageUsageReportEntry struct {
 	// The ID of the report.
 	ReportId *string
 
-	// The type of resource ( ec2:Instance or ec2:LaunchTemplate ).
+	// The type of resource ( ec2:Instance | ec2:LaunchTemplate |
+	// imagebuilder:ImageRecipe | imagebuilder:ContainerRecipe ).
 	ResourceType *string
 
 	// The number of times resources of this type reference this image in the account.
@@ -8870,7 +9413,8 @@ type ImageUsageResourceType struct {
 
 	// The resource type.
 	//
-	// Valid values: ec2:Instance | ec2:LaunchTemplate
+	// Valid values: ec2:Instance | ec2:LaunchTemplate | imagebuilder:ImageRecipe |
+	// imagebuilder:ContainerRecipe
 	ResourceType *string
 
 	// The options that affect the scope of the report. Valid only when ResourceType
@@ -8916,7 +9460,8 @@ type ImageUsageResourceTypeRequest struct {
 
 	// The resource type.
 	//
-	// Valid values: ec2:Instance | ec2:LaunchTemplate
+	// Valid values: ec2:Instance | ec2:LaunchTemplate | imagebuilder:ImageRecipe |
+	// imagebuilder:ContainerRecipe
 	ResourceType *string
 
 	// The options that affect the scope of the report. Valid only when ResourceType
@@ -9876,6 +10421,29 @@ type InstanceFamilyCreditSpecification struct {
 
 	// The instance family.
 	InstanceFamily UnlimitedSupportedInstanceFamily
+
+	noSmithyDocumentSerde
+}
+
+// Describes the cost allocation policy document for EC2 instances.
+type InstanceFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. The only valid value
+	// is data-transfer .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
 
 	noSmithyDocumentSerde
 }
@@ -11489,7 +12057,7 @@ type InstanceStateChange struct {
 }
 
 // Describes the status of an instance, including system status, instance status,
-// attached EBS status, and application status.
+// attached EBS status, application status, and performance status.
 type InstanceStatus struct {
 
 	// Reports the application-level health status for the instance.
@@ -11524,6 +12092,11 @@ type InstanceStatus struct {
 
 	// The Amazon Resource Name (ARN) of the Outpost.
 	OutpostArn *string
+
+	// Reports the performance-related health status for the instance. This
+	// information is returned only when performance status checks are enabled for the
+	// instance.
+	PerformanceStatus *PerformanceStatusSummary
 
 	// Reports impaired functionality that stems from issues related to the systems
 	// that support an instance, such as hardware failures and network connectivity
@@ -12448,7 +13021,7 @@ type IpamInternetRegistryAssociation struct {
 	// association.
 	OwnerId *string
 
-	// The Regional Internet Registry. Possible values:
+	// The internet registry. Possible values:
 	//
 	//   - ripe - RIPE NCC (Europe, the Middle East, and Central Asia).
 	//
@@ -12457,12 +13030,14 @@ type IpamInternetRegistryAssociation struct {
 	//   - arin - ARIN (North America).
 	//
 	//   - lacnic - LACNIC (Latin America and the Caribbean).
+	//
+	//   - nicbr - NIC.br (Brazil).
 	Rir Rir
 
-	// The state of the internet registry association. Valid values: pending-activation
-	// | pending-enable | create-in-progress | create-failed | enable-in-progress |
-	// enable-complete | enable-failed | delete-in-progress | delete-complete |
-	// delete-failed .
+	// The state of the internet registry association. Valid values: pending-enable |
+	// create-in-progress | create-failed | enable-in-progress | enable-complete |
+	// enable-failed | disable-in-progress | disable-complete | disable-failed |
+	// delete-in-progress | delete-complete | delete-failed .
 	State IpamInternetRegistryAssociationState
 
 	// A message describing the current state of the internet registry association,
@@ -12626,6 +13201,16 @@ type IpamPolicyDocument struct {
 	// through IPAM policies. Supported services and resource types include:
 	//
 	//   - Elastic IP addresses
+	//
+	//   - Application Load Balancers
+	//
+	//   - Amazon RDS
+	//
+	//   - NAT gateways in regional availability mode
+	//
+	//   - Lambda Network Connector
+	//
+	//   - Automated Internet Firewall
 	ResourceType IpamPolicyResourceType
 
 	noSmithyDocumentSerde
@@ -13803,7 +14388,7 @@ type IpamRoutingPolicyRegistration struct {
 
 	// The state of the routing policy registration. Valid values: pending-activate |
 	// activate-failed | create-in-progress | create-complete | update-in-progress |
-	// update-complete | delete-in-progress | delete-complete .
+	// update-complete | delete-in-progress | delete-complete | disable-complete .
 	State IpamRoutingPolicyRegistrationState
 
 	noSmithyDocumentSerde
@@ -15440,6 +16025,9 @@ type LaunchTemplatesMonitoring struct {
 	// is enabled.
 	Enabled *bool
 
+	// The IDs of the metric categories to associate with the instance.
+	MetricCategoryIds []string
+
 	noSmithyDocumentSerde
 }
 
@@ -15449,6 +16037,10 @@ type LaunchTemplatesMonitoringRequest struct {
 	// Specify true to enable detailed monitoring. Otherwise, basic monitoring is
 	// enabled.
 	Enabled *bool
+
+	// The IDs of the metric categories to associate with the instance. To specify
+	// metric categories, you must also enable detailed monitoring.
+	MetricCategoryIds []string
 
 	noSmithyDocumentSerde
 }
@@ -16269,6 +16861,22 @@ type MemoryMiBRequest struct {
 	noSmithyDocumentSerde
 }
 
+// Describes a metric category. A metric category is a set of additional metrics
+// that you can associate with an instance that has detailed monitoring enabled.
+type MetricCategory struct {
+
+	// The ID of the metric category.
+	MetricCategoryId *string
+
+	// The names of the metrics in the metric category.
+	Metrics []string
+
+	// Any tags assigned to the metric category.
+	Tags []Tag
+
+	noSmithyDocumentSerde
+}
+
 //	Contains a single data point from a capacity metrics query, including the
 //
 // dimension values, timestamp, and metric values for that specific combination.
@@ -16447,6 +17055,32 @@ type ModifyTransitGatewayOptions struct {
 
 	// Enable or disable Equal Cost Multipath Protocol support.
 	VpnEcmpSupport VpnEcmpSupportValue
+
+	noSmithyDocumentSerde
+}
+
+// Contains the options to modify for a transit gateway peering attachment,
+// including multipath resilience settings.
+type ModifyTransitGatewayPeeringAttachmentRequestOptions struct {
+
+	// Specifies whether you allow multipath resilience for your side of the transit
+	// gateway peering attachment. Multipath resilience is supported only for
+	// inter-Region transit gateway peering attachments between supported Regions. It
+	// takes effect only when both the requester and the accepter allow it. If you
+	// don't specify this parameter, the current setting doesn't change.
+	AllowMultipathResilience *bool
+
+	// The multipath resilience mode. You can specify this parameter only if
+	// AllowMultipathResilience is true .
+	//
+	// The following value is valid:
+	//
+	//   - always-on – Replicates traffic across multiple network paths while multipath
+	//   resilience is in effect.
+	//
+	// If AllowMultipathResilience is true and you don't specify a mode, the default
+	// is always-on .
+	MultipathResilienceMode TransitGatewayPeeringAttachmentMultipathResilienceMode
 
 	noSmithyDocumentSerde
 }
@@ -16655,10 +17289,18 @@ type ModifyVpnTunnelOptionsSpecification struct {
 	// Options for logging VPN tunnel activity.
 	LogOptions *VpnTunnelLogOptionsSpecification
 
+	// One or more additional key exchange rounds that are permitted for the VPN
+	// tunnel for phase 1 IKE negotiations. Additional key exchanges occur after the
+	// initial Diffie-Hellman exchange. Each round must have a unique round number.
+	//
+	// Additional key exchanges are supported only with IKEv2. You can't specify a
+	// required round if IKEVersions contains only ikev1 .
+	Phase1AdditionalKeyExchanges []VpnAdditionalKeyExchangeRequest
+
 	// One or more Diffie-Hellman group numbers that are permitted for the VPN tunnel
 	// for phase 1 IKE negotiations.
 	//
-	// Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24
+	// Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 35
 	Phase1DHGroupNumbers []Phase1DHGroupNumbersRequestListValue
 
 	// One or more encryption algorithms that are permitted for the VPN tunnel for
@@ -16680,10 +17322,19 @@ type ModifyVpnTunnelOptionsSpecification struct {
 	// Default: 28800
 	Phase1LifetimeSeconds *int32
 
+	// One or more additional key exchange rounds that are permitted for the VPN
+	// tunnel for phase 2 IKE negotiations. Additional key exchanges occur after the
+	// initial Diffie-Hellman exchange. Each round must have a unique round number.
+	//
+	// Additional key exchanges are supported only with IKEv2. You can't specify a
+	// required round if IKEVersions contains only ikev1 .
+	Phase2AdditionalKeyExchanges []VpnAdditionalKeyExchangeRequest
+
 	// One or more Diffie-Hellman group numbers that are permitted for the VPN tunnel
 	// for phase 2 IKE negotiations.
 	//
-	// Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24
+	// Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 35
+	// | 36 | 37
 	Phase2DHGroupNumbers []Phase2DHGroupNumbersRequestListValue
 
 	// One or more encryption algorithms that are permitted for the VPN tunnel for
@@ -16783,6 +17434,9 @@ type ModifyVpnTunnelOptionsSpecification struct {
 // Describes the monitoring of an instance.
 type Monitoring struct {
 
+	// The IDs of the metric categories that are associated with the instance.
+	MetricCategoryIds []string
+
 	// Indicates whether detailed monitoring is enabled. Otherwise, basic monitoring
 	// is enabled.
 	State MonitoringState
@@ -16800,6 +17454,29 @@ type MovingAddressStatus struct {
 
 	// The Elastic IP address.
 	PublicIp *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes the cost allocation policy document for NAT gateways.
+type NatFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. Valid values are
+	// data-transfer and data-processing .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
 
 	noSmithyDocumentSerde
 }
@@ -17190,6 +17867,34 @@ type NetworkCardInfo struct {
 
 	// The peak (burst) network performance of the network card, in Gbps.
 	PeakBandwidthInGbps *float64
+
+	noSmithyDocumentSerde
+}
+
+// Describes an Automated Internet Firewall that inspects traffic between a VPC
+// and its internet gateway or egress-only internet gateway.
+type NetworkFirewallAssociation struct {
+
+	// The Amazon Resource Name (ARN) of the firewall.
+	FirewallArn *string
+
+	// The mode of the firewall. Possible values:
+	//
+	//   - enforce : The firewall applies its policy to traffic.
+	//
+	//   - monitor : The firewall logs traffic that its policy would act on, but
+	//   doesn't block it.
+	FirewallMode FirewallMode
+
+	// The status of the firewall for the VPC. Possible values:
+	//
+	//   - active : The firewall inspects traffic for the VPC.
+	//
+	//   - disabling : AWS is removing the firewall from the VPC.
+	//
+	//   - pending : AWS is setting up the firewall for the VPC. The firewall might not
+	//   inspect traffic yet.
+	FirewallOnboardingStatus FirewallOnboardingStatus
 
 	noSmithyDocumentSerde
 }
@@ -18143,6 +18848,9 @@ type PathComponent struct {
 	// The transit gateway.
 	TransitGateway *AnalysisComponent
 
+	// The entry in a transit gateway policy table.
+	TransitGatewayPolicyTableEntry *AnalysisTransitGatewayPolicyTableEntry
+
 	// The route in a transit gateway route table.
 	TransitGatewayRouteTableRoute *TransitGatewayRouteTableRoute
 
@@ -18244,6 +18952,30 @@ type PciId struct {
 	noSmithyDocumentSerde
 }
 
+// Describes the cost allocation policy document for Amazon VPC peering
+// connections.
+type PcxFlexCostAllocationPolicyDocument struct {
+
+	// The cost dimensions to report. This parameter is required. The only valid value
+	// is data-transfer .
+	//
+	// This member is required.
+	Dimensions []FlexCostAllocationCostDimension
+
+	// The resource granularity level at which networking costs are allocated. This
+	// parameter is required. Specify exactly one value. Valid values are eni , ec2 ,
+	// subnet , vpc , account , peering-id , and cidr .
+	//
+	// This member is required.
+	ReportingGranularity []FlexCostAllocationReportingGranularity
+
+	// The CIDR range mappings to use for cost allocation. Specify this value when
+	// ReportingGranularity is cidr , and omit it otherwise.
+	CidrRangeSpecifications *FlexCostAllocationCidrRangeSpecifications
+
+	noSmithyDocumentSerde
+}
+
 // The status of the transit gateway peering attachment.
 type PeeringAttachmentStatus struct {
 
@@ -18269,6 +19001,14 @@ type PeeringConnectionOptions struct {
 	// Deprecated.
 	AllowEgressFromLocalVpcToRemoteClassicLink *bool
 
+	// Indicates whether this side of the VPC peering connection allows multipath
+	// resilience.
+	AllowMultipathResilience *bool
+
+	// The multipath resilience mode for this side of the VPC peering connection. This
+	// value is present only when this side allows multipath resilience.
+	MultipathResilienceMode MultipathResilienceMode
+
 	noSmithyDocumentSerde
 }
 
@@ -18284,6 +19024,25 @@ type PeeringConnectionOptionsRequest struct {
 
 	// Deprecated.
 	AllowEgressFromLocalVpcToRemoteClassicLink *bool
+
+	// Specifies whether you allow multipath resilience for this side of the VPC
+	// peering connection. Multipath resilience is supported only for inter-Region VPC
+	// peering connections between supported Regions. It takes effect only when both
+	// the requester and the accepter allow it. If you don't specify this parameter,
+	// the current setting doesn't change.
+	AllowMultipathResilience *bool
+
+	// The multipath resilience mode. You can specify this parameter only if
+	// AllowMultipathResilience is true .
+	//
+	// The following value is valid:
+	//
+	//   - always-on – Replicates traffic across multiple network paths while multipath
+	//   resilience is in effect.
+	//
+	// If AllowMultipathResilience is true and you don't specify a mode, the default
+	// is always-on .
+	MultipathResilienceMode MultipathResilienceMode
 
 	noSmithyDocumentSerde
 }
@@ -18408,6 +19167,22 @@ type PerformanceFactorReferenceRequest struct {
 	// [RequestSpotFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_RequestSpotFleet
 	// [ModifyFleet]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyFleet
 	InstanceFamily *string
+
+	noSmithyDocumentSerde
+}
+
+// Provides a summary of the performance status check results for an instance.
+type PerformanceStatusSummary struct {
+
+	// The date and time when the performance status became impaired.
+	ImpairedSince *time.Time
+
+	// The recommended action to remediate the impaired instance, if one is available.
+	// This value is returned only when the instance is impaired.
+	Remediation *string
+
+	// The current status.
+	Status SummaryStatus
 
 	noSmithyDocumentSerde
 }
@@ -20520,6 +21295,12 @@ type Route struct {
 	// The ID of a gateway attached to your VPC.
 	GatewayId *string
 
+	// Information about the Automated Internet Firewall that inspects traffic for
+	// this route. The response includes this value only for routes that target an
+	// internet gateway or egress-only internet gateway in a VPC that has a firewall.
+	// The route target remains the internet gateway or egress-only internet gateway.
+	IgwFirewall *IgwFirewall
+
 	// The ID of a NAT instance in your VPC.
 	InstanceId *string
 
@@ -21018,6 +21799,10 @@ type RunInstancesMonitoringEnabled struct {
 	// This member is required.
 	Enabled *bool
 
+	// The IDs of the metric categories to associate with the instance. To specify
+	// metric categories, you must also enable detailed monitoring.
+	MetricCategoryIds []string
+
 	noSmithyDocumentSerde
 }
 
@@ -21068,6 +21853,284 @@ type S3Storage struct {
 
 	// The signature of the JSON document.
 	UploadPolicySignature *string
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+// The criteria can limit the highest finding severity. They can also limit, for
+// each severity, the days since Amazon Inspector reported a fix as available.
+//
+// The severity limit applies to all findings, whether or not a fix is available.
+// The day limits for each severity apply only to findings that have a fix
+// available. A scanned AMI that has no fix-available finding of a given severity
+// meets that severity's day limit. AMIs that Amazon Inspector has not scanned are
+// not allowed when you specify this condition.
+type ScanResultCondition struct {
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a critical severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no critical severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceCriticalFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a high severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no high severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceHighFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for an informational severity finding on the AMI. For example, a value of 7
+	// does not allow an AMI if Amazon Inspector reported such a fix more than 7 days
+	// ago.
+	//
+	// A scanned AMI that has no informational severity finding with a fix available
+	// meets this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceInformationalFixAvailable *int32
+
+	// The maximum number of days that have elapsed since Amazon Inspector last
+	// scanned the AMI. For example, a value of 7 allows AMIs that were scanned within
+	// the last 7 days. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLastFindingScan *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a low severity finding on the AMI. For example, a value of 7 does not allow
+	// an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no low severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLowFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a medium severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no medium severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceMediumFixAvailable *int32
+
+	// The maximum severity that an AMI's Amazon Inspector findings can have for the
+	// AMI to be allowed. Findings count whether or not a fix is available. For
+	// example, a value of medium allows AMIs whose highest severity is informational ,
+	// low , or medium .
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// A scanned AMI that has no findings meets this limit.
+	//
+	// AMIs that Amazon Inspector has not scanned are not allowed when you specify
+	// this condition.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	MaximumSeverityLabel SeverityLabel
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan-result criteria that an AMI must meet to be allowed.
+// The criteria can limit the highest finding severity. They can also limit, for
+// each severity, the days since Amazon Inspector reported a fix as available.
+//
+// The severity limit applies to all findings, whether or not a fix is available.
+// The day limits for each severity apply only to findings that have a fix
+// available. A scanned AMI that has no fix-available finding of a given severity
+// meets that severity's day limit. AMIs that Amazon Inspector has not scanned are
+// not allowed when you specify this condition.
+type ScanResultConditionRequest struct {
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a critical severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no critical severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceCriticalFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a high severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no high severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceHighFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for an informational severity finding on the AMI. For example, a value of 7
+	// does not allow an AMI if Amazon Inspector reported such a fix more than 7 days
+	// ago.
+	//
+	// A scanned AMI that has no informational severity finding with a fix available
+	// meets this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceInformationalFixAvailable *int32
+
+	// The maximum number of days that have elapsed since Amazon Inspector last
+	// scanned the AMI. For example, a value of 7 allows AMIs that were scanned within
+	// the last 7 days. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLastFindingScan *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a low severity finding on the AMI. For example, a value of 7 does not allow
+	// an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no low severity finding with a fix available meets this
+	// limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceLowFixAvailable *int32
+
+	// The maximum number of days since Amazon Inspector reported a fix as available
+	// for a medium severity finding on the AMI. For example, a value of 7 does not
+	// allow an AMI if Amazon Inspector reported such a fix more than 7 days ago.
+	//
+	// A scanned AMI that has no medium severity finding with a fix available meets
+	// this limit. AMIs that Amazon Inspector has not scanned are not allowed.
+	//
+	// Constraints: Minimum value of 0. Maximum value of 2147483647.
+	MaxDaysSinceMediumFixAvailable *int32
+
+	// The maximum severity that an AMI's Amazon Inspector findings can have for the
+	// AMI to be allowed. Findings count whether or not a fix is available. For
+	// example, a value of medium allows AMIs whose highest severity is informational ,
+	// low , or medium .
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// A scanned AMI that has no findings meets this limit.
+	//
+	// AMIs that Amazon Inspector has not scanned are not allowed when you specify
+	// this condition.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	MaximumSeverityLabel SeverityLabel
+
+	noSmithyDocumentSerde
+}
+
+// The Amazon Inspector scan results for an AMI. This information is present only
+// for AMIs that Amazon Inspector has scanned.
+//
+// When you share an AMI with other accounts, organizations, or organizational
+// units (OUs), or make it public, its scan results are available to the accounts
+// that can use the AMI.
+//
+// The fix-available dates are specific to the AMI. Each date reflects when a fix
+// became available for a finding on that AMI, not when the vendor released the
+// fix. As a result, a date can be later than the vendor's release date, and AMIs
+// with the same vulnerability can have different dates.
+type ScanResults struct {
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a critical severity finding on the AMI. This value is present
+	// only if the AMI has at least one critical severity finding with a fix
+	// available. Amazon Inspector recomputes this value on each scan.
+	CriticalFixAvailableSince *time.Time
+
+	// The date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), of the most recent Amazon Inspector scan of the AMI.
+	FindingScanDate *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a high severity finding on the AMI. This value is present only if
+	// the AMI has at least one high severity finding with a fix available. Amazon
+	// Inspector recomputes this value on each scan.
+	HighFixAvailableSince *time.Time
+
+	// The highest severity among the AMI's Amazon Inspector findings, whether or not
+	// a fix is available.
+	//
+	// The valid values are the following Amazon Inspector severity levels, which
+	// correspond to CVSS score ranges:
+	//
+	//   - informational - CVSS score of 0.
+	//
+	//   - low - CVSS score of 0.1 to 3.9.
+	//
+	//   - medium - CVSS score of 4.0 to 6.9.
+	//
+	//   - high - CVSS score of 7.0 to 8.9.
+	//
+	//   - critical - CVSS score of 9.0 to 10.0.
+	//
+	// For more information, see [Software package vulnerability severity] in the Amazon Inspector User Guide.
+	//
+	// This value is present only if the AMI has at least one finding.
+	//
+	// [Software package vulnerability severity]: https://docs.aws.amazon.com/inspector/latest/user/findings-understanding-severity.html#findings-understanding-package-score
+	HighestFindingSeverityLabel SeverityLabel
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for an informational severity finding on the AMI. This value is
+	// present only if the AMI has at least one informational severity finding with a
+	// fix available. Amazon Inspector recomputes this value on each scan.
+	InformationalFixAvailableSince *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a low severity finding on the AMI. This value is present only if
+	// the AMI has at least one low severity finding with a fix available. Amazon
+	// Inspector recomputes this value on each scan.
+	LowFixAvailableSince *time.Time
+
+	// The earliest date and time, in the ISO 8601 format in the UTC time zone
+	// (YYYY-MM-DDThh:mm:ss.sssZ), at which Amazon Inspector reported a fix as
+	// available for a medium severity finding on the AMI. This value is present only
+	// if the AMI has at least one medium severity finding with a fix available.
+	// Amazon Inspector recomputes this value on each scan.
+	MediumFixAvailableSince *time.Time
 
 	noSmithyDocumentSerde
 }
@@ -22163,6 +23226,9 @@ type SlotStartTimeRangeRequest struct {
 
 // Describes a snapshot.
 type Snapshot struct {
+
+	// The additional KMS keys that are associated with the snapshot.
+	AssociatedKmsKeys []AssociatedKmsKey
 
 	// The Availability Zone or Local Zone of the snapshot. For example, us-west-1a
 	// (Availability Zone) or us-west-2-lax-1a (Local Zone).
@@ -23684,6 +24750,35 @@ type Subnet struct {
 	// [Amazon VPC pricing page]: http://aws.amazon.com/vpc/pricing/
 	MapPublicIpOnLaunch *bool
 
+	// The internet connectivity treatment that the Automated Internet Firewall
+	// applies to the subnet. The response includes this value only if the subnet is in
+	// a VPC that has a firewall. Possible values:
+	//
+	//   - az-unsupported : The firewall doesn't support the subnet's Availability
+	//   Zone, so it doesn't inspect traffic for the subnet.
+	//
+	//   - bidirectional : Provides bidirectional internet connectivity to every
+	//   network interface that has a public IP association. Any network interface
+	//   without a public IP cannot communicate with the internet unless a NAT device is
+	//   explicitly inserted in the path. All inbound and outbound traffic is inspected
+	//   against your firewall rules.
+	//
+	//   - exclude : The firewall doesn't inspect traffic for the subnet. The subnet
+	//   bypasses the firewall, and its traffic passes directly through the internet
+	//   gateway.
+	//
+	//   - flexible : Sets the connectivity for each network interface in the subnet
+	//   based on whether it is associated with a public IP address. A network interface
+	//   with a public IP address gets bidirectional internet connectivity. A network
+	//   interface without a public IP address gets outbound-only connectivity. All
+	//   traffic is inspected against your firewall rules.
+	//
+	//   - outbound-only : Provides egress-only connectivity for all network interfaces
+	//   in the subnet. All outbound traffic and inbound responses are inspected against
+	//   your firewall rules. Unsolicited inbound connections are dropped. For IPv4
+	//   traffic, the firewall performs NAT.
+	NetworkFirewallConnectivityType NetworkFirewallConnectivityType
+
 	// The Amazon Resource Name (ARN) of the Outpost.
 	OutpostArn *string
 
@@ -24476,6 +25571,10 @@ type TransitGatewayAttachment struct {
 	// The creation time.
 	CreationTime *time.Time
 
+	// The state of NAT gateway support for the attachment. Only the owner of the
+	// transit gateway receives this parameter.
+	NatGatewaySupport TransitGatewayAttachmentNatGatewaySupportState
+
 	// The ID of the resource.
 	ResourceId *string
 
@@ -24984,6 +26083,95 @@ type TransitGatewayMulticastRegisteredGroupSources struct {
 	noSmithyDocumentSerde
 }
 
+// Contains information about a NAT gateway rule for a transit gateway attachment,
+// including the rule number, the source CIDR block, the translated CIDR block, and
+// the state of the rule.
+type TransitGatewayNatRule struct {
+
+	// The IPv4 CIDR block of the source addresses to translate.
+	MatchSourceCidr *string
+
+	// The IPv4 CIDR block that the transit gateway translates the source addresses to.
+	NatCidr *string
+
+	// The rule number.
+	RuleNumber *int32
+
+	// The state of the NAT gateway rule. The possible values are:
+	//
+	//   - pending - The transit gateway is applying a change to the rule.
+	//
+	//   - activated - The rule is in effect because NAT gateway support is enabled for
+	//   the attachment.
+	//
+	//   - deactivated - The rule isn't in effect because NAT gateway support is
+	//   disabled for the attachment.
+	State TransitGatewayNatRuleState
+
+	noSmithyDocumentSerde
+}
+
+// Describes a NAT gateway rule to apply to a transit gateway attachment. A NAT
+// gateway rule translates source addresses in the MatchSourceCidr range to the
+// corresponding addresses in the NatCidr range.
+type TransitGatewayNatRuleRequest struct {
+
+	// The IPv4 CIDR block of the source addresses to translate. The CIDR block can't
+	// overlap the multicast range ( 224.0.0.0/4 ) or the link-local range (
+	// 169.254.0.0/16 ).
+	MatchSourceCidr *string
+
+	// The IPv4 CIDR block to translate the source addresses to. The CIDR block must
+	// be in a private (RFC 1918) or shared address space (RFC 6598) range, and must
+	// have the same prefix length as MatchSourceCidr . The CIDR blocks in the rules
+	// for an attachment can't overlap each other.
+	NatCidr *string
+
+	// The rule number. Valid values are 1 to 32766. Each rule number must be unique
+	// within the request.
+	RuleNumber *int32
+
+	noSmithyDocumentSerde
+}
+
+// Contains information about a transit gateway network function attachment,
+// including the attachment ID, the transit gateway, the endpoint service, the
+// Availability Zones, and the state of the attachment.
+type TransitGatewayNetworkFunctionAttachment struct {
+
+	// The IDs of the Availability Zones for the attachment.
+	AvailabilityZoneIds []string
+
+	// The names of the Availability Zones for the attachment.
+	AvailabilityZones []string
+
+	// The date and time the attachment was created.
+	CreationTime *time.Time
+
+	// The name of the Gateway Load Balancer endpoint service.
+	ResourceId *string
+
+	// The ID of the Amazon Web Services account that owns the attachment.
+	ResourceOwnerId *string
+
+	// The state of the attachment.
+	State TransitGatewayAttachmentState
+
+	// The tags for the attachment.
+	Tags []Tag
+
+	// The ID of the attachment.
+	TransitGatewayAttachmentId *string
+
+	// The ID of the transit gateway.
+	TransitGatewayId *string
+
+	// The ID of the Amazon Web Services account that owns the transit gateway.
+	TransitGatewayOwnerId *string
+
+	noSmithyDocumentSerde
+}
+
 // Describes the options for a transit gateway.
 type TransitGatewayOptions struct {
 
@@ -25075,9 +26263,37 @@ type TransitGatewayPeeringAttachment struct {
 // Describes dynamic routing for the transit gateway peering attachment.
 type TransitGatewayPeeringAttachmentOptions struct {
 
+	// Indicates whether the accepter allows multipath resilience for the transit
+	// gateway peering attachment.
+	AccepterAllowMultipathResilience *bool
+
+	// The multipath resilience mode for the accepter. This value is present only when
+	// the accepter allows multipath resilience.
+	AccepterMultipathResilienceMode TransitGatewayPeeringAttachmentMultipathResilienceMode
+
 	// Describes whether dynamic routing is enabled or disabled for the transit
 	// gateway peering attachment.
 	DynamicRouting DynamicRoutingValue
+
+	// The multipath resilience status of the transit gateway peering attachment. The
+	// possible values are:
+	//
+	//   - enabled – Both the requester and the accepter allow multipath resilience.
+	//
+	//   - pending – Either the requester or the accepter allows multipath resilience,
+	//   but not both.
+	//
+	//   - disabled – Neither the requester nor the accepter allows multipath
+	//   resilience.
+	MultipathResilienceStatus TransitGatewayPeeringAttachmentMultipathResilienceStatus
+
+	// Indicates whether the requester allows multipath resilience for the transit
+	// gateway peering attachment.
+	RequesterAllowMultipathResilience *bool
+
+	// The multipath resilience mode for the requester. This value is present only
+	// when the requester allows multipath resilience.
+	RequesterMultipathResilienceMode TransitGatewayPeeringAttachmentMultipathResilienceMode
 
 	noSmithyDocumentSerde
 }
@@ -25616,6 +26832,10 @@ type TunnelOption struct {
 	// The external IP address of the VPN tunnel.
 	OutsideIpAddress *string
 
+	// The permitted additional key exchange rounds for the VPN tunnel for phase 1 IKE
+	// negotiations.
+	Phase1AdditionalKeyExchanges []VpnAdditionalKeyExchange
+
 	// The permitted Diffie-Hellman group numbers for the VPN tunnel for phase 1 IKE
 	// negotiations.
 	Phase1DHGroupNumbers []Phase1DHGroupNumbersListValue
@@ -25630,6 +26850,10 @@ type TunnelOption struct {
 
 	// The lifetime for phase 1 of the IKE negotiation, in seconds.
 	Phase1LifetimeSeconds *int32
+
+	// The permitted additional key exchange rounds for the VPN tunnel for phase 2 IKE
+	// negotiations.
+	Phase2AdditionalKeyExchanges []VpnAdditionalKeyExchange
 
 	// The permitted Diffie-Hellman group numbers for the VPN tunnel for phase 2 IKE
 	// negotiations.
@@ -26967,6 +28191,12 @@ type Vpc struct {
 	// Indicates whether the VPC is the default VPC.
 	IsDefault *bool
 
+	// Information about the firewall associations for the VPC. Automated Internet
+	// Firewall, a feature of Amazon Virtual Private Cloud (Amazon VPC), inspects
+	// traffic between the VPC and its internet gateway or egress-only internet
+	// gateway. This list is empty if the VPC doesn't have a firewall.
+	NetworkFirewallAssociations []NetworkFirewallAssociation
+
 	// The ID of the Amazon Web Services account that owns the VPC.
 	OwnerId *string
 
@@ -27187,6 +28417,10 @@ type VpcEncryptionControlConfiguration struct {
 	// This member is required.
 	Mode VpcEncryptionControlMode
 
+	// Specifies whether to exclude Amazon API Gateway V2 traffic from encryption
+	// enforcement.
+	ApiGatewayV2Exclusion VpcEncryptionControlExclusionStateInput
+
 	// Specifies whether to exclude egress-only internet gateway traffic from
 	// encryption enforcement.
 	EgressOnlyInternetGatewayExclusion VpcEncryptionControlExclusionStateInput
@@ -27194,6 +28428,10 @@ type VpcEncryptionControlConfiguration struct {
 	// Specifies whether to exclude Elastic File System traffic from encryption
 	// enforcement.
 	ElasticFileSystemExclusion VpcEncryptionControlExclusionStateInput
+
+	// Specifies whether to exclude Amazon Web Services Global Accelerator traffic
+	// from encryption enforcement.
+	GlobalAcceleratorExclusion VpcEncryptionControlExclusionStateInput
 
 	// Specifies whether to exclude internet gateway traffic from encryption
 	// enforcement.
@@ -27244,11 +28482,17 @@ type VpcEncryptionControlExclusion struct {
 // [Enforce VPC encryption in transit]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-encryption-controls.html
 type VpcEncryptionControlExclusions struct {
 
+	// The exclusion configuration for Amazon API Gateway V2 traffic.
+	ApiGatewayV2 *VpcEncryptionControlExclusion
+
 	// The exclusion configuration for egress-only internet gateway traffic.
 	EgressOnlyInternetGateway *VpcEncryptionControlExclusion
 
 	// The exclusion configuration for Elastic File System traffic.
 	ElasticFileSystem *VpcEncryptionControlExclusion
+
+	// The exclusion configuration for Amazon Web Services Global Accelerator traffic.
+	GlobalAccelerator *VpcEncryptionControlExclusion
 
 	// The exclusion configuration for internet gateway traffic.
 	InternetGateway *VpcEncryptionControlExclusion
@@ -27458,6 +28702,14 @@ type VpcEndpointConnection struct {
 	// The tags.
 	Tags []Tag
 
+	// The ID of the transit gateway attachment, if the connection is for a transit
+	// gateway attachment.
+	TransitGatewayAttachmentId *string
+
+	// The ID of the Amazon Web Services account that owns the transit gateway
+	// attachment, if the connection is for a transit gateway attachment.
+	TransitGatewayAttachmentOwner *string
+
 	// The ID of the VPC endpoint connection.
 	VpcEndpointConnectionId *string
 
@@ -27519,6 +28771,18 @@ type VpcPeeringConnection struct {
 	// The time that an unaccepted VPC peering connection will expire.
 	ExpirationTime *time.Time
 
+	// The multipath resilience status of the VPC peering connection. The possible
+	// values are:
+	//
+	//   - enabled – Both the requester and the accepter allow multipath resilience.
+	//
+	//   - pending – Either the requester or the accepter allows multipath resilience,
+	//   but not both.
+	//
+	//   - disabled – Neither the requester nor the accepter allows multipath
+	//   resilience.
+	MultipathResilienceStatus MultipathResilienceStatus
+
 	// Information about the requester VPC. CIDR block information is only returned
 	// when describing an active VPC peering connection.
 	RequesterVpcInfo *VpcPeeringConnectionVpcInfo
@@ -27547,6 +28811,14 @@ type VpcPeeringConnectionOptionsDescription struct {
 
 	// Deprecated.
 	AllowEgressFromLocalVpcToRemoteClassicLink *bool
+
+	// Indicates whether this side of the VPC peering connection allows multipath
+	// resilience.
+	AllowMultipathResilience *bool
+
+	// The multipath resilience mode for this side of the VPC peering connection. This
+	// value is present only when this side allows multipath resilience.
+	MultipathResilienceMode MultipathResilienceMode
 
 	noSmithyDocumentSerde
 }
@@ -27587,6 +28859,60 @@ type VpcPeeringConnectionVpcInfo struct {
 
 	// The ID of the VPC.
 	VpcId *string
+
+	noSmithyDocumentSerde
+}
+
+// Describes an additional key exchange round that is permitted for the VPN tunnel.
+type VpnAdditionalKeyExchange struct {
+
+	// The additional key exchange round number.
+	AdditionalKeyExchangeRound *int32
+
+	// The key exchange method numbers permitted for this round.
+	KeyExchangeMethods []AdditionalKeyExchangeMethodsListValue
+
+	// Indicates whether this round is mandatory.
+	Requirement AdditionalKeyExchangeRequirement
+
+	noSmithyDocumentSerde
+}
+
+// Specifies an additional key exchange round for the VPN tunnel, as defined in
+// RFC 9370.
+type VpnAdditionalKeyExchangeRequest struct {
+
+	// The additional key exchange round number.
+	//
+	// Valid range: Minimum value of 1. Maximum value of 7.
+	//
+	// This member is required.
+	AdditionalKeyExchangeRound *int32
+
+	// The key exchange method numbers that are permitted for this round. The method
+	// numbers are the IANA IKEv2 key exchange method transform IDs.
+	//
+	// A required round must specify at least one method. An optional round can omit
+	// this parameter or specify an empty list. If omitted or empty for an optional
+	// round, the round is disabled.
+	//
+	// IKEv2 requires that the initial Diffie-Hellman exchange and each required round
+	// use a different key exchange method. The permitted methods must allow a distinct
+	// method to be selected for each of them.
+	//
+	// Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 35
+	// | 36 | 37
+	KeyExchangeMethods []AdditionalKeyExchangeMethodsRequestListValue
+
+	// Indicates whether this round is mandatory. If required , the tunnel isn't
+	// established unless the customer gateway device negotiates this round. If
+	// optional , the round is negotiated only if the customer gateway device supports
+	// it.
+	//
+	// Valid values: required | optional
+	//
+	// Default: required
+	Requirement AdditionalKeyExchangeRequirement
 
 	noSmithyDocumentSerde
 }
@@ -27907,10 +29233,18 @@ type VpnTunnelOptionsSpecification struct {
 	// Options for logging VPN tunnel activity.
 	LogOptions *VpnTunnelLogOptionsSpecification
 
+	// One or more additional key exchange rounds that are permitted for the VPN
+	// tunnel for phase 1 IKE negotiations. Additional key exchanges occur after the
+	// initial Diffie-Hellman exchange. Each round must have a unique round number.
+	//
+	// Additional key exchanges are supported only with IKEv2. You can't specify a
+	// required round if IKEVersions contains only ikev1 .
+	Phase1AdditionalKeyExchanges []VpnAdditionalKeyExchangeRequest
+
 	// One or more Diffie-Hellman group numbers that are permitted for the VPN tunnel
 	// for phase 1 IKE negotiations.
 	//
-	// Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24
+	// Valid values: 2 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 35
 	Phase1DHGroupNumbers []Phase1DHGroupNumbersRequestListValue
 
 	// One or more encryption algorithms that are permitted for the VPN tunnel for
@@ -27932,10 +29266,19 @@ type VpnTunnelOptionsSpecification struct {
 	// Default: 28800
 	Phase1LifetimeSeconds *int32
 
+	// One or more additional key exchange rounds that are permitted for the VPN
+	// tunnel for phase 2 IKE negotiations. Additional key exchanges occur after the
+	// initial Diffie-Hellman exchange. Each round must have a unique round number.
+	//
+	// Additional key exchanges are supported only with IKEv2. You can't specify a
+	// required round if IKEVersions contains only ikev1 .
+	Phase2AdditionalKeyExchanges []VpnAdditionalKeyExchangeRequest
+
 	// One or more Diffie-Hellman group numbers that are permitted for the VPN tunnel
 	// for phase 2 IKE negotiations.
 	//
-	// Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24
+	// Valid values: 2 | 5 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 35
+	// | 36 | 37
 	Phase2DHGroupNumbers []Phase2DHGroupNumbersRequestListValue
 
 	// One or more encryption algorithms that are permitted for the VPN tunnel for
