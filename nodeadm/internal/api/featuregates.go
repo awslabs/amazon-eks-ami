@@ -20,6 +20,12 @@ var featureVerifiers = map[Feature]func(Feature, map[Feature]bool) bool{
 	// may result in faster image pull times. This flag will be ignored on
 	// instances with memory and vCPU below a certain threshold.
 	FastImagePull: DefaultFalse,
+
+	// ENITags makes nodeadm aware of ENI tags. Secondary ENIs tagged
+	// alpha.node.eks.aws/system_managed=true are configured via
+	// systemd-networkd. Requires ec2:DescribeNetworkInterfaces on the node
+	// instance role.
+	ENITags: DefaultFalse,
 }
 
 func IsFeatureEnabled(feature Feature, featureGates map[Feature]bool) bool {
