@@ -63,6 +63,7 @@ COMMON_DIRECTORIES=(
   system
   docker
   containerd
+  crio
   storage
   var_log
   networking
@@ -313,6 +314,7 @@ collect() {
   get_pkglist
   get_system_services
   get_containerd_info
+  get_crio_info
   get_docker_info
   get_k8s_info
   get_nodeadm_info
@@ -873,6 +875,44 @@ get_system_services() {
       echo -e "${PID}\t${ENV_COUNT}" >> "${COLLECT_DIR}/system/large_environments.txt"
     fi
   done
+
+  ok
+}
+
+get_crio_info() {
+  if ! command -v crio > /dev/null 2>&1; then
+    warning "crio not installed"
+    return
+  fi
+
+  try "Collect CRI-O daemon information"
+
+  # Journal is collected even when crio is down, so a crash is still in the bundle.
+  timeout 75 journalctl -u crio --since "${DAYS_10}" > "${COLLECT_DIR}"/crio/crio-log.txt 2>&1 || echo -e "\tTimed out, ignoring \"crio log output \" "
+
+  timeout 75 crio version > "${COLLECT_DIR}"/crio/crio-version.txt 2>&1 || echo -e "\tTimed out, ignoring \"crio version output \" "
+  timeout 75 crio config > "${COLLECT_DIR}"/crio/crio-config.txt 2>&1 || echo -e "\tTimed out, ignoring \"crio config output \" "
+
+  cp --force /etc/crio/crio.conf "${COLLECT_DIR}"/crio/crio.conf 2> /dev/null
+  cp --force --recursive /etc/crio/crio.conf.d "${COLLECT_DIR}"/crio/ 2> /dev/null
+
+  if ! pgrep -x crio > /dev/null 2>&1; then
+    warning "The CRI-O daemon is not running."
+  fi
+
+  ok
+
+  try "Collect CRI-O running information"
+  if ! command -v crictl > /dev/null 2>&1; then
+    warning "crictl not installed"
+  else
+    timeout 75 crictl version > "${COLLECT_DIR}"/crio/crictl-version.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl version output \" "
+    timeout 75 crictl info > "${COLLECT_DIR}"/crio/crictl-info.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl info output \" "
+    timeout 75 crictl pods --verbose > "${COLLECT_DIR}"/crio/crictl-pods.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl pods output \" "
+    timeout 75 crictl ps -a --verbose > "${COLLECT_DIR}"/crio/crictl-ps.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl ps output \" "
+    timeout 75 crictl images > "${COLLECT_DIR}"/crio/crictl-images.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl images output \" "
+    timeout 75 crictl stats -a > "${COLLECT_DIR}"/crio/crictl-stats.txt 2>&1 || echo -e "\tTimed out, ignoring \"crictl stats output \" "
+  fi
 
   ok
 }
