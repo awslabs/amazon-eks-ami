@@ -70,7 +70,8 @@ function stage-kmod-rpm() {
   local DOWNLOAD_DIR="${WORKING_DIR}/nvidia-kmod-rpms"
 
   mkdir -p "${DOWNLOAD_DIR}"
-  sudo dnf download --setopt=*.module_hotfixes=true --destdir="${DOWNLOAD_DIR}" "${SOURCE_PACKAGE}"
+  # Retried: NVIDIA's single-mirror CUDA repo. See helpers/dnf-retry.sh.
+  dnf_retry download --setopt=*.module_hotfixes=true --destdir="${DOWNLOAD_DIR}" "${SOURCE_PACKAGE}"
 
   # dnf download skips signature checks, so verify before staging.
   rpm -K "${DOWNLOAD_DIR}"/*.rpm

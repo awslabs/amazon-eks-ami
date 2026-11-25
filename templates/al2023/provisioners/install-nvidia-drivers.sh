@@ -36,6 +36,8 @@ readonly NVIDIA_TREE_ROOT="/opt/nvidia"
 # shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/aws-clients.sh"
 # shellcheck disable=SC1090
+source "${WORKING_DIR}/helpers/dnf-retry.sh"
+# shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/nvidia-kmods.sh"
 # shellcheck disable=SC1090
 source "${WORKING_DIR}/helpers/nvidia-userspace.sh"
@@ -57,10 +59,12 @@ else
     DOMAIN="nvidia.com"
   fi
 
+  # Retried: --add-repo fetches the .repo file over the network, from the same NVIDIA
+  # host that serves the packages. See helpers/dnf-retry.sh.
   if [ -n "${NVIDIA_REPOSITORY:-}" ]; then
-    sudo dnf config-manager --add-repo "${NVIDIA_REPOSITORY}"
+    dnf_retry config-manager --add-repo "${NVIDIA_REPOSITORY}"
   else
-    sudo dnf config-manager --add-repo "https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/${MACHINE}/cuda-amzn2023.repo"
+    dnf_retry config-manager --add-repo "https://developer.download.${DOMAIN}/compute/cuda/repos/amzn2023/${MACHINE}/cuda-amzn2023.repo"
   fi
 
   # update all current .repo sources to enable gpgcheck
@@ -105,7 +109,9 @@ function resolve-tree-version() {
   local LATEST_OPEN_DRIVER_VERSION
   local LATEST_GRID_DRIVER_VERSION
 
-  LATEST_OPEN_DRIVER_VERSION=$(dnf repoquery --setopt=*.module_hotfixes=true --latest=1 --queryformat "%{version}" "kmod-nvidia-open-dkms-${MAJOR_VERSION}*")
+  # Retried: a reset here surfaces as the misleading "no kmod-nvidia-open-dkms package
+  # found" below rather than as a download error. See helpers/dnf-retry.sh.
+  LATEST_OPEN_DRIVER_VERSION=$(dnf_retry repoquery --setopt=*.module_hotfixes=true --latest=1 --queryformat "%{version}" "kmod-nvidia-open-dkms-${MAJOR_VERSION}*")
   if [ -z "${LATEST_OPEN_DRIVER_VERSION}" ]; then
     echo >&2 "ERROR: no kmod-nvidia-open-dkms package found for major version ${MAJOR_VERSION}"
     return 1
@@ -206,11 +212,13 @@ sudo build-nvidia-drivers
 # NVLSM
 # https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html#systems-using-fourth-generation-nvswitches
 echo "ib_umad" | sudo tee -a /etc/modules-load.d/ib-umad.conf
-sudo dnf -y install \
+# Retried: nvlsm and nvidia-container-toolkit come from NVIDIA-hosted repos, not the
+# Amazon Linux ones. See helpers/dnf-retry.sh.
+dnf_retry -y install \
   libibumad \
   infiniband-diags \
   nvlsm
-sudo dnf -y install nvidia-container-toolkit
+dnf_retry -y install nvidia-container-toolkit
 
 # %pre scripts of nvidia-persistenced adds a user required to run the persistenced daemon.
 create-persistenced-user
