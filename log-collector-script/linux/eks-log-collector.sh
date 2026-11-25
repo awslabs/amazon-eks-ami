@@ -310,6 +310,7 @@ collect() {
   get_mounts_info
   get_selinux_info
   get_iptables_info
+  get_nftables_info
   get_pkglist
   get_system_services
   get_containerd_info
@@ -327,6 +328,7 @@ collect() {
   get_sandboxImage_info
   get_cpu_throttled_processes
   get_io_throttled_processes
+  get_pressure_info
   get_reboot_history
   get_nvidia_bug_report
 }
@@ -415,6 +417,50 @@ get_iptables_info() {
     ipset --save | tee -a "${COLLECT_DIR}"/networking/ipset.txt
   fi
 
+  ok
+}
+
+get_nftables_info() {
+  # iptables output above only shows the iptables-nft compatibility view; rules
+  # written natively with nft (e.g. by newer kube-proxy modes) are only visible here.
+  if ! command -v nft > /dev/null 2>&1; then
+    echo "nft not installed" > "${COLLECT_DIR}"/networking/nftables.txt
+    return
+  fi
+
+  try "collect nftables information"
+  local tables family name outfile
+  if ! tables=$(timeout 75 nft list tables 2> /dev/null); then
+    echo "Unable to list nftables tables" > "${COLLECT_DIR}"/networking/nftables.txt
+    ok
+    return
+  fi
+
+  # Lines look like "table ip filter" or "table ip6 nat"
+  while read -r _ family name _; do
+    [[ -z "${family}" || -z "${name}" ]] && continue
+    outfile="${COLLECT_DIR}/networking/nftables-${family}-${name}.txt"
+    timeout 75 nft list table "${family}" "${name}" > "${outfile}" 2>&1
+    # timeout exits 124 when it kills the command. The file is then empty or cut
+    # off part-way, which looks like real data, so say so in the file itself.
+    if [[ $? -eq 124 ]]; then
+      printf '\n*** nft list table %s %s timed out after 75s; output above may be incomplete ***\n' "${family}" "${name}" >> "${outfile}"
+    fi
+  done <<< "${tables}"
+
+  ok
+}
+
+get_pressure_info() {
+  # Pressure Stall Information (PSI): distinguishes CPU contention, memory
+  # reclaim and IO wait. Absent on kernels without PSI or booted with psi=0.
+  try "collect pressure stall information"
+  local resource
+  for resource in cpu memory io; do
+    if [[ -r "/proc/pressure/${resource}" ]]; then
+      cp "/proc/pressure/${resource}" "${COLLECT_DIR}/system/pressure_${resource}.txt"
+    fi
+  done
   ok
 }
 
