@@ -254,8 +254,11 @@ func (ksc *kubeletConfig) withNodeIp(cfg *api.NodeConfig, flags map[string]strin
 }
 
 func (ksc *kubeletConfig) withVersionToggles(cfg *api.NodeConfig) {
-	// EKS enables DRA on 1.33+
-	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 {
+	// EKS enables DRA on 1.33 through 1.37. The
+	// DRA feature gate was removed in 1.38
+	// ref: https://github.com/kubernetes/kubernetes/pull/141946
+	if semver.Compare(cfg.Status.KubeletVersion, "v1.33.0") >= 0 &&
+		semver.Compare(cfg.Status.KubeletVersion, "v1.38.0") < 0 {
 		ksc.FeatureGates["DynamicResourceAllocation"] = true
 	}
 	// Enable MutableCSINodeAllocatableCount on 1.34+
