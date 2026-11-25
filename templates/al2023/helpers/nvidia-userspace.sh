@@ -36,7 +36,9 @@ function download-nvidia-userspace-rpms() {
 
   echo "Downloading the NVIDIA ${DRIVER_VERSION} userspace rpms for tree ${TREE}"
   mkdir -p "${RPM_LIST}"
-  sudo dnf install -y --downloadonly --destdir="${RPM_LIST}" \
+  # Retried: these come from NVIDIA's single-mirror CUDA repo, whose CDN intermittently
+  # resets HTTP/2 streams. See helpers/dnf-retry.sh.
+  dnf_retry install -y --downloadonly --destdir="${RPM_LIST}" \
     --setopt=*.module_hotfixes=true \
     "${VERSIONED_PACKAGES[@]}"
 
