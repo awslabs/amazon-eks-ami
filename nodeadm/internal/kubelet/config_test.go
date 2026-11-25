@@ -109,6 +109,35 @@ func TestMutableCSINodeAllocatableCountFeatureGate(t *testing.T) {
 	}
 }
 
+func TestDynamicResourceAllocationFeatureGate(t *testing.T) {
+	tests := []struct {
+		kubeletVersion string
+		expected       bool
+	}{
+		{kubeletVersion: "v1.32.0", expected: false},
+		{kubeletVersion: "v1.33.0", expected: true},
+		{kubeletVersion: "v1.37.0", expected: true},
+		// the gate was removed in 1.38
+		{kubeletVersion: "v1.38.0", expected: false},
+		{kubeletVersion: "v1.39.0", expected: false},
+	}
+
+	for _, test := range tests {
+		kubeletConfig := defaultKubeletSubConfig()
+		nodeConfig := api.NodeConfig{
+			Status: api.NodeConfigStatus{
+				KubeletVersion: test.kubeletVersion,
+			},
+		}
+		kubeletConfig.withVersionToggles(&nodeConfig)
+		if test.expected {
+			assert.True(t, kubeletConfig.FeatureGates["DynamicResourceAllocation"], "DynamicResourceAllocation should be set for %s", test.kubeletVersion)
+		} else {
+			assert.NotContains(t, kubeletConfig.FeatureGates, "DynamicResourceAllocation", "DynamicResourceAllocation shouldn't be set for %s", test.kubeletVersion)
+		}
+	}
+}
+
 func TestGenerateKubeletConfig(t *testing.T) {
 	mockIMDS := &imds.FakeIMDSClient{
 		GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
