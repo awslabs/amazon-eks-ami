@@ -31,15 +31,15 @@ sudo rpm --import https://yum.repos.neuron.amazonaws.com/GPG-PUB-KEY-AMAZON-AWS-
 ################################################################################
 # TODO: remove this section if inf1 is not supported
 
-# Install and remove aws-neuronx-dkms-2.21.x to ensure all of its dependencies are
+# Install and remove aws-neuronx-dkms-2.24.x to ensure all of its dependencies are
 # pre-installed
-sudo dnf install -y aws-neuronx-dkms-2.21.*
+sudo dnf install -y aws-neuronx-dkms-2.24.*
 sudo dnf remove -y --noautoremove aws-neuronx-dkms
 
-# Cache the 2.21.x rpm for contidtional boot-time install
-sudo dnf download aws-neuronx-dkms-2.21.*
+# Cache the 2.24.x rpm for contidtional boot-time install
+sudo dnf download aws-neuronx-dkms-2.24.*
 sudo mkdir -p "$PACKAGE_CACHE_PATH"
-sudo mv aws-neuronx-dkms-2.21.*.rpm "${PACKAGE_CACHE_PATH}/"
+sudo mv aws-neuronx-dkms-2.24.*.rpm "${PACKAGE_CACHE_PATH}/"
 
 sudo mv ${WORKING_DIR}/gpu/neuron-package-install.sh /etc/eks/
 sudo mv ${WORKING_DIR}/gpu/neuron-package-install.service /etc/systemd/system/

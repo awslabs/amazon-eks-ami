@@ -34,8 +34,8 @@ function installed-neuron-driver-version() {
   rpm -q aws-neuronx-dkms --queryformat '%{VERSION}'
 }
 
-if is-inf1 && [[ $(installed-neuron-driver-version) != 2.21.* ]]; then
-  echo "downgrading driver to 2.21"
+if is-inf1 && [[ $(installed-neuron-driver-version) != 2.24.* ]]; then
+  echo "downgrading driver to 2.24"
   # "dnf downgrade" would fail because the post remove script for the package
   # does not fully remove the module, and then the post install script for the
   # downgraded version fails because of an attempt to probe an older version of
@@ -43,7 +43,7 @@ if is-inf1 && [[ $(installed-neuron-driver-version) != 2.21.* ]]; then
   # operations more intuitive
   export -f update-pciids
   rpm --erase aws-neuronx-dkms
-  rpm -i "${PACKAGE_CACHE_PATH}/aws-neuronx-dkms-2.21.*.rpm"
+  rpm -i "${PACKAGE_CACHE_PATH}/aws-neuronx-dkms-2.24.*.rpm"
 else
   echo "nothing to do!"
 fi
