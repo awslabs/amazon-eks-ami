@@ -267,8 +267,7 @@ sudo systemctl enable nvidia-driver-resolve.service \
 if ! [[ $(imds /latest/meta-data/services/partition) =~ ^aws-iso ]]; then
   # ISO partitions use the AL NVIDIA repo, which does not include module streams
   # enable the LTS open module stream so that package installs can later be performed against it
-  # Retried: resolving a module stream reads NVIDIA repo metadata. See helpers/dnf-retry.sh.
-  dnf_retry -y module enable nvidia-driver:${NVIDIA_DRIVER_LTS_VERSION}-open
+  sudo dnf -y module enable nvidia-driver:${NVIDIA_DRIVER_LTS_VERSION}-open
   # dnf module commands require repository metadata that may not be available w/o network access at boot, so we
   # instead use a placeholder that can be trivially replaced at boot
   sudo sed -i "s/${NVIDIA_DRIVER_LTS_VERSION}-open/DRIVER_TREE_VERSION_PLACEHOLDER/g" /etc/dnf/modules.d/nvidia-driver.module

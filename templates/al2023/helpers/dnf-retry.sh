@@ -14,12 +14,8 @@
 #
 # Log lines go to stderr, so dnf_retry is safe to use inside a command substitution.
 
-# Guarded: re-declaring a readonly is fatal under `set -o errexit`, so a second source
-# of this file would abort the build.
-if [ -z "${DNF_RETRY_ATTEMPTS:-}" ]; then
-  readonly DNF_RETRY_ATTEMPTS=5
-  readonly DNF_RETRY_BASE_DELAY_SECONDS=20
-fi
+readonly DNF_RETRY_ATTEMPTS=5
+readonly DNF_RETRY_BASE_DELAY_SECONDS=20
 
 # Runs `sudo dnf "$@"`, retrying with a linear backoff.
 function dnf_retry() {
