@@ -3,6 +3,9 @@ Description=NVIDIA driver resolve
 ConditionPathExists=!/opt/nvidia/current/.driver-flavor
 DefaultDependencies=no
 After=local-fs.target
+# nodeadm-config writes the service's environment drop-in from spec.instance.environment,
+# which can pin the driver tree with NVIDIA_DRIVER_TREE.
+After=nodeadm-config.service
 Before=shutdown.target
 Conflicts=shutdown.target
 RefuseManualStart=yes
