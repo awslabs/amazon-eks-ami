@@ -9,6 +9,9 @@ NVIDIA_TREE_ROOT="${NVIDIA_TREE_ROOT:-/opt/nvidia}"
 EKS_CONFIG_DIR="${EKS_CONFIG_DIR:-/etc/eks}"
 MODPROBE_D_DIR="${MODPROBE_D_DIR:-/etc/modprobe.d}"
 DMI_PRODUCT_NAME_PATH="${DMI_PRODUCT_NAME_PATH:-/sys/devices/virtual/dmi/id/product_name}"
+# Optional driver tree pin, "lts" or "pb". Set it per node through nodeadm's
+# spec.instance.environment for the nvidia-driver-resolve service.
+NVIDIA_DRIVER_TREE="${NVIDIA_DRIVER_TREE:-}"
 
 readonly NVIDIA_VENDOR_ID="10de"
 readonly PCI_CLASS_CODES=(
@@ -65,7 +68,7 @@ function has_nvidia_gpu() {
 }
 
 function main() {
-  local instance_type tree flavor lts_major pb_major tree_path current_tree_path
+  local instance_type tree flavor lts_major pb_major tree_path current_tree_path requested_major
 
   if ! has_nvidia_gpu; then
     echo "resolve: no NVIDIA GPU attached, doing nothing"
@@ -116,6 +119,26 @@ function main() {
         > "${MODPROBE_D_DIR}/nvidia-disable-gsp.conf"
       ;;
   esac
+
+  # A pinned tree replaces the tree chosen above. The flavor stays, except that an open flavor
+  # falls back to proprietary when the pinned tree's open modules don't support every attached GPU.
+  if [[ -n "${NVIDIA_DRIVER_TREE}" ]]; then
+    case "${NVIDIA_DRIVER_TREE}" in
+      lts) requested_major="${lts_major}" ;;
+      pb) requested_major="${pb_major}" ;;
+      *) requested_major="" ;;
+    esac
+    if [[ -z "${requested_major}" ]]; then
+      echo >&2 "resolve: ignoring NVIDIA_DRIVER_TREE=${NVIDIA_DRIVER_TREE}, which is not a staged tree (lts or pb); keeping ${tree}"
+    else
+      tree="${NVIDIA_DRIVER_TREE}"
+      if [[ "${flavor}" == "open" ]] \
+        && ! devices_supported_by "${EKS_CONFIG_DIR}/nvidia-open-supported-devices-${requested_major}.txt"; then
+        flavor="proprietary"
+      fi
+      echo "resolve: NVIDIA_DRIVER_TREE pins tree ${tree} (flavor ${flavor})"
+    fi
+  fi
 
   tree_path="${NVIDIA_TREE_ROOT}/${tree}"
   current_tree_path="${NVIDIA_TREE_ROOT}/current"
