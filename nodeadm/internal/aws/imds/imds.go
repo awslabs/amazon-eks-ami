@@ -54,6 +54,13 @@ var (
 	NetworkCard = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "network-card")) }
 	LocalIPv4s  = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "local-ipv4s")) }
 	InterfaceID = func(mac string) IMDSProperty { return IMDSProperty(path.Join(string(MACs), mac, "interface-id")) }
+
+	SubnetIPv4CIDRBlock = func(mac string) IMDSProperty {
+		return IMDSProperty(path.Join(string(MACs), mac, "subnet-ipv4-cidr-block"))
+	}
+	SubnetIPv6CIDRBlocks = func(mac string) IMDSProperty {
+		return IMDSProperty(path.Join(string(MACs), mac, "subnet-ipv6-cidr-blocks"))
+	}
 )
 
 type IMDSClient interface {

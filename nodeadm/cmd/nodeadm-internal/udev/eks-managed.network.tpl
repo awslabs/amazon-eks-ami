@@ -52,6 +52,19 @@ Gateway=_ipv6ra
 Table={{.TableID}}
 Gateway=_dhcp4
 
+{{ if .SubnetCIDRs -}}
+# on-link routes for the interface's own subnet, so that traffic to neighbors
+# in the same subnet is sent directly instead of through the gateway.
+#
+# see: https://github.com/amazonlinux/amazon-ec2-net-utils/blob/3261b3b4c8824343706ee54d4a6f5d05cd8a5979/lib/lib.sh#L376-L401
+
+{{ range .SubnetCIDRs -}}
+[Route]
+Table={{$.TableID}}
+Destination={{.}}
+
+{{ end -}}
+{{ end -}}
 {{ if .InterfaceIP -}}
 [RoutingPolicyRule]
 From={{.InterfaceIP}}

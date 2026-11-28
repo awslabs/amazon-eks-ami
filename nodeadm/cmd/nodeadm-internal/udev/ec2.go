@@ -34,6 +34,33 @@ func getInterfaceID(ctx context.Context, imdsClient imds.IMDSClient, mac string)
 	return imdsClient.GetProperty(ctx, imds.InterfaceID(mac))
 }
 
+// getSubnetCIDRs returns the IPv4 and IPv6 CIDR blocks of the subnet that the
+// interface with the given mac address belongs to. a subnet does not always
+// have both address families, so a 404 for either property means that family
+// is absent rather than an error.
+func getSubnetCIDRs(ctx context.Context, imdsClient imds.IMDSClient, mac string) ([]string, error) {
+	var cidrs []string
+	for _, prop := range []imds.IMDSProperty{
+		imds.SubnetIPv4CIDRBlock(mac),
+		imds.SubnetIPv6CIDRBlocks(mac),
+	} {
+		value, err := imdsClient.GetProperty(ctx, prop)
+		if err != nil {
+			if isNotFoundErr(err) {
+				continue
+			}
+			return nil, err
+		}
+		// subnet-ipv6-cidr-blocks can hold multiple newline-separated blocks.
+		for _, cidr := range strings.Split(value, "\n") {
+			if cidr = strings.TrimSpace(cidr); len(cidr) > 0 {
+				cidrs = append(cidrs, cidr)
+			}
+		}
+	}
+	return cidrs, nil
+}
+
 func isNotFoundErr(err error) bool {
 	// TODO: implement a more robust check. example data:
 	// "operation error ec2imds: GetMetadata, http response error StatusCode: 404, request to EC2 IMDS failed"
