@@ -161,6 +161,17 @@ func (c *netManager) manageLink(ctx context.Context) error {
 			ipv4 := strings.Split(ipv4s, "\n")[0]
 			templateVars.InterfaceIP = strings.TrimSpace(ipv4)
 		}
+
+		// the policy rule above sends all traffic from this interface's address
+		// through its own route table, so that table also needs on-link routes
+		// for the interface's subnet. without them, traffic to neighbors in the
+		// same subnet is sent to the gateway, which only works when the gateway
+		// forwards traffic back into the same subnet.
+		subnetCIDRs, err := getSubnetCIDRs(ctx, c.imds, c.selfMac)
+		if err != nil {
+			return fmt.Errorf("failed to get subnet cidr blocks: %w", err)
+		}
+		templateVars.SubnetCIDRs = subnetCIDRs
 	}
 
 	networkConfig, err := renderNetworkTemplate(templateVars)

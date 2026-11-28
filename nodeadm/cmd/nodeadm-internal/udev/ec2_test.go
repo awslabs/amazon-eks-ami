@@ -86,4 +86,56 @@ func Test_IMDS(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, networkCard, 0)
 	})
+
+	t.Run("SubnetCIDRsDualStack", func(t *testing.T) {
+		imdsClient := &imds.FakeIMDSClient{
+			GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
+				switch prop {
+				case imds.SubnetIPv4CIDRBlock("mac"):
+					return "10.0.0.0/28", nil
+				case imds.SubnetIPv6CIDRBlocks("mac"):
+					return "2600:1f18:aaaa:bbbb::/64\n2600:1f18:aaaa:cccc::/64\n", nil
+				}
+				return "", fmt.Errorf("unexpected property %q", prop)
+			},
+		}
+		cidrs, err := getSubnetCIDRs(context.TODO(), imdsClient, "mac")
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"10.0.0.0/28", "2600:1f18:aaaa:bbbb::/64", "2600:1f18:aaaa:cccc::/64"}, cidrs)
+	})
+
+	t.Run("SubnetCIDRsIPv4Only", func(t *testing.T) {
+		imdsClient := &imds.FakeIMDSClient{
+			GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
+				if prop == imds.SubnetIPv4CIDRBlock("mac") {
+					return "10.0.0.0/28", nil
+				}
+				return "", imds404Error
+			},
+		}
+		cidrs, err := getSubnetCIDRs(context.TODO(), imdsClient, "mac")
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"10.0.0.0/28"}, cidrs)
+	})
+
+	t.Run("SubnetCIDRs404", func(t *testing.T) {
+		imdsClient := &imds.FakeIMDSClient{
+			GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
+				return "", imds404Error
+			},
+		}
+		cidrs, err := getSubnetCIDRs(context.TODO(), imdsClient, "mac")
+		assert.NoError(t, err)
+		assert.Empty(t, cidrs)
+	})
+
+	t.Run("SubnetCIDRsError", func(t *testing.T) {
+		imdsClient := &imds.FakeIMDSClient{
+			GetPropertyFunc: func(ctx context.Context, prop imds.IMDSProperty) (string, error) {
+				return "", fmt.Errorf("foo")
+			},
+		}
+		_, err := getSubnetCIDRs(context.TODO(), imdsClient, "mac")
+		assert.Error(t, err)
+	})
 }
